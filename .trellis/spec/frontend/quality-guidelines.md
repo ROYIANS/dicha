@@ -63,6 +63,7 @@
 - MVP 不强制单测（单人开发）
 - 关键路径 e2e：onboarding、录入、登录
 - 每周自用 1 天验证
+- **验证陷阱**：`vite build` 绿 ≠ `vite dev` 能跑（workspace **CJS** 包：Rollup 能静态分析 CJS 再导出，esbuild/原生 ESM dev 看不穿 tslib `__exportStar`）→ 改完前端**必须真加载 dev module graph**（curl Vite 转换后的模块或开浏览器），别只看 build/typecheck/lint。
 
 ---
 

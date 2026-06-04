@@ -96,6 +96,7 @@ M1 **真建**（与 plan W1-2 对齐），不是桩。
 - **web tsconfig**：override base 的 NodeNext → `moduleResolution: 'Bundler'`。
 - **Node floor**：Vite 8 要求 `^20.19 || >=22.12`。开发机已是 Node 24（满足），但 `.nvmrc`(=20) + root `engines`(>=20) 是过时文本 → 抬到 `.nvmrc`=24 / `engines`>=22.12。
 - **Vite 8** + `@vitejs/plugin-react@^6` + `tanstackRouter()` 插件（camelCase，放 `react()` 前）。
+- **shared 跨包消费**：web 对 `@vidorra/shared` 解析到**源码**（Vite `resolve.alias` + tsconfig `paths` → `packages/shared/src/index.ts`），`apps/api`(CJS) 走 `dist`。shared 是 CJS（`module: CommonJS`），Vite **dev**（esbuild/原生 ESM）看不穿 tslib `__exportStar(require(...))` 的转导出 → **`vite build` 绿但 `vite dev` 炸**；web 解析到源彻底消除该 desync。
 
 ## 待回填 TODO（M1 真代码出现后）
 

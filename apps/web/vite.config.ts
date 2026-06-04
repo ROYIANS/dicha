@@ -15,6 +15,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Resolve the workspace contract package to its TS SOURCE (not the CJS
+      // `dist`). Vite dev (esbuild/native ESM) cannot see named exports through
+      // shared's tslib `__exportStar(require(...))` CJS re-export, so a `dist`
+      // import of `contract` fails at runtime. Source keeps dev/build/typecheck
+      // consistent and gives instant HMR on shared edits. `apps/api` (CJS) keeps
+      // consuming the `dist` build — only web maps to source.
+      '@vidorra/shared': fileURLToPath(
+        new URL('../../packages/shared/src/index.ts', import.meta.url),
+      ),
     },
   },
   server: {
