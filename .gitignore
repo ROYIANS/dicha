@@ -33,11 +33,7 @@ Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
 
-# Trellis: ignore backups / worktrees / runtime caches; journals are tracked
-.trellis/.backup-*
-.trellis/worktrees/
-.trellis/.runtime/
-.trellis/.cache/
+# Trellis manages its own ignores in .trellis/.gitignore
 
 # Local storage (MinIO / dev uploads)
 .storage/
