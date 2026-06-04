@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 2
-- **Last Active**: 2026-06-04
+- **Total Sessions**: 3
+- **Last Active**: 2026-06-05
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~74 | Active |
+| `journal-1.md` | ~110 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 3 | 2026-06-05 | Frontend architecture grill + apps/web scaffold (M1 W1-2) | `a857889`, `d6f8e87`, `06a438f`, `2a6a10c` | `main` |
 | 2 | 2026-06-04 | M1 W1-2: Monorepo 骨架 + NestJS/Prisma 7 后端地基 | `23615c2` | `main` |
 | 1 | 2026-06-04 | Bootstrap repo + README manifesto | `910fcfd`, `54cb912` | `main` |
 <!-- @@@/auto:session-history -->

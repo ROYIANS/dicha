@@ -72,3 +72,39 @@ Initialized git remote (github.com/ROYIANS/easylife-os) with local proxy 127.0.0
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Frontend architecture grill + apps/web scaffold (M1 W1-2)
+
+**Date**: 2026-06-05
+**Task**: Frontend architecture grill + apps/web scaffold (M1 W1-2)
+**Branch**: `main`
+
+### Summary
+
+10-branch frontend-architecture grill -> architecture.md keystone; synced decisions into plan.md/README/spec (next-intl->react-i18next, +HeroUI/ts-rest). Scaffolded apps/web: React 19 + Vite 8 + TanStack Router(loader-first)/Query + ts-rest+zod contract in packages/shared + HeroUI v3/Tailwind v4 + react-i18next + sonner + ESLint flat. Health ts-rest vertical slice proves the wire end-to-end (contract->@ts-rest/nest->Vite proxy->loader->useQuery->HeroUI). Fixed Vite-dev CJS-interop bug (web resolves @vidorra/shared to source). typecheck/lint/build green.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a857889` | (see git log) |
+| `d6f8e87` | (see git log) |
+| `06a438f` | (see git log) |
+| `2a6a10c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
