@@ -1,0 +1,12 @@
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "Keystone: 10 M1 frontend architecture decisions + 依赖前置清单 + 实现约束 (research-verified)"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "ts-rest + xxxQueryOptions factory convention (loader+component shared); NOT @ts-rest/react-query"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "zod runtime validation, shared ts-rest contract single-source, TS strict rules"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "HeroUI as base component lib + RHF Controller + function-component-only rules"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "apps/web feature-first layout, api/ = ts-rest client + queryOptions factories"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "loader-first data loading, router context queryClient, Zustand vs Query split"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "ESLint flat+Prettier, Tailwind v4, latest-stable policy, no-backcompat 铁律"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend conventions — HealthController is refactored to @ts-rest/nest"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Backend module layout for the health ts-rest change"}
+{"file": ".trellis/tasks/06-04-frontend-web-scaffold/research/ts-rest-e2e.md", "reason": "ts-rest e2e wiring: versions, @TsRestHandler, @ts-rest/core + native queryOptions, zod v3"}
+{"file": ".trellis/tasks/06-04-frontend-web-scaffold/research/tanstack-router-setup.md", "reason": "TanStack Router v1 + Vite 8 file-based + loader-first + queryClient context + /api proxy"}
+{"file": ".trellis/tasks/06-04-frontend-web-scaffold/research/heroui-tailwind-setup.md", "reason": "HeroUI v3 + Tailwind v4 + Vite setup, no-provider, oklch theme, RHF Controller"}

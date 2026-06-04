@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "Verify scaffold matches the locked architecture decisions + 实现约束"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Lint/typecheck bar, latest-stable version policy, no-half-baked 铁律"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "No any / no @ts-ignore, zod, shared contract single-source"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "Verify queryOptions factory + ts-rest pattern (NOT @ts-rest/react-query)"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend code standards for the health controller change"}
+{"file": ".trellis/tasks/06-04-frontend-web-scaffold/research/ts-rest-e2e.md", "reason": "Verify ts-rest wiring matches researched pattern (zod v3, @TsRestHandler, ValidationPipe no-op)"}
+{"file": ".trellis/tasks/06-04-frontend-web-scaffold/research/tanstack-router-setup.md", "reason": "Verify router/loader/proxy + setGlobalPrefix('api') setup matches research"}
+{"file": ".trellis/tasks/06-04-frontend-web-scaffold/research/heroui-tailwind-setup.md", "reason": "Verify HeroUI v3/Tailwind v4 setup matches research (no provider, oklch theme)"}
