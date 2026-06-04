@@ -1,0 +1,22 @@
+{
+  "name": "vidorra-life",
+  "version": "0.0.0",
+  "private": true,
+  "description": "安逸生活 · 像素风 2.5D 个人物品管理 OS",
+  "license": "MIT",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2.9.16",
+    "typescript": "^5.9.3"
+  }
+}

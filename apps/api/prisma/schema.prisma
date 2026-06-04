@@ -1,0 +1,164 @@
+// vidorra-life · v0 数据模型（M1 Week 1-2）
+// 约定见 .trellis/spec/backend/database-guidelines.md
+// 显式关系命名 / 硬删除（断舍离 g1）/ coins schema MVP 就装 / 互动统一进 Event
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  runtime             = "nodejs"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum RoomType {
+  STORAGE_ROOM
+  WARDROBE
+  LIBRARY
+}
+
+enum StickerSource {
+  AI
+  LIBRARY
+  USER
+}
+
+enum PoemAuthorType {
+  DEFAULT_POOL
+  USER
+  AI
+}
+
+enum PoemVisibility {
+  PRIVATE
+  FRIEND
+}
+
+enum EventType {
+  CREATED
+  CHECK_IN
+  WORN
+  READ
+  CLEANED_DUST
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model User {
+  id                   String  @id @default(cuid())
+  email                String  @unique
+  displayName          String
+  city                 String?
+  gender               String?
+  personalityArchetype String?
+  homeName             String?
+
+  // 游戏内金币：MVP 仅 schema + 显示，无消费场景（避免 v2 迁移）
+  coins Int @default(0)
+
+  items  Item[]
+  events Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String   @id @default(cuid())
+  key      String   @unique // 稳定标识，如 "tops" / "books"
+  name     String
+  roomType RoomType
+
+  // 每类目独立可配落灰曲线（落灰只对物品 sprite）
+  dustCurve Json?
+
+  items Item[]
+  poems Poem[] // 类目默认诗池（诗永不为空）
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id       String   @id @default(cuid())
+  name     String
+  roomType RoomType
+  notes    String?
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  // sticker 可空：AI/库匹配都失败时用文字占位（永不阻塞录入）
+  sticker   Sticker? @relation(fields: [stickerId], references: [id])
+  stickerId String?
+
+  poems  Poem[]
+  events Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([categoryId])
+}
+
+model Sticker {
+  id          String        @id @default(cuid())
+  name        String
+  description String? // M2 用于 embedding 智能匹配
+  imageUrl    String
+  source      StickerSource
+
+  items Item[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Poem {
+  id         String         @id @default(cuid())
+  content    String
+  order      Int            @default(0) // c1 一句，留多句空间（v2 诗的卷轴）
+  authorType PoemAuthorType
+  visibility PoemVisibility @default(PRIVATE)
+  archivedAt DateTime? // 用户编辑诗 → 旧版归档（v2 诗的考古层）
+
+  // 二选一：绑定到具体 item，或作为 category 默认诗池
+  item       Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId     String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([itemId])
+  @@index([categoryId])
+}
+
+model Event {
+  id       String    @id @default(cuid())
+  type     EventType
+  roomType RoomType?
+  metadata Json? // 房间特有事件载荷（衣橱"穿了"、书房"读了"等）
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  item   Item?   @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  itemId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+  @@index([itemId])
+  @@index([type])
+}

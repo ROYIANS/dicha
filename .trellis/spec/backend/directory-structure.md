@@ -65,8 +65,14 @@ apps/api/
 
 ---
 
-## TODO（M1 Week 1-2 落地后回填）
+## TODO（M1 Week 3 第一个房间出炉后回填）
 
-- [ ] 具体的 controller / service 分层模板（M1 Week 3 第一个房间出炉后定型）
+- [ ] 具体的 controller / service 分层模板（M1 Week 3 第一个房间 storage-room 出炉后定型）
 - [ ] DTO 与 Prisma model 的映射约定
-- [ ] common/ 下的 filter / interceptor 列表
+
+### 已落地（M1 Week 1-2）
+
+- `common/all-exceptions.filter.ts`：全局兜底 ExceptionFilter（≥500 记 error log；错误码体系待 Week 3-6）
+- `prisma/`：`PrismaModule`（@Global）+ `PrismaService`（OnModuleInit `$connect`）
+- `config/env.validation.ts`：class-validator 校验 `DATABASE_URL` / `PORT`
+- `modules/health/`：`GET /health` → DB ping，是 controller/service 分层的最小范例

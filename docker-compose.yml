@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vidorra-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vidorra
+      POSTGRES_PASSWORD: vidorra
+      POSTGRES_DB: vidorra
+    ports:
+      - "5432:5432"
+    volumes:
+      - vidorra-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vidorra -d vidorra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vidorra-pgdata:

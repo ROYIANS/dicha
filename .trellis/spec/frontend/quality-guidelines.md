@@ -11,9 +11,30 @@
 
 ---
 
+## 技术栈版本选型
+
+- **永远用前沿稳定版**（最新 LTS / latest stable）。新建依赖时查实当前最新版本号再写，不沿用过时版本。
+- 跨大版本优先升（React 19、Vite 最新、TanStack 最新等），配置按新版规范重写。
+- 例外：ROYIANS 明确要求锁版本时才锁。
+
+---
+
+## 不要兼容历史 / 旧数据（MVP 铁律）
+
+**MVP 阶段本就会大量重构、重设计。除非 ROYIANS 明确要求兼容，否则绝不为"旧数据 / 旧 localStorage / 旧组件接口"写兼容逻辑。**
+
+**Why:** 单人开发、greenfield。胶水代码、向后兼容分支污染代码库、拖慢迭代，违背"最干净版本"目标。
+
+**How to apply:**
+- 改组件 props / store 结构就直接改，不留 deprecated 别名或迁移层。
+- 不写 `if (oldLocalStorageFormat)` 之类的版本判断分支。
+- 唯一触发兼容的信号：ROYIANS 明说"这个要兼容 / 保留"。
+
+---
+
 ## Code Style
 
-- ESLint + Prettier（与后端共享配置）
+- ESLint + Prettier（与后端共享配置）：**尚未落地**，待选型（见下方 TODO）
 - `eslint-plugin-react-hooks` 严格执行
 - Tailwind？M3 决定（M1 用纯 CSS / CSS Modules 起步即可）
 
