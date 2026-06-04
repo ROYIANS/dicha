@@ -39,3 +39,36 @@ Initialized git remote (github.com/ROYIANS/easylife-os) with local proxy 127.0.0
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: M1 W1-2: Monorepo 骨架 + NestJS/Prisma 7 后端地基
+
+**Date**: 2026-06-04
+**Task**: M1 W1-2: Monorepo 骨架 + NestJS/Prisma 7 后端地基
+**Branch**: `main`
+
+### Summary
+
+搭建 pnpm+Turborepo monorepo（apps/{api,web,image-worker} + packages/{shared,palette}）；apps/api 用 NestJS 11 + Prisma 7（prisma-client generator/CJS/@prisma/adapter-pg）+ /health；落地 v0 数据模型 6 模型 5 enum + init migration。全栈升最新稳定版（TS 锁 5.x）。用 context7 查实 Prisma 7 配置，确认 NestJS 走 CJS + moduleFormat=cjs。spec 回填后端/前端指南并新增两条规则（版本前沿、不兼容旧数据）。建 ideas/ 暂存命名(vidorra/wabi)与习惯跟踪 backlog。对真实 dev Postgres 验证：migrate reset 建 6 表，GET /health 返回 {status:ok,db:up}。trellis-check 自查修复坏 lint 接线、spec 失准 3 处。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `23615c2` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
