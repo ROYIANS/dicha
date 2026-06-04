@@ -38,6 +38,10 @@ pnpm-debug.log*
 
 # Trellis manages its own ignores in .trellis/.gitignore
 
+# Claude Code — per-machine shim mapping `python` -> `python3` for Trellis hooks
+# (referenced by the git-ignored .claude/settings.local.json env.PATH)
+.claude/shims/
+
 # Local storage (MinIO / dev uploads)
 .storage/
 uploads/
