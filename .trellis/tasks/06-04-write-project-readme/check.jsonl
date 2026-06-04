@@ -1,0 +1,4 @@
+{"file": "plan.md", "reason": "Check 时对照：README 是否抓住 plan.md 的语调与核心金句，技术栈与路线图是否与 plan.md 一致"}
+{"file": ".trellis/tasks/06-04-write-project-readme/prd.md", "reason": "Check Acceptance Criteria 是否全部满足（无假截图、无 install、状态明示、英文摘要存在等）"}
+{"file": "C:\\Users\\12946\\.claude\\projects\\D--Code-Study-vidorra-life\\memory\\project_emotional_vision.md", "reason": "Check README 是否出现'咖啡厅/治愈/安逸'等无设计支撑的空泛词，是否守住皮卡堂情感北极星"}
+{"file": "C:\\Users\\12946\\.claude\\projects\\D--Code-Study-vidorra-life\\memory\\feedback_partial_features.md", "reason": "Check 是否承诺了未实现的能力（pre-alpha 必须明示，不能伪装成'已可用'）"}
