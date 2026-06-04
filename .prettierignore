@@ -1,0 +1,8 @@
+node_modules
+dist
+build
+.turbo
+.vite
+pnpm-lock.yaml
+**/src/generated
+**/routeTree.gen.ts

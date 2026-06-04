@@ -1,6 +1,22 @@
 # apps/web
 
-React + Vite + TanStack + PixiJS 前端。
+`@vidorra/web` — React 19 + Vite SPA。前端架构单一出处见
+[`.trellis/spec/frontend/architecture.md`](../../.trellis/spec/frontend/architecture.md)。
 
-> **占位**。M1 后续片实现（基础录入 UI 在 Week 3-6，PixiJS 引擎按铁律 #2 推迟到 M2）。
-> 当前不含 package.json，避免 turbo 把空包当构建任务。
+技术栈：TanStack Router(file-based, loader-first) + TanStack Query · ts-rest + zod 合约（住
+`packages/shared`）· HeroUI v3 + Tailwind v4 · react-i18next（zh）· Zustand · sonner ·
+ESLint flat + Prettier（root 共享）。PixiJS 按铁律 #2 推迟到 M2。
+
+## 开发
+
+```bash
+pnpm dev          # 在仓库根：turbo 同时起 web(:5173) + api(:3000)
+```
+
+dev 下 Vite `server.proxy` 把 `/api` 转 `http://localhost:3000`（同源，为 BFF cookie 预留）。
+
+- 数据层：`src/api/client.ts`（ts-rest `initClient`）+ `src/api/<x>.ts` 的 `xxxQueryOptions` 工厂
+  （loader 与组件共用同一份 query 定义）。**不用** `@ts-rest/react-query`。
+- 路由：`src/routes/`（file-based）；`src/routeTree.gen.ts` 由 router 插件生成，勿手改。
+- 首页 `routes/index.tsx` 是 health ts-rest 竖切样板：loader `ensureQueryData(healthQueryOptions())`
+  → 组件 `useQuery` → HeroUI 渲染 DB up/down。后续 feature 复用此样板。

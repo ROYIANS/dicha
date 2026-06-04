@@ -1,0 +1,3 @@
+/* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
+@import 'tailwindcss';
+@import '@heroui/styles';

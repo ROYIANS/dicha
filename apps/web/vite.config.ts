@@ -1,0 +1,26 @@
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from 'vite';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    // ⚠️ tanstackRouter() MUST come BEFORE react() (it transforms route files).
+    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
+    react(),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  server: {
+    proxy: {
+      // Same-origin in dev so the future BFF httpOnly/SameSite cookie works (architecture.md §3/§6).
+      '/api': { target: 'http://localhost:3000', changeOrigin: true },
+    },
+  },
+});
