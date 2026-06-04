@@ -33,8 +33,11 @@ Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
 
-# Trellis workspace (per-developer journals, not shared)
-.trellis/workspace/
+# Trellis: ignore backups / worktrees / runtime caches; journals are tracked
+.trellis/.backup-*
+.trellis/worktrees/
+.trellis/.runtime/
+.trellis/.cache/
 
 # Local storage (MinIO / dev uploads)
 .storage/
