@@ -15,6 +15,9 @@
 
 **铁律：server data 不进 Zustand store。** 走 query 缓存。
 
+- **auth 状态也是 server state**：`/api/auth/me` 用 Query 缓存，不进 Zustand。
+- **数据加载是 loader-first**：路由 `loader` 用 `queryClient.ensureQueryData(xxxQueryOptions)` 预取；`queryClient` 经 `createRouter({ context })` 注入。详见 [architecture.md §2](./architecture.md)。
+
 ---
 
 ## Zustand Store 划分

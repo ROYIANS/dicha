@@ -1,7 +1,7 @@
 # Frontend Directory Structure
 
-> Pure React + Vite + TanStack Router + TanStack Query + PixiJS + Zustand。
-> Monorepo 中 `apps/web/`。
+> React 19 + Vite + TanStack Router(loader-first) + TanStack Query + ts-rest + Zustand + HeroUI(Tailwind v4)。PixiJS M2 才上。
+> Monorepo 中 `apps/web/`。完整架构见 [architecture.md](./architecture.md)。
 
 ---
 
@@ -23,7 +23,7 @@ apps/web/
 │   │   ├── sprites/         # sprite 加载器 / atlas
 │   │   └── shaders/         # palette swap fragment shader
 │   ├── stores/              # Zustand store（按 slice 拆）
-│   ├── api/                 # TanStack Query hooks + 调用封装
+│   ├── api/                 # ts-rest client + xxxQueryOptions 工厂（loader+组件共用）
 │   ├── components/          # 跨 feature 复用的纯展示组件
 │   ├── lib/                 # 工具函数
 │   └── styles/
@@ -55,5 +55,6 @@ apps/web/
 ## TODO（M1 Week 3 杂物间页面落地后回填）
 
 - [ ] feature 内部子目录约定（components/ hooks/ api/ 等是否强制）
-- [ ] 路由参数 / loader 约定
-- [ ] PixiJS 场景与 React 组件的生命周期边界
+- [ ] PixiJS 场景与 React 组件的生命周期边界（M2）
+
+> loader / queryOptions 约定已定，见 [architecture.md §2](./architecture.md) 与 hook-guidelines。

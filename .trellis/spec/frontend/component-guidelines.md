@@ -16,8 +16,17 @@
 | 位置 | 性质 | 例子 |
 |---|---|---|
 | `features/<x>/components/` | 业务组件，可直连 store / query | `ItemDraftCard` |
-| `components/` | 跨 feature 纯展示组件 | `Button`、`Modal` |
-| `pixi/scenes/` | PixiJS 场景（不是 React 组件） | `StorageRoomScene` |
+| `components/` | 跨 feature 复用件：**优先用 HeroUI**，必要时在此薄封装 | `Button`(HeroUI)、`Modal` |
+| `pixi/scenes/` | PixiJS 场景（不是 React 组件，M2） | `StorageRoomScene` |
+
+---
+
+## 组件库：HeroUI v3
+
+- **基建优先用 HeroUI**（按钮 / 输入 / 弹窗 / 表格等），底层 React Aria（可访问性）+ Tailwind v4。不重复造轮子。
+- `components/` 只在需要统一封装时薄包 HeroUI；有业务逻辑的留 feature 内。
+- 表单：HeroUI 输入是受控组件，用 RHF `<Controller>` 接（详见 [architecture.md §5](./architecture.md)）。
+- 美学：M1 接受 HeroUI 现代观感，像素皮 = M2 soul 层。
 
 ---
 

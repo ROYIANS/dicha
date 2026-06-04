@@ -10,12 +10,17 @@
 
 ---
 
-## TanStack Query Hook 约定
+## 数据请求 Hook 约定（ts-rest + loader-first）
 
-- query hook：`useXxxQuery`（如 `useItemsQuery`）
-- mutation hook：`useXxxMutation`（如 `useCreateItemMutation`）
-- query key：用数组，第一段是 domain（`['items', userId, filters]`）
-- 所有 query / mutation 封装在 `features/<x>/api/` 或 `apps/web/src/api/`，组件内不直调 `fetch`
+- 走 **ts-rest**（`@ts-rest/core` client + 原生 `@tanstack/react-query` `queryOptions`），不手写 `fetch`。不用 `@ts-rest/react-query`（v5 无 `queryOptions`）。
+- **`api/` 必须导出 `xxxQueryOptions` 工厂**（如 `itemsQueryOptions(filters)`），返回可两处共用的 query 定义：
+  - route `loader`：`queryClient.ensureQueryData(itemsQueryOptions(...))`（loader-first 预取）
+  - 组件：`useQuery(itemsQueryOptions(...))`
+
+  这是 loader-first 的核心约定（详见 [architecture.md §2](./architecture.md)）。
+- query key 由合约 + 工厂统一生成，第一段是 domain（`['items', filters]`）。
+- mutation hook：`useXxxMutation`；成功/失败反馈走 `sonner`。
+- 封装在 `features/<x>/api/` 或 `apps/web/src/api/`，组件内不直调 `fetch`。
 
 ---
 

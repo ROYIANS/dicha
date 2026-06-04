@@ -207,14 +207,16 @@ AI 提议卡片（一张）：
 |---|---|
 | **前端框架** | Pure React + Vite + TanStack Router + TanStack Query |
 | **状态** | Zustand |
+| **组件库** | HeroUI v3（Tailwind v4 + React Aria） |
 | **2.5D 引擎** | PixiJS v8（`@pixi/react` 集成进 React 组件树） |
 | **后端** | NestJS + Prisma |
+| **API 契约** | ts-rest + zod（端到端类型，合约住 packages/shared） |
 | **数据库** | Postgres |
 | **图像处理** | Python (FastAPI) + Pillow + rembg（独立 service） |
 | **AI 调用** | 自建 proxy + OpenRouter（含 budget guard + 计费 schema） |
 | **Auth** | Casdoor（开源、自托管、原生微信支持） |
 | **Storage** | 腾讯云 COS + CDN（云端版） / MinIO（自托管版）—— 代码用 S3 SDK 协议抽象 |
-| **i18n** | 中文优先，next-intl 类库装上 |
+| **i18n** | 中文优先，react-i18next 装上 |
 | **结构** | Monorepo（pnpm workspaces + Turborepo）|
 | **部署** | Docker compose 全自托管，一台 VPS |
 

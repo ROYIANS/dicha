@@ -11,18 +11,18 @@
 
 ---
 
-## 共享类型
+## 共享类型 / API 契约
 
-- 前后端共享类型在 `packages/shared/`
-- DTO / enum 单 source of truth：后端 Prisma model + NestJS DTO 导出 → `packages/shared/` 再被前端引用
-- **避免前后端各定义一份再手工对齐**
+- **合约中心 = `packages/shared/`**：用 zod + ts-rest 定义请求/响应 schema 与 `contract`，前后端各 import 同一份（详见 [architecture.md §1](./architecture.md)）。
+- enum 单 source of truth：后端 Prisma model → `packages/shared/` 暴露 → 前端引用。
+- **避免前后端各定义一份再手工对齐** —— ts-rest 合约即唯一出处。
 
 ---
 
 ## API 调用类型
 
-- TanStack Query hook 必须显式标 `<Data, Error, Variables>`
-- 不依赖推断（推断在跨包场景会丢）
+- 走 ts-rest/react-query，类型**从合约推断**，不再手工标 `<Data, Error, Variables>`。
+- 合约是跨包单源，所以推断在此场景可靠（与手写 fetch 不同）。
 
 ---
 
@@ -33,7 +33,10 @@
 
 ---
 
+## runtime 校验
+
+- **定了：zod**（随 ts-rest 合约一起，前后端共用同一 schema 校验）。
+
 ## TODO（M1 共享类型出炉后回填）
 
-- [ ] shared 包导出约定
-- [ ] zod / valibot 是否引入（runtime 校验）
+- [ ] `packages/shared` 的合约文件组织约定（第一个真实端点后）
