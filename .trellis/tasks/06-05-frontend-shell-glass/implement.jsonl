@@ -1,0 +1,6 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "三模式 IA、Liquid Glass 设计系统、Auth bypass、GlassPanel 规范"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "features/ routes/ components/ api/ 目录规范"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "GlassPanel 薄封装原则、HeroUI 优先、PixiJS 边界"}
+{"file": ".cursor/skills/liquid-glass-css-skill/SKILL.md", "reason": "Liquid Glass 设计工作流、Apple-flavored 模式、验证启发"}
+{"file": ".cursor/skills/liquid-glass-css-skill/references/implementation-patterns.md", "reason": "Glass token 配方、Shared Shell 模式、破坏效果的反例"}
