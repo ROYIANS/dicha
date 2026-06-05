@@ -1,3 +1,75 @@
 /* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
 @import 'tailwindcss';
 @import '@heroui/styles';
+
+/* ─── Glass design-system tokens ─────────────────────────────────────── */
+:root {
+  /* surface tiers */
+  --glass-bg-1: color-mix(in srgb, white 12%, transparent);
+  --glass-bg-2: color-mix(in srgb, white 20%, transparent);
+  /* chrome */
+  --glass-border: color-mix(in srgb, white 35%, transparent);
+  --glass-highlight: color-mix(in srgb, white 55%, transparent);
+  /* shadows */
+  --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --glass-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --glass-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
+  /* blur radii */
+  --glass-blur-sm: 10px;
+  --glass-blur-md: 18px;
+  --glass-blur-lg: 28px;
+  /* app background gradient */
+  --app-bg-from: oklch(96% 0.01 250);
+  --app-bg-to: oklch(93% 0.02 280);
+}
+
+/* ─── Global background — glass needs something to sample ─────────────── */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, var(--app-bg-from), var(--app-bg-to));
+  min-height: 100dvh;
+}
+
+/* ─── Shared glass surface classes ────────────────────────────────────── */
+
+/* Base: border + radius (applied to all tiers via .glass-panel) */
+.glass-panel {
+  border: 1px solid var(--glass-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* default — modal / mid-weight panel */
+.glass-default {
+  background:
+    linear-gradient(to bottom, var(--glass-highlight) 0%, transparent 40%),
+    var(--glass-bg-1);
+  box-shadow: var(--glass-shadow-sm);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(1.15);
+}
+
+/* strong — sidebar, top-bar, chrome */
+.glass-strong {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white 22%, transparent),
+      color-mix(in srgb, white 8%, transparent)
+    );
+  box-shadow: var(--glass-shadow-md);
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(1.2);
+}
+
+/* subtle — dashboard cards, widget tiles */
+.glass-subtle {
+  background:
+    linear-gradient(to bottom, var(--glass-highlight) 0%, transparent 40%),
+    var(--glass-bg-1);
+  box-shadow: var(--glass-shadow-sm);
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(1.1);
+}

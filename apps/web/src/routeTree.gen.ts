@@ -9,38 +9,95 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWorldRouteImport } from './routes/_app/world'
+import { Route as AppWardrobeRouteImport } from './routes/_app/wardrobe'
+import { Route as AppStorageRoomRouteImport } from './routes/_app/storage-room'
+import { Route as AppLibraryRouteImport } from './routes/_app/library'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWorldRoute = AppWorldRouteImport.update({
+  id: '/world',
+  path: '/world',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWardrobeRoute = AppWardrobeRouteImport.update({
+  id: '/wardrobe',
+  path: '/wardrobe',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStorageRoomRoute = AppStorageRoomRouteImport.update({
+  id: '/storage-room',
+  path: '/storage-room',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLibraryRoute = AppLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/library': typeof AppLibraryRoute
+  '/storage-room': typeof AppStorageRoomRoute
+  '/wardrobe': typeof AppWardrobeRoute
+  '/world': typeof AppWorldRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/library': typeof AppLibraryRoute
+  '/storage-room': typeof AppStorageRoomRoute
+  '/wardrobe': typeof AppWardrobeRoute
+  '/world': typeof AppWorldRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/library': typeof AppLibraryRoute
+  '/_app/storage-room': typeof AppStorageRoomRoute
+  '/_app/wardrobe': typeof AppWardrobeRoute
+  '/_app/world': typeof AppWorldRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/library' | '/storage-room' | '/wardrobe' | '/world'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/library' | '/storage-room' | '/wardrobe' | '/world'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/library'
+    | '/_app/storage-room'
+    | '/_app/wardrobe'
+    | '/_app/world'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +105,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/world': {
+      id: '/_app/world'
+      path: '/world'
+      fullPath: '/world'
+      preLoaderRoute: typeof AppWorldRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/wardrobe': {
+      id: '/_app/wardrobe'
+      path: '/wardrobe'
+      fullPath: '/wardrobe'
+      preLoaderRoute: typeof AppWardrobeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/storage-room': {
+      id: '/_app/storage-room'
+      path: '/storage-room'
+      fullPath: '/storage-room'
+      preLoaderRoute: typeof AppStorageRoomRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/library': {
+      id: '/_app/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AppLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppLibraryRoute: typeof AppLibraryRoute
+  AppStorageRoomRoute: typeof AppStorageRoomRoute
+  AppWardrobeRoute: typeof AppWardrobeRoute
+  AppWorldRoute: typeof AppWorldRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppLibraryRoute: AppLibraryRoute,
+  AppStorageRoomRoute: AppStorageRoomRoute,
+  AppWardrobeRoute: AppWardrobeRoute,
+  AppWorldRoute: AppWorldRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

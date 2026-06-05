@@ -7,6 +7,8 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   VITE_API_BASE_URL: z.string().default('/api'),
+  /** Set to 'true' in .env.local to bypass real auth during local dev. */
+  VITE_DEV_BYPASS_AUTH: z.enum(['true', 'false']).optional(),
 });
 
 const parsed = envSchema.safeParse(import.meta.env);
