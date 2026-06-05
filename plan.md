@@ -56,20 +56,68 @@
 
 ## 🏠 四、空间模型
 
-**架构 = B 全景 + 房间细览**
-- 全景视图（首页）：固定 + 轻微视差 + 可缩放
-- 房间细览：等距 2.5D 一致，独立 2.5D 场景
-- 视觉过渡（v1.x+）：从全景"走入"房间的动画
+> ⚠️ 2026-06-05 架构更新：「打开即见房子 / 全景首页」已作废，改为三模式 IA。详见下。
 
-**房间 = 独立功能模块（不是数据分类）**
-- 每个房间由 vidorra 官方品类定制化开发
-- 用户在首页摆出"房间 sticker"才解锁该房间入口（A3 扩建机制）
-- 房间背景必须原子化（tile 系统），不能是单张大图
+### 三模式 IA（2026-06-05 grill-me 定稿）
+
+**核心原则：内容是主角，像素世界是奖励层（Reward Layer），不是操作层（Work Layer）。**
+
+```
+Dashboard（Mode A）← 默认，95% 停留
+Collection（Mode B）← 高频操作层
+World（Mode C）← 低频沉浸，按需进入
+```
+
+#### Mode A · Dashboard（默认路由 `/`）
+
+Apple Health / Journal 风格。打开 vidorra 看到的是你的物品和记忆，不是游戏。
+
+- 问候语（用户名 + 今日日期）
+- 今日录入、最近物品 widget
+- 房间卡片（衣橱/书房/杂物间）点击进 Collection
+- 世界入口缩略图（小窗，不是全屏）
+- 底部全局录入条（贯穿全宽）
+
+**美学**：Liquid Glass（半透明 + `backdrop-blur` + 柔和阴影 + 大量留白）。像素元素仅限角色头像和物品 sprite 缩略图。
+
+#### Mode B · Collection（各房间路由 `/wardrobe`、`/library`、`/storage-room`）
+
+Apple Photos × Notion Gallery 风格。三栏布局：左侧分类筛选 / 中间 grid / 右侧详情。
+
+- **不是游戏**，是专业整理工具
+- 各房间独立路由，侧边栏一级直达
+- 详情栏展示物品诗（右侧常驻）
+
+#### Mode C · World（路由 `/world`）
+
+全屏像素沉浸。这里才出现角色、柴犬、房间 sprite、飞行动画、落灰、蜘蛛网。
+
+- 从 Dashboard 世界入口点击进入
+- 支持 `⌘+Enter` 全屏沉浸模式
+- **M1 是 stub**（静态占位图 + 「M2 即将开放」）；M2 才上 PixiJS
+
+### 导航结构（侧边栏分区式）
+
+```
+仪表盘
+─────────（房间区）
+衣橱
+书房
+杂物间
+─────────（工具区）
+搜索
+─────────（世界区）
+世界
+─────────
+设置 / 用户区
+```
+
+### 房间定义不变
 
 **MVP 包含 3 个房间（α 战略）：**
 1. **衣橱**（深度）—— vidorra 的"装饰灵魂"
 2. **书房**（深度）—— vidorra 的"内容灵魂" + 市集冷启动黄金
-3. **杂物间**（浅）—— 兜底
+3. **杂物间**（浅）—— M1 第一个落地
 
 **v2 候选：** 冰箱 / 药盒 / 唱片架 / 厨房 / 工具房 / 美妆台 / 香薰区
 
@@ -259,19 +307,21 @@ vidorra-life/
 
 **目标：自己开始用 vidorra 记录物品**
 
-**Week 1-2 基础架构**
+**Week 1-2 基础架构 + 前端底座**
 - Monorepo + Docker compose
 - NestJS + Prisma + Postgres
 - 数据模型 v0: User / Item / Category / Sticker / Poem / Event
-- Casdoor 部署 + GitHub OAuth + 邮箱 OTP
-- React + Vite + TanStack 跑通
+- 前端 App Shell：Liquid Glass 设计系统 + 侧边栏（分区式）+ Dashboard 骨架 + 底部录入条 UI
+- dev 假 session bypass（Auth Task 前的占位）
+- Casdoor 部署 + GitHub OAuth + 邮箱 OTP（独立 Auth Task）
 
-**Week 3-6 核心循环（简陋 UI）**
-- 杂物间页面（列表 UI，无 sprite，文字 + tag）
+**Week 3-6 核心循环（Liquid Glass UI）**
+- 杂物间 Collection（三栏布局：筛选 / grid / 详情，Liquid Glass 风格）
 - 录入流程 C2（拍照 / 文字 → AI 识别 → 提议卡片 → 落入）
 - AI 调用层：OpenRouter + 自建 proxy + budget guard
 - Image worker 占位（暂不实现量化/抠图）
 - 用户级日限额 + 月报存档
+- Dashboard widget 接真实数据（今日录入 / 最近物品）
 
 **Week 7-10 数据基础**
 - 类目体系初版（30 个最常见类目）

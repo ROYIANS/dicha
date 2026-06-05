@@ -55,21 +55,64 @@ M1 **真建**（与 plan W1-2 对齐），不是桩。
 - dev：Vite `server.proxy` 把 `/api` 转 `:3000` 做**同源**（cookie SameSite 才生效、免 CORS）。
 - 后端 AuthModule + Casdoor 部署多半拆**独立 task**。
 
-## §4 样式 + token：Tailwind v4 + HeroUI（branch 6 / 10）
+## §4 三模式 IA（2026-06-05 grill-me 定稿）
+
+> 替代原 plan.md「打开即见房子 / 全景首页」方案。**内容是主角，像素世界是奖励层，不是操作层。**
+
+### 三种模式
+
+| 模式 | 路由 | 定位 | M1 状态 |
+|---|---|---|---|
+| **Dashboard**（默认） | `/` | Apple Health 风格，问候 + widget + 房间卡片 | ✅ 骨架 |
+| **Collection** | `/wardrobe` `/library` `/storage-room` | 专业整理，三栏（筛选/grid/详情） | 杂物间 M1，其余 M3 |
+| **World** | `/world` | 全屏像素沉浸，角色/sprite/飞行动画 | M1 stub，M2 真做 |
+
+### 侧边栏分区（分区式，Mock 定稿）
+
+```
+仪表盘
+─── 房间 ───────────────
+衣橱 / 书房 / 杂物间   ← 一级直达各 Collection 路由
+─── 工具 ───────────────
+搜索
+─── 世界 ───────────────
+世界                   ← World 路由，单独分区
+────────────────────────
+设置 / 用户区
+```
+
+M1 只有「杂物间」亮起；衣橱/书房 `disabled`（`coming soon`），避免半成品体验（铁律 #9）。
+
+### Liquid Glass 设计系统
+
+- **实现策略**：覆写 HeroUI v3 oklch 背景/表面变量 → 透明版，Tailwind v4 定义 `glass` utility（`backdrop-blur-glass`、`border-white/20`、`shadow-glass`）
+- **`GlassPanel` 薄封装**：`src/components/GlassPanel.tsx`，全站卡片/侧边栏/顶栏统一复用
+- **昼夜兼容**：M3 palette swap 只改 oklch 变量，Glass 效果自动跟随，无需维护两套
+- **像素 ≠ chrome**：像素元素仅限游戏视口内（World mode）和物品 sprite 缩略图；chrome（侧边栏/顶栏/卡片）永远是玻璃风
+
+### Auth：dev bypass 策略
+
+- **M1 底座**：`VITE_DEV_BYPASS_AUTH=true` env flag → `beforeLoad` 守卫直通，硬编码假用户（`{ id: 'dev', name: 'Royians' }`）
+- **Auth Task（独立）**：Casdoor + NestJS AuthModule + BFF cookie，完成后删除 bypass flag，Shell 代码零改动
+- 两条线不互相阻塞
+
+---
+
+## §5 样式 + token：Tailwind v4 + HeroUI（branch 6 / 10）
 
 - **HeroUI v3** 是 M1 基建主力，底层 React Aria（可访问性）+ Tailwind v4 + oklch CSS 变量主题。
 - **HeroUI 的 oklch theme 变量即 token 层** —— 未来昼夜 palette swap（M3）直接按时段换这些变量值，不另建 token 系统。
 - **CSS Modules 降级为 bespoke 逃生口**（HeroUI/utility 难表达的像素效果，如 dithering / hard-edge）。
 - 分层不变：**HeroUI/React 管 DOM 的 HUD/表单/弹窗，PixiJS 管 canvas sprite**（M2）。两者共存。
-- 美学：M1 接受 HeroUI 现代观感（"简陋 UI"验证期，一致即可），像素 soul 在 M2。图标 M1 用 `lucide-react`/`iconify`，像素图标 M2 随 BRAND 定。
+- 美学：M1 Liquid Glass 风格（见 §4），像素 soul 在 M2。图标 M1 用 `lucide-react`/`iconify`，像素图标 M2 随 BRAND 定。
 
-## §5 表单：RHF + zod（branch 7）
+## §6 表单：RHF + zod（branch 7）
 
 - `react-hook-form` + `@hookform/resolvers/zod`，resolver 直接吃 `packages/shared` 的合约 schema → 前后端校验同源。
 - HeroUI 输入是受控组件，用 RHF `<Controller>` 接。
 - M1 只有录入卡一个表单；onboarding（M3）多步表单复用此 seam。
 
-## §6 反馈 / i18n / 工具链（branch 5 / 8 / 9）
+## §7 反馈 / i18n / 工具链（branch 5 / 8 / 9）
 
 - **反馈**：路由级 pending/error + `sonner`（mutation toast，可后期皮成像素/角色风）。角色化反馈（"让我看看…"/+1 气泡）= M2 soul 层，M1 不做。
 - **i18n**：`react-i18next` + `i18next`；`CustomTypeOptions` 声明合并补 key 级类型。中文优先，单 locale 起步但 seam 留好。
