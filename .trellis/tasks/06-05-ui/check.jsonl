@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "本任务产出的设计系统单一出处；验证日夜色板/token/Surface 契约齐全且代码与之一致"}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "验证 §4/§5 已去玻璃紫色、回链 design-system.md，无遗留矛盾断言"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "typecheck/lint、无 any/@ts-ignore、无 legacy 双套视觉残留"}

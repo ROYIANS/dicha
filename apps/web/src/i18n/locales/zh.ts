@@ -48,10 +48,26 @@ export const zh = {
       weeklyCheckin: '本周打卡',
       days: '{{count}} 天',
       notification: '通知',
+      todayOverview: '今天概览',
+      recentAdded: '最近添加',
+      reminders: '近期提醒',
+      reading: '最近在读',
+      spaceUsage: '空间使用情况',
+      viewAll: '查看全部',
+      addSpace: '添加空间',
+      recordNew: '记录新物品',
+      continueReading: '继续阅读',
+    },
+    header: {
+      searchPlaceholder: '搜索物品 / 空间 / 标签',
     },
     inputBar: {
       placeholder: '记录一件物品...',
       comingSoon: '录入功能即将开放',
+    },
+    sidebar: {
+      pixelWorld: '像素世界',
+      pixelWorldDesc: '你的温馨小屋正在等你',
     },
     world: {
       title: '进入我的小窝',

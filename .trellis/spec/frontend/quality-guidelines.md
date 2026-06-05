@@ -39,6 +39,7 @@
   - `react-refresh/only-export-components` 与 TanStack Router file-route 冲突（route 文件导出 `Route` 对象而非组件）→ 仅对 `src/routes/**` 关掉该规则（HMR 由 router 插件管）。
 - **Tailwind v4 + HeroUI v3** 是 M1 样式/组件基建（不再推迟 M3）；CSS Modules 仅作 bespoke 逃生口。详见 [architecture.md §4](./architecture.md)。
 - i18n：`react-i18next`（**不是** plan 误写的 next-intl）。
+- **禁用清单（check 阶段会查）**：组件 / i18n / 文案内不得出现 `text-gray-*`、`violet`、`glass-*`、`GlassPanel`，以及 **emoji 字符**（杂项符号 / emoji 区，如 ☀ 🌿 ✅ 等）。需要图形符号时用 `lucide-react` 图标组件。见 [design-system.md §4/§8](./design-system.md)。
 
 ---
 

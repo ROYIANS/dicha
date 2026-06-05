@@ -1,17 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  LayoutDashboard,
-  Shirt,
-  BookOpen,
-  Package,
-  Search,
-  Globe,
-  Settings,
-  User,
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { LayoutDashboard, Shirt, BookOpen, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { GlassPanel } from './GlassPanel';
 
 /** Union of all registered route paths — matches FileRouteTypes['to'] in routeTree.gen.ts */
 type AppRoute = '/' | '/storage-room' | '/wardrobe' | '/library' | '/world';
@@ -36,12 +25,12 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   if (item.disabled) {
     return (
       <div
-        className={`${baseClass} opacity-40 cursor-not-allowed`}
+        className={`${baseClass} text-sidebar-ink-soft opacity-50 cursor-not-allowed`}
         title="即将开放"
       >
         <span className="w-4 h-4 shrink-0">{item.icon}</span>
         <span>{item.label}</span>
-        <span className="ml-auto text-xs opacity-70">即将</span>
+        <span className="ml-auto text-xs">即将</span>
       </div>
     );
   }
@@ -50,7 +39,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     return (
       <button
         onClick={item.onClick}
-        className={`${baseClass} w-full text-left hover:bg-white/20 text-gray-700`}
+        className={`${baseClass} w-full text-left text-sidebar-ink-soft hover:bg-[var(--sidebar-hover)]`}
       >
         <span className="w-4 h-4 shrink-0">{item.icon}</span>
         <span>{item.label}</span>
@@ -64,8 +53,8 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
         to={item.to}
         className={`${baseClass} ${
           active
-            ? 'bg-white/30 text-violet-700 shadow-sm'
-            : 'text-gray-700 hover:bg-white/20'
+            ? 'bg-[var(--sidebar-active)] text-sidebar-ink'
+            : 'text-sidebar-ink-soft hover:bg-[var(--sidebar-hover)]'
         }`}
       >
         <span className="w-4 h-4 shrink-0">{item.icon}</span>
@@ -114,44 +103,21 @@ export function Sidebar() {
         },
       ],
     },
-    {
-      title: t('nav.tools'),
-      items: [
-        {
-          label: t('nav.search'),
-          icon: <Search size={16} />,
-          onClick: () => toast.info('搜索功能即将开放'),
-        },
-      ],
-    },
-    {
-      title: t('nav.world'),
-      items: [
-        {
-          label: t('nav.world'),
-          icon: <Globe size={16} />,
-          to: '/world',
-        },
-      ],
-    },
   ];
 
   return (
-    <GlassPanel
-      variant="strong"
-      className="w-[220px] shrink-0 flex flex-col h-full rounded-none border-r border-white/20 overflow-hidden"
-    >
+    <div className="w-[220px] shrink-0 flex flex-col h-full bg-sidebar-bg overflow-hidden">
       {/* Logo area */}
-      <div className="px-4 py-5 border-b border-white/20">
-        <div className="text-lg font-bold text-violet-800 tracking-tight">vidorra</div>
-        <div className="text-xs text-gray-500 mt-0.5">{t('app.tagline')}</div>
+      <div className="px-5 py-5">
+        <div className="text-xl text-sidebar-ink tracking-tight">vidorra</div>
+        <div className="text-xs text-sidebar-ink-soft mt-1">{t('app.tagline')}</div>
       </div>
 
       {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-5">
         {sections.map((section) => (
           <div key={section.title}>
-            <div className="px-3 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <div className="px-3 mb-1 text-xs font-semibold text-sidebar-ink-soft uppercase tracking-wider">
               {section.title}
             </div>
             <div className="space-y-0.5">
@@ -167,23 +133,22 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom user area */}
-      <div className="border-t border-white/20 px-3 py-3 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-xs shrink-0">
-          <User size={14} />
+      {/* 像素世界入口卡 — 唯一的像素传送门，允许深色暖灯笼渐变 */}
+      <div
+        className="m-3 rounded-xl overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #3a2f24, #241c14)' }}
+      >
+        <div className="p-3">
+          <div className="text-sm font-semibold text-sidebar-ink">{t('sidebar.pixelWorld')}</div>
+          <div className="text-xs text-sidebar-ink-soft mt-0.5">{t('sidebar.pixelWorldDesc')}</div>
+          <Link
+            to="/world"
+            className="mt-2 block text-center py-1.5 rounded-lg bg-[var(--sidebar-active)] text-sidebar-ink text-xs hover:bg-[var(--sidebar-hover)]"
+          >
+            {t('dashboard.enterWorld')}
+          </Link>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-gray-800 truncate">Royians</div>
-          <div className="text-xs text-gray-400">{t('user.level', { level: 18 })}</div>
-        </div>
-        <button
-          onClick={() => toast.info('设置功能即将开放')}
-          className="w-7 h-7 rounded-lg hover:bg-white/20 flex items-center justify-center text-gray-500 transition-colors"
-          title={t('nav.settings')}
-        >
-          <Settings size={14} />
-        </button>
       </div>
-    </GlassPanel>
+    </div>
   );
 }

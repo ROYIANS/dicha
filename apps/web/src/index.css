@@ -1,75 +1,180 @@
+/* Google Fonts must come before all other @import (CSS spec). serif-first 文艺基调。 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 /* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
 @import 'tailwindcss';
 @import '@heroui/styles';
 
-/* ─── Glass design-system tokens ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   vidorra design system — 暖白柔面哑光（Warm Matte）
+   Single source of truth: .trellis/spec/frontend/design-system.md
+   材质 = 柔面哑光（非玻璃）· 主色 = 暖中性 · 强调 = 功能性柔彩 · 日夜两套
+   昼夜只换下面的语义变量值，组件零改动（@theme inline 让工具类跟随）。
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 日间（默认）— 暖奶油 ──────────────────────────────────────────────── */
 :root {
-  /* surface tiers */
-  --glass-bg-1: color-mix(in srgb, white 12%, transparent);
-  --glass-bg-2: color-mix(in srgb, white 20%, transparent);
-  /* chrome */
-  --glass-border: color-mix(in srgb, white 35%, transparent);
-  --glass-highlight: color-mix(in srgb, white 55%, transparent);
-  /* shadows */
-  --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --glass-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --glass-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
-  /* blur radii */
-  --glass-blur-sm: 10px;
-  --glass-blur-md: 18px;
-  --glass-blur-lg: 28px;
-  /* app background gradient */
-  --app-bg-from: oklch(96% 0.01 250);
-  --app-bg-to: oklch(93% 0.02 280);
+  /* 画布 / 表面 */
+  --canvas-outer: #e8e2d9;
+  --canvas: #f7f4ef;
+  --surface: #ffffff;
+  --surface-alt: #fcfaf6;
+  /* 文字 */
+  --ink: #2e2a26; /* 暖炭黑，非纯黑 */
+  --ink-soft: #8a8178;
+  --ink-faint: #b5aea4;
+  /* 描边 */
+  --hairline: #ece7e0;
+
+  /* 深色侧栏 chrome — 主墨色底 + 浅奶油文字（日夜都深，用层次代替边框分界） */
+  --sidebar-bg: #2e2a26;
+  --sidebar-ink: #f3efe8; /* 侧栏主文字（浅奶油） */
+  --sidebar-ink-soft: #a8a097; /* 侧栏次要文字 */
+  --sidebar-active: rgba(255, 255, 255, 0.1); /* 选中态浅叠加 */
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+
+  /* 功能性柔彩 — 仅用于图标圆片 / 数据点 / 进度条 / 分类标识 */
+  --accent-lavender: #b7aee0;
+  --accent-peach: #f0c3a3;
+  --accent-sage: #a9c0a0;
+  --accent-pink: #e9b7be;
+  --accent-mist: #a8c4d6;
+  /* 极浅图标底色（icon chip） */
+  --chip-lavender: #efedf8;
+  --chip-peach: #fbeee3;
+  --chip-sage: #edf2ea;
+  --chip-pink: #faedef;
+  --chip-mist: #eaf1f5;
+
+  /* 阴影 — 极轻、弥散、暖调 */
+  --shadow-sm: 0 1px 2px rgba(40, 30, 20, 0.04);
+  --shadow-md:
+    0 1px 2px rgba(40, 30, 20, 0.04), 0 8px 24px rgba(40, 30, 20, 0.06);
+  --shadow-lg:
+    0 4px 8px rgba(40, 30, 20, 0.05), 0 16px 40px rgba(40, 30, 20, 0.1);
+
+  /* 动效 */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-base: 240ms;
 }
 
-/* ─── Global background — glass needs something to sample ─────────────── */
+/* ─── 夜间 — 暖暗（不冷）──────────────────────────────────────────────── */
+:root[data-theme='dark'] {
+  --canvas-outer: #1a1714;
+  --canvas: #24201c;
+  --surface: #2c2723;
+  --surface-alt: #322c27;
+  --ink: #f0ebe3;
+  --ink-soft: #a89e92;
+  --ink-faint: #7c7268;
+  --hairline: #3a332d;
+
+  /* 侧栏日夜都深 — 复用同值 */
+  --sidebar-bg: #2e2a26;
+  --sidebar-ink: #f3efe8;
+  --sidebar-ink-soft: #a8a097;
+  --sidebar-active: rgba(255, 255, 255, 0.1);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+
+  /* 同色相，略提亮去饱和以坐在暗底上 */
+  --accent-lavender: #c5bcec;
+  --accent-peach: #f4cfb2;
+  --accent-sage: #b6cbad;
+  --accent-pink: #efc4ca;
+  --accent-mist: #b7cfde;
+  --chip-lavender: #322e3c;
+  --chip-peach: #3a322b;
+  --chip-sage: #2e342b;
+  --chip-pink: #3a2f31;
+  --chip-mist: #2b343a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.24), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.28), 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── 语义变量 → Tailwind 工具类（inline 保持动态，随 data-theme 切换）──── */
+@theme inline {
+  --color-canvas-outer: var(--canvas-outer);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-hairline: var(--hairline);
+
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-soft: var(--sidebar-ink-soft);
+
+  --color-lavender: var(--accent-lavender);
+  --color-peach: var(--accent-peach);
+  --color-sage: var(--accent-sage);
+  --color-pink: var(--accent-pink);
+  --color-mist: var(--accent-mist);
+  --color-chip-lavender: var(--chip-lavender);
+  --color-chip-peach: var(--chip-peach);
+  --color-chip-sage: var(--chip-sage);
+  --color-chip-pink: var(--chip-pink);
+  --color-chip-mist: var(--chip-mist);
+
+  --radius-card: 16px;
+
+  /* serif-first — 文艺基调核心；Tailwind 默认 font-sans 也指向衬线 */
+  --font-sans: 'Noto Serif SC', 'Songti SC', ui-serif, serif;
+
+  --shadow-card: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
+  --shadow-float: var(--shadow-lg);
+}
+
+/* ─── 全局底 — 暖奶油画布 ─────────────────────────────────────────────── */
 html,
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, var(--app-bg-from), var(--app-bg-to));
+  background: var(--canvas);
+  color: var(--ink);
   min-height: 100dvh;
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
 }
 
-/* ─── Shared glass surface classes ────────────────────────────────────── */
-
-/* Base: border + radius (applied to all tiers via .glass-panel) */
-.glass-panel {
-  border: 1px solid var(--glass-border);
-  border-radius: 0.75rem;
-  overflow: hidden;
+/* ─── 全局滚动条 — 彻底隐藏（任何情况都不显示，hover 也不），内容仍可滚 ──────── */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / 旧 Edge */
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
-/* default — modal / mid-weight panel */
-.glass-default {
-  background:
-    linear-gradient(to bottom, var(--glass-highlight) 0%, transparent 40%),
-    var(--glass-bg-1);
-  box-shadow: var(--glass-shadow-sm);
-  backdrop-filter: blur(var(--glass-blur-md)) saturate(1.15);
-  -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(1.15);
+/* .no-scrollbar — 显式语义留作逃生口（与全局一致，便于局部表意）。 */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-/* strong — sidebar, top-bar, chrome */
-.glass-strong {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, white 22%, transparent),
-      color-mix(in srgb, white 8%, transparent)
-    );
-  box-shadow: var(--glass-shadow-md);
-  backdrop-filter: blur(var(--glass-blur-lg)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(1.2);
+/* ─── Surface 材质类 — 柔面哑光（被 Surface 组件复用）───────────────────── */
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
 }
-
-/* subtle — dashboard cards, widget tiles */
-.glass-subtle {
-  background:
-    linear-gradient(to bottom, var(--glass-highlight) 0%, transparent 40%),
-    var(--glass-bg-1);
-  box-shadow: var(--glass-shadow-sm);
-  backdrop-filter: blur(var(--glass-blur-sm)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(1.1);
+/* card = 扁平无阴影（列表/卡片默认），靠 hairline + surface/canvas 微差制造层次 */
+.surface-card {
+  box-shadow: none;
+}
+/* raised / float 仅供 chrome（侧栏/顶栏/浮层/弹窗）使用 */
+.surface-raised {
+  box-shadow: var(--shadow-md);
+}
+.surface-float {
+  box-shadow: var(--shadow-lg);
+}
+.surface-flat {
+  box-shadow: none;
 }
