@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "验证动效/token 使用是否符合设计系统"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "typecheck/lint/无 any 标准"}
