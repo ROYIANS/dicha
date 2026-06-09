@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-06-09
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~178 | Active |
+| `journal-1.md` | ~211 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-06-09 | 昼夜主题切换器 + 暗色模式适配 | `e7d4e68` | `main` |
 | 5 | 2026-06-09 | 暖白哑光设计系统 + 首页 mock | `64f3f3e` | `main` |
 | 4 | 2026-06-05 | Frontend Shell + Liquid Glass + 三模式 IA 架构决策 | `4a8727d`, `eda9b8b`, `448a0c8` | `main` |
 | 3 | 2026-06-05 | Frontend architecture grill + apps/web scaffold (M1 W1-2) | `a857889`, `d6f8e87`, `06a438f`, `2a6a10c` | `main` |
