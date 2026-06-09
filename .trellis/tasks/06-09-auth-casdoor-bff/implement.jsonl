@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "§3 Auth BFF 决策：OIDC flow、httpOnly cookie、beforeLoad 守卫、dev bypass 策略"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "authQueryOptions 工厂模式、loader-first 约定"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "zod schema + TypeScript 类型约定"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "NestJS module 目录结构规范"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "AuthGuard 401/403 响应格式"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "NestJS 代码质量约定"}
+{"file": ".trellis/tasks/06-09-auth-casdoor-bff/prd.md", "reason": "完整需求：endpoints、session 配置、CSRF、user schema、AC"}
+{"file": ".trellis/tasks/06-09-auth-casdoor-bff/research/casdoor-sdk-options.md", "reason": "openid-client v6 API 用法、Casdoor PKCE 验证结论、NestJS 集成 gotchas"}

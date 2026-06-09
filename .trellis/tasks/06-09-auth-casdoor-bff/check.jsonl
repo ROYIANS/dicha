@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "验证 beforeLoad 守卫、cookie credentials、dev bypass 行为符合架构决策"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端代码规范、禁用模式检查"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "验证 401/403 错误响应格式正确"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "NestJS 代码规范检查"}
+{"file": ".trellis/tasks/06-09-auth-casdoor-bff/prd.md", "reason": "对照 AC 逐条验收"}
