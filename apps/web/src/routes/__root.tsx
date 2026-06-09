@@ -1,9 +1,6 @@
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { type QueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Sidebar } from '@/components/Sidebar';
-import { Header } from '@/components/Header';
-import { InputBar } from '@/components/InputBar';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -18,25 +15,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootComponent() {
-  return (
-    <div className="flex h-dvh overflow-hidden bg-sidebar-bg">
-      {/* Sidebar — fixed 220 px, dark chrome */}
-      <Sidebar />
-
-      {/* Content panel — floats above dark sidebar via left rounding + shadow */}
-      <div className="flex-1 min-w-0 flex flex-col bg-canvas rounded-l-[20px] shadow-float overflow-hidden">
-        <Header />
-
-        {/* Scrollable page area */}
-        <div className="flex-1 overflow-auto">
-          <Outlet />
-        </div>
-
-        {/* Fixed-to-bottom input bar */}
-        <InputBar />
-      </div>
-    </div>
-  );
+  return <Outlet />;
 }
 
 function RootPending() {

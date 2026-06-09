@@ -1,5 +1,7 @@
 /* Google Fonts must come before all other @import (CSS spec). serif-first 文艺基调。 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
+/* IBM Plex Mono — 工程/工业气质的等宽体，用于 landing 的技术性标签、导航、按键徽标。 */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 /* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
 @import 'tailwindcss';
 @import '@heroui/styles';

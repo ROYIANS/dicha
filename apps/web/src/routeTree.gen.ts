@@ -15,6 +15,7 @@ import { Route as AppWorldRouteImport } from './routes/_app/world'
 import { Route as AppWardrobeRouteImport } from './routes/_app/wardrobe'
 import { Route as AppStorageRoomRouteImport } from './routes/_app/storage-room'
 import { Route as AppLibraryRouteImport } from './routes/_app/library'
+import { Route as AppHomeRouteImport } from './routes/_app/home'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -45,9 +46,15 @@ const AppLibraryRoute = AppLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/home': typeof AppHomeRoute
   '/library': typeof AppLibraryRoute
   '/storage-room': typeof AppStorageRoomRoute
   '/wardrobe': typeof AppWardrobeRoute
@@ -55,6 +62,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/home': typeof AppHomeRoute
   '/library': typeof AppLibraryRoute
   '/storage-room': typeof AppStorageRoomRoute
   '/wardrobe': typeof AppWardrobeRoute
@@ -64,6 +72,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/_app/home': typeof AppHomeRoute
   '/_app/library': typeof AppLibraryRoute
   '/_app/storage-room': typeof AppStorageRoomRoute
   '/_app/wardrobe': typeof AppWardrobeRoute
@@ -71,13 +80,20 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/library' | '/storage-room' | '/wardrobe' | '/world'
+  fullPaths:
+    | '/'
+    | '/home'
+    | '/library'
+    | '/storage-room'
+    | '/wardrobe'
+    | '/world'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/library' | '/storage-room' | '/wardrobe' | '/world'
+  to: '/' | '/home' | '/library' | '/storage-room' | '/wardrobe' | '/world'
   id:
     | '__root__'
     | '/'
     | '/_app'
+    | '/_app/home'
     | '/_app/library'
     | '/_app/storage-room'
     | '/_app/wardrobe'
@@ -133,10 +149,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLibraryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppHomeRoute: typeof AppHomeRoute
   AppLibraryRoute: typeof AppLibraryRoute
   AppStorageRoomRoute: typeof AppStorageRoomRoute
   AppWardrobeRoute: typeof AppWardrobeRoute
@@ -144,6 +168,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppHomeRoute: AppHomeRoute,
   AppLibraryRoute: AppLibraryRoute,
   AppStorageRoomRoute: AppStorageRoomRoute,
   AppWardrobeRoute: AppWardrobeRoute,
