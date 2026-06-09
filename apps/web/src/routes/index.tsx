@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { Surface } from '@/components/Surface';
 import { ScrollArea } from '@/components/ScrollArea';
+import { useTheme } from '@/lib/hooks/useTheme';
 
 // ─── Unsplash 占位图（暖调极简实拍；真实摄影管线独立跟进）──────────────────────
 // 全部 URL 已 curl -I 验证 200。直链格式（不用已废弃的 source.unsplash.com）。
@@ -440,16 +441,21 @@ const HERO_MASK =
   'linear-gradient(to top, transparent 0%, #000 30%)';
 
 function HeroDecoration() {
+  const { theme } = useTheme();
+  const heroSrc = theme === 'dark'
+    ? '/assets/dashboard-hero-dark.png'
+    : '/assets/dashboard-hero.png';
+
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute top-0 right-0 w-[560px] h-[300px] z-0 bg-no-repeat bg-cover bg-right-top"
       style={{
-        backgroundImage: 'url(/assets/dashboard-hero.png)',
+        backgroundImage: `url(${heroSrc})`,
         WebkitMaskImage: HERO_MASK,
-        WebkitMaskComposite: 'source-in', // webkit 取交集
+        WebkitMaskComposite: 'source-in',
         maskImage: HERO_MASK,
-        maskComposite: 'intersect', // 标准取交集
+        maskComposite: 'intersect',
       }}
     />
   );

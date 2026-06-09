@@ -57,19 +57,18 @@
   --dur-base: 240ms;
 }
 
-/* ─── 夜间 — 暖暗（不冷）──────────────────────────────────────────────── */
+/* ─── 夜间 — 深灰中性 ──────────────────────────────────────────────── */
 :root[data-theme='dark'] {
-  --canvas-outer: #1a1714;
-  --canvas: #24201c;
-  --surface: #2c2723;
-  --surface-alt: #322c27;
+  --canvas-outer: #0d0d0d;
+  --canvas: #141414;
+  --surface: #212121;
+  --surface-alt: #2a2a2a;
   --ink: #f0ebe3;
   --ink-soft: #a89e92;
   --ink-faint: #7c7268;
-  --hairline: #3a332d;
+  --hairline: #2a2a2a;
 
-  /* 侧栏日夜都深 — 复用同值 */
-  --sidebar-bg: #2e2a26;
+  --sidebar-bg: #212121;
   --sidebar-ink: #f3efe8;
   --sidebar-ink-soft: #a8a097;
   --sidebar-active: rgba(255, 255, 255, 0.1);
@@ -156,6 +155,61 @@ body {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ─── 覆盖 HeroUI 的 view-transition-name: none，重新启用根元素过渡捕获 ── */
+/* HeroUI @layer base 里把 :root { view-transition-name: none } 导致      */
+/* ::view-transition-new/old(root) 伪元素根本不存在，动画完全失效。          */
+/* 此规则在 @layer 外，优先级高于 @layer base，可以覆盖它。                 */
+:root {
+  view-transition-name: root;
+}
+
+/* ─── 主题切换过渡动画（移植自 TDesign，8° 斜向扫过）──────────────────── */
+/* tan(8deg) ≈ 0.1405，100vh * 0.1405 ≈ 14.05vmin，此处用 15vw 近似以兼容 Lightning CSS */
+@keyframes light-to-dark {
+  from {
+    clip-path: polygon(0 0, 0 0, -15vw 100%, -15vw 100%);
+  }
+  to {
+    clip-path: polygon(0 0, calc(100% + 15vw) 0, 100% 100%, -15vw 100%);
+  }
+}
+
+@keyframes dark-to-light {
+  from {
+    clip-path: polygon(calc(100% + 15vw) 0, calc(100% + 15vw) 0, 100% 100%, 100% 100%);
+  }
+  to {
+    clip-path: polygon(0 0, calc(100% + 15vw) 0, 100% 100%, -15vw 100%);
+  }
+}
+
+:root::view-transition-group(root) {
+  animation-duration: 0.6s;
+  animation-timing-function: ease-in-out;
+}
+
+:root::view-transition-new(root),
+:root::view-transition-old(root) {
+  mix-blend-mode: normal;
+  /* 继承 group 的 duration/timing */
+  animation-duration: inherit;
+  animation-timing-function: inherit;
+}
+
+:root::view-transition-old(root) {
+  animation: none;
+}
+
+/* 切到 light → dark-to-light（新主题从右侧扫入） */
+:root::view-transition-new(root) {
+  animation-name: dark-to-light;
+}
+
+/* 切到 dark → light-to-dark（新主题从左侧扫入） */
+:root[data-theme='dark']::view-transition-new(root) {
+  animation-name: light-to-dark;
 }
 
 /* ─── Surface 材质类 — 柔面哑光（被 Surface 组件复用）───────────────────── */
