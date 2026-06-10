@@ -3,7 +3,7 @@ import { LayoutDashboard, Shirt, BookOpen, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /** Union of all registered route paths — matches FileRouteTypes['to'] in routeTree.gen.ts */
-type AppRoute = '/' | '/storage-room' | '/wardrobe' | '/library' | '/world';
+type AppRoute = '/home' | '/storage-room' | '/wardrobe' | '/library' | '/world';
 
 type NavItem = {
   label: string;
@@ -18,7 +18,15 @@ type NavSection = {
   items: NavItem[];
 };
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({
+  item,
+  active,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  onNavigate?: () => void;
+}) {
   const baseClass =
     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors';
 
@@ -38,7 +46,10 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   if (item.onClick) {
     return (
       <button
-        onClick={item.onClick}
+        onClick={() => {
+          item.onClick?.();
+          onNavigate?.();
+        }}
         className={`${baseClass} w-full text-left text-sidebar-ink-soft hover:bg-[var(--sidebar-hover)]`}
       >
         <span className="w-4 h-4 shrink-0">{item.icon}</span>
@@ -51,6 +62,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     return (
       <Link
         to={item.to}
+        onClick={onNavigate}
         className={`${baseClass} ${
           active
             ? 'bg-[var(--sidebar-active)] text-sidebar-ink'
@@ -66,7 +78,13 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return null;
 }
 
-export function Sidebar() {
+type SidebarNavProps = {
+  className?: string;
+  onNavigate?: () => void;
+};
+
+/** 侧栏导航内容 — 桌面侧栏与移动 drawer 共用。 */
+export function SidebarNav({ className = '', onNavigate }: SidebarNavProps) {
   const { t } = useTranslation();
   const location = useRouterState({ select: (s) => s.location.pathname });
 
@@ -77,7 +95,7 @@ export function Sidebar() {
         {
           label: t('nav.dashboard'),
           icon: <LayoutDashboard size={16} />,
-          to: '/',
+          to: '/home',
         },
       ],
     },
@@ -106,15 +124,8 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="w-[220px] shrink-0 flex flex-col h-full bg-sidebar-bg overflow-hidden">
-      {/* Logo area */}
-      <div className="px-5 py-5">
-        <div className="text-xl text-sidebar-ink tracking-tight">vidorra</div>
-        <div className="text-xs text-sidebar-ink-soft mt-1">{t('app.tagline')}</div>
-      </div>
-
-      {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-5">
+    <div className={className}>
+      <nav className="px-3 py-2 space-y-5">
         {sections.map((section) => (
           <div key={section.title}>
             <div className="px-3 mb-1 text-xs font-semibold text-sidebar-ink-soft uppercase tracking-wider">
@@ -126,6 +137,7 @@ export function Sidebar() {
                   key={item.label}
                   item={item}
                   active={item.to !== undefined && location === item.to}
+                  onNavigate={onNavigate}
                 />
               ))}
             </div>
@@ -133,7 +145,6 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* 像素世界入口卡 — 唯一的像素传送门，允许深色暖灯笼渐变 */}
       <div
         className="m-3 rounded-xl overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #3a2f24, #241c14)' }}
@@ -143,6 +154,7 @@ export function Sidebar() {
           <div className="text-xs text-sidebar-ink-soft mt-0.5">{t('sidebar.pixelWorldDesc')}</div>
           <Link
             to="/world"
+            onClick={onNavigate}
             className="mt-2 block text-center py-1.5 rounded-lg bg-[var(--sidebar-active)] text-sidebar-ink text-xs hover:bg-[var(--sidebar-hover)]"
           >
             {t('dashboard.enterWorld')}
@@ -150,5 +162,19 @@ export function Sidebar() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function Sidebar() {
+  const { t } = useTranslation();
+
+  return (
+    <aside className="hidden lg:flex w-[220px] shrink-0 flex-col h-full bg-sidebar-bg overflow-hidden">
+      <div className="px-5 py-5">
+        <div className="text-xl text-sidebar-ink tracking-tight">vidorra</div>
+        <div className="text-xs text-sidebar-ink-soft mt-1">{t('app.tagline')}</div>
+      </div>
+      <SidebarNav className="flex-1 overflow-y-auto" />
+    </aside>
   );
 }

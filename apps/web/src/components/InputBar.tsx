@@ -10,41 +10,38 @@ export function InputBar() {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-canvas border-t border-hairline px-4 py-3">
-      <div className="flex items-center gap-3">
-        {/* Add button — primary action, warm ink */}
+    <div className="border-t border-hairline bg-canvas px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <button
           onClick={handleStub}
-          className="w-9 h-9 rounded-full bg-ink flex items-center justify-center text-surface shadow-card shrink-0 hover:opacity-90 transition-opacity"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-surface shadow-card transition-opacity hover:opacity-90"
         >
           <Plus size={18} />
         </button>
 
-        {/* Input field */}
         <button
           onClick={handleStub}
-          className="flex-1 h-9 px-4 rounded-full bg-surface border border-hairline text-sm text-ink-faint text-left hover:bg-surface-alt transition-colors"
+          className="h-9 min-w-0 flex-1 rounded-full border border-hairline bg-surface px-3 text-left text-sm text-ink-faint transition-colors hover:bg-surface-alt sm:px-4"
         >
-          {t('inputBar.placeholder')}
+          <span className="truncate">{t('inputBar.placeholder')}</span>
         </button>
 
-        {/* Action icons */}
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           <button
             onClick={handleStub}
-            className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center text-ink-soft transition-colors"
+            className="flex size-8 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-surface"
           >
             <Camera size={16} />
           </button>
           <button
             onClick={handleStub}
-            className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center text-ink-soft transition-colors"
+            className="hidden size-8 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-surface sm:flex"
           >
             <QrCode size={16} />
           </button>
           <button
             onClick={handleStub}
-            className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center text-lavender transition-colors"
+            className="flex size-8 items-center justify-center rounded-lg text-lavender transition-colors hover:bg-surface"
           >
             <Sparkles size={16} />
           </button>

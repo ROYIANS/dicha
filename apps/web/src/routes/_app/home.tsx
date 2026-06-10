@@ -158,15 +158,13 @@ function IconChip({ tint, children }: { tint: Tint; children: React.ReactNode })
 // ─── A1 — 问候 header 区块（约 300px 高，留白让 hero 完整露出）───────────────────
 function TopBar() {
   return (
-    <header className="relative z-10 min-h-[300px] px-8 pt-8">
+    <header className="relative z-10 min-h-[160px] px-4 pt-5 sm:min-h-[220px] sm:px-6 sm:pt-7 lg:min-h-[300px] lg:px-8 lg:pt-8">
       <div className="flex items-center gap-2">
-        <Sun size={20} className="text-peach" />
-        <h1 className="text-xl font-bold text-ink">早安，{DEV_NAME}</h1>
+        <Sun size={20} className="text-peach shrink-0" />
+        <h1 className="text-lg font-bold text-ink sm:text-xl">早安，{DEV_NAME}</h1>
       </div>
-      <p className="text-sm text-ink-soft mt-0.5 pl-7">有序的空间，安定的心。今天也很棒</p>
-      <div className="text-sm text-ink-soft mt-1.5 pl-7">
-        5月 20日 · 星期二 · 22°C 多云转晴
-      </div>
+      <p className="mt-0.5 pl-7 text-sm text-ink-soft">有序的空间，安定的心。今天也很棒</p>
+      <div className="mt-1.5 pl-7 text-sm text-ink-soft">5月 20日 · 星期二 · 22°C 多云转晴</div>
     </header>
   );
 }
@@ -175,19 +173,19 @@ function TopBar() {
 function TodayOverview() {
   const { t } = useTranslation();
   return (
-    <section className="px-8">
+    <section className="px-4 sm:px-6 lg:px-8">
       <h2 className="text-sm font-semibold text-ink-soft mb-3">{t('dashboard.todayOverview')}</h2>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {WIDGETS.map((w) => {
           const Icon = w.icon;
           return (
-            <Surface key={w.key} variant="card" className="p-4">
+            <Surface key={w.key} variant="card" className="p-3 sm:p-4">
               <IconChip tint={w.tint}>
                 <Icon size={18} />
               </IconChip>
               <div className="text-xs font-semibold text-ink-soft mb-1">{w.label}</div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-ink">{w.value}</span>
+                <span className="text-xl font-bold text-ink sm:text-2xl">{w.value}</span>
                 {w.unit ? <span className="text-xs text-ink-faint">{w.unit}</span> : null}
               </div>
               <div className="text-xs text-ink-faint mt-1">{w.sub}</div>
@@ -259,8 +257,8 @@ function MySpaces() {
   const { t } = useTranslation();
   return (
     <section>
-      <h2 className="text-sm font-semibold text-ink-soft mb-3 px-8">我的收纳空间</h2>
-      <ScrollArea orientation="horizontal" className="flex gap-3 px-8 pb-1">
+      <h2 className="text-sm font-semibold text-ink-soft mb-3 px-4 sm:px-6 lg:px-8">我的收纳空间</h2>
+      <ScrollArea orientation="horizontal" className="flex gap-3 px-4 pb-1 sm:px-6 lg:px-8">
         {SPACES.map((space) => (
           <SpaceCard key={space.key} space={space} />
         ))}
@@ -282,8 +280,8 @@ function RecentAdded() {
   const { t } = useTranslation();
   return (
     <section>
-      <h2 className="text-sm font-semibold text-ink-soft mb-3 px-8">{t('dashboard.recentAdded')}</h2>
-      <ScrollArea orientation="horizontal" className="flex gap-3 px-8 pb-1">
+      <h2 className="text-sm font-semibold text-ink-soft mb-3 px-4 sm:px-6 lg:px-8">{t('dashboard.recentAdded')}</h2>
+      <ScrollArea orientation="horizontal" className="flex gap-3 px-4 pb-1 sm:px-6 lg:px-8">
         {RECENT_ITEMS.map((item) => (
           <Surface key={item.key} variant="card" className="w-[150px] shrink-0 overflow-hidden">
             <div className="relative h-28" style={{ backgroundColor: `var(--chip-${item.tint})` }}>
@@ -394,9 +392,9 @@ function SpaceUsage() {
           {t('dashboard.viewAll')}
         </button>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
         <div
-          className="relative w-28 h-28 rounded-full shrink-0"
+          className="relative size-24 shrink-0 rounded-full sm:size-28"
           style={{ background: conic }}
         >
           <div className="absolute inset-[14px] rounded-full bg-surface flex flex-col items-center justify-center">
@@ -423,7 +421,7 @@ function SpaceUsage() {
 
 function RightPanel() {
   return (
-    <aside className="w-72 shrink-0 flex flex-col gap-4 p-4 overflow-y-auto">
+    <aside className="flex w-full shrink-0 flex-col gap-4 border-t border-hairline p-4 xl:w-72 xl:border-t-0 xl:overflow-y-auto">
       <Reminders />
       <Reading />
       <SpaceUsage />
@@ -449,7 +447,7 @@ function HeroDecoration() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute top-0 right-0 w-[560px] h-[300px] z-0 bg-no-repeat bg-cover bg-right-top"
+      className="pointer-events-none absolute top-0 right-0 z-0 h-[160px] w-[min(100%,320px)] bg-right-top bg-no-repeat bg-cover sm:h-[220px] sm:w-[min(100%,420px)] lg:h-[300px] lg:w-[560px]"
       style={{
         backgroundImage: `url(${heroSrc})`,
         WebkitMaskImage: HERO_MASK,
@@ -463,19 +461,17 @@ function HeroDecoration() {
 
 function DashboardPage() {
   return (
-    <div className="flex h-full min-h-0">
-      {/* Main scrollable content */}
-      <main className="relative flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col xl:flex-row">
+      <main className="relative min-h-0 flex-1 xl:overflow-y-auto">
         <HeroDecoration />
         <TopBar />
-        <div className="relative z-10 space-y-8 pb-8">
+        <div className="relative z-10 space-y-6 pb-6 sm:space-y-8 sm:pb-8">
           <TodayOverview />
           <MySpaces />
           <RecentAdded />
         </div>
       </main>
 
-      {/* Right fixed panel */}
       <RightPanel />
     </div>
   );

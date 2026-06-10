@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { DEV_USER } from '@/lib/auth';
+import { useState } from 'react';
+import { DEV_USER, shouldBypassAuth } from '@/lib/auth';
 import { Sidebar } from '@/components/Sidebar';
+import { AppNavDrawer } from '@/components/AppNavDrawer';
 import { Header } from '@/components/Header';
 import { InputBar } from '@/components/InputBar';
 
@@ -10,36 +12,34 @@ import { InputBar } from '@/components/InputBar';
  * Also provides the full app chrome (Sidebar, Header, InputBar).
  *
  * beforeLoad:
- *   - VITE_DEV_BYPASS_AUTH=true → inject DEV_USER into context, allow through.
- *   - Otherwise → redirect to /login (stub; real Casdoor integration is a separate task).
+ *   - shouldBypassAuth() → inject DEV_USER into context, allow through.
+ *   - Otherwise → redirect to landing (real Casdoor guard is a separate task).
  */
 export const Route = createFileRoute('/_app')({
   beforeLoad: () => {
-    if (import.meta.env.VITE_DEV_BYPASS_AUTH === 'true') {
+    if (shouldBypassAuth()) {
       return { user: DEV_USER };
     }
-    // Real auth guard placeholder — redirect to landing page when bypass is off.
     throw redirect({ to: '/' });
   },
   component: AppLayout,
 });
 
 function AppLayout() {
+  const [navOpen, setNavOpen] = useState(false);
+
   return (
-    <div className="flex h-dvh overflow-hidden bg-sidebar-bg">
-      {/* Sidebar — fixed 220 px, dark chrome */}
+    <div className="flex h-dvh overflow-hidden bg-canvas lg:bg-sidebar-bg">
       <Sidebar />
+      <AppNavDrawer open={navOpen} onOpenChange={setNavOpen} />
 
-      {/* Content panel — floats above dark sidebar via left rounding + shadow */}
-      <div className="flex-1 min-w-0 flex flex-col bg-canvas rounded-l-[20px] shadow-float overflow-hidden">
-        <Header />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas lg:rounded-l-[20px] lg:shadow-float">
+        <Header navOpen={navOpen} onMenuClick={() => setNavOpen((v) => !v)} />
 
-        {/* Scrollable page area */}
-        <div className="flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto">
           <Outlet />
         </div>
 
-        {/* Fixed-to-bottom input bar */}
         <InputBar />
       </div>
     </div>

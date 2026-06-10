@@ -15,6 +15,8 @@ pnpm dev          # 在仓库根：turbo 同时起 web(:5173) + api(:3000)
 
 dev 下 Vite `server.proxy` 把 `/api` 转 `http://localhost:3000`（同源，为 BFF cookie 预留）。
 
+本地 `pnpm dev` 默认跳过 `_app` 鉴权（与 docker-compose `VITE_DEV_BYPASS_AUTH=true` 一致）；若要本地测守卫，在 `apps/web/.env.local` 设 `VITE_DEV_BYPASS_AUTH=false`。
+
 - 数据层：`src/api/client.ts`（ts-rest `initClient`）+ `src/api/<x>.ts` 的 `xxxQueryOptions` 工厂
   （loader 与组件共用同一份 query 定义）。**不用** `@ts-rest/react-query`。
 - 路由：`src/routes/`（file-based）；`src/routeTree.gen.ts` 由 router 插件生成，勿手改。
