@@ -57,6 +57,18 @@
   /* 动效 */
   --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
   --dur-base: 240ms;
+
+  /* 强调色 — 浅色暖棕 / 深色中性灰（与 dashboard 一致，组件用 var(--accent-warm)） */
+  --accent-warm: #7a6248;
+
+  /* 落地页装饰 / 标签 — 随 accent-warm 切换 */
+  --lp-brand: var(--accent-warm);
+  --lp-deco: var(--lp-brand);
+  --lp-footer-rail: color-mix(in oklab, var(--sidebar-ink) 14%, transparent);
+  --lp-footer-hair: color-mix(in oklab, var(--sidebar-ink) 10%, transparent);
+  --lp-footer-divide: color-mix(in oklab, var(--sidebar-ink) 12%, transparent);
+  --lp-footer-fg-muted: color-mix(in oklab, var(--sidebar-ink) 70%, transparent);
+  --lp-footer-fg-faint: color-mix(in oklab, var(--sidebar-ink) 50%, transparent);
 }
 
 /* ─── 夜间 — 深灰中性 ──────────────────────────────────────────────── */
@@ -91,6 +103,11 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.24), 0 8px 24px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.28), 0 16px 40px rgba(0, 0, 0, 0.4);
+
+  --accent-warm: var(--ink-soft);
+
+  --lp-brand: var(--accent-warm);
+  --lp-deco: var(--ink-faint);
 }
 
 /* ─── 语义变量 → Tailwind 工具类（inline 保持动态，随 data-theme 切换）──── */
@@ -118,6 +135,8 @@
   --color-chip-sage: var(--chip-sage);
   --color-chip-pink: var(--chip-pink);
   --color-chip-mist: var(--chip-mist);
+  --color-lp-brand: var(--lp-brand);
+  --color-accent-warm: var(--accent-warm);
 
   --radius-card: 16px;
 
@@ -290,6 +309,17 @@ body {
 .lp-intro-banner:hover {
   background: color-mix(in oklab, var(--chip-peach) 52%, var(--canvas));
 }
+:root[data-theme='dark'] .lp-intro-banner {
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--surface-alt) 55%, transparent),
+    transparent
+  );
+}
+:root[data-theme='dark'] .lp-intro-banner:hover {
+  background: color-mix(in oklab, var(--surface-alt) 72%, var(--canvas));
+}
 /* hero 底景渐变（加强暖色层次，网格叠上时应为主视觉） */
 .lp-hero-gradient {
   background: linear-gradient(
@@ -300,19 +330,57 @@ body {
     transparent
   );
 }
+:root[data-theme='dark'] .lp-hero-gradient {
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--surface-alt) 35%, transparent),
+    color-mix(in oklab, var(--canvas) 55%, transparent) 38%,
+    transparent 68%,
+    transparent
+  );
+}
+/* hero 细网格线色 + 自下而上渐隐遮罩 */
+.lp-hero-grid-lines {
+  color: var(--lp-deco);
+  mask-image: linear-gradient(to top, rgb(0 0 0 / 68%), transparent);
+  -webkit-mask-image: linear-gradient(to top, rgb(0 0 0 / 68%), transparent);
+}
 /* 页脚下划线渐显链接（zed decoration-white/20 → hover:decoration-white） */
 .lp-foot-link {
-  color: rgba(243, 239, 232, 0.72);
+  color: var(--lp-footer-fg-muted);
   text-decoration-line: underline;
-  text-decoration-color: rgba(243, 239, 232, 0.2);
+  text-decoration-color: var(--lp-footer-hair);
   text-underline-offset: 2px;
   transition:
     text-decoration-color 150ms ease,
     color 150ms ease;
 }
 .lp-foot-link:hover {
-  color: #f3efe8;
-  text-decoration-color: rgba(243, 239, 232, 0.9);
+  color: var(--sidebar-ink);
+  text-decoration-color: color-mix(in oklab, var(--sidebar-ink) 90%, transparent);
+}
+/* 主按钮 / chrome 块上的 kbd 徽标 */
+.lp-key-on-chrome {
+  border: 1px solid color-mix(in oklab, var(--sidebar-ink) 35%, transparent);
+  color: color-mix(in oklab, var(--sidebar-ink) 85%, transparent);
+}
+/* 页脚装饰带（描边字 + 斜纹，色值随 sidebar-ink） */
+.lp-footer-band-slash {
+  color: color-mix(in oklab, var(--sidebar-ink) 22%, transparent);
+}
+.lp-footer-band-ticks {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--sidebar-ink) 50%, transparent) 0 1px,
+    transparent 1px 10px
+  );
+  mask-image: linear-gradient(to bottom, #000, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  opacity: 0.18;
+}
+.lp-footer-wordmark {
+  color: color-mix(in oklab, var(--sidebar-ink) 3%, transparent);
+  -webkit-text-stroke: 1.2px color-mix(in oklab, var(--sidebar-ink) 20%, transparent);
 }
 /* 跑马灯：内容渲染两份，位移 -50% 即无缝循环 */
 @keyframes lp-marquee {
@@ -350,14 +418,14 @@ body {
   transform: translateY(1px) scale(0.99);
 }
 .lp-btn-primary {
-  background-color: #2e2a26;
-  color: #f7f4ef;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-ink);
   box-shadow:
-    inset 0 -2px 0 0 rgba(0, 0, 0, 0.45),
-    0 1px 3px rgba(46, 42, 38, 0.3);
+    inset 0 -2px 0 0 color-mix(in oklab, var(--sidebar-ink) 12%, transparent),
+    0 1px 3px color-mix(in oklab, var(--sidebar-bg) 40%, transparent);
 }
 .lp-btn-primary:hover {
-  background-color: #3a352f;
+  background-color: color-mix(in oklab, var(--sidebar-bg) 88%, var(--sidebar-ink));
   box-shadow: none;
 }
 .lp-btn-ghost {

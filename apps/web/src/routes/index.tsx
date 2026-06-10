@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ScanLine,
@@ -14,7 +15,6 @@ import {
   Play,
   ArrowRight,
   ChevronRight,
-  Search,
   Menu,
   type LucideIcon,
 } from 'lucide-react';
@@ -41,11 +41,17 @@ export const Route = createFileRoute('/')({
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 const SERIF = "'Noto Serif SC', serif";
 
-const BROWN = '#2e2a26'; // = --sidebar-bg / --ink：实色块、按钮、页脚
-const ACCENT = '#7a6248'; // 暖核桃棕：小标签 / 高亮字 / 图标
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
-const CREAM = '#f3efe8';
+const LP = {
+  deco: 'var(--lp-deco)',
+  chrome: 'var(--sidebar-bg)',
+  chromeFg: 'var(--sidebar-ink)',
+  footRail: 'var(--lp-footer-rail)',
+  footHair: 'var(--lp-footer-hair)',
+  footMuted: 'var(--lp-footer-fg-muted)',
+  footFaint: 'var(--lp-footer-fg-faint)',
+} as const;
 
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
@@ -213,7 +219,7 @@ function GridPattern({ mask = 'to bottom' }: { mask?: string }) {
     <svg
       aria-hidden
       className="pointer-events-none absolute inset-0 z-0 size-full"
-      style={{ color: ACCENT, opacity: 0.12, maskImage: `linear-gradient(${mask}, #000, transparent)` }}
+      style={{ color: LP.deco, opacity: 0.12, maskImage: `linear-gradient(${mask}, #000, transparent)` }}
     >
       <defs>
         <pattern id={id} width="8" height="8" patternUnits="userSpaceOnUse" x="-1" y="-1">
@@ -229,7 +235,7 @@ function GridPattern({ mask = 'to bottom' }: { mask?: string }) {
 function DotPattern() {
   const id = useId().replace(/:/g, '');
   return (
-    <svg aria-hidden className="pointer-events-none absolute inset-0 z-0 size-full" style={{ color: ACCENT, opacity: 0.22 }}>
+    <svg aria-hidden className="pointer-events-none absolute inset-0 z-0 size-full" style={{ color: LP.deco, opacity: 0.22 }}>
       <defs>
         <pattern id={id} width="8" height="8" patternUnits="userSpaceOnUse">
           <circle cx="4" cy="4" r="0.75" fill="currentColor" />
@@ -298,12 +304,16 @@ function Mono({ children, className = '', style }: { children: ReactNode; classN
 function Key({ children, onDark = false }: { children: ReactNode; onDark?: boolean }) {
   return (
     <span
-      className="ml-2 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded px-1 text-[11px] leading-none"
-      style={{
-        fontFamily: MONO,
-        border: `1px solid ${onDark ? 'rgba(243,239,232,0.35)' : LINE}`,
-        color: onDark ? 'rgba(243,239,232,0.85)' : 'var(--ink-soft)',
-      }}
+      className={`ml-2 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded px-1 text-[11px] leading-none ${onDark ? 'lp-key-on-chrome' : ''}`}
+      style={
+        onDark
+          ? { fontFamily: MONO }
+          : {
+              fontFamily: MONO,
+              border: `1px solid ${LINE}`,
+              color: 'var(--ink-soft)',
+            }
+      }
     >
       {children}
     </span>
@@ -346,7 +356,7 @@ function Nav() {
 
         <div className="flex min-w-0 items-center gap-4">
           <a href="#top" className="flex shrink-0 items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: BROWN, color: '#f7f4ef' }}>v</span>
+            <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>v</span>
             <Mono className="text-[15px] font-semibold tracking-tight text-ink">vidorra</Mono>
           </a>
           <div className="hidden items-center gap-0.5 lg:flex">
@@ -357,13 +367,8 @@ function Nav() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden items-center gap-1.5 rounded-md px-2 py-1 sm:flex" style={{ border: `1px solid ${LINE}`, backgroundColor: 'color-mix(in oklab, var(--surface) 50%, transparent)' }}>
-            <Search size={12} className="text-ink-faint" />
-            <Mono className="text-[11px] text-ink-faint">⌘K</Mono>
-          </span>
-          <span aria-hidden className="hidden h-5 w-px sm:block" style={{ backgroundColor: LINE }} />
-          <Link to="/home"><Mono className="text-[13px] text-ink-soft transition-colors hover:text-ink">登录</Mono></Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md" iconSize={15} />
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-3 py-1.5">
             <Mono className="text-[13px] font-medium">开始入住</Mono>
             <Key onDark>D</Key>
@@ -396,7 +401,7 @@ function Announce() {
       <span aria-hidden className="absolute bottom-0 left-1/2 block h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
       <Node pos="bottom-left" className="hidden lg:block" />
       <Node pos="bottom-right" className="hidden lg:block" />
-      <span className="text-[13px] tracking-wide" style={{ fontFamily: SERIF, color: ACCENT }}>新功能：</span>
+      <span className="text-[13px] tracking-wide text-lp-brand" style={{ fontFamily: SERIF }}>新功能：</span>
       <span className="text-[13px] font-medium tracking-wide text-ink" style={{ fontFamily: SERIF }}>齐默默 —— 不催促的物品管家</span>
       <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">→</span>
     </a>
@@ -504,7 +509,7 @@ function Hero() {
       <div aria-hidden className="lp-hero-gradient pointer-events-none absolute inset-0" />
       <HeroArt />
       <Reveal className="relative z-10">
-        <h1 className="mx-auto max-w-[20ch] font-medium leading-[1.05]" style={{ fontFamily: SERIF, color: BROWN, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
+        <h1 className="mx-auto max-w-[20ch] font-medium leading-[1.05] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
           让万物，各归其位。
         </h1>
         <p className="mx-auto mt-6 max-w-[42ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
@@ -535,8 +540,7 @@ function HeroArt() {
     <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <svg
         aria-hidden
-        className="absolute inset-0 size-full opacity-[0.028]"
-        style={{ color: ACCENT, maskImage: 'linear-gradient(to top, rgba(255,255,255,0.68), transparent)' }}
+        className="lp-hero-grid-lines absolute inset-0 size-full opacity-[0.028]"
       >
         <defs>
           <pattern id={gridId} width="10" height="10" patternUnits="userSpaceOnUse" x="-1" y="-1">
@@ -546,7 +550,7 @@ function HeroArt() {
         <rect width="100%" height="100%" strokeWidth="0" fill={`url(#${gridId})`} />
       </svg>
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <svg viewBox="0 0 480 480" className="lp-spin block w-[680px]" style={{ opacity: 0.035, color: BROWN }}>
+        <svg viewBox="0 0 480 480" className="lp-spin block w-[680px]" style={{ opacity: 0.035, color: 'var(--ink)' }}>
           {squares.map((_, i) => {
             const s = 460 * 0.9 ** i;
             return (
@@ -608,7 +612,7 @@ function FeatureTabs() {
       {/* 头排：左标题 + 右幽灵按钮（Zed "AI that works..." 的头排布局） */}
       <div className="flex flex-col gap-5 px-6 py-10 sm:px-10 lg:flex-row lg:items-end lg:justify-between" style={{ borderBottom: `1px solid ${LINE}` }}>
         <hgroup className="max-w-2xl">
-          <Mono className="text-[12px]" style={{ color: ACCENT }}>// 功能</Mono>
+          <Mono className="text-[12px] text-lp-brand">// 功能</Mono>
           <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink" style={{ textWrap: 'balance' }}>记录不像打卡，更像布置房间。</h2>
         </hgroup>
         <a href="#demo" className="lp-btn lp-btn-ghost inline-flex h-9 w-fit items-center gap-1 rounded-md pl-3 pr-2">
@@ -648,7 +652,7 @@ function FeatureTabs() {
                 ) : (
                   <div className="flex items-center justify-between py-4 text-ink-soft transition-colors hover:text-ink">
                     <span className="flex items-center gap-2.5">
-                      <Icon size={15} style={{ color: ACCENT }} />
+                      <Icon size={15} className="text-lp-brand" />
                       <span className="text-[14px]">{f.title}</span>
                     </span>
                     <PlusIcon size={14} className="opacity-50" />
@@ -678,10 +682,10 @@ function FeatureVignette({ id }: { id: string }) {
         {/* 取景框：四角括号 + 识别结果卡 */}
         <div className="relative mx-auto h-[180px] w-full rounded-lg" style={{ border: `1px dashed ${LINE}` }}>
           {(['left-2 top-2 border-l-2 border-t-2', 'right-2 top-2 border-r-2 border-t-2', 'left-2 bottom-2 border-l-2 border-b-2', 'right-2 bottom-2 border-r-2 border-b-2'] as const).map((pos) => (
-            <span key={pos} aria-hidden className={`absolute size-4 ${pos}`} style={{ borderColor: ACCENT }} />
+            <span key={pos} aria-hidden className={`absolute size-4 border-lp-brand ${pos}`} />
           ))}
           <div className="absolute left-1/2 top-1/2 w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-lg p-4" style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--hairline)`, boxShadow: 'var(--shadow-md)' }}>
-            <Mono className="text-[10px]" style={{ color: ACCENT }}>已识别</Mono>
+            <Mono className="text-[10px] text-lp-brand">已识别</Mono>
             <div className="mt-1 text-[15px] font-semibold text-ink">白瓷盖碗</div>
             <div className="mt-2 flex gap-1.5">
               {['茶具', '厨房', '易碎'].map((t) => (
@@ -719,7 +723,7 @@ function FeatureVignette({ id }: { id: string }) {
             <Wind size={18} className="text-ink-faint" />
           </div>
           <div className="mt-4 h-1 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--hairline)' }}>
-            <div className="h-full w-[72%] rounded-full" style={{ backgroundColor: ACCENT, opacity: 0.45 }} />
+            <div className="h-full w-[72%] rounded-full bg-lp-brand opacity-45" />
           </div>
           <div className="mt-4 flex gap-2">
             <span className="rounded-md px-2.5 py-1 text-[11px] text-ink" style={{ border: `1px solid ${LINE}` }}>拂去灰尘</span>
@@ -760,8 +764,8 @@ function Demo() {
     <section id="demo" className="px-6 py-16 sm:px-10">
       <Reveal className="relative mx-auto max-w-[980px]">
         <Link to="/home" className="lp-btn absolute -top-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 shadow-float" style={{ backgroundColor: 'var(--surface)', border: `1px solid ${LINE}` }}>
-          <span className="grid h-5 w-5 place-items-center rounded-full" style={{ backgroundColor: BROWN }}>
-            <Play size={10} style={{ color: '#f7f4ef' }} />
+          <span className="grid h-5 w-5 place-items-center rounded-full" style={{ backgroundColor: LP.chrome }}>
+            <Play size={10} style={{ color: LP.chromeFg }} />
           </span>
           <Mono className="text-[12px] text-ink">亲手试试</Mono>
         </Link>
@@ -785,7 +789,7 @@ function AppWindow() {
       </div>
       <div className="flex h-[360px] sm:h-[420px]">
         <div className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
-          <span className="grid h-8 w-8 place-items-center rounded-lg text-[13px] font-bold" style={{ backgroundColor: ACCENT, color: '#f7f4ef' }}>v</span>
+          <span className="grid h-8 w-8 place-items-center rounded-lg text-[13px] font-bold" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>v</span>
           {[0, 1, 2, 3].map((k) => (<span key={k} className="h-7 w-7 rounded-lg" style={{ backgroundColor: 'var(--sidebar-hover)' }} />))}
         </div>
         <div className="flex-1 overflow-hidden p-7">
@@ -833,7 +837,7 @@ function Rooms() {
     <section id="rooms">
       <div className="flex items-end justify-between px-8 py-9">
         <div>
-          <Mono className="text-[12px]" style={{ color: ACCENT }}>// 房间</Mono>
+          <Mono className="text-[12px] text-lp-brand">// 房间</Mono>
           <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">为不同的物，备不同的处。</h2>
         </div>
         <Mono className="hidden text-[12px] text-ink-faint sm:block">06 间</Mono>
@@ -880,7 +884,7 @@ function Principles() {
         {/* 大金句卡（左列跨两行）*/}
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
           <GridPattern />
-          <Mono className="text-[12px]" style={{ color: ACCENT }}>// 为什么</Mono>
+          <Mono className="text-[12px] text-lp-brand">// 为什么</Mono>
           <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.6rem,3.2vw,2.5rem)' }}>
             这不是一份清单，而是 <Mark tint="peach">生活的另一种模样</Mark>。每件物品不只是一行数字，
             而是一个 <Mark tint="lavender">有重量的存在</Mark> —— 你录入一件衬衫，它会变成衣橱里的一抹颜色；
@@ -932,7 +936,7 @@ function Extras() {
   return (
     <section>
       <div className="px-8 py-9">
-        <Mono className="text-[12px]" style={{ color: ACCENT }}>// 细节台账</Mono>
+        <Mono className="text-[12px] text-lp-brand">// 细节台账</Mono>
         <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">每一处，都为安心而造。</h2>
       </div>
       <HRule />
@@ -958,7 +962,7 @@ function AuthorLetter() {
   return (
     <section id="author" className="grid grid-cols-1 lg:grid-cols-12">
       <div className="relative px-8 py-12 lg:col-span-4">
-        <Mono className="text-[12px]" style={{ color: ACCENT }}>// 来自作者</Mono>
+        <Mono className="text-[12px] text-lp-brand">// 来自作者</Mono>
         <div className="mt-6 flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-2xl" style={{ backgroundColor: 'var(--chip-sage)' }}>
             <MessageSquareText size={22} style={{ color: 'var(--accent-sage)' }} />
@@ -987,7 +991,7 @@ function FinalCTA() {
   return (
     <section className="relative px-8 py-24 text-center">
       <Reveal>
-        <h2 className="font-medium leading-tight" style={{ fontFamily: SERIF, color: 'var(--ink)', fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推门进去。</h2>
+        <h2 className="font-medium leading-tight text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推门进去。</h2>
         <p className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft" style={{ textWrap: 'balance' }}>在生活里，留一处安静的地方，让自己住下来。</p>
         <div className="mt-9 flex items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-5 py-3">
@@ -1002,9 +1006,6 @@ function FinalCTA() {
 
 // ─── 页脚 ──────────────────────────────────────────────────────────────────────
 
-const FOOT_LINE = 'rgba(243,239,232,0.14)'; // 深底上的标尺 / 条码刻线
-const FOOT_HAIR = 'rgba(243,239,232,0.1)'; // 深底上的 hairline / 列分隔
-
 const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
   { h: '产品', items: [{ label: '功能' }, { label: '房间' }, { label: '齐默默' }, { label: '更新日志' }] },
   { h: '资源', items: [{ label: '使用指南' }, { label: '常见问题' }, { label: '开源' }, { label: '反馈' }] },
@@ -1017,9 +1018,8 @@ const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
 function FooterBand() {
   const id = useId().replace(/:/g, '');
   return (
-    <div className="relative col-span-full -mb-16 mt-4 flex w-full justify-center border-t py-6" style={{ borderColor: FOOT_HAIR }}>
-      {/* 45° 斜纹 */}
-      <svg aria-hidden className="pointer-events-none absolute inset-0 size-full" style={{ color: 'rgba(243,239,232,0.22)', opacity: 0.3 }}>
+    <div className="relative col-span-full -mb-16 mt-4 flex w-full justify-center border-t py-6" style={{ borderColor: LP.footHair }}>
+      <svg aria-hidden className="lp-footer-band-slash pointer-events-none absolute inset-0 size-full opacity-30">
         <defs>
           <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
@@ -1027,27 +1027,11 @@ function FooterBand() {
         </defs>
         <rect width="100%" height="100%" fill={`url(#${id})`} />
       </svg>
-      {/* 渐隐水平刻线（每 10px 一条，自上而下衰减） */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: 'repeating-linear-gradient(to bottom, rgba(243,239,232,0.5) 0 1px, transparent 1px 10px)',
-          maskImage: 'linear-gradient(to bottom, #000, transparent)',
-          WebkitMaskImage: 'linear-gradient(to bottom, #000, transparent)',
-          opacity: 0.18,
-        }}
-      />
-      {/* 描边 wordmark：fill 近透明 + stroke 低透明 */}
+      <div aria-hidden className="lp-footer-band-ticks pointer-events-none absolute inset-0" />
       <span
         aria-hidden
-        className="block select-none font-bold leading-[0.85] tracking-tighter"
-        style={{
-          fontFamily: MONO,
-          fontSize: 'clamp(4.5rem, 20vw, 17rem)',
-          color: 'rgba(243,239,232,0.03)',
-          WebkitTextStroke: '1.2px rgba(243,239,232,0.2)',
-        }}
+        className="lp-footer-wordmark block select-none font-bold leading-[0.85] tracking-tighter"
+        style={{ fontFamily: MONO, fontSize: 'clamp(4.5rem, 20vw, 17rem)' }}
       >
         vidorra
       </span>
@@ -1060,7 +1044,7 @@ function Footer() {
     <footer
       id="about"
       className="lp-outer-node-offset relative flex min-w-0 border-t"
-      style={{ backgroundColor: BROWN, borderColor: LINE }}
+      style={{ backgroundColor: LP.chrome, borderColor: LINE }}
     >
       {/* 节点对骑 footer 上边界 hairline */}
       <Node pos="top-left" className="hidden lg:block" />
@@ -1068,37 +1052,37 @@ function Footer() {
 
       {/* 五段 rail 框架（深底白低透明标尺；无网格/条码，保持 footer 干净） */}
       <span className="relative z-[1] w-4 shrink-0 sm:w-6 md:w-12">
-        <Ruler side="right" color={FOOT_LINE} segs={[{ f: 2.2 }, { f: 3.4, dash: true }, { f: 1.8 }]} />
+        <Ruler side="right" color={LP.footRail} segs={[{ f: 2.2 }, { f: 3.4, dash: true }, { f: 1.8 }]} />
       </span>
       <span className="relative z-[1] hidden flex-1 lg:block">
-        <Ruler side="right" color={FOOT_LINE} segs={[{ f: 3.1 }, { f: 2.2, dash: true }, { f: 2.8 }]} />
+        <Ruler side="right" color={LP.footRail} segs={[{ f: 3.1 }, { f: 2.2, dash: true }, { f: 2.8 }]} />
       </span>
 
       <div className="lp-container-max-w relative z-[1] max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
         <Node pos="top-left" className="hidden lg:block" />
         <Node pos="top-right" className="hidden lg:block" />
         <div className="relative isolate size-full overflow-clip">
-          <div className="grid grid-cols-1 gap-2 divide-[rgba(243,239,232,0.12)] md:grid-cols-4 lg:grid-cols-6 lg:gap-6 lg:divide-x">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-4 lg:grid-cols-6 lg:gap-6 lg:divide-x lg:divide-[var(--lp-footer-divide)]">
             {/* 第 1 列：品牌 + 短 hr + 法务 */}
             <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
               <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: CREAM, color: BROWN }}>v</span>
-                <Mono className="text-[15px] font-semibold" style={{ color: CREAM }}>vidorra</Mono>
+                <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chromeFg, color: LP.chrome }}>v</span>
+                <Mono className="text-[15px] font-semibold" style={{ color: LP.chromeFg }}>vidorra</Mono>
               </div>
-              <Mono className="mt-4 block text-[12px]" style={{ color: 'rgba(243,239,232,0.7)' }}>vidorra © 2026</Mono>
-              <hr className="my-3 w-20 border-t" style={{ borderColor: FOOT_HAIR }} />
+              <Mono className="mt-4 block text-[12px]" style={{ color: LP.footMuted }}>vidorra © 2026</Mono>
+              <hr className="my-3 w-20 border-t" style={{ borderColor: LP.footHair }} />
               <Link to="/home" className="lp-foot-link w-fit"><Mono className="text-[12px]">已有账号？登录</Mono></Link>
-              <Mono className="mt-3 block text-[11px]" style={{ color: 'rgba(243,239,232,0.5)' }}>服务条款 · 隐私政策</Mono>
+              <Mono className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>服务条款 · 隐私政策</Mono>
             </div>
             {FOOT_COLS.map((c) => (
               <div key={c.h} className="flex flex-col gap-4 px-5 py-4 md:py-8 lg:py-10">
-                <Mono className="text-[12px] font-semibold" style={{ color: CREAM }}>{c.h}</Mono>
+                <Mono className="text-[12px] font-semibold" style={{ color: LP.chromeFg }}>{c.h}</Mono>
                 <ul className="flex flex-col gap-3">
                   {c.items.map((it) => (
                     <li key={it.label}>
                       <a href="#about" className="lp-foot-link">
                         <Mono className="text-[12px]">{it.label}</Mono>
-                        {it.ext && <span aria-hidden className="ml-2 text-[12px]" style={{ color: 'rgba(243,239,232,0.5)' }}>↗</span>}
+                        {it.ext && <span aria-hidden className="ml-2 text-[12px]" style={{ color: LP.footFaint }}>↗</span>}
                       </a>
                     </li>
                   ))}
@@ -1111,10 +1095,10 @@ function Footer() {
       </div>
 
       <span className="relative z-[1] hidden flex-1 lg:block">
-        <Ruler side="left" color={FOOT_LINE} segs={[{ f: 1.9, dash: true }, { f: 3.6 }, { f: 2.4 }]} />
+        <Ruler side="left" color={LP.footRail} segs={[{ f: 1.9, dash: true }, { f: 3.6 }, { f: 2.4 }]} />
       </span>
       <span className="relative z-[1] w-4 shrink-0 sm:w-6 md:w-12">
-        <Ruler side="left" color={FOOT_LINE} segs={[{ f: 2.7 }, { f: 1.6 }, { f: 3.9, dash: true }]} />
+        <Ruler side="left" color={LP.footRail} segs={[{ f: 2.7 }, { f: 1.6 }, { f: 3.9, dash: true }]} />
       </span>
     </footer>
   );
@@ -1124,7 +1108,7 @@ function Footer() {
 
 function LandingPage() {
   return (
-    <div className="min-h-screen overflow-x-clip" style={{ backgroundColor: 'var(--canvas)', color: 'var(--ink)' }}>
+    <div className="min-h-screen overflow-x-clip bg-canvas text-ink">
       <Nav />
       {/* isolate：内容里的 z-50 节点只在 main 内比较，不会盖过 sticky 顶栏 */}
       <main className="isolate">
