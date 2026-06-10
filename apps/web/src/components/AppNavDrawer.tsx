@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { AppBrand } from '@/components/AppBrand';
+import { DotsBackdrop } from '@/components/DotsBackdrop';
 import { SidebarNav } from '@/components/Sidebar';
 
 type AppNavDrawerProps = {
@@ -8,7 +10,7 @@ type AppNavDrawerProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** 移动端侧栏 — 自左侧滑出，复用 SidebarNav。 */
+/** 移动端导航 — canvas 底 + landing drawer 语汇（非深色侧栏）。 */
 export function AppNavDrawer({ open, onOpenChange }: AppNavDrawerProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -40,30 +42,30 @@ export function AppNavDrawer({ open, onOpenChange }: AppNavDrawerProps) {
       <button
         type="button"
         aria-label="关闭导航"
-        className="fixed inset-0 z-[200] bg-black/45 backdrop-blur-[2px] transition-opacity lg:hidden"
+        className="lp-drawer-backdrop fixed inset-0 z-[200] backdrop-blur-[14px] backdrop-saturate-150 lg:hidden"
         onClick={close}
-      />
+      >
+        <DotsBackdrop visible={open} className="pointer-events-none absolute inset-0 size-full" />
+      </button>
       <aside
         role="dialog"
         aria-modal="true"
         aria-label="应用导航"
-        className="fixed inset-y-0 left-0 z-[201] flex w-[min(280px,88vw)] flex-col bg-sidebar-bg shadow-float lg:hidden"
+        className="fixed inset-y-0 left-0 z-[201] flex w-[min(280px,88vw)] flex-col border-r border-hairline bg-canvas shadow-float lg:hidden"
       >
-        <div className="flex shrink-0 items-center justify-between px-5 py-4">
-          <div>
-            <div className="text-xl tracking-tight text-sidebar-ink">vidorra</div>
-          </div>
+        <div className="flex shrink-0 items-center justify-between border-b border-hairline px-4 py-3.5">
+          <AppBrand to="/home" onClick={close} />
           <button
             ref={closeRef}
             type="button"
             aria-label="关闭"
-            className="inline-flex size-9 items-center justify-center rounded-lg text-sidebar-ink-soft hover:bg-[var(--sidebar-hover)]"
+            className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md border border-hairline"
             onClick={close}
           >
-            <X size={18} />
+            <X size={16} className="text-ink-soft" />
           </button>
         </div>
-        <SidebarNav className="flex-1 overflow-y-auto" onNavigate={close} />
+        <SidebarNav className="flex-1 overflow-y-auto py-2" onNavigate={close} variant="canvas" />
       </aside>
     </>,
     document.body,

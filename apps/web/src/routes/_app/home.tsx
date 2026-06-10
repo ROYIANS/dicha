@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Surface } from '@/components/Surface';
+import { DashCard, DashCardHeader, DashCardSlash } from '@/components/DashCard';
 import { ScrollArea } from '@/components/ScrollArea';
 import { useTheme } from '@/lib/hooks/useTheme';
 
@@ -143,28 +143,39 @@ const USAGE_TOTAL = 634;
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const stub = () => toast.info('录入功能即将开放');
 
-/** 功能性柔彩图标圆片 — 强调色只在这里出现。 */
-function IconChip({ tint, children }: { tint: Tint; children: React.ReactNode }) {
+function DashSectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="app-dash-section mb-3">{children}</h2>;
+}
+
+/** 功能性柔彩图标圆片 */
+function IconChip({ tint, children, className = '' }: { tint: Tint; children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className="w-9 h-9 rounded-full flex items-center justify-center mb-3"
+    <span
+      className={`dash-card-chip ${className}`}
       style={{ backgroundColor: `var(--chip-${tint})`, color: `var(--accent-${tint})` }}
     >
       {children}
-    </div>
+    </span>
   );
 }
 
-// ─── A1 — 问候 header 区块（约 300px 高，留白让 hero 完整露出）───────────────────
+// ─── A1 — 问候 header 区块 ────────────────────────────────────────────────────
 function TopBar() {
   return (
-    <header className="relative z-10 min-h-[160px] px-4 pt-5 sm:min-h-[220px] sm:px-6 sm:pt-7 lg:min-h-[300px] lg:px-8 lg:pt-8">
-      <div className="flex items-center gap-2">
-        <Sun size={20} className="text-peach shrink-0" />
-        <h1 className="text-lg font-bold text-ink sm:text-xl">早安，{DEV_NAME}</h1>
+    <header className="app-dash-pad relative z-10 min-h-[128px] pt-4 sm:min-h-[200px] sm:pt-6 lg:min-h-[260px] lg:pt-7">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-[min(100%,300px)] bg-gradient-to-r from-canvas from-55% via-canvas/88 to-transparent sm:from-45%"
+      />
+      <div className="relative max-w-xl">
+        <p className="app-mono text-[11px] uppercase tracking-wider text-ink-faint">Dashboard</p>
+        <div className="mt-2 flex items-center gap-2">
+          <Sun size={18} className="shrink-0 text-peach" />
+          <h1 className="text-lg font-bold tracking-tight text-ink sm:text-xl">早安，{DEV_NAME}</h1>
+        </div>
+        <p className="app-mono mt-1 pl-6 text-[13px] leading-snug text-ink-soft">有序的空间，安定的心。今天也很棒</p>
+        <p className="app-mono mt-1 pl-6 text-[12px] leading-snug text-ink-faint">5月 20日 · 星期二 · 22°C 多云转晴</p>
       </div>
-      <p className="mt-0.5 pl-7 text-sm text-ink-soft">有序的空间，安定的心。今天也很棒</p>
-      <div className="mt-1.5 pl-7 text-sm text-ink-soft">5月 20日 · 星期二 · 22°C 多云转晴</div>
     </header>
   );
 }
@@ -173,23 +184,29 @@ function TopBar() {
 function TodayOverview() {
   const { t } = useTranslation();
   return (
-    <section className="px-4 sm:px-6 lg:px-8">
-      <h2 className="text-sm font-semibold text-ink-soft mb-3">{t('dashboard.todayOverview')}</h2>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <section className="app-dash-pad">
+      <DashSectionTitle>{t('dashboard.todayOverview')}</DashSectionTitle>
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-2.5 lg:grid-cols-4 lg:gap-3">
         {WIDGETS.map((w) => {
           const Icon = w.icon;
           return (
-            <Surface key={w.key} variant="card" className="p-3 sm:p-4">
-              <IconChip tint={w.tint}>
-                <Icon size={18} />
-              </IconChip>
-              <div className="text-xs font-semibold text-ink-soft mb-1">{w.label}</div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-ink sm:text-2xl">{w.value}</span>
-                {w.unit ? <span className="text-xs text-ink-faint">{w.unit}</span> : null}
+            <DashCard key={w.key} variant="stat">
+              <div className="dash-card-stat-row">
+                <div className="min-w-0 flex-1">
+                  <div className="app-mono mb-2 text-[10px] uppercase tracking-wide text-ink-soft sm:text-[11px]">
+                    {w.label}
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="dash-card-stat-value text-xl font-bold text-ink sm:text-2xl">{w.value}</span>
+                    {w.unit ? <span className="app-mono text-[10px] text-ink-faint sm:text-[11px]">{w.unit}</span> : null}
+                  </div>
+                  <div className="app-mono mt-1.5 text-[10px] leading-snug text-ink-faint sm:text-[11px]">{w.sub}</div>
+                </div>
+                <IconChip tint={w.tint}>
+                  <Icon size={15} />
+                </IconChip>
               </div>
-              <div className="text-xs text-ink-faint mt-1">{w.sub}</div>
-            </Surface>
+            </DashCard>
           );
         })}
       </div>
@@ -200,56 +217,52 @@ function TodayOverview() {
 // ─── A3 ───────────────────────────────────────────────────────────────────────
 function SpaceCard({ space }: { space: Space }) {
   const Icon = space.icon;
-  // 整图卡：生活照绝对铺满 + 底部 scrim 压字 + 左上 frosted 图标圆片。
-  const inner = (
-    <Surface
-      variant="card"
-      className="relative w-[150px] h-[180px] shrink-0 overflow-hidden"
-    >
-      {/* fallback 底色（图未加载/失败时不空） */}
-      <div className="absolute inset-0" style={{ backgroundColor: `var(--chip-${space.tint})` }} />
-      <img
-        src={space.img}
-        alt={space.label}
-        loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      {/* 底部暖色 scrim 保证白字可读 */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 to-transparent" />
-      {/* 左上分类图标圆片 — chip 底 + accent 图标色（柔面哑光，无玻璃模糊） */}
-      <div
-        className="absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: `var(--chip-${space.tint})` }}
-      >
-        <Icon size={14} style={{ color: `var(--accent-${space.tint})` }} />
+  const cardClass = 'dash-card-scroll-item dash-card-scroll-item--space h-full';
+  const body = (
+    <>
+      <div className="dash-card-media-img">
+        <div className="absolute inset-0" style={{ backgroundColor: `var(--chip-${space.tint})` }} />
+        <img src={space.img} alt={space.label} loading="lazy" className="absolute inset-0 size-full object-cover" />
+        <div className="dash-card-space-overlay absolute inset-x-0 bottom-0 top-1/3" />
+        <span
+          className="dash-card-chip absolute left-2 top-2"
+          style={{ backgroundColor: `var(--chip-${space.tint})`, color: `var(--accent-${space.tint})` }}
+        >
+          <Icon size={13} />
+        </span>
+        <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3">
+          <div className="app-mono truncate text-[13px] font-semibold text-white">{space.label}</div>
+          <div className="app-mono mt-0.5 text-[10px] text-white/75 sm:text-[11px]">{space.count}</div>
+        </div>
       </div>
-      {/* 底部白字 */}
-      <div className="absolute inset-x-0 bottom-0 p-3">
-        <div className="text-white text-sm font-semibold truncate">{space.label}</div>
-        <div className="text-white/80 text-xs mt-0.5">{space.count}</div>
-      </div>
-    </Surface>
+    </>
   );
 
   if (space.to === '/wardrobe' || space.to === '/library') {
-    // disabled / coming soon → toast
     return (
-      <button type="button" onClick={() => toast.info('即将开放')} className="text-left">
-        {inner}
-      </button>
+      <DashCard
+        as="button"
+        type="button"
+        variant="media"
+        className={cardClass}
+        interactive
+        onClick={() => toast.info('即将开放')}
+      >
+        {body}
+      </DashCard>
     );
   }
   if (space.to) {
     return (
-      <Link to={space.to} className="block">
-        {inner}
-      </Link>
+      <DashCard as={Link} to={space.to} variant="media" className={cardClass} interactive>
+        {body}
+      </DashCard>
     );
   }
   return (
-    <button type="button" onClick={() => toast.info('即将开放')} className="text-left">
-      {inner}
-    </button>
+    <DashCard as="button" type="button" variant="media" className={cardClass} interactive onClick={() => toast.info('即将开放')}>
+      {body}
+    </DashCard>
   );
 }
 
@@ -257,19 +270,24 @@ function MySpaces() {
   const { t } = useTranslation();
   return (
     <section>
-      <h2 className="text-sm font-semibold text-ink-soft mb-3 px-4 sm:px-6 lg:px-8">我的收纳空间</h2>
-      <ScrollArea orientation="horizontal" className="flex gap-3 px-4 pb-1 sm:px-6 lg:px-8">
+      <div className="app-dash-pad mb-3">
+        <DashSectionTitle>我的收纳空间</DashSectionTitle>
+      </div>
+      <ScrollArea orientation="horizontal" className="app-dash-pad flex gap-2 pb-1 sm:gap-2.5">
         {SPACES.map((space) => (
           <SpaceCard key={space.key} space={space} />
         ))}
-        <button
+        <DashCard
+          as="button"
           type="button"
+          variant="dashed"
+          interactive
+          className="dash-card-scroll-item dash-card-scroll-item--space dash-card-scroll-item--dashed flex min-h-[168px] flex-col items-center justify-center sm:min-h-[195px]"
           onClick={stub}
-          className="w-[150px] h-[180px] shrink-0 rounded-card border border-dashed border-hairline flex flex-col items-center justify-center text-ink-faint hover:bg-surface-alt transition-colors"
         >
-          <Plus size={20} />
-          <span className="text-xs mt-1">{t('dashboard.addSpace')}</span>
-        </button>
+          <Plus size={18} className="text-ink-faint" />
+          <span className="app-mono mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.addSpace')}</span>
+        </DashCard>
       </ScrollArea>
     </section>
   );
@@ -280,33 +298,34 @@ function RecentAdded() {
   const { t } = useTranslation();
   return (
     <section>
-      <h2 className="text-sm font-semibold text-ink-soft mb-3 px-4 sm:px-6 lg:px-8">{t('dashboard.recentAdded')}</h2>
-      <ScrollArea orientation="horizontal" className="flex gap-3 px-4 pb-1 sm:px-6 lg:px-8">
+      <div className="app-dash-pad">
+        <DashSectionTitle>{t('dashboard.recentAdded')}</DashSectionTitle>
+      </div>
+      <ScrollArea orientation="horizontal" className="app-dash-pad flex gap-2 pb-1 sm:gap-2.5">
         {RECENT_ITEMS.map((item) => (
-          <Surface key={item.key} variant="card" className="w-[150px] shrink-0 overflow-hidden">
-            <div className="relative h-28" style={{ backgroundColor: `var(--chip-${item.tint})` }}>
-              <img
-                src={item.img}
-                alt={item.name}
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+          <DashCard key={item.key} variant="media" className="dash-card-scroll-item" interactive>
+            <div className="dash-card-media-img max-h-[108px] sm:max-h-[120px]" style={{ aspectRatio: 'auto' }}>
+              <div className="absolute inset-0" style={{ backgroundColor: `var(--chip-${item.tint})` }} />
+              <img src={item.img} alt={item.name} loading="lazy" className="absolute inset-0 size-full object-cover" />
             </div>
-            <div className="p-3">
-              <div className="text-sm font-semibold text-ink truncate">{item.name}</div>
-              <div className="text-xs text-ink-faint mt-0.5">{item.tag}</div>
-              <div className="text-xs text-ink-faint">{item.time}</div>
+            <div className="dash-card-media-body">
+              <div className="truncate text-[13px] font-semibold text-ink">{item.name}</div>
+              <div className="app-mono mt-0.5 truncate text-[10px] text-ink-faint sm:text-[11px]">{item.tag}</div>
+              <div className="app-mono mt-0.5 text-[10px] text-ink-faint">{item.time}</div>
             </div>
-          </Surface>
+          </DashCard>
         ))}
-        <button
+        <DashCard
+          as="button"
           type="button"
+          variant="dashed"
+          interactive
+          className="dash-card-scroll-item dash-card-scroll-item--dashed flex min-h-[148px] flex-col items-center justify-center sm:min-h-[168px]"
           onClick={stub}
-          className="w-[150px] shrink-0 rounded-card border border-dashed border-hairline flex flex-col items-center justify-center text-ink-faint hover:bg-surface-alt transition-colors min-h-[120px]"
         >
-          <Plus size={20} />
-          <span className="text-xs mt-1">{t('dashboard.recordNew')}</span>
-        </button>
+          <Plus size={18} className="text-ink-faint" />
+          <span className="app-mono mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.recordNew')}</span>
+        </DashCard>
       </ScrollArea>
     </section>
   );
@@ -316,65 +335,62 @@ function RecentAdded() {
 function Reminders() {
   const { t } = useTranslation();
   return (
-    <Surface variant="card" className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-xs font-semibold text-ink-soft">{t('dashboard.reminders')}</div>
-        <button type="button" onClick={stub} className="text-xs text-ink-faint hover:text-ink-soft">
-          {t('dashboard.viewAll')}
-        </button>
-      </div>
+    <DashCard variant="panel">
+      <DashCardSlash />
+      <DashCardHeader
+        title={t('dashboard.reminders')}
+        action={
+          <button type="button" onClick={stub} className="dash-card-action">
+            {t('dashboard.viewAll')}
+          </button>
+        }
+      />
       <div className="space-y-2.5">
         {REMINDERS.map((r) => (
           <div key={r.key} className="flex items-start gap-2.5">
-            <span className="mt-0.5 w-4 h-4 shrink-0 rounded border border-hairline" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-ink">{r.text}</div>
-              <div className={`text-xs ${r.urgent ? 'text-pink' : 'text-ink-faint'}`}>{r.due}</div>
+            <span className="dash-card-check" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] leading-snug text-ink">{r.text}</div>
+              <div className={`app-mono mt-0.5 text-[11px] ${r.urgent ? 'text-pink' : 'text-ink-faint'}`}>{r.due}</div>
             </div>
           </div>
         ))}
       </div>
-    </Surface>
+    </DashCard>
   );
 }
 
-// ─── A5/2 ─────────────────────────────────────────────────────────────────────
 function Reading() {
   const { t } = useTranslation();
   return (
-    <Surface variant="card" className="p-4">
-      <div className="text-xs font-semibold text-ink-soft mb-3">{t('dashboard.reading')}</div>
+    <DashCard variant="panel">
+      <DashCardSlash />
+      <DashCardHeader title={t('dashboard.reading')} />
       <div className="flex gap-3">
         <img
           src={READING_COVER}
           alt="《最好的告别》封面"
           loading="lazy"
-          className="w-12 h-16 rounded object-cover bg-surface-alt shrink-0"
+          className="h-16 w-12 shrink-0 rounded-sm border border-hairline object-cover bg-surface-alt"
         />
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-ink truncate">《最好的告别》</div>
-          <div className="text-xs text-ink-faint mt-0.5">阿图·葛文德</div>
-          <div className="mt-2 h-1.5 rounded-full bg-chip-peach overflow-hidden">
-            <div className="h-full w-[68%] rounded-full bg-peach" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-semibold text-ink">《最好的告别》</div>
+          <div className="app-mono mt-0.5 text-[11px] text-ink-faint">阿图·葛文德</div>
+          <div className="dash-card-progress mt-2.5 bg-chip-peach">
+            <div className="w-[68%] bg-peach" />
           </div>
-          <div className="text-xs text-ink-faint mt-1">68%</div>
+          <div className="app-mono mt-1 text-[11px] text-ink-faint">68%</div>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={stub}
-        className="mt-3 w-full py-2 rounded-lg border border-hairline text-sm text-ink hover:bg-surface-alt transition-colors"
-      >
+      <button type="button" onClick={stub} className="lp-btn lp-btn-ghost app-mono mt-3 w-full rounded-md py-2 text-[12px] text-ink">
         {t('dashboard.continueReading')}
       </button>
-    </Surface>
+    </DashCard>
   );
 }
 
-// ─── A5/3 ─────────────────────────────────────────────────────────────────────
 function SpaceUsage() {
   const { t } = useTranslation();
-  // conic-gradient 累积分段
   const segments: string[] = [];
   let acc = 0;
   for (const u of USAGE) {
@@ -385,46 +401,51 @@ function SpaceUsage() {
   const conic = `conic-gradient(${segments.join(', ')})`;
 
   return (
-    <Surface variant="card" className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-xs font-semibold text-ink-soft">{t('dashboard.spaceUsage')}</div>
-        <button type="button" onClick={stub} className="text-xs text-ink-faint hover:text-ink-soft">
-          {t('dashboard.viewAll')}
-        </button>
-      </div>
+    <DashCard variant="panel">
+      <DashCardSlash />
+      <DashCardHeader
+        title={t('dashboard.spaceUsage')}
+        action={
+          <button type="button" onClick={stub} className="dash-card-action">
+            {t('dashboard.viewAll')}
+          </button>
+        }
+      />
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-        <div
-          className="relative size-24 shrink-0 rounded-full sm:size-28"
-          style={{ background: conic }}
-        >
-          <div className="absolute inset-[14px] rounded-full bg-surface flex flex-col items-center justify-center">
-            <span className="text-lg font-bold text-ink leading-none">{USAGE_TOTAL}</span>
-            <span className="text-xs text-ink-faint mt-0.5">件物品</span>
+        <div className="relative size-[5.5rem] shrink-0 rounded-full sm:size-28" style={{ background: conic }}>
+          <div className="absolute inset-[12px] flex flex-col items-center justify-center rounded-full border border-hairline bg-surface sm:inset-[14px]">
+            <span className="dash-card-stat-value text-lg font-bold leading-none text-ink">{USAGE_TOTAL}</span>
+            <span className="app-mono mt-0.5 text-[10px] text-ink-faint">件物品</span>
           </div>
         </div>
-        <div className="flex-1 space-y-1.5">
+        <div className="w-full flex-1 space-y-1.5 sm:w-auto">
           {USAGE.map((u) => (
-            <div key={u.key} className="flex items-center gap-2 text-xs">
-              <span
-                className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: `var(--accent-${u.tint})` }}
-              />
-              <span className="text-ink flex-1 truncate">{u.label}</span>
-              <span className="text-ink-faint">{u.pct}%</span>
+            <div key={u.key} className="flex items-center gap-2">
+              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: `var(--accent-${u.tint})` }} />
+              <span className="app-mono min-w-0 flex-1 truncate text-[11px] text-ink">{u.label}</span>
+              <span className="app-mono text-[11px] tabular-nums text-ink-faint">{u.pct}%</span>
             </div>
           ))}
         </div>
       </div>
-    </Surface>
+    </DashCard>
+  );
+}
+
+function RightPanelStack({ className = '' }: { className?: string }) {
+  return (
+    <div className={`flex flex-col gap-2.5 sm:gap-3 ${className}`}>
+      <Reminders />
+      <Reading />
+      <SpaceUsage />
+    </div>
   );
 }
 
 function RightPanel() {
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-4 border-t border-hairline p-4 xl:w-72 xl:border-t-0 xl:overflow-y-auto">
-      <Reminders />
-      <Reading />
-      <SpaceUsage />
+    <aside className="hidden w-80 shrink-0 flex-col gap-2.5 overflow-y-auto border-l border-hairline bg-surface-alt/30 p-5 xl:flex">
+      <RightPanelStack />
     </aside>
   );
 }
@@ -461,7 +482,7 @@ function HeroDecoration() {
 
 function DashboardPage() {
   return (
-    <div className="flex h-full min-h-0 flex-col xl:flex-row">
+    <div className="flex min-h-0 flex-col xl:h-full xl:flex-row">
       <main className="relative min-h-0 flex-1 xl:overflow-y-auto">
         <HeroDecoration />
         <TopBar />
@@ -469,6 +490,9 @@ function DashboardPage() {
           <TodayOverview />
           <MySpaces />
           <RecentAdded />
+          <section className="app-dash-pad border-t border-hairline pt-6 xl:hidden">
+            <RightPanelStack />
+          </section>
         </div>
       </main>
 

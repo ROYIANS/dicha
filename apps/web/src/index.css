@@ -576,6 +576,299 @@ body {
   }
 }
 
+/* ─── App shell — 延续 landing / Zed 工业语汇 ───────────────────────────── */
+.app-shell {
+  --app-sidebar-w: 220px;
+}
+.app-chrome-header {
+  background-color: color-mix(in oklab, var(--canvas) 82%, transparent);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+}
+.app-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+/* 侧栏导航 — 块状 hover + active 下压（lp-nav-link 的深色侧栏版） */
+.app-sidebar-link {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 80ms ease;
+}
+.app-sidebar-link:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--sidebar-ink);
+}
+.app-sidebar-link:active {
+  transform: translateY(1px) scale(0.99);
+}
+.app-sidebar-link-active {
+  background-color: var(--sidebar-active);
+  color: var(--sidebar-ink);
+}
+.app-sidebar-section {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--sidebar-ink-soft) 90%, transparent);
+}
+.app-sidebar {
+  isolation: isolate;
+}
+.app-sidebar-noise {
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.app-sidebar-world {
+  background: linear-gradient(145deg, color-mix(in oklab, var(--sidebar-ink) 8%, #3a2f24), #241c14);
+}
+.app-sidebar-world-btn {
+  background-color: color-mix(in oklab, var(--sidebar-ink) 12%, transparent);
+  box-shadow: inset 0 -1px 0 0 color-mix(in oklab, var(--sidebar-ink) 18%, transparent);
+  transition: background-color 150ms ease;
+}
+.app-sidebar-world-btn:hover {
+  background-color: color-mix(in oklab, var(--sidebar-ink) 18%, transparent);
+}
+/* Dashboard 区块标题 — 与侧栏 section 同语汇 */
+.app-dash-section {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+/* ─── Dashboard 卡片（Zed fv-style：rounded-sm + inset 物理阴影）────────── */
+.dash-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 8%, transparent);
+  transition:
+    box-shadow 150ms ease,
+    background-color 150ms ease,
+    transform 80ms ease,
+    border-color 150ms ease;
+}
+.dash-card--interactive:hover,
+button.dash-card:hover,
+a.dash-card:hover {
+  background: var(--surface-alt);
+  box-shadow: none;
+}
+.dash-card--interactive:active,
+button.dash-card:active,
+a.dash-card:active {
+  transform: translateY(1px) scale(0.995);
+}
+.dash-card--stat {
+  padding: 0.625rem 0.75rem;
+}
+@media (min-width: 640px) {
+  .dash-card--stat {
+    padding: 0.75rem 0.875rem;
+  }
+}
+.dash-card--stat::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--ink) 4%, transparent),
+    transparent 42%
+  );
+  border-radius: inherit;
+}
+.dash-card--panel {
+  padding: 0.875rem;
+}
+@media (min-width: 640px) {
+  .dash-card--panel {
+    padding: 1rem;
+  }
+}
+.dash-card--media {
+  padding: 0;
+  box-shadow: inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 6%, transparent);
+}
+.dash-card--dashed {
+  border-style: dashed;
+  background: color-mix(in oklab, var(--surface) 72%, var(--canvas));
+  box-shadow: none;
+}
+.dash-card--dashed:hover {
+  background: var(--surface-alt);
+  border-color: color-mix(in oklab, var(--ink) 22%, transparent);
+}
+.dash-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--hairline);
+}
+.dash-card-slash {
+  color: color-mix(in oklab, var(--ink) 14%, transparent);
+  opacity: 0.35;
+  mask-image: linear-gradient(to bottom, #000, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.dash-card-media-body {
+  border-top: 1px solid var(--hairline);
+  padding: 0.625rem 0.75rem;
+}
+.dash-card-media-img {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+}
+.dash-card-space-overlay {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.58) 0%, rgb(0 0 0 / 0.08) 55%, transparent 100%);
+}
+.dash-card-chip {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--surface) 40%, transparent);
+}
+.dash-card-stat-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.dash-card-stat-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.dash-card-check {
+  margin-top: 0.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface-alt) 80%, transparent);
+}
+.dash-card-progress {
+  height: 0.375rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--hairline);
+}
+.dash-card-progress > div {
+  height: 100%;
+  border-radius: inherit;
+}
+.dash-card-action {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+  transition: color 150ms ease;
+}
+.dash-card-action:hover {
+  color: var(--ink-soft);
+}
+.dash-card-scroll-item {
+  width: min(42vw, 140px);
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .dash-card-scroll-item {
+    width: 150px;
+  }
+}
+.dash-card-scroll-item--space {
+  width: min(42vw, 140px);
+}
+@media (min-width: 640px) {
+  .dash-card-scroll-item--space {
+    width: 156px;
+  }
+}
+.dash-card-scroll-item--dashed {
+  min-height: 168px;
+}
+@media (min-width: 640px) {
+  .dash-card-scroll-item--dashed {
+    min-height: 195px;
+  }
+}
+.app-dash-pad {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .app-dash-pad {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .app-dash-pad {
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+  }
+}
+/* 录入栏 — 物理感主按钮 + mono 输入 */
+.app-input-bar {
+  background-color: color-mix(in oklab, var(--canvas) 92%, var(--surface));
+  border-top: 1px solid var(--hairline);
+}
+.app-input-field {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  transition: background-color 150ms ease;
+}
+.app-input-field:hover {
+  background-color: var(--surface-alt);
+}
+.app-icon-btn {
+  color: var(--ink-soft);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 80ms ease;
+}
+.app-icon-btn:hover {
+  background-color: color-mix(in oklab, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+.app-icon-btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+/* 内容区 subtle 噪点（zed body noise 的轻量版） */
+.app-shell-noise {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+:root[data-theme='dark'] .app-shell-noise {
+  opacity: 0.012;
+}
+
 /* ─── Surface 材质类 — 柔面哑光（被 Surface 组件复用）───────────────────── */
 .surface {
   background: var(--surface);

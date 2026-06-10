@@ -1,6 +1,7 @@
 import { Search, Bell, User, Menu } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { FrameNode } from '@/components/FrameNode';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 type HeaderProps = {
@@ -8,50 +9,65 @@ type HeaderProps = {
   onMenuClick?: () => void;
 };
 
-/** 内容区顶部 chrome — 搜索 + 通知 + 头像 + 主题切换。跨 feature 复用纯展示组件。 */
+/** 内容区顶栏 — 全宽 h-[57px] 框架 + 搜索区 flex-1 撑满。 */
 export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
-      {onMenuClick ? (
+    <header className="app-chrome-header relative z-20 w-full shrink-0 border-b border-hairline [--node-horizontal-offset:-3.5px]">
+      <FrameNode pos="bottom-left" className="hidden lg:block" />
+      <FrameNode pos="bottom-right" className="hidden lg:block" />
+
+      <div className="flex h-[57px] w-full min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-5 lg:px-6">
+        {onMenuClick ? (
+          <button
+            type="button"
+            aria-label={navOpen ? '关闭导航菜单' : '打开导航菜单'}
+            aria-expanded={navOpen}
+            aria-haspopup="dialog"
+            className="app-icon-btn inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-hairline lg:hidden"
+            onClick={onMenuClick}
+          >
+            <Menu size={16} />
+          </button>
+        ) : null}
+
         <button
           type="button"
-          aria-label={navOpen ? '关闭导航菜单' : '打开导航菜单'}
-          aria-expanded={navOpen}
-          aria-haspopup="dialog"
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-hairline text-ink-soft hover:bg-surface-alt lg:hidden"
-          onClick={onMenuClick}
+          onClick={() => toast.info('搜索功能即将开放')}
+          className="app-input-field app-mono flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-hairline bg-surface/80 px-2.5 text-left text-ink-faint sm:px-3"
         >
-          <Menu size={18} />
-        </button>
-      ) : null}
-
-      <button
-        onClick={() => toast.info('搜索功能即将开放')}
-        className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full border border-hairline bg-surface px-3 text-left text-sm text-ink-faint transition-colors hover:bg-surface-alt sm:h-10 sm:max-w-md sm:px-4"
-      >
-        <Search size={16} className="shrink-0" />
-        <span className="truncate max-sm:sr-only">{t('header.searchPlaceholder')}</span>
-      </button>
-
-      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-        <ThemeToggle />
-        <button
-          onClick={() => toast.info('通知功能即将开放')}
-          className="relative flex size-9 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-surface-alt"
-        >
-          <Bell size={18} />
-          <span className="absolute top-2 right-2 size-2 rounded-full bg-peach" />
+          <Search size={14} className="shrink-0" />
+          <span className="truncate text-[12px] sm:text-[13px]">
+            <span className="sm:hidden">{t('header.searchShort', { defaultValue: '搜索' })}</span>
+            <span className="hidden sm:inline">{t('header.searchPlaceholder')}</span>
+          </span>
+          <span className="app-mono ml-auto hidden shrink-0 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline">
+            /
+          </span>
         </button>
 
-        <button
-          onClick={() => toast.info('个人空间即将开放')}
-          className="flex size-9 items-center justify-center rounded-full bg-lavender text-white transition-opacity hover:opacity-90"
-        >
-          <User size={18} />
-        </button>
+        <span aria-hidden className="hidden h-5 w-px shrink-0 bg-hairline sm:block" />
+
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md" iconSize={15} />
+          <button
+            type="button"
+            onClick={() => toast.info('通知功能即将开放')}
+            className="app-icon-btn relative inline-flex size-8 items-center justify-center rounded-md"
+          >
+            <Bell size={16} />
+            <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-peach" />
+          </button>
+          <button
+            type="button"
+            onClick={() => toast.info('个人空间即将开放')}
+            className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md bg-sidebar-bg text-sidebar-ink"
+          >
+            <User size={15} />
+          </button>
+        </div>
       </div>
-    </div>
+    </header>
   );
 }

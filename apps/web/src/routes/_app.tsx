@@ -29,14 +29,15 @@ function AppLayout() {
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-canvas lg:bg-sidebar-bg">
+    <div className="app-shell flex h-dvh overflow-hidden bg-canvas lg:bg-sidebar-bg">
       <Sidebar />
       <AppNavDrawer open={navOpen} onOpenChange={setNavOpen} />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas lg:rounded-l-[20px] lg:shadow-float">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas lg:rounded-l-2xl lg:shadow-float">
+        <div aria-hidden className="app-shell-noise" />
         <Header navOpen={navOpen} onMenuClick={() => setNavOpen((v) => !v)} />
 
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="relative z-[1] min-h-0 flex-1 overflow-auto">
           <Outlet />
         </div>
 
