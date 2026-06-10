@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LandingNavDrawer } from '@/components/LandingNavDrawer';
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ScanLine,
@@ -330,7 +331,7 @@ const NAV = [
   { href: '#about', label: '关于' },
 ];
 
-function Nav() {
+function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: () => void }) {
   return (
     <header
       className="lp-outer-node-offset sticky top-0 z-40 flex h-[57px] min-w-0 border-y sm:border-t-0"
@@ -369,15 +370,18 @@ function Nav() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md" iconSize={15} />
-          <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-3 py-1.5">
+          <Link to="/home" className="lp-btn lp-btn-primary hidden items-center rounded-md px-3 py-1.5 lg:inline-flex">
             <Mono className="text-[13px] font-medium">开始入住</Mono>
             <Key onDark>D</Key>
           </Link>
           <button
             type="button"
-            aria-label="打开菜单"
+            aria-label={drawerOpen ? '关闭导航菜单' : '打开导航菜单'}
+            aria-expanded={drawerOpen}
+            aria-haspopup="dialog"
             className="inline-flex size-8 items-center justify-center rounded-md border lg:hidden"
             style={{ borderColor: LINE }}
+            onClick={onMenuClick}
           >
             <Menu size={15} className="text-ink-soft" />
           </button>
@@ -1014,11 +1018,11 @@ const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
 ];
 
 /** 页脚底部装饰带：border-t + 45° 斜纹 + 渐隐水平刻线 + 描边 wordmark
-    （负 margin 伸出 container，由父级 overflow-clip 裁掉下缘）。 */
+    （负 margin 伸出 container，由父级 overflow-clip 裁掉下缘；移动端少裁切）。 */
 function FooterBand() {
   const id = useId().replace(/:/g, '');
   return (
-    <div className="relative col-span-full -mb-16 mt-4 flex w-full justify-center border-t py-6" style={{ borderColor: LP.footHair }}>
+    <div className="lp-footer-band relative col-span-full flex w-full justify-center border-t" style={{ borderColor: LP.footHair }}>
       <svg aria-hidden className="lp-footer-band-slash pointer-events-none absolute inset-0 size-full opacity-30">
         <defs>
           <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -1028,11 +1032,7 @@ function FooterBand() {
         <rect width="100%" height="100%" fill={`url(#${id})`} />
       </svg>
       <div aria-hidden className="lp-footer-band-ticks pointer-events-none absolute inset-0" />
-      <span
-        aria-hidden
-        className="lp-footer-wordmark block select-none font-bold leading-[0.85] tracking-tighter"
-        style={{ fontFamily: MONO, fontSize: 'clamp(4.5rem, 20vw, 17rem)' }}
-      >
+      <span aria-hidden className="lp-footer-wordmark block select-none font-bold leading-[0.85] tracking-tighter">
         vidorra
       </span>
     </div>
@@ -1061,7 +1061,7 @@ function Footer() {
       <div className="lp-container-max-w relative z-[1] max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
         <Node pos="top-left" className="hidden lg:block" />
         <Node pos="top-right" className="hidden lg:block" />
-        <div className="relative isolate size-full overflow-clip">
+        <div className="lp-footer-clip relative isolate size-full overflow-clip">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-4 lg:grid-cols-6 lg:gap-6 lg:divide-x lg:divide-[var(--lp-footer-divide)]">
             {/* 第 1 列：品牌 + 短 hr + 法务 */}
             <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
@@ -1107,11 +1107,18 @@ function Footer() {
 // ─── 页面 ──────────────────────────────────────────────────────────────────────
 
 function LandingPage() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   return (
-    <div className="min-h-screen overflow-x-clip bg-canvas text-ink">
-      <Nav />
-      {/* isolate：内容里的 z-50 节点只在 main 内比较，不会盖过 sticky 顶栏 */}
-      <main className="isolate">
+    <div className="lp-drawer-root relative min-h-screen overflow-clip">
+      <LandingNavDrawer open={drawerOpen} onOpenChange={setDrawerOpen} items={NAV} />
+      <div
+        className="lp-drawer-shell min-h-screen overflow-x-clip bg-canvas text-ink"
+        data-drawer-active={drawerOpen ? '' : undefined}
+      >
+        <Nav drawerOpen={drawerOpen} onMenuClick={() => setDrawerOpen((v) => !v)} />
+        {/* isolate：内容里的 z-50 节点只在 main 内比较，不会盖过 sticky 顶栏 */}
+        <main className="isolate">
         <SectionFrame {...RAILS.intro}>
           <Announce />
         </SectionFrame>
@@ -1156,6 +1163,7 @@ function LandingPage() {
         </SectionFrame>
         <Footer />
       </main>
+      </div>
     </div>
   );
 }
