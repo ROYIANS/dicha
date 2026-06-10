@@ -1,5 +1,7 @@
 # vidorra self-hosted stack
 # Quick start:  ./deploy.sh   (Linux/macOS)  or  .\deploy.ps1   (Windows)
+# Re-run anytime to upgrade: stops containers, no-cache rebuild, recreates (DB kept).
+# Blank slate:  ./deploy.sh --fresh   or   .\deploy.ps1 -Fresh
 
 services:
   postgres:

@@ -16,8 +16,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "deploy": "docker compose up -d --build",
-    "deploy:down": "docker compose down",
+    "deploy": "docker compose down --remove-orphans && docker image prune -f && docker compose build --no-cache && docker compose up -d --force-recreate --remove-orphans",
+    "deploy:fresh": "docker compose down -v --remove-orphans && docker image prune -f && docker compose build --no-cache && docker compose up -d --force-recreate --remove-orphans",
+    "deploy:down": "docker compose down --remove-orphans",
     "deploy:logs": "docker compose logs -f"
   },
   "devDependencies": {

@@ -3,13 +3,19 @@
 .SYNOPSIS
   One-click self-hosted deploy for vidorra (Docker Compose).
 
+.DESCRIPTION
+  Safe to run repeatedly:
+  - First run: creates .env, builds images, starts stack (empty DB volume).
+  - Later runs: stops containers, rebuilds without cache, recreates services (DB volume kept).
+  - Use -Fresh to wipe volumes too (blank database).
+
 .EXAMPLE
   .\deploy.ps1
-  .\deploy.ps1 -Rebuild
+  .\deploy.ps1 -Fresh
   .\deploy.ps1 -Down
 #>
 param(
-    [switch]$Rebuild,
+    [switch]$Fresh,
     [switch]$Down,
     [switch]$Logs
 )
@@ -43,7 +49,7 @@ try {
 
 if ($Down) {
     Write-Step "Stopping vidorra stack…"
-    docker compose down
+    docker compose down --remove-orphans
     exit 0
 }
 
@@ -72,22 +78,32 @@ foreach ($line in $envLines) {
 
 $webPort = if ($env:WEB_PORT) { $env:WEB_PORT } else { '8080' }
 
-$composeArgs = @('compose', 'up', '-d', '--remove-orphans')
-if ($Rebuild -or -not (docker compose ps -q api 2>$null)) {
-    $composeArgs += '--build'
+if ($Fresh) {
+    Write-WarnStep "Fresh deploy: removing containers and volumes (database will be wiped)…"
+    docker compose down -v --remove-orphans
+} else {
+    Write-Step "Stopping existing containers (keeping database volume)…"
+    docker compose down --remove-orphans
 }
 
-Write-Step "Building images and starting stack…"
-& docker @composeArgs
+Write-Step "Removing dangling images from previous builds…"
+docker image prune -f | Out-Null
+
+Write-Step "Building api + web images (no cache)…"
+docker compose build --no-cache
+if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed" }
+
+Write-Step "Starting stack with recreated containers…"
+docker compose up -d --force-recreate --remove-orphans
 if ($LASTEXITCODE -ne 0) { Fail "docker compose up failed" }
 
 Write-Step "Waiting for services…"
-$deadline = (Get-Date).AddMinutes(3)
+$deadline = (Get-Date).AddMinutes(5)
 while ((Get-Date) -lt $deadline) {
     $ps = docker compose ps --format json 2>$null
     if ($ps -match '"Health":"unhealthy"') {
         docker compose ps
-        Fail "Unhealthy service. Run: docker compose logs"
+        Fail "Unhealthy service. Run: .\deploy.ps1 -Logs"
     }
     if ($ps -notmatch '"Health":"starting"') { break }
     Start-Sleep -Seconds 3
@@ -99,7 +115,7 @@ Write-Host "  App:  http://localhost:${webPort}/"
 Write-Host "  API:  http://localhost:${webPort}/api/health"
 Write-Host ""
 Write-Host "Useful commands:"
+Write-Host "  .\deploy.ps1            # upgrade redeploy (keeps DB)"
+Write-Host "  .\deploy.ps1 -Fresh     # wipe DB + redeploy from scratch"
 Write-Host "  .\deploy.ps1 -Logs      # follow logs"
-Write-Host "  docker compose ps       # service status"
 Write-Host "  .\deploy.ps1 -Down      # stop stack"
-Write-Host "  .\deploy.ps1 -Rebuild   # force rebuild images"
