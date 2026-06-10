@@ -57,10 +57,10 @@ const LP = {
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
 const FEATURES: { id: string; code: string; icon: LucideIcon; title: string; body: string }[] = [
-  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照、说话、扫码，自动识别。把一件东西放进 vidorra，更像往房间里摆一件摆设，而不是填一张表。' },
-  { id: 'poem', code: 'F.02', icon: Feather, title: '物品有诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
-  { id: 'dust', code: 'F.03', icon: Wind, title: '落灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
-  { id: 'zimomo', code: 'F.04', icon: MessageSquareText, title: '齐默默', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
+  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进 vidorra，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
+  { id: 'poem', code: 'F.02', icon: Feather, title: '物品会自己长出一句诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
+  { id: 'dust', code: 'F.03', icon: Wind, title: '旧了的东西，会落一点灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
+  { id: 'zimomo', code: 'F.04', icon: MessageSquareText, title: '齐默默在旁边，不催你', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
 ];
 
 const MARQUEE_ITEMS = [
@@ -78,30 +78,30 @@ const SPECS: { k: string; v: string }[] = [
 ];
 
 const ROOMS: { id: string; no: string; icon: LucideIcon; label: string; caption: string; tint: string }[] = [
-  { id: 'wardrobe', no: '01', icon: Shirt, label: '衣橱', caption: '每一件衣服，都是一种心情。', tint: 'lavender' },
-  { id: 'library', no: '02', icon: BookOpen, label: '书房', caption: '书和时间，都会留下来。', tint: 'peach' },
-  { id: 'storage', no: '03', icon: Package, label: '杂物间', caption: '装着「以后会用上」的宝藏。', tint: 'sage' },
-  { id: 'fridge', no: '04', icon: Refrigerator, label: '冰箱', caption: '新鲜与过期，都值得被记得。', tint: 'mist' },
-  { id: 'meds', no: '05', icon: Pill, label: '药盒', caption: '照顾好身体，才走得更远。', tint: 'pink' },
+  { id: 'wardrobe', no: '01', icon: Shirt, label: '衣橱', caption: '每一件，都连着某一天的心情。', tint: 'lavender' },
+  { id: 'library', no: '02', icon: BookOpen, label: '书房', caption: '书放着，时间好像也慢一点。', tint: 'peach' },
+  { id: 'storage', no: '03', icon: Package, label: '杂物间', caption: '「以后用得上」，是家里最温柔的理由。', tint: 'sage' },
+  { id: 'fridge', no: '04', icon: Refrigerator, label: '冰箱', caption: '新鲜的、快过期的，都值得看一眼。', tint: 'mist' },
+  { id: 'meds', no: '05', icon: Pill, label: '药盒', caption: '不生病的时候，也记得打开看看。', tint: 'pink' },
   { id: 'more', no: '06', icon: PlusIcon, label: '更多房间', caption: '未来，还会有更多。', tint: '' },
 ];
 
 const PRINCIPLES: { t: string; d: string }[] = [
-  { t: '不催促', d: '没有红色待办，没有「还差几件」。' },
-  { t: '不评判', d: '凌乱也好，留白也好，都被允许。' },
-  { t: '不丢弃', d: '落灰可以拂去，也可以让它停着。' },
-  { t: '只是陪着', d: '齐默默在你需要时，才轻声出现。' },
+  { t: '不催促', d: '没有红色的小红点。' },
+  { t: '不评判', d: '乱一点，也没关系。' },
+  { t: '不丢弃', d: '灰可以擦，也可以让它落着。' },
+  { t: '只是陪着', d: '你需要的时候，它才轻轻说一句。' },
 ];
 
 const EXTRAS: { t: string; d: string }[] = [
-  { t: '全文搜索', d: '一秒找到任何一件东西' },
-  { t: '到期提醒', d: '药品、食物、借出，不再忘记' },
-  { t: '空间统计', d: '看清每个房间的占用' },
-  { t: '多端同步', d: '网页与手机，实时一致' },
-  { t: '心情记录', d: '记物，也记此刻的心情' },
-  { t: '随时导出', d: '你的数据，始终属于你' },
-  { t: '落灰提醒', d: '温柔提示久未打理的角落' },
-  { t: '数据私有', d: '默认私密，安心收存' },
+  { t: '全文搜索', d: '哪怕只记得一个字，也能找到。' },
+  { t: '到期提醒', d: '药、食物、借出去的书，不容易忘。' },
+  { t: '空间统计', d: '每个房间住了多少东西，看一眼就知道。' },
+  { t: '多端同步', d: '手机和网页，总是同一本账。' },
+  { t: '心情记录', d: '记东西的时候，也记下今天的心情。' },
+  { t: '随时导出', d: '你的东西，永远是你的。' },
+  { t: '落灰提醒', d: '很久没碰的东西，它会轻轻说一声。' },
+  { t: '数据私有', d: '默认只有你自己能看到。' },
 ];
 
 // ─── 工业装饰原子 ──────────────────────────────────────────────────────────────
@@ -513,11 +513,11 @@ function Hero() {
       <div aria-hidden className="lp-hero-gradient pointer-events-none absolute inset-0" />
       <HeroArt />
       <Reveal className="relative z-10">
-        <h1 className="mx-auto max-w-[20ch] font-medium leading-[1.05] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
-          让万物，各归其位。
+        <h1 className="mx-auto max-w-[16ch] font-medium leading-[1.05] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
+          物有所安
         </h1>
-        <p className="mx-auto mt-6 max-w-[42ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
-          vidorra 是一套为「物」而生的收纳系统 —— 把琐碎的记录，变成安心的布置。每一件东西，都在这里被看见、被记得。
+        <p className="mx-auto mt-6 max-w-[32ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
+          一个安静的角落，记着每一件东西。
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-4 py-2.5">
@@ -592,7 +592,7 @@ function Marquee() {
   );
   return (
     <section className="py-7">
-      <Mono className="mb-3 block px-6 text-center text-[11px] tracking-[0.2em] text-ink-faint sm:px-10">此刻，正被收进 vidorra 的物件</Mono>
+      <Mono className="mb-3 block px-6 text-center text-[11px] tracking-[0.2em] text-ink-faint sm:px-10">刚刚，有人收进了这些——</Mono>
       <div
         className="overflow-hidden border-y py-2.5"
         style={{ borderColor: LINE, maskImage: 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)' }}
@@ -617,7 +617,7 @@ function FeatureTabs() {
       <div className="flex flex-col gap-5 px-6 py-10 sm:px-10 lg:flex-row lg:items-end lg:justify-between" style={{ borderBottom: `1px solid ${LINE}` }}>
         <hgroup className="max-w-2xl">
           <Mono className="text-[12px] text-lp-brand">// 功能</Mono>
-          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink" style={{ textWrap: 'balance' }}>记录不像打卡，更像布置房间。</h2>
+          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink" style={{ textWrap: 'balance' }}>记录，不是完成任务，是慢慢地归置。</h2>
         </hgroup>
         <a href="#demo" className="lp-btn lp-btn-ghost inline-flex h-9 w-fit items-center gap-1 rounded-md pl-3 pr-2">
           <Mono className="text-[13px]">看完整演示</Mono>
@@ -774,7 +774,7 @@ function Demo() {
           <Mono className="text-[12px] text-ink">亲手试试</Mono>
         </Link>
         <AppWindow />
-        <Mono className="mt-4 block text-center text-[12px] text-ink-faint">fig. 01 — 「小窝」总览：记录、提醒、空间，一屏掌握。</Mono>
+        <Mono className="mt-4 block text-center text-[12px] text-ink-faint">一眼看过去，房间、物品、还有那些怕忘记的小事，都在这里了。</Mono>
       </Reveal>
     </section>
   );
@@ -797,8 +797,8 @@ function AppWindow() {
           {[0, 1, 2, 3].map((k) => (<span key={k} className="h-7 w-7 rounded-lg" style={{ backgroundColor: 'var(--sidebar-hover)' }} />))}
         </div>
         <div className="flex-1 overflow-hidden p-7">
-          <div className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>早安，Serena</div>
-          <Mono className="mt-0.5 block text-[11px] text-ink-faint">有序的空间，安定的心。</Mono>
+          <div className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>早，Serena。</div>
+          <Mono className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里好像也静了一点。</Mono>
           <div className="mt-6 grid grid-cols-4 gap-3">
             {chips.map((c, i) => (
               <div key={i} className="rounded-xl p-3" style={{ border: `1px solid var(--hairline)`, backgroundColor: 'var(--surface)' }}>
@@ -842,7 +842,7 @@ function Rooms() {
       <div className="flex items-end justify-between px-8 py-9">
         <div>
           <Mono className="text-[12px] text-lp-brand">// 房间</Mono>
-          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">为不同的物，备不同的处。</h2>
+          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">每样东西，都有自己的房间。</h2>
         </div>
         <Mono className="hidden text-[12px] text-ink-faint sm:block">06 间</Mono>
       </div>
@@ -889,14 +889,14 @@ function Principles() {
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
           <GridPattern />
           <Mono className="text-[12px] text-lp-brand">// 为什么</Mono>
-          <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.6rem,3.2vw,2.5rem)' }}>
-            这不是一份清单，而是 <Mark tint="peach">生活的另一种模样</Mark>。每件物品不只是一行数字，
-            而是一个 <Mark tint="lavender">有重量的存在</Mark> —— 你录入一件衬衫，它会变成衣橱里的一抹颜色；
-            一本搁置三年的书，会慢慢落上时间的灰。
+          <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.55rem,3.2vw,2.65rem)' }}>
+            东西不是数字，也不该只是清单上的一行字。你录入一件衬衫，它会变成衣橱里<Mark tint="lavender">一抹蓝</Mark>——挂在那里，连着某一天的心情；那本三年没翻的书，边上真的<Mark tint="mist">落了灰</Mark>，摸得到，也懒得解释为什么还留着。
           </p>
-          <p className="mt-6 max-w-[52ch] text-[14px] leading-loose text-ink-soft">
-            它不催你「还有几本没读」，只是安静地承认：日子，确实过去了。vidorra 想做的，
-            是让每一件东西都有归处，也让你在其中，慢慢住下来。
+          <p className="mt-6 max-w-[40ch] text-[13px] leading-relaxed text-ink-soft">
+            没有人催你「还剩几本没读」。日子就这么过去了。
+          </p>
+          <p className="mt-2 max-w-[40ch] text-[13px] leading-relaxed text-ink-soft">
+            它只是<Mark tint="peach">替你记得</Mark>。留一个慢慢住下来的地方。
           </p>
         </Reveal>
 
@@ -979,10 +979,12 @@ function AuthorLetter() {
       </div>
       <Reveal className="relative px-8 py-12 lg:col-span-8">
         <div className="pointer-events-none absolute inset-y-0 left-0 hidden border-l border-dashed lg:block" style={{ borderColor: LINE }} />
-        <p className="text-[clamp(1.15rem,2.2vw,1.5rem)] leading-loose text-ink" style={{ fontFamily: SERIF }}>
-          我们总在 <Mark tint="mist">整理</Mark> 和 <Mark tint="pink">凌乱</Mark> 之间反复，却很少问自己：那些东西，对我究竟意味着什么。
-          vidorra 想做的，不是又一个让你更自律的工具，而是一个安静的角落 —— 让每一件物品都有归处，也让你在其中，慢慢住下来。
-        </p>
+        <blockquote className="text-[clamp(1.15rem,2.2vw,1.5rem)] leading-loose text-ink" style={{ fontFamily: SERIF }}>
+          <p>「有时候收拾，有时候乱着。很少问自己：<Mark tint="mist">这些东西，为什么还留着？</Mark>」</p>
+          <p className="mt-5">
+            「vidorra 不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
+          </p>
+        </blockquote>
         <Mono className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于 vidorra 的第一个清晨</Mono>
       </Reveal>
     </section>
@@ -995,8 +997,8 @@ function FinalCTA() {
   return (
     <section className="relative px-8 py-24 text-center">
       <Reveal>
-        <h2 className="font-medium leading-tight text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推门进去。</h2>
-        <p className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft" style={{ textWrap: 'balance' }}>在生活里，留一处安静的地方，让自己住下来。</p>
+        <h2 className="font-medium leading-tight text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推开门，进来坐坐。</h2>
+        <p className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft" style={{ textWrap: 'balance' }}>在忙忙碌碌的日子里，给自己留一个安静的、住得下来的地方。</p>
         <div className="mt-9 flex items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-5 py-3">
             <Mono className="text-[15px] font-medium">开始入住</Mono>
