@@ -1,11 +1,12 @@
 #!/bin/sh
 set -eu
 
-cd /app
+API_DIR=/app/apps/api
+export PATH="/app/node_modules/.bin:${API_DIR}/node_modules/.bin:${PATH}"
 
 echo "[vidorra] applying database migrations…"
-pnpm --filter @vidorra/api run prisma:deploy
+cd "$API_DIR"
+prisma migrate deploy
 
 echo "[vidorra] starting api…"
-cd /app/apps/api
 exec node dist/main.js
