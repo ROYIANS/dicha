@@ -15,6 +15,7 @@ import {
   ArrowRight,
   ChevronRight,
   Search,
+  Menu,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -42,7 +43,6 @@ const SERIF = "'Noto Serif SC', serif";
 
 const BROWN = '#2e2a26'; // = --sidebar-bg / --ink：实色块、按钮、页脚
 const ACCENT = '#7a6248'; // 暖核桃棕：小标签 / 高亮字 / 图标
-const ACCENT_DEEP = '#3a352f';
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
 const CREAM = '#f3efe8';
@@ -99,13 +99,24 @@ const EXTRAS: { t: string; d: string }[] = [
 
 // ─── 工业装饰原子 ──────────────────────────────────────────────────────────────
 
-/** 菱形节点（Zed 式 rotate-45 方块），吸附线条交点。 */
-function Node({ className = '' }: { className?: string }) {
+/** 菱形节点（Zed 式 rotate-45 方块）：6px、无 translate，显式 offset 骑线。
+    垂直：top/bottom = -var(--node-vertical-offset)（中心压在 1px 分界线中心）；
+    水平：left/right = var(--node-horizontal-offset)（外侧对走 .lp-outer-node-offset
+    断点值，container 内侧对由父级 [--node-horizontal-offset:-3.5px] 覆盖）。 */
+type NodePos = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+function Node({ pos, className = '' }: { pos: NodePos; className?: string }) {
+  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
   return (
     <span
       aria-hidden
-      className={`pointer-events-none absolute z-30 size-[7px] -translate-x-1/2 -translate-y-1/2 rotate-45 border ${className}`}
-      style={{ borderColor: LINE, backgroundColor: 'var(--canvas)' }}
+      className={`pointer-events-none absolute z-50 size-1.5 rotate-45 border ${className}`}
+      style={{
+        borderColor: LINE,
+        backgroundColor: 'var(--canvas)',
+        [v]: 'calc(-1 * var(--node-vertical-offset))',
+        [h]: 'var(--node-horizontal-offset)',
+      }}
     />
   );
 }
@@ -113,11 +124,12 @@ function Node({ className = '' }: { className?: string }) {
 /** 斜线舱壁分隔（Zed divider-slash）：上下细线全幅贯穿视口 + 容器内 45° 斜纹。 */
 function Slash() {
   const id = useId().replace(/:/g, '');
+  // 上沿 1px 线画在元素内部（top:0..1），骑线中心在 0.5px → 垂直 offset 改 2.5px
   return (
-    <div className="relative h-3.5 w-full">
+    <div className="relative h-3.5 w-full" style={{ '--node-vertical-offset': '2.5px' } as CSSProperties}>
       <div aria-hidden className="absolute left-1/2 top-0 h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
       <div aria-hidden className="absolute bottom-0 left-1/2 h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
-      <svg aria-hidden className="absolute inset-0 size-full" style={{ opacity: 0.45, color: RULE }}>
+      <svg aria-hidden className="absolute inset-x-0 bottom-[1px] top-[1px] w-full" style={{ opacity: 0.45, color: RULE }}>
         <defs>
           <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
@@ -125,8 +137,8 @@ function Slash() {
         </defs>
         <rect width="100%" height="100%" fill={`url(#${id})`} />
       </svg>
-      <Node className="left-0 top-0" />
-      <Node className="right-0 top-0" />
+      <Node pos="top-left" />
+      <Node pos="top-right" />
     </div>
   );
 }
@@ -136,10 +148,11 @@ function HRule() {
   return <div className="w-full border-t border-dashed" style={{ borderColor: LINE }} />;
 }
 
-/** 侧沟分段标尺：一条被切成不等段的竖线，部分实段部分虚段。 */
-function Ruler({ segs }: { segs: { f: number; dash?: boolean }[] }) {
+/** 侧沟分段标尺：一条被切成不等段的竖线，部分实段部分虚段。
+    zed 式贴边：1px 线压在 rail 的内边界上（side 边 -0.5px，线中心 = 边界）。 */
+function Ruler({ segs, side, color = RULE }: { segs: { f: number; dash?: boolean }[]; side: 'left' | 'right'; color?: string }) {
   return (
-    <div aria-hidden className="absolute inset-y-0 left-1/2 flex -translate-x-1/2 flex-col" style={{ width: 1, color: RULE }}>
+    <div aria-hidden className="absolute inset-y-0 flex flex-col" style={{ width: 1, color, [side]: -0.5 }}>
       {segs.map((s, i) => (
         <div
           key={i}
@@ -157,18 +170,29 @@ function Ruler({ segs }: { segs: { f: number; dash?: boolean }[] }) {
   );
 }
 
-/** 条码刻线纹（Zed 侧沟里不等宽水平 rect 的 pattern）：贴在侧沟边缘。 */
-function Barcode({ className = '', flip = false }: { className?: string; flip?: boolean }) {
+/** 条码刻线纹（Zed 侧沟里不等宽水平 rect 的 pattern）：放在弹性 rail 内、
+    贴 container 边缘（rail="left" 表示位于左侧弹性 rail → 贴自己的右边）。 */
+function Barcode({ rail, color = RULE }: { rail: 'left' | 'right'; color?: string }) {
+  const id = useId().replace(/:/g, '');
   // 伪随机但确定：避免每次渲染抖动
   const rows = Array.from({ length: 22 }, (_, i) => ({
     y: i * 9,
     w: 9 + ((i * 7919 + 13) % 15),
   }));
   return (
-    <svg aria-hidden className={`pointer-events-none absolute ${className}`} width="32" height="198" style={{ color: RULE }}>
-      {rows.map((r, i) => (
-        <rect key={i} x={flip ? 0 : 32 - r.w} y={r.y} width={r.w} height="1" fill="currentColor" />
-      ))}
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute inset-y-0 h-full w-8"
+      style={{ color, [rail === 'left' ? 'right' : 'left']: -1 }}
+    >
+      <defs>
+        <pattern id={id} width="32" height="198" patternUnits="userSpaceOnUse">
+          {rows.map((r, i) => (
+            <rect key={i} x={rail === 'left' ? 32 - r.w : 0} y={r.y} width={r.w} height="1" fill="currentColor" />
+          ))}
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
     </svg>
   );
 }
@@ -299,53 +323,79 @@ const NAV = [
 function Nav() {
   return (
     <header
-      className="sticky top-0 z-40"
+      className="lp-outer-node-offset sticky top-0 z-40 flex h-[57px] min-w-0 border-y sm:border-t-0"
       style={{
+        borderColor: LINE,
         backgroundColor: 'color-mix(in oklab, var(--canvas) 82%, transparent)',
         backdropFilter: 'saturate(160%) blur(14px)',
         WebkitBackdropFilter: 'saturate(160%) blur(14px)',
-        borderBottom: `1px solid ${LINE}`,
       }}
     >
-      <div className="mx-auto flex h-14 max-w-[1240px] items-center justify-between px-6">
-        <a href="#top" className="flex items-center gap-2">
-          <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: BROWN, color: '#f7f4ef' }}>v</span>
-          <Mono className="text-[15px] font-semibold tracking-tight text-ink">vidorra</Mono>
-        </a>
-        <nav className="hidden items-center gap-7 md:flex">
-          {NAV.map((n) => (
-            <a key={n.href} href={n.href}>
-              <Mono className="text-[13px] text-ink-soft transition-colors hover:text-ink">{n.label}</Mono>
-            </a>
-          ))}
-        </nav>
+      {/* 外侧节点对：骑 header 自己的 border-b，跟随 sticky，z 高于 nav 背景 */}
+      <Node pos="bottom-left" className="hidden lg:block" />
+      <Node pos="bottom-right" className="hidden lg:block" />
+
+      {/* 五段 rail 框架（header 区 rail 用实线） */}
+      <span aria-hidden className="w-4 shrink-0 border-r sm:w-6 md:w-12 lg:border-r-0" style={{ borderColor: LINE }} />
+      <span aria-hidden className="hidden flex-1 border-x lg:block" style={{ borderColor: LINE }} />
+
+      <nav className="lp-container-max-w relative isolate z-[2] flex max-md:min-w-0 flex-1 items-center justify-between gap-4 px-3 [--node-horizontal-offset:-3.5px] lg:gap-0 lg:px-3.5">
+        {/* container 内侧节点对：压 container 边线 × header 底线，常显 */}
+        <Node pos="bottom-left" />
+        <Node pos="bottom-right" />
+
+        <div className="flex min-w-0 items-center gap-4">
+          <a href="#top" className="flex shrink-0 items-center gap-2">
+            <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: BROWN, color: '#f7f4ef' }}>v</span>
+            <Mono className="text-[15px] font-semibold tracking-tight text-ink">vidorra</Mono>
+          </a>
+          <div className="hidden items-center gap-0.5 lg:flex">
+            {NAV.map((n) => (
+              <a key={n.href} href={n.href} className="lp-nav-link inline-flex h-8 items-center rounded-md px-2.5">
+                <Mono className="text-[13px]">{n.label}</Mono>
+              </a>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-3">
-          <span className="hidden items-center gap-1.5 rounded-md px-2 py-1 sm:flex" style={{ border: `1px solid ${LINE}` }}>
+          <span className="hidden items-center gap-1.5 rounded-md px-2 py-1 sm:flex" style={{ border: `1px solid ${LINE}`, backgroundColor: 'color-mix(in oklab, var(--surface) 50%, transparent)' }}>
             <Search size={12} className="text-ink-faint" />
             <Mono className="text-[11px] text-ink-faint">⌘K</Mono>
           </span>
+          <span aria-hidden className="hidden h-5 w-px sm:block" style={{ backgroundColor: LINE }} />
           <Link to="/home"><Mono className="text-[13px] text-ink-soft transition-colors hover:text-ink">登录</Mono></Link>
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-3 py-1.5">
             <Mono className="text-[13px] font-medium">开始入住</Mono>
             <Key onDark>D</Key>
           </Link>
+          <button
+            type="button"
+            aria-label="打开菜单"
+            className="inline-flex size-8 items-center justify-center rounded-md border lg:hidden"
+            style={{ borderColor: LINE }}
+          >
+            <Menu size={15} className="text-ink-soft" />
+          </button>
         </div>
-      </div>
+      </nav>
+
+      <span aria-hidden className="hidden flex-1 border-x lg:block" style={{ borderColor: LINE }} />
+      <span aria-hidden className="w-4 shrink-0 border-l sm:w-6 md:w-12 lg:border-l-0" style={{ borderColor: LINE }} />
     </header>
   );
 }
 
-/** 公告光带（Zed Introducing 行）：横向渐变高亮 + serif 前缀，整行可点。 */
+/** 公告光带（Zed Introducing 行）：横向渐变 + hover 整行高亮，整行可点。 */
 function Announce() {
   return (
     <a
       href="#author"
-      className="group relative block py-2.5 text-center"
-      style={{
-        background: 'linear-gradient(to right, transparent, color-mix(in oklab, var(--chip-peach) 75%, transparent), transparent)',
-        borderBottom: `1px solid ${LINE}`,
-      }}
+      className="lp-intro-banner group relative block py-2.5 text-center"
+      style={{ '--node-vertical-offset': '2.5px' } as CSSProperties}
     >
+      <span aria-hidden className="absolute bottom-0 left-1/2 block h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
+      <Node pos="bottom-left" className="hidden lg:block" />
+      <Node pos="bottom-right" className="hidden lg:block" />
       <span className="text-[13px] tracking-wide" style={{ fontFamily: SERIF, color: ACCENT }}>新功能：</span>
       <span className="text-[13px] font-medium tracking-wide text-ink" style={{ fontFamily: SERIF }}>齐默默 —— 不催促的物品管家</span>
       <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">→</span>
@@ -353,40 +403,106 @@ function Announce() {
   );
 }
 
-// ─── 主框：左右标尺侧沟 + 中央内容（角部菱形节点）────────────────────────────────
+// ─── 主框：全幅五段（窄 rail / 弹性 rail / 中央 container / 弹性 rail / 窄 rail）
+// zed 并非每段左右都有刻度——各 section 的 rail 装饰组合不同，由 props 逐段配置。
 
-function Frame({ children }: { children: ReactNode }) {
+type RulerSeg = { f: number; dash?: boolean };
+type FlexRail = { ruler?: RulerSeg[]; barcode?: boolean };
+
+function SectionFrame({
+  children,
+  className = '',
+  tracks = false,
+  leftNarrow,
+  leftFlex,
+  rightFlex,
+  rightNarrow,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** 仅显示 rail 轨道边线（header 式实线框），不渲染分段刻度 */
+  tracks?: boolean;
+  leftNarrow?: RulerSeg[];
+  leftFlex?: FlexRail;
+  rightFlex?: FlexRail;
+  rightNarrow?: RulerSeg[];
+}) {
+  const trackBorder = tracks ? { borderColor: LINE } : undefined;
   return (
-    <div className="mx-auto flex w-full max-w-[1240px]">
-      {/* 左侧沟 */}
-      <div className="relative w-5 shrink-0 sm:w-8 md:w-12" style={{ borderRight: `1px dashed ${LINE}` }}>
-        <Ruler segs={[{ f: 1.3 }, { f: 4.6 }, { f: 4.8, dash: true }, { f: 2.4 }, { f: 3.1 }]} />
-      </div>
+    <div className={`lp-outer-node-offset relative flex w-full min-w-0 ${className}`}>
+      <span
+        className={`relative w-4 shrink-0 sm:w-6 md:w-12 ${tracks ? 'border-r lg:border-r-0' : ''}`}
+        style={trackBorder}
+      >
+        {leftNarrow && <Ruler side="right" segs={leftNarrow} />}
+      </span>
+      <span className={`relative hidden flex-1 lg:block ${tracks ? 'border-x' : ''}`} style={trackBorder}>
+        {leftFlex?.ruler && <Ruler side="right" segs={leftFlex.ruler} />}
+        {leftFlex?.barcode && <Barcode rail="left" />}
+      </span>
 
-      {/* 中央内容 */}
-      <div className="relative min-w-0 flex-1">
-        <Node className="left-0 top-0" />
-        <Node className="right-0 top-0" />
-        <Node className="bottom-0 left-0" />
-        <Node className="bottom-0 right-0" />
-        {children}
-      </div>
+      <div className="lp-container-max-w relative max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">{children}</div>
 
-      {/* 右侧沟 */}
-      <div className="relative w-5 shrink-0 sm:w-8 md:w-12" style={{ borderLeft: `1px dashed ${LINE}` }}>
-        <Ruler segs={[{ f: 2.4 }, { f: 2.9 }, { f: 2.1, dash: true }, { f: 3.8 }, { f: 4.2 }]} />
-      </div>
+      <span className={`relative hidden flex-1 lg:block ${tracks ? 'border-x' : ''}`} style={trackBorder}>
+        {rightFlex?.ruler && <Ruler side="left" segs={rightFlex.ruler} />}
+        {rightFlex?.barcode && <Barcode rail="right" />}
+      </span>
+      <span
+        className={`relative w-4 shrink-0 sm:w-6 md:w-12 ${tracks ? 'border-l lg:border-l-0' : ''}`}
+        style={trackBorder}
+      >
+        {rightNarrow && <Ruler side="left" segs={rightNarrow} />}
+      </span>
     </div>
   );
 }
+
+type SectionRails = Omit<Parameters<typeof SectionFrame>[0], 'children'>;
+
+/** 各 section 的 rail 装饰预设（对照 zed：hero 才有条码，多数段仅一侧 flex 标尺 + 对侧窄 rail）。 */
+const RAILS = {
+  /** intro banner：五段轨道框，无刻度线 */
+  intro: { tracks: true },
+  hero: {
+    leftNarrow: [{ f: 1.3 }, { f: 4.6, dash: true }, { f: 2.4 }],
+    leftFlex: { ruler: [{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.7 }], barcode: true },
+    rightFlex: { ruler: [{ f: 2.9, dash: true }, { f: 1.6 }, { f: 1.9, dash: true }, { f: 3.2 }], barcode: true },
+    rightNarrow: [{ f: 2.4 }, { f: 2.9, dash: true }, { f: 3.8 }],
+  },
+  marquee: {
+    leftNarrow: [{ f: 1.7, dash: true }, { f: 3.2 }, { f: 2.1 }],
+    leftFlex: { ruler: [{ f: 2.2 }, { f: 4.1, dash: true }] },
+    rightFlex: { ruler: [{ f: 2.2 }, { f: 4.1, dash: true }] },
+    rightNarrow: [{ f: 3.1 }, { f: 1.8 }],
+  },
+  standard: {
+    leftNarrow: [{ f: 2.6 }, { f: 3.3, dash: true }],
+    leftFlex: { ruler: [{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.6 }] },
+    rightFlex: { ruler: [{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.6 }] },
+    rightNarrow: [{ f: 2.6 }, { f: 3.3, dash: true }],
+  },
+  leftHeavy: {
+    leftNarrow: [{ f: 2.0 }, { f: 3.5, dash: true }],
+    leftFlex: { ruler: [{ f: 2.4 }, { f: 4.0 }] },
+    rightFlex: { ruler: [{ f: 2.4 }, { f: 4.0 }] },
+    rightNarrow: [{ f: 1.9, dash: true }, { f: 3.2 }],
+  },
+  minimal: {
+    leftNarrow: [{ f: 4.0 }, { f: 2.2, dash: true }],
+    rightNarrow: [{ f: 4.0 }, { f: 2.2, dash: true }],
+  },
+  /** 无轨道无刻度（收尾 CTA 等） */
+  bare: {},
+} as const satisfies Record<string, SectionRails>;
 
 // ─── Hero ──────────────────────────────────────────────────────────────────────
 
 function Hero() {
   return (
-    <section id="top" className="relative px-6 pb-24 pt-20 text-center sm:pt-28">
+    <section id="top" className="relative isolate overflow-clip px-6 pb-24 pt-20 text-center sm:pt-28">
+      {/* hero 底：暖色渐变（zed 层次：from/10 via/40）→ 网格叠上 */}
+      <div aria-hidden className="lp-hero-gradient pointer-events-none absolute inset-0" />
       <HeroArt />
-      <Barcode className="-right-[33px] top-24 hidden md:block" flip />
       <Reveal className="relative z-10">
         <h1 className="mx-auto max-w-[20ch] font-medium leading-[1.05]" style={{ fontFamily: SERIF, color: BROWN, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
           让万物，各归其位。
@@ -411,12 +527,24 @@ function Hero() {
   );
 }
 
-/** Hero 底景：细网格自底渐隐 + 慢旋嵌套方块水印（Zed hero 的对应物，无图片）。 */
+/** Hero 底景：细网格（zed opacity-8 层次，vidorra 暖棕线色）+ 慢旋嵌套方块水印。 */
 function HeroArt() {
   const squares = Array.from({ length: 9 });
+  const gridId = useId().replace(/:/g, '');
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      <GridPattern mask="to top" />
+      <svg
+        aria-hidden
+        className="absolute inset-0 size-full opacity-[0.028]"
+        style={{ color: ACCENT, maskImage: 'linear-gradient(to top, rgba(255,255,255,0.68), transparent)' }}
+      >
+        <defs>
+          <pattern id={gridId} width="10" height="10" patternUnits="userSpaceOnUse" x="-1" y="-1">
+            <path d="M.5 10V.5H10" fill="none" stroke="currentColor" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" strokeWidth="0" fill={`url(#${gridId})`} />
+      </svg>
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <svg viewBox="0 0 480 480" className="lp-spin block w-[680px]" style={{ opacity: 0.035, color: BROWN }}>
           {squares.map((_, i) => {
@@ -748,7 +876,6 @@ function RoomCell({ room: r, index }: { room: (typeof ROOMS)[number]; index: num
 function Principles() {
   return (
     <section id="why" className="relative px-6 py-14 sm:px-10">
-      <Barcode className="-left-[33px] top-16 hidden md:block" />
       <div className="grid grid-cols-1 gap-px lg:grid-cols-3 lg:grid-rows-2" style={{ backgroundColor: LINE }}>
         {/* 大金句卡（左列跨两行）*/}
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
@@ -875,42 +1002,120 @@ function FinalCTA() {
 
 // ─── 页脚 ──────────────────────────────────────────────────────────────────────
 
-function Footer() {
-  const cols = [
-    { h: '产品', items: ['功能', '房间', '齐默默', '更新日志'] },
-    { h: '资源', items: ['使用指南', '常见问题', '开源', '反馈'] },
-    { h: '公司', items: ['理念', '团队', '博客', '联系我们'] },
-    { h: '社交', items: ['微博 ↗', '小红书 ↗', 'GitHub ↗', 'X ↗'] },
-  ];
+const FOOT_LINE = 'rgba(243,239,232,0.14)'; // 深底上的标尺 / 条码刻线
+const FOOT_HAIR = 'rgba(243,239,232,0.1)'; // 深底上的 hairline / 列分隔
+
+const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
+  { h: '产品', items: [{ label: '功能' }, { label: '房间' }, { label: '齐默默' }, { label: '更新日志' }] },
+  { h: '资源', items: [{ label: '使用指南' }, { label: '常见问题' }, { label: '开源' }, { label: '反馈' }] },
+  { h: '公司', items: [{ label: '理念' }, { label: '团队' }, { label: '博客' }, { label: '联系我们' }] },
+  { h: '社交', items: [{ label: '微博', ext: true }, { label: '小红书', ext: true }, { label: 'GitHub', ext: true }, { label: 'X', ext: true }] },
+];
+
+/** 页脚底部装饰带：border-t + 45° 斜纹 + 渐隐水平刻线 + 描边 wordmark
+    （负 margin 伸出 container，由父级 overflow-clip 裁掉下缘）。 */
+function FooterBand() {
+  const id = useId().replace(/:/g, '');
   return (
-    <footer id="about" className="relative overflow-hidden" style={{ backgroundColor: BROWN }}>
-      <div aria-hidden className="absolute inset-0 opacity-[0.10]" style={{ backgroundImage: `linear-gradient(rgba(243,239,232,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(243,239,232,0.6) 1px, transparent 1px)`, backgroundSize: '34px 34px' }} />
-      <div className="relative mx-auto max-w-[1240px] px-6 pb-0 pt-16">
-        <div className="grid grid-cols-2 gap-10 sm:grid-cols-5">
-          <div className="col-span-2 sm:col-span-1">
-            <div className="flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: CREAM, color: BROWN }}>v</span>
-              <Mono className="text-[15px] font-semibold" style={{ color: CREAM }}>vidorra</Mono>
+    <div className="relative col-span-full -mb-16 mt-4 flex w-full justify-center border-t py-6" style={{ borderColor: FOOT_HAIR }}>
+      {/* 45° 斜纹 */}
+      <svg aria-hidden className="pointer-events-none absolute inset-0 size-full" style={{ color: 'rgba(243,239,232,0.22)', opacity: 0.3 }}>
+        <defs>
+          <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${id})`} />
+      </svg>
+      {/* 渐隐水平刻线（每 10px 一条，自上而下衰减） */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: 'repeating-linear-gradient(to bottom, rgba(243,239,232,0.5) 0 1px, transparent 1px 10px)',
+          maskImage: 'linear-gradient(to bottom, #000, transparent)',
+          WebkitMaskImage: 'linear-gradient(to bottom, #000, transparent)',
+          opacity: 0.18,
+        }}
+      />
+      {/* 描边 wordmark：fill 近透明 + stroke 低透明 */}
+      <span
+        aria-hidden
+        className="block select-none font-bold leading-[0.85] tracking-tighter"
+        style={{
+          fontFamily: MONO,
+          fontSize: 'clamp(4.5rem, 20vw, 17rem)',
+          color: 'rgba(243,239,232,0.03)',
+          WebkitTextStroke: '1.2px rgba(243,239,232,0.2)',
+        }}
+      >
+        vidorra
+      </span>
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer
+      id="about"
+      className="lp-outer-node-offset relative flex min-w-0 border-t"
+      style={{ backgroundColor: BROWN, borderColor: LINE }}
+    >
+      {/* 节点对骑 footer 上边界 hairline */}
+      <Node pos="top-left" className="hidden lg:block" />
+      <Node pos="top-right" className="hidden lg:block" />
+
+      {/* 五段 rail 框架（深底白低透明标尺；无网格/条码，保持 footer 干净） */}
+      <span className="relative z-[1] w-4 shrink-0 sm:w-6 md:w-12">
+        <Ruler side="right" color={FOOT_LINE} segs={[{ f: 2.2 }, { f: 3.4, dash: true }, { f: 1.8 }]} />
+      </span>
+      <span className="relative z-[1] hidden flex-1 lg:block">
+        <Ruler side="right" color={FOOT_LINE} segs={[{ f: 3.1 }, { f: 2.2, dash: true }, { f: 2.8 }]} />
+      </span>
+
+      <div className="lp-container-max-w relative z-[1] max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
+        <Node pos="top-left" className="hidden lg:block" />
+        <Node pos="top-right" className="hidden lg:block" />
+        <div className="relative isolate size-full overflow-clip">
+          <div className="grid grid-cols-1 gap-2 divide-[rgba(243,239,232,0.12)] md:grid-cols-4 lg:grid-cols-6 lg:gap-6 lg:divide-x">
+            {/* 第 1 列：品牌 + 短 hr + 法务 */}
+            <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
+              <div className="flex items-center gap-2">
+                <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: CREAM, color: BROWN }}>v</span>
+                <Mono className="text-[15px] font-semibold" style={{ color: CREAM }}>vidorra</Mono>
+              </div>
+              <Mono className="mt-4 block text-[12px]" style={{ color: 'rgba(243,239,232,0.7)' }}>vidorra © 2026</Mono>
+              <hr className="my-3 w-20 border-t" style={{ borderColor: FOOT_HAIR }} />
+              <Link to="/home" className="lp-foot-link w-fit"><Mono className="text-[12px]">已有账号？登录</Mono></Link>
+              <Mono className="mt-3 block text-[11px]" style={{ color: 'rgba(243,239,232,0.5)' }}>服务条款 · 隐私政策</Mono>
             </div>
-            <Mono className="mt-4 block text-[12px]" style={{ color: 'rgba(243,239,232,0.7)' }}>vidorra © 2026</Mono>
-            <Link to="/home"><Mono className="mt-3 block text-[12px] transition-colors hover:text-[#f3efe8]" style={{ color: 'rgba(243,239,232,0.7)' }}>已有账号？登录</Mono></Link>
-            <Mono className="mt-3 block text-[11px]" style={{ color: 'rgba(243,239,232,0.5)' }}>服务条款 · 隐私政策</Mono>
+            {FOOT_COLS.map((c) => (
+              <div key={c.h} className="flex flex-col gap-4 px-5 py-4 md:py-8 lg:py-10">
+                <Mono className="text-[12px] font-semibold" style={{ color: CREAM }}>{c.h}</Mono>
+                <ul className="flex flex-col gap-3">
+                  {c.items.map((it) => (
+                    <li key={it.label}>
+                      <a href="#about" className="lp-foot-link">
+                        <Mono className="text-[12px]">{it.label}</Mono>
+                        {it.ext && <span aria-hidden className="ml-2 text-[12px]" style={{ color: 'rgba(243,239,232,0.5)' }}>↗</span>}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            <FooterBand />
           </div>
-          {cols.map((c) => (
-            <div key={c.h}>
-              <Mono className="text-[12px] font-semibold" style={{ color: CREAM }}>{c.h}</Mono>
-              <ul className="mt-4 space-y-3">
-                {c.items.map((it) => (
-                  <li key={it}><a href="#about"><Mono className="text-[12px] transition-colors hover:text-[#f3efe8]" style={{ color: 'rgba(243,239,232,0.72)' }}>{it}</Mono></a></li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div aria-hidden className="pointer-events-none mt-10 select-none overflow-hidden" style={{ lineHeight: 0.8 }}>
-          <span className="block font-bold tracking-tighter" style={{ fontFamily: MONO, fontSize: 'clamp(5rem, 24vw, 20rem)', color: ACCENT_DEEP, transform: 'translateY(28%)' }}>vidorra</span>
         </div>
       </div>
+
+      <span className="relative z-[1] hidden flex-1 lg:block">
+        <Ruler side="left" color={FOOT_LINE} segs={[{ f: 1.9, dash: true }, { f: 3.6 }, { f: 2.4 }]} />
+      </span>
+      <span className="relative z-[1] w-4 shrink-0 sm:w-6 md:w-12">
+        <Ruler side="left" color={FOOT_LINE} segs={[{ f: 2.7 }, { f: 1.6 }, { f: 3.9, dash: true }]} />
+      </span>
     </footer>
   );
 }
@@ -921,29 +1126,50 @@ function LandingPage() {
   return (
     <div className="min-h-screen overflow-x-clip" style={{ backgroundColor: 'var(--canvas)', color: 'var(--ink)' }}>
       <Nav />
-      <main>
-        <Frame>
+      {/* isolate：内容里的 z-50 节点只在 main 内比较，不会盖过 sticky 顶栏 */}
+      <main className="isolate">
+        <SectionFrame {...RAILS.intro}>
           <Announce />
+        </SectionFrame>
+        <SectionFrame {...RAILS.hero}>
           <Hero />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.marquee}>
           <Marquee />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.standard}>
           <FeatureTabs />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.leftHeavy}>
           <Demo />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.minimal}>
           <SpecPanel />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.standard}>
           <Rooms />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.standard}>
           <Principles />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.leftHeavy}>
           <Extras />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.marquee}>
           <AuthorLetter />
-          <Slash />
+        </SectionFrame>
+        <Slash />
+        <SectionFrame {...RAILS.bare}>
           <FinalCTA />
-        </Frame>
+        </SectionFrame>
         <Footer />
       </main>
     </div>

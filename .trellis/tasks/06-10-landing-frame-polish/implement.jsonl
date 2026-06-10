@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端层编码规范索引，落地页改动属前端"}
+{"file": ".trellis/tasks/06-10-landing-frame-polish/research/zed-section-reference.md", "reason": "zed 标准 section 框架代码与结构解读，对齐基准"}
+{"file": ".trellis/tasks/06-10-landing-frame-polish/research/zed-header-footer.md", "reason": "zed header/footer 精确结构、CSS 变量值、菱形节点骑线数学"}
+{"file": ".trellis/tasks/06-10-landing-frame-polish/research/current-gap-analysis.md", "reason": "当前实现逐项差距清单与带行号的修改建议"}

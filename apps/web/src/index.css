@@ -215,6 +215,105 @@ body {
 }
 
 /* ─── Landing 专用（Zed 式工业语汇）────────────────────────────────────── */
+/* 骑线菱形节点偏移变量（zed --node-*-offset 体系）：
+   vertical 3.5px = 节点半宽 3px + 线半宽 0.5px → 节点中心正好压在 1px 分界线中心；
+   horizontal 由 .lp-outer-node-offset 按断点覆盖（= 窄 rail 宽 - 3px ± 0.5px 修正）。 */
+:root {
+  --node-vertical-offset: 3.5px;
+  --node-horizontal-offset: 4.5px;
+}
+.lp-outer-node-offset {
+  --node-horizontal-offset: 12.5px; /* base: rail w-4 = 16px */
+}
+@media (min-width: 640px) {
+  .lp-outer-node-offset {
+    --node-horizontal-offset: 19.5px; /* sm: rail w-6 = 24px */
+  }
+}
+@media (min-width: 768px) {
+  .lp-outer-node-offset {
+    --node-horizontal-offset: 43.5px; /* md: rail w-12 = 48px */
+  }
+}
+@media (min-width: 1024px) {
+  .lp-outer-node-offset {
+    --node-horizontal-offset: 45.5px; /* lg: 节点中心 48.5px = rail 分界 1px 线中心 */
+  }
+}
+/* 五段框架中央 container（zed container-max-w 的对应物）。
+   container 与弹性 rail 同为 flex-1（flex-basis 0），必须靠断点 min-width
+   保证中央内容不被 rail 平分挤扁；min > max 时以 min 为准（xl 实际 1120px）。 */
+.lp-container-max-w {
+  max-width: 1080px;
+}
+@media (min-width: 768px) {
+  .lp-container-max-w {
+    min-width: 680px;
+  }
+}
+@media (min-width: 1024px) {
+  .lp-container-max-w {
+    min-width: 920px;
+  }
+}
+@media (min-width: 1280px) {
+  .lp-container-max-w {
+    min-width: 1120px;
+    max-width: 1120px;
+  }
+}
+/* 顶栏块状导航链接：hover 铺底、active 下压（zed nav item） */
+.lp-nav-link {
+  color: var(--ink-soft);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 80ms ease;
+}
+.lp-nav-link:hover {
+  background-color: color-mix(in oklab, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+.lp-nav-link:active {
+  transform: translateY(1px) scale(0.99);
+}
+/* intro banner：暖桃色横向渐变 + hover 整行高亮（vidorra 配色） */
+.lp-intro-banner {
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--chip-peach) 75%, transparent),
+    transparent
+  );
+  transition: background 150ms ease;
+}
+.lp-intro-banner:hover {
+  background: color-mix(in oklab, var(--chip-peach) 52%, var(--canvas));
+}
+/* hero 底景渐变（加强暖色层次，网格叠上时应为主视觉） */
+.lp-hero-gradient {
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--chip-peach) 28%, transparent),
+    color-mix(in oklab, var(--canvas) 72%, transparent) 38%,
+    color-mix(in oklab, var(--canvas) 28%, transparent) 68%,
+    transparent
+  );
+}
+/* 页脚下划线渐显链接（zed decoration-white/20 → hover:decoration-white） */
+.lp-foot-link {
+  color: rgba(243, 239, 232, 0.72);
+  text-decoration-line: underline;
+  text-decoration-color: rgba(243, 239, 232, 0.2);
+  text-underline-offset: 2px;
+  transition:
+    text-decoration-color 150ms ease,
+    color 150ms ease;
+}
+.lp-foot-link:hover {
+  color: #f3efe8;
+  text-decoration-color: rgba(243, 239, 232, 0.9);
+}
 /* 跑马灯：内容渲染两份，位移 -50% 即无缝循环 */
 @keyframes lp-marquee {
   to {
