@@ -1,0 +1,32 @@
+# Dependencies & build output
+**/node_modules
+**/dist
+**/.turbo
+
+# Git & IDE
+.git
+.gitignore
+.cursor
+.claude
+**/.DS_Store
+
+# Trellis / agent artifacts (not needed in image)
+.trellis
+
+# Local env & secrets
+.env
+.env.*
+!.env.example
+apps/api/.env
+
+# Large reference files
+zed.html
+
+# Docs & ideas (not runtime)
+ideas
+**/*.md
+!apps/web/README.md
+
+# Test / coverage
+**/coverage
+**/*.log

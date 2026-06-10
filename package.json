@@ -15,7 +15,10 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "db:up": "docker compose up -d postgres",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "deploy": "docker compose up -d --build",
+    "deploy:down": "docker compose down",
+    "deploy:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
