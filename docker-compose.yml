@@ -66,6 +66,13 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-vidorra}:${POSTGRES_PASSWORD:-vidorra}@postgres:5432/${POSTGRES_DB:-vidorra}?schema=public
       PORT: '3000'
+      SESSION_SECRET: ${SESSION_SECRET}
+      CASDOOR_ENDPOINT: ${CASDOOR_ENDPOINT}
+      CASDOOR_CLIENT_ID: ${CASDOOR_CLIENT_ID}
+      CASDOOR_CLIENT_SECRET: ${CASDOOR_CLIENT_SECRET}
+      CASDOOR_ORG: ${CASDOOR_ORG}
+      CASDOOR_APP: ${CASDOOR_APP}
+      CASDOOR_CALLBACK_URL: ${CASDOOR_CALLBACK_URL}
     expose:
       - '3000'
     healthcheck:
