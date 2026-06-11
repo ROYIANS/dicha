@@ -20,6 +20,8 @@ export class AuthController {
   @Get('auth/login')
   async login(@Req() req: Request, @Res() res: Response): Promise<void> {
     const loginUrl = await this.authService.buildLoginUrl(req.session);
+    console.log('[login] session ID:', req.sessionID);
+    console.log('[login] session data:', JSON.stringify(req.session));
     res.redirect(loginUrl);
   }
 
@@ -31,6 +33,9 @@ export class AuthController {
     }
 
     try {
+      console.log('[callback] session ID:', req.sessionID);
+      console.log('[callback] session data:', JSON.stringify(req.session));
+
       const currentUrl = new URL(
         req.originalUrl,
         `${req.protocol}://${req.get('host')}`,
