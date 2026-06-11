@@ -1,5 +1,6 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
+import { authContract } from './auth.contract';
 
 const c = initContract();
 
@@ -26,4 +27,5 @@ export const contract = c.router({
     },
     summary: 'Liveness + DB probe',
   },
+  auth: authContract,
 });

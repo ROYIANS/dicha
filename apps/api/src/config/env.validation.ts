@@ -10,6 +10,27 @@ class EnvVars {
   @Min(1)
   @Max(65535)
   PORT = 3000;
+
+  @IsString()
+  CASDOOR_ENDPOINT!: string;
+
+  @IsString()
+  CASDOOR_CLIENT_ID!: string;
+
+  @IsString()
+  CASDOOR_CLIENT_SECRET!: string;
+
+  @IsString()
+  CASDOOR_ORG!: string;
+
+  @IsString()
+  CASDOOR_APP!: string;
+
+  @IsString()
+  CASDOOR_CALLBACK_URL!: string;
+
+  @IsString()
+  SESSION_SECRET!: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

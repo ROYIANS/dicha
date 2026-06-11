@@ -2,6 +2,10 @@ import 'reflect-metadata';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import session from 'express-session';
+import ConnectPgSimple from 'connect-pg-simple';
+import { Pool } from 'pg';
+import { doubleCsrf } from 'csrf-csrf';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 
@@ -12,6 +16,49 @@ async function bootstrap(): Promise<void> {
   // (architecture.md §3/§6). Contract paths stay bare ('/health' -> '/api/health').
   app.setGlobalPrefix('api');
 
+  const config = app.get(ConfigService);
+
+  // Session middleware with Postgres store
+  const PgSession = ConnectPgSimple(session);
+  const pgPool = new Pool({
+    connectionString: config.get<string>('DATABASE_URL'),
+  });
+
+  app.use(
+    session({
+      store: new PgSession({
+        pool: pgPool,
+        tableName: 'vidorra_sessions',
+        createTableIfMissing: true,
+      }),
+      secret: config.get<string>('SESSION_SECRET')!,
+      resave: false,
+      saveUninitialized: false,
+      rolling: true,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      },
+    }),
+  );
+
+  // CSRF protection (double-submit cookie)
+  const { doubleCsrfProtection } = doubleCsrf({
+    getSecret: () => config.get<string>('SESSION_SECRET')!,
+    cookieName: 'csrf-token',
+    cookieOptions: {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    },
+    size: 64,
+    ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
+    getSessionIdentifier: (req) => req.session?.id || '',
+  });
+  app.use(doubleCsrfProtection);
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -21,7 +68,6 @@ async function bootstrap(): Promise<void> {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3000);
   await app.listen(port);
 
