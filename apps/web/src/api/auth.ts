@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from './client';
 import { DEV_USER, shouldBypassAuth } from '@/lib/auth';
+import { getCsrfToken } from '@/lib/csrf';
 
 /**
  * Query options factory for /auth/me.
@@ -35,10 +36,7 @@ export async function logout(): Promise<void> {
     method: 'POST',
     credentials: 'include',
     headers: {
-      'x-csrf-token': document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('csrf-token='))
-        ?.split('=')[1] || '',
+      'x-csrf-token': getCsrfToken() || '',
     },
   });
 }

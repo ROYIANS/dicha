@@ -1,7 +1,7 @@
 import { initClient } from '@ts-rest/core';
 import { contract } from '@vidorra/shared';
 import { env } from '@/lib/env';
-import { getCookie } from '@/lib/cookie';
+import { getCsrfToken } from '@/lib/csrf';
 
 /**
  * Single ts-rest client over the shared contract.
@@ -18,7 +18,7 @@ export const api = initClient(contract, {
     // Inject CSRF token for mutations (POST, PUT, PATCH, DELETE)
     const method = args.method.toUpperCase();
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-      const csrfToken = getCookie('csrf-token');
+      const csrfToken = getCsrfToken();
       if (csrfToken) {
         headers.set('x-csrf-token', csrfToken);
       }
