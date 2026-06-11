@@ -17,6 +17,7 @@ export type DevUser = typeof DEV_USER;
  */
 export function shouldBypassAuth(): boolean {
   const flag = import.meta.env.VITE_DEV_BYPASS_AUTH;
+  console.log('[auth] VITE_DEV_BYPASS_AUTH:', flag, '| DEV:', import.meta.env.DEV);
   if (flag === 'true') return true;
   if (flag === 'false') return false;
   return import.meta.env.DEV;
