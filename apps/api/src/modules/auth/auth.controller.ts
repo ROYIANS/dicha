@@ -13,17 +13,17 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { authContract } from '@vidorra/shared';
 
-@Controller('auth')
+@Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('login')
+  @Get('auth/login')
   async login(@Req() req: Request, @Res() res: Response): Promise<void> {
     const loginUrl = await this.authService.buildLoginUrl(req.session);
     res.redirect(loginUrl);
   }
 
-  @Get('callback')
+  @Get('auth/callback')
   async callback(@Req() req: Request, @Res() res: Response): Promise<void> {
     const error = req.query.error;
     if (error) {
@@ -62,7 +62,7 @@ export class AuthController {
     });
   }
 
-  @Post('logout')
+  @Post('auth/logout')
   @UseGuards(AuthGuard)
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
     req.session.destroy((err) => {
