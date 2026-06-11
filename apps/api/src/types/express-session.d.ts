@@ -11,5 +11,6 @@ declare module 'express-session' {
     };
     pkceVerifier?: string;
     nonce?: string;
+    state?: string;
   }
 }

@@ -41,6 +41,7 @@ export class AuthController {
 
       delete req.session.pkceVerifier;
       delete req.session.nonce;
+      delete req.session.state;
 
       res.redirect('/');
     } catch (err) {

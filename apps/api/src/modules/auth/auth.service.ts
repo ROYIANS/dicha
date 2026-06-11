@@ -26,14 +26,17 @@ export class AuthService {
   async buildLoginUrl(session: {
     pkceVerifier?: string;
     nonce?: string;
+    state?: string;
   }): Promise<string> {
     const config = await this.getConfig();
     const code_verifier = client.randomPKCECodeVerifier();
     const code_challenge = await client.calculatePKCECodeChallenge(code_verifier);
     const nonce = client.randomNonce();
+    const state = client.randomState();
 
     session.pkceVerifier = code_verifier;
     session.nonce = nonce;
+    session.state = state;
 
     const redirectUri = this.configService.get<string>('CASDOOR_CALLBACK_URL')!;
 
@@ -43,11 +46,12 @@ export class AuthService {
       code_challenge,
       code_challenge_method: 'S256',
       nonce,
+      state,
     }).href;
   }
 
   async handleCallback(
-    session: { pkceVerifier?: string; nonce?: string },
+    session: { pkceVerifier?: string; nonce?: string; state?: string },
     currentUrl: URL,
   ): Promise<{
     id: string;
@@ -61,6 +65,7 @@ export class AuthService {
     const tokens = await client.authorizationCodeGrant(config, currentUrl, {
       pkceCodeVerifier: session.pkceVerifier,
       expectedNonce: session.nonce,
+      expectedState: session.state,
       idTokenExpected: true,
     });
 
