@@ -3,7 +3,8 @@ export const DEV_USER = {
   id: 'dev',
   name: 'Royians',
   avatar: null,
-  level: 18,
+  email: null,
+  phone: null,
 } as const;
 
 export type DevUser = typeof DEV_USER;

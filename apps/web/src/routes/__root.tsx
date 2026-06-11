@@ -2,11 +2,12 @@ import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { type QueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { UmamiAnalytics } from '@/components/UmamiAnalytics';
+import { type UserDto } from '@vidorra/shared';
+import { type DevUser } from '@/lib/auth';
 
 export interface RouterContext {
   queryClient: QueryClient;
-  // auth seam: `_app.tsx` beforeLoad injects the resolved user here.
-  // Kept off the root shape until real auth lands; dev bypass injects via _app context return.
+  user?: UserDto | DevUser;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
