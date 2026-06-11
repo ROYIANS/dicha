@@ -14,6 +14,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-vidorra}
     volumes:
       - vidorra-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test:
         [
@@ -37,7 +38,7 @@ services:
       RUNNING_IN_DOCKER: 'true'
       # Casdoor 连接 Postgres（与 api 共用同一 DB，不同 schema/前缀）
       driverName: postgres
-      dataSourceName: postgresql://${POSTGRES_USER:-vidorra}:${POSTGRES_PASSWORD:-vidorra}@postgres:5432/${POSTGRES_DB:-vidorra}?sslmode=disable
+      dataSourceName: postgresql://${POSTGRES_USER:-vidorra}:${POSTGRES_PASSWORD:-vidorra}@postgres:5432/${POSTGRES_DB:-vidorra}?sslmode=disable&search_path=casdoor
       # Casdoor 外部访问地址（需与 .env CASDOOR_ENDPOINT 一致）
       origin: ${CASDOOR_ORIGIN:-http://localhost:8000}
     ports:
