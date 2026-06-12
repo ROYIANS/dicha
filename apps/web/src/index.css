@@ -74,6 +74,45 @@
   --lp-drawer-scrim-rgb: 40, 30, 20;
   --lp-drawer-scrim-a: 0.38;
   --lp-drawer-dot-rgb: 46, 42, 38;
+
+  /* ── HeroUI v3 语义 token → 对齐 vidorra 暖色 blueprint（日间）──────────── */
+  /* 结构即装饰：方角偏好（小 radius）、hairline 描边、暖中性主色、无渐变。 */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  /* --surface 已由 vidorra 系统定义（#ffffff），HeroUI 直接复用 */
+  --surface-foreground: var(--ink);
+  --overlay: var(--surface);
+  --overlay-foreground: var(--ink);
+  --muted: var(--ink-faint);
+  --default: var(--hairline);
+  --default-foreground: var(--ink);
+  /* accent = 深墨 chrome 色（主行动），与 lp-btn-primary 一致 */
+  --accent: var(--sidebar-bg);
+  --accent-foreground: var(--sidebar-ink);
+  --segment: var(--surface-alt);
+  --segment-foreground: var(--ink);
+  /* 功能色映射到 vidorra 柔彩 */
+  --success: var(--accent-sage);
+  --success-foreground: var(--ink);
+  --warning: var(--accent-peach);
+  --warning-foreground: var(--ink);
+  --danger: var(--accent-pink);
+  --danger-foreground: var(--ink);
+  /* 描边 / 分隔 / 焦点 / 链接 */
+  --border: var(--hairline);
+  --separator: var(--hairline);
+  --focus: var(--accent-warm);
+  --link: var(--accent-warm);
+  /* 表单字段：奇纸底 + hairline 边 + 方角（呼应登录页 Field/InputOTP） */
+  --field-background: var(--canvas);
+  --field-foreground: var(--ink);
+  --field-placeholder: var(--ink-faint);
+  --field-border: color-mix(in oklab, var(--ink) 20%, transparent);
+  /* 方角 blueprint：小基准 radius + 字段同步收方 */
+  --radius: 0.375rem;
+  --field-radius: var(--radius);
+  --border-width: 1px;
+  --field-border-width: 1px;
 }
 
 /* ─── 夜间 — 深灰中性 ──────────────────────────────────────────────── */
@@ -118,6 +157,36 @@
   --lp-drawer-scrim-rgb: 0, 0, 0;
   --lp-drawer-scrim-a: 0.55;
   --lp-drawer-dot-rgb: 243, 239, 232;
+
+  /* ── HeroUI v3 语义 token → vidorra 暖色 blueprint（夜间）──────────────── */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  /* --surface 已由 vidorra 系统定义（#212121），HeroUI 直接复用 */
+  --surface-foreground: var(--ink);
+  --overlay: var(--surface);
+  --overlay-foreground: var(--ink);
+  --muted: var(--ink-faint);
+  --default: var(--hairline);
+  --default-foreground: var(--ink);
+  /* 夜间 accent = 浅奶油（在深底上做主色），foreground 用深墨保证对比 */
+  --accent: var(--sidebar-ink);
+  --accent-foreground: var(--sidebar-bg);
+  --segment: var(--surface-alt);
+  --segment-foreground: var(--ink);
+  --success: var(--accent-sage);
+  --success-foreground: #141414;
+  --warning: var(--accent-peach);
+  --warning-foreground: #141414;
+  --danger: var(--accent-pink);
+  --danger-foreground: #141414;
+  --border: var(--hairline);
+  --separator: var(--hairline);
+  --focus: var(--ink-soft);
+  --link: var(--ink-soft);
+  --field-background: color-mix(in oklab, var(--surface) 70%, var(--canvas));
+  --field-foreground: var(--ink);
+  --field-placeholder: var(--ink-faint);
+  --field-border: color-mix(in oklab, var(--ink) 26%, transparent);
 }
 
 /* ─── 语义变量 → Tailwind 工具类（inline 保持动态，随 data-theme 切换）──── */
