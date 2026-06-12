@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -34,6 +36,14 @@ async function bootstrap(): Promise<void> {
   // 关掉全局 parser 后，为非 auth 路由（ts-rest 合约）补回 JSON body 解析。
   // 注册在 auth handler 之后，故 auth 路由不会被 JSON parser 吞掉。
   expressApp.use(express.json());
+
+  // 用户上传的媒体（头像等）同源暴露在 /api/uploads/*，与 nginx /api/ 反代对齐。
+  // 目录由 UPLOAD_DIR 指定，容器内经 docker-compose 卷持久化。
+  const uploadDir = path.resolve(
+    app.get(ConfigService).get<string>('UPLOAD_DIR', './uploads'),
+  );
+  fs.mkdirSync(uploadDir, { recursive: true });
+  expressApp.use('/api/uploads', express.static(uploadDir));
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -1,9 +1,12 @@
 import { Search, Bell, User, Menu } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useRouteContext } from '@tanstack/react-router';
 import { FrameNode } from '@/components/FrameNode';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AccountModal } from '@/components/AccountModal';
+import type { UserDto } from '@vidorra/shared';
 
 type HeaderProps = {
   navOpen?: boolean;
@@ -15,6 +18,7 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
   const { t } = useTranslation();
   const { user } = useRouteContext({ from: '/_app' });
   const displayName = user?.displayName || user?.name || '';
+  const [accountOpen, setAccountOpen] = useState(false);
 
   return (
     <header className="app-chrome-header relative z-20 w-full shrink-0 border-b border-hairline [--node-horizontal-offset:-3.5px]">
@@ -64,11 +68,20 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
           </button>
           <button
             type="button"
-            onClick={() => toast.info('个人空间即将开放')}
-            className="app-icon-btn inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-sidebar-bg px-1.5 text-sidebar-ink sm:px-2"
+            onClick={() => setAccountOpen(true)}
+            aria-haspopup="dialog"
+            className="app-icon-btn inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-1.5 sm:px-2"
             title={displayName}
           >
-            <User size={15} className="shrink-0" />
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={displayName}
+                className="size-5 shrink-0 rounded-[5px] object-cover"
+              />
+            ) : (
+              <User size={15} className="shrink-0" />
+            )}
             {displayName ? (
               <span className="app-mono hidden max-w-[10ch] truncate text-[12px] sm:inline">
                 {displayName}
@@ -77,6 +90,14 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
           </button>
         </div>
       </div>
+
+      {user ? (
+        <AccountModal
+          user={user as UserDto}
+          isOpen={accountOpen}
+          onOpenChange={setAccountOpen}
+        />
+      ) : null}
     </header>
   );
 }

@@ -1,5 +1,5 @@
 import { plainToInstance, Type } from 'class-transformer';
-import { IsInt, IsString, Max, Min, validateSync } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
 
 class EnvVars {
   @IsString()
@@ -43,6 +43,12 @@ class EnvVars {
 
   @IsString()
   SMTP_FROM!: string;
+
+  // ── 上传存储（头像等用户媒体）─────────────────────────────
+  // 容器内持久化目录，由 docker-compose 挂卷映射；本地开发默认进程下的 ./uploads。
+  @IsOptional()
+  @IsString()
+  UPLOAD_DIR = './uploads';
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

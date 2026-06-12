@@ -58,6 +58,14 @@ export function createAuth(prisma: PrismaClient) {
         clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
       },
     },
+    account: {
+      // 允许把已登录账户与社交身份关联/解绑（个人中心“绑定 GitHub”）。
+      // github 设为可信：其邮箱可直接并入已有同邮箱账户，避免重复建号。
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['github'],
+      },
+    },
     plugins: [
       emailOTP({
         // 注册即可发码（OTP 登录会按需自动注册新用户）
