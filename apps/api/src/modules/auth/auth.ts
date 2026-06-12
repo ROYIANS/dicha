@@ -51,6 +51,21 @@ export function createAuth(prisma: PrismaClient) {
     user: {
       additionalFields,
     },
+    databaseHooks: {
+      user: {
+        create: {
+          // GitHub 等 OAuth provider 不返回 displayName（必填 additionalField）。
+          // 首次 OAuth 建 user 行时回退用 Better Auth 的 name 填充，避免 NOT NULL 插入失败。
+          before: async (user) => ({
+            data: {
+              ...user,
+              displayName:
+                (user as typeof user & { displayName?: string }).displayName ?? user.name,
+            },
+          }),
+        },
+      },
+    },
     advanced: {
       database: {
         // 决策 6：让 Prisma `@default(cuid())` 接管 id 生成，Better Auth 不自生成
