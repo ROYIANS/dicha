@@ -16,6 +16,9 @@ async function bootstrap(): Promise<void> {
   // (architecture.md §3/§6). Contract paths stay bare ('/health' -> '/api/health').
   app.setGlobalPrefix('api');
 
+  // Trust reverse proxy (Nginx) for X-Forwarded-* headers
+  app.set('trust proxy', true);
+
   const config = app.get(ConfigService);
 
   // Session middleware with Postgres store
