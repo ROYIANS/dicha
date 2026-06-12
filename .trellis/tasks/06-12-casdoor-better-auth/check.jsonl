@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/06-12-casdoor-better-auth/prd.md", "reason": "验收基准：AC 清单 + DoD + Out of Scope，核对实现是否覆盖且无旧 Casdoor 残留"}
+{"file": ".trellis/tasks/06-12-casdoor-better-auth/research/better-auth-nestjs-integration.md", "reason": "核对集成正确性：bodyParser:false、路径无 double /api、Guard getSession、Prisma adapter import 路径"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "后端代码质量校验基准"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端代码质量校验基准"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "复用检查：AuthGuard 可复用性、避免重复造轮子"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "跨层数据流核对：session.user → 前端 useSession → 业务端点身份一致"}

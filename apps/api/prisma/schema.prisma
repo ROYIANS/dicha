@@ -49,9 +49,20 @@ enum EventType {
 
 // ─── Models ──────────────────────────────────────────────
 
+// User 表 = Better Auth 身份表 + 领域 User（单一身份源，决策 2）。
+// id 保留 cuid()（决策 6：advanced.database.generateId=false → Prisma DB 侧默认接管）。
 model User {
-  id                   String  @id @default(cuid())
-  email                String  @unique
+  id String @id @default(cuid())
+
+  // ── Better Auth 必需列 ──────────────────────────────────
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // ── vidorra 应用字段（additionalFields）────────────────
   displayName          String
   city                 String?
   gender               String?
@@ -61,11 +72,65 @@ model User {
   // 游戏内金币：MVP 仅 schema + 显示，无消费场景（避免 v2 迁移）
   coins Int @default(0)
 
+  // ── Better Auth 关系 ───────────────────────────────────
+  sessions Session[]
+  accounts Account[]
+
+  // ── 领域关系 ───────────────────────────────────────────
   items  Item[]
   events Event[]
+}
+
+// ─── Better Auth 表（session / account / verification）───
+// 字段对齐 Better Auth Prisma adapter 期望；显式关系命名遵循 database-guidelines.md。
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+
+  owner  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+
+  owner  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 model Category {

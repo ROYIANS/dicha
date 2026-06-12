@@ -27,31 +27,6 @@ services:
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
 
-  casdoor:
-    image: casbin/casdoor:latest
-    container_name: vidorra-casdoor
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      RUNNING_IN_DOCKER: 'true'
-      # Casdoor 连接 Postgres（与 api 共用同一 DB，不同 schema/前缀）
-      driverName: postgres
-      dataSourceName: postgresql://${POSTGRES_USER:-vidorra}:${POSTGRES_PASSWORD:-vidorra}@postgres:5432/${POSTGRES_DB:-vidorra}?sslmode=disable&search_path=casdoor
-      # Casdoor 外部访问地址（需与 .env CASDOOR_ENDPOINT 一致）
-      origin: ${CASDOOR_ORIGIN:-http://localhost:8000}
-    ports:
-      - '${CASDOOR_PORT:-8000}:8000'
-    volumes:
-      - vidorra-casdoor-data:/data
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8000/api/get-account >/dev/null 2>&1 || exit 1']
-      interval: 10s
-      timeout: 5s
-      start_period: 30s
-      retries: 5
-
   api:
     build:
       context: .
@@ -61,18 +36,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      casdoor:
-        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-vidorra}:${POSTGRES_PASSWORD:-vidorra}@postgres:5432/${POSTGRES_DB:-vidorra}?schema=public
       PORT: '3000'
-      SESSION_SECRET: ${SESSION_SECRET}
-      CASDOOR_ENDPOINT: ${CASDOOR_ENDPOINT}
-      CASDOOR_CLIENT_ID: ${CASDOOR_CLIENT_ID}
-      CASDOOR_CLIENT_SECRET: ${CASDOOR_CLIENT_SECRET}
-      CASDOOR_ORG: ${CASDOOR_ORG}
-      CASDOOR_APP: ${CASDOOR_APP}
-      CASDOOR_CALLBACK_URL: ${CASDOOR_CALLBACK_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
     expose:
       - '3000'
     healthcheck:
@@ -111,4 +86,3 @@ services:
 
 volumes:
   vidorra-pgdata:
-  vidorra-casdoor-data:

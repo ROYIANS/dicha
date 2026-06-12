@@ -1,0 +1,11 @@
+{"file": ".trellis/tasks/06-12-casdoor-better-auth/prd.md", "reason": "完整需求与 5 个已确认决策：认证方式、user 表合并、前端 client、邮件、NestJS 集成；AC 清单"}
+{"file": ".trellis/tasks/06-12-casdoor-better-auth/research/better-auth-nestjs-integration.md", "reason": "Better Auth × NestJS 挂载/bodyParser 冲突/全局前缀/Prisma adapter additionalFields/Guard getSession 全套落地要点与代码片段"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "NestJS module 目录结构规范，auth 模块改造遵循"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Prisma schema 约定（显式关系命名/硬删除）—— user 表合并 + 新增 session/account/verification 模型需遵循"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "AuthGuard 401/403 响应格式约定"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "NestJS 代码质量约定"}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "§3 auth 守卫/beforeLoad/dev bypass 策略——改用 authClient.getSession 时保持架构一致"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "query options 工厂 / loader-first 约定，auth session 接入沿用"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "login.tsx 重写为邮箱表单 + GitHub 按钮 + 注册的组件规范"}
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "登录页沿用 Zed 风格视觉的设计令牌与样式约定"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "UserDto / session 类型推导与 zod 约定"}

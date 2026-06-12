@@ -1,2 +1,3 @@
--- Create dedicated schema for Casdoor
-CREATE SCHEMA IF NOT EXISTS casdoor;
+-- Postgres init hook (runs once on first container start).
+-- Casdoor schema removed in Better Auth migration (06-12-casdoor-better-auth).
+-- Better Auth tables live in the public schema, managed by Prisma migrations.

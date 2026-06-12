@@ -11,26 +11,38 @@ class EnvVars {
   @Max(65535)
   PORT = 3000;
 
+  // ── Better Auth ──────────────────────────────────────────
   @IsString()
-  CASDOOR_ENDPOINT!: string;
+  BETTER_AUTH_SECRET!: string;
 
   @IsString()
-  CASDOOR_CLIENT_ID!: string;
+  BETTER_AUTH_URL!: string;
+
+  // ── GitHub OAuth ─────────────────────────────────────────
+  @IsString()
+  GITHUB_CLIENT_ID!: string;
 
   @IsString()
-  CASDOOR_CLIENT_SECRET!: string;
+  GITHUB_CLIENT_SECRET!: string;
+
+  // ── SMTP（邮箱验证 + 找回密码）────────────────────────────
+  @IsString()
+  SMTP_HOST!: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  SMTP_PORT!: number;
 
   @IsString()
-  CASDOOR_ORG!: string;
+  SMTP_USER!: string;
 
   @IsString()
-  CASDOOR_APP!: string;
+  SMTP_PASS!: string;
 
   @IsString()
-  CASDOOR_CALLBACK_URL!: string;
-
-  @IsString()
-  SESSION_SECRET!: string;
+  SMTP_FROM!: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {
