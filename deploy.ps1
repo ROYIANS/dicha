@@ -4,10 +4,14 @@
   One-click self-hosted deploy for vidorra (Docker Compose).
 
 .DESCRIPTION
+  Images are built in CI (GitHub Actions) and pushed to GHCR on every push to main.
+  This script pulls those prebuilt images and (re)starts the stack — no local build.
+
   Safe to run repeatedly:
-  - First run: creates .env, builds images, starts stack (empty DB volume).
-  - Later runs: stops containers, rebuilds without cache, recreates services (DB volume kept).
+  - First run: creates .env, pulls images, starts stack (empty DB volume).
+  - Later runs: pulls latest images, recreates services (DB volume kept).
   - Use -Fresh to wipe volumes too (blank database).
+  - Use -Build to build images locally instead of pulling from GHCR.
 
 .EXAMPLE
   .\deploy.ps1
@@ -17,7 +21,8 @@
 param(
     [switch]$Fresh,
     [switch]$Down,
-    [switch]$Logs
+    [switch]$Logs,
+    [switch]$Build
 )
 
 $ErrorActionPreference = 'Stop'
@@ -89,9 +94,17 @@ if ($Fresh) {
 Write-Step "Removing dangling images from previous builds…"
 docker image prune -f | Out-Null
 
-Write-Step "Building api + web images (no cache)…"
-docker compose build --no-cache
-if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed" }
+if ($Build) {
+    Write-Step "Building api + web images locally (no cache)…"
+    docker compose build --no-cache
+    if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed" }
+} else {
+    $prefix = if ($env:IMAGE_PREFIX) { $env:IMAGE_PREFIX } else { 'ghcr.io/royians/vidorra' }
+    $tag = if ($env:IMAGE_TAG) { $env:IMAGE_TAG } else { 'latest' }
+    Write-Step "Pulling prebuilt images from $prefix (tag: $tag)…"
+    docker compose pull api web
+    if ($LASTEXITCODE -ne 0) { Fail "docker compose pull failed" }
+}
 
 Write-Step "Starting stack with recreated containers…"
 docker compose up -d --force-recreate --remove-orphans
@@ -115,7 +128,8 @@ Write-Host "  App:  http://localhost:${webPort}/"
 Write-Host "  API:  http://localhost:${webPort}/api/health"
 Write-Host ""
 Write-Host "Useful commands:"
-Write-Host "  .\deploy.ps1            # upgrade redeploy (keeps DB)"
+Write-Host "  .\deploy.ps1            # pull latest images + redeploy (keeps DB)"
+Write-Host "  .\deploy.ps1 -Build     # build images locally instead of pulling"
 Write-Host "  .\deploy.ps1 -Fresh     # wipe DB + redeploy from scratch"
 Write-Host "  .\deploy.ps1 -Logs      # follow logs"
 Write-Host "  .\deploy.ps1 -Down      # stop stack"

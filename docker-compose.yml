@@ -28,6 +28,7 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
 
   api:
+    image: ${IMAGE_PREFIX:-ghcr.io/royians/vidorra}-api:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -62,6 +63,7 @@ services:
       retries: 8
 
   web:
+    image: ${IMAGE_PREFIX:-ghcr.io/royians/vidorra}-web:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.web
