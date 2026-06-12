@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-06-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~277 | Active |
+| `journal-1.md` | ~383 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-06-12 | Casdoor → Better Auth 迁移 + 无密码登录（OTP/passkey/GitHub） | `7660f13`, `75bd44b`, `157a812`, `365b10f`, `8c91f85`, `fe19f02`, `51db518`, `ed919d2` | `main` |
 | 8 | 2026-06-12 | 启用 Express trust proxy 修复 secure cookie | `34adfc7` | `main` |
 | 7 | 2026-06-12 | 修复生产环境 Casdoor 回调 session 丢失 | `60f23ee` | `main` |
 | 6 | 2026-06-09 | 昼夜主题切换器 + 暗色模式适配 | `e7d4e68` | `main` |
