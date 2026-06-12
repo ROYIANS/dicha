@@ -34,7 +34,7 @@ export const authClient = createAuthClient({
     passkeyClient(),
     inferAdditionalFields({
       user: {
-        displayName: { type: 'string', required: true },
+        displayName: { type: 'string', required: false },
         city: { type: 'string', required: false },
         gender: { type: 'string', required: false },
         personalityArchetype: { type: 'string', required: false },

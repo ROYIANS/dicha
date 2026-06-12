@@ -7,8 +7,10 @@ import { sendOtpMail } from './mailer';
 
 // vidorra-life 应用字段（合并进 Better Auth user 表 → 领域 User 单一身份源）。
 // 必需列 name/emailVerified/image/createdAt/updatedAt 由 Better Auth 自身管理。
+// displayName 不设 required：OTP/OAuth 自动注册不会传它，由 databaseHook 兜底填充
+// （否则必填校验先于 hook 触发，报 "displayName is required"）。
 const additionalFields = {
-  displayName: { type: 'string', required: true },
+  displayName: { type: 'string', required: false },
   city: { type: 'string', required: false },
   gender: { type: 'string', required: false },
   personalityArchetype: { type: 'string', required: false },

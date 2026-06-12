@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useId, useState, type CSSProperties } from 'react';
 import { KeyRound, Mail, ArrowLeft, Loader2 } from 'lucide-react';
+import { InputOTP } from '@heroui/react';
 import { authClient } from '@/lib/auth-client';
 
 /** GitHub 标识（lucide v1 已移除品牌图标，内联官方 mark）。 */
@@ -216,18 +217,24 @@ function LoginPage() {
     setNotice('验证码已发送，请查收邮件');
   };
 
-  // 第二步：用验证码登录（未注册会自动注册）
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // 第二步：用验证码登录（未注册会自动注册）。
+  // 支持表单提交与 InputOTP onComplete 自动提交（传入 6 位码）。
+  const verifyOtp = async (code: string) => {
+    if (pending) return;
     resetFeedback();
     setPending(true);
-    const { error: err } = await authClient.signIn.emailOtp({ email, otp });
+    const { error: err } = await authClient.signIn.emailOtp({ email, otp: code });
     setPending(false);
     if (err) {
       setFormError(err.message ?? '验证码错误或已过期');
       return;
     }
     await router.navigate({ to: '/' });
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyOtp(otp);
   };
 
   // passkey 登录（无需先输邮箱，浏览器弹凭证选择器）
@@ -375,13 +382,27 @@ function LoginPage() {
           {/* 邮箱 OTP — 第二步：输入验证码登录 */}
           {step === 'otp' && (
             <form className="space-y-4" onSubmit={handleVerifyOtp}>
-              <Field
-                label={`验证码（已发送至 ${email}）`}
-                value={otp}
-                onChange={setOtp}
-                autoComplete="one-time-code"
-                placeholder="6 位数字"
-              />
+              <div className="space-y-2">
+                <span className="block text-[11px] tracking-wider text-ink-soft" style={{ fontFamily: MONO }}>
+                  验证码（已发送至 {email}）
+                </span>
+                <InputOTP
+                  maxLength={6}
+                  value={otp}
+                  onChange={setOtp}
+                  onComplete={(code) => void verifyOtp(code)}
+                  autoFocus
+                >
+                  <InputOTP.Group>
+                    <InputOTP.Slot index={0} />
+                    <InputOTP.Slot index={1} />
+                    <InputOTP.Slot index={2} />
+                    <InputOTP.Slot index={3} />
+                    <InputOTP.Slot index={4} />
+                    <InputOTP.Slot index={5} />
+                  </InputOTP.Group>
+                </InputOTP>
+              </div>
               <PhysicalButton type="submit" disabled={pending}>
                 {pending ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
                 <span>验证并登录</span>
