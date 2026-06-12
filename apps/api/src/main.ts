@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api');
 
   // Trust reverse proxy (Nginx) for X-Forwarded-* headers
-  app.set('trust proxy', true);
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
 
   const config = app.get(ConfigService);
 
