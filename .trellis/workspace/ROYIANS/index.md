@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
-- **Last Active**: 2026-06-09
+- **Total Sessions**: 7
+- **Last Active**: 2026-06-12
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~211 | Active |
+| `journal-1.md` | ~244 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-06-12 | 修复生产环境 Casdoor 回调 session 丢失 | `60f23ee` | `main` |
 | 6 | 2026-06-09 | 昼夜主题切换器 + 暗色模式适配 | `e7d4e68` | `main` |
 | 5 | 2026-06-09 | 暖白哑光设计系统 + 首页 mock | `64f3f3e` | `main` |
 | 4 | 2026-06-05 | Frontend Shell + Liquid Glass + 三模式 IA 架构决策 | `4a8727d`, `eda9b8b`, `448a0c8` | `main` |
