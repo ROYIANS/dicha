@@ -28,24 +28,26 @@ async function send(to: string, subject: string, html: string): Promise<void> {
   });
 }
 
-export async function sendVerificationMail(to: string, url: string): Promise<void> {
-  await send(
-    to,
-    '验证你的 vidorra 邮箱',
-    `<p>你好，</p>
-     <p>欢迎来到 vidorra。请点击下方链接验证你的邮箱地址：</p>
-     <p><a href="${url}">验证邮箱</a></p>
-     <p>若你没有注册 vidorra，请忽略此邮件。</p>`,
-  );
-}
+const OTP_SUBJECT: Record<string, string> = {
+  'sign-in': '你的 vidorra 登录验证码',
+  'email-verification': '你的 vidorra 邮箱验证码',
+  'forget-password': '你的 vidorra 密码重置验证码',
+};
 
-export async function sendResetPasswordMail(to: string, url: string): Promise<void> {
+const OTP_INTRO: Record<string, string> = {
+  'sign-in': '使用以下验证码登录 vidorra：',
+  'email-verification': '使用以下验证码验证你的邮箱：',
+  'forget-password': '使用以下验证码重置密码：',
+};
+
+/** 发送邮箱 OTP 验证码（登录 / 邮箱验证 / 密码重置共用）。 */
+export async function sendOtpMail(to: string, otp: string, type: string): Promise<void> {
   await send(
     to,
-    '重置你的 vidorra 密码',
+    OTP_SUBJECT[type] ?? '你的 vidorra 验证码',
     `<p>你好，</p>
-     <p>我们收到了重置密码的请求。请点击下方链接设置新密码：</p>
-     <p><a href="${url}">重置密码</a></p>
-     <p>若你没有发起此请求，请忽略此邮件，你的密码不会被更改。</p>`,
+     <p>${OTP_INTRO[type] ?? '你的验证码：'}</p>
+     <p style="font-size:24px;font-weight:bold;letter-spacing:4px;">${otp}</p>
+     <p>验证码 5 分钟内有效。若非你本人操作，请忽略此邮件。</p>`,
   );
 }

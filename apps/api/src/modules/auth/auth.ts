@@ -1,7 +1,9 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { emailOTP } from 'better-auth/plugins';
+import { passkey } from '@better-auth/passkey';
 import type { PrismaClient } from '../../generated/prisma/client';
-import { sendResetPasswordMail, sendVerificationMail } from './mailer';
+import { sendOtpMail } from './mailer';
 
 // vidorra-life 应用字段（合并进 Better Auth user 表 → 领域 User 单一身份源）。
 // 必需列 name/emailVerified/image/createdAt/updatedAt 由 Better Auth 自身管理。
@@ -14,11 +16,26 @@ const additionalFields = {
   coins: { type: 'number', required: false, defaultValue: 0 },
 } as const;
 
+// 无密码：只信任 https 子域（app./api. 等）+ 本地开发源。
+// baseURL(BETTER_AUTH_URL) 自动受信，无需重复列。
 function trustedOrigins(): string[] {
-  const origins = ['http://localhost:8080', 'http://localhost:5173', 'https://vidorra.life'];
+  return [
+    'http://localhost:8080',
+    'http://localhost:5173',
+    'https://*.vidorra.life',
+  ];
+}
+
+// passkey rpID：生产用裸域 vidorra.life（覆盖 app./www. 等子域），
+// 本地用 localhost。origin 取 BETTER_AUTH_URL。
+function passkeyOptions() {
   const baseUrl = process.env.BETTER_AUTH_URL;
-  if (baseUrl && !origins.includes(baseUrl)) origins.push(baseUrl);
-  return origins;
+  const isProd = !!baseUrl && baseUrl.startsWith('https://');
+  return {
+    rpID: isProd ? 'vidorra.life' : 'localhost',
+    rpName: 'vidorra',
+    origin: baseUrl ?? 'http://localhost:8080',
+  };
 }
 
 export function createAuth(prisma: PrismaClient) {
@@ -29,18 +46,9 @@ export function createAuth(prisma: PrismaClient) {
     baseURL: process.env.BETTER_AUTH_URL,
     // basePath 默认 /api/auth —— 与 main.ts 直接挂的 Express handler 对齐
     trustedOrigins: trustedOrigins(),
+    // 无密码体系：邮箱+密码彻底关闭
     emailAndPassword: {
-      enabled: true,
-      requireEmailVerification: true,
-      sendResetPassword: async ({ user, url }) => {
-        await sendResetPasswordMail(user.email, url);
-      },
-    },
-    emailVerification: {
-      sendOnSignUp: true,
-      sendVerificationEmail: async ({ user, url }) => {
-        await sendVerificationMail(user.email, url);
-      },
+      enabled: false,
     },
     socialProviders: {
       github: {
@@ -48,21 +56,29 @@ export function createAuth(prisma: PrismaClient) {
         clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
       },
     },
+    plugins: [
+      emailOTP({
+        // 注册即可发码（OTP 登录会按需自动注册新用户）
+        sendVerificationOnSignUp: true,
+        async sendVerificationOTP({ email, otp, type }) {
+          await sendOtpMail(email, otp, type);
+        },
+      }),
+      passkey(passkeyOptions()),
+    ],
     user: {
       additionalFields,
     },
     databaseHooks: {
       user: {
         create: {
-          // GitHub 等 OAuth provider 不返回 displayName（必填 additionalField）。
-          // 首次 OAuth 建 user 行时回退用 Better Auth 的 name 填充，避免 NOT NULL 插入失败。
-          before: async (user) => ({
-            data: {
-              ...user,
-              displayName:
-                (user as typeof user & { displayName?: string }).displayName ?? user.name,
-            },
-          }),
+          // OAuth / OTP 首次建 user 行时不带 displayName（必填 additionalField）。
+          // 回退用 Better Auth 的 name（OAuth 给）或邮箱前缀（OTP）兜底，避免 NOT NULL 失败。
+          before: async (user) => {
+            const u = user as typeof user & { displayName?: string };
+            const fallback = u.name || u.email?.split('@')[0] || '旅人';
+            return { data: { ...user, displayName: u.displayName ?? fallback } };
+          },
         },
       },
     },

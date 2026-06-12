@@ -1,5 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { inferAdditionalFields } from 'better-auth/client/plugins';
+import { inferAdditionalFields, emailOTPClient } from 'better-auth/client/plugins';
+import { passkeyClient } from '@better-auth/passkey/client';
 import { env } from '@/lib/env';
 
 /**
@@ -29,6 +30,8 @@ function resolveAuthBaseURL(): string | undefined {
 export const authClient = createAuthClient({
   baseURL: resolveAuthBaseURL(),
   plugins: [
+    emailOTPClient(),
+    passkeyClient(),
     inferAdditionalFields({
       user: {
         displayName: { type: 'string', required: true },
@@ -42,4 +45,4 @@ export const authClient = createAuthClient({
   ],
 });
 
-export const { signIn, signUp, signOut, useSession, getSession } = authClient;
+export const { signIn, signUp, signOut, useSession, getSession, emailOtp, passkey } = authClient;

@@ -75,6 +75,7 @@ model User {
   // ── Better Auth 关系 ───────────────────────────────────
   sessions Session[]
   accounts Account[]
+  passkeys Passkey[]
 
   // ── 领域关系 ───────────────────────────────────────────
   items  Item[]
@@ -131,6 +132,26 @@ model Verification {
   updatedAt DateTime @updatedAt
 
   @@index([identifier])
+}
+
+// passkey 插件表（WebAuthn 凭证）。字段对齐 @better-auth/passkey adapter 期望。
+model Passkey {
+  id           String    @id @default(cuid())
+  name         String?
+  publicKey    String
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  aaguid       String?
+
+  owner  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Category {

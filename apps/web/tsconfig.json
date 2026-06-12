@@ -9,6 +9,8 @@
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {

@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useId, useState, type CSSProperties } from 'react';
-import { LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { KeyRound, Mail, ArrowLeft, Loader2 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 
 /** GitHub 标识（lucide v1 已移除品牌图标，内联官方 mark）。 */
@@ -176,17 +176,17 @@ function Corner({ pos, label }: { pos: NodePos; label: string }) {
   );
 }
 
-type Mode = 'login' | 'register';
+
+type Step = 'email' | 'otp';
 
 function LoginPage() {
   const router = useRouter();
   const searchParams = Route.useSearch();
   const urlError = (searchParams as { error?: string }).error;
 
-  const [mode, setMode] = useState<Mode>('login');
+  const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [otp, setOtp] = useState('');
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -198,9 +198,49 @@ function LoginPage() {
     setFormError(null);
   };
 
-  const switchMode = (next: Mode) => {
-    setMode(next);
+  // 第一步：发送邮箱登录验证码
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
     resetFeedback();
+    setPending(true);
+    const { error: err } = await authClient.emailOtp.sendVerificationOtp({
+      email,
+      type: 'sign-in',
+    });
+    setPending(false);
+    if (err) {
+      setFormError(err.message ?? '验证码发送失败，请稍后再试');
+      return;
+    }
+    setStep('otp');
+    setNotice('验证码已发送，请查收邮件');
+  };
+
+  // 第二步：用验证码登录（未注册会自动注册）
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    resetFeedback();
+    setPending(true);
+    const { error: err } = await authClient.signIn.emailOtp({ email, otp });
+    setPending(false);
+    if (err) {
+      setFormError(err.message ?? '验证码错误或已过期');
+      return;
+    }
+    await router.navigate({ to: '/' });
+  };
+
+  // passkey 登录（无需先输邮箱，浏览器弹凭证选择器）
+  const handlePasskey = async () => {
+    resetFeedback();
+    setPending(true);
+    const res = await authClient.signIn.passkey();
+    if (res?.error) {
+      setFormError(res.error.message ?? 'passkey 登录失败或被取消');
+      setPending(false);
+      return;
+    }
+    await router.navigate({ to: '/' });
   };
 
   const handleGithub = async () => {
@@ -211,53 +251,19 @@ function LoginPage() {
       setFormError(err.message ?? 'GitHub 登录失败，请稍后再试');
       setPending(false);
     }
-    // 成功时浏览器会跳转到 GitHub，无需复位 pending
+    // 成功时浏览器跳转 GitHub，无需复位 pending
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const backToEmail = () => {
+    setStep('email');
+    setOtp('');
     resetFeedback();
-    setPending(true);
-
-    if (mode === 'register') {
-      const { error: err } = await authClient.signUp.email({
-        email,
-        password,
-        name: displayName,
-        displayName,
-        callbackURL: '/',
-      });
-      setPending(false);
-      if (err) {
-        setFormError(err.message ?? '注册失败，请稍后再试');
-        return;
-      }
-      setNotice('验证邮件已发送，请查收后登录');
-      setMode('login');
-      setPassword('');
-      return;
-    }
-
-    const { error: err } = await authClient.signIn.email({ email, password, callbackURL: '/' });
-    setPending(false);
-    if (err) {
-      if (err.status === 403) {
-        setFormError('邮箱尚未验证，请先查收验证邮件');
-      } else {
-        setFormError(err.message ?? '登录失败，请检查邮箱与密码');
-      }
-      return;
-    }
-    await router.navigate({ to: '/' });
   };
-
-  const isLogin = mode === 'login';
 
   return (
     <div className="relative flex min-h-dvh items-center justify-center overflow-clip bg-canvas p-4">
       <GridPattern />
 
-      {/* 工程刻度尺（左右贴边） */}
       <div className="pointer-events-none absolute inset-y-0 left-0 hidden sm:block">
         <Ruler side="left" />
       </div>
@@ -279,7 +285,7 @@ function LoginPage() {
         <Node pos="bottom-left" />
         <Node pos="bottom-right" />
         <Corner pos="top-left" label="A1" />
-        <Corner pos="bottom-right" label={isLogin ? 'AUTH·01' : 'AUTH·02'} />
+        <Corner pos="bottom-right" label={step === 'otp' ? 'AUTH·OTP' : 'AUTH·01'} />
 
         <div className="space-y-6">
           {/* 品牌头 */}
@@ -300,7 +306,7 @@ function LoginPage() {
                 物有所安
               </h1>
               <span className="text-[10px] uppercase tracking-[0.2em] text-ink-faint" style={{ fontFamily: MONO }}>
-                vidorra — {isLogin ? 'sign in' : 'sign up'}
+                vidorra — sign in
               </span>
             </div>
           </div>
@@ -316,7 +322,6 @@ function LoginPage() {
             </span>
           </div>
 
-          {/* 错误提示（工程告警卡：方角 + 左侧标记条） */}
           {error && (
             <div
               className="border border-l-2 p-3 transition-all duration-200"
@@ -333,7 +338,6 @@ function LoginPage() {
             </div>
           )}
 
-          {/* 成功提示（验证邮件已发送等） */}
           {notice && (
             <div
               className="border border-l-2 p-3 transition-all duration-200"
@@ -350,45 +354,49 @@ function LoginPage() {
             </div>
           )}
 
-          {/* 邮箱 + 密码表单 */}
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {!isLogin && (
+          {/* 邮箱 OTP — 第一步：输入邮箱发码 */}
+          {step === 'email' && (
+            <form className="space-y-4" onSubmit={handleSendOtp}>
               <Field
-                label="昵称"
-                value={displayName}
-                onChange={setDisplayName}
-                autoComplete="nickname"
-                placeholder="你想被怎么称呼"
+                label="邮箱"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                autoComplete="email"
+                placeholder="you@example.com"
               />
-            )}
-            <Field
-              label="邮箱"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
-            <Field
-              label="密码"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              autoComplete={isLogin ? 'current-password' : 'new-password'}
-              placeholder="••••••••"
-            />
+              <PhysicalButton type="submit" disabled={pending}>
+                {pending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+                <span>发送验证码</span>
+              </PhysicalButton>
+            </form>
+          )}
 
-            <PhysicalButton type="submit" disabled={pending}>
-              {pending ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : isLogin ? (
-                <LogIn size={14} />
-              ) : (
-                <UserPlus size={14} />
-              )}
-              <span>{isLogin ? '登录' : '注册'}</span>
-            </PhysicalButton>
-          </form>
+          {/* 邮箱 OTP — 第二步：输入验证码登录 */}
+          {step === 'otp' && (
+            <form className="space-y-4" onSubmit={handleVerifyOtp}>
+              <Field
+                label={`验证码（已发送至 ${email}）`}
+                value={otp}
+                onChange={setOtp}
+                autoComplete="one-time-code"
+                placeholder="6 位数字"
+              />
+              <PhysicalButton type="submit" disabled={pending}>
+                {pending ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
+                <span>验证并登录</span>
+              </PhysicalButton>
+              <button
+                type="button"
+                onClick={backToEmail}
+                className="flex items-center justify-center gap-1.5 text-[12px] text-ink-soft hover:text-ink"
+                style={{ fontFamily: MONO }}
+              >
+                <ArrowLeft size={12} />
+                换一个邮箱
+              </button>
+            </form>
+          )}
 
           {/* 分隔：或 */}
           <div className="relative flex items-center gap-3">
@@ -399,7 +407,19 @@ function LoginPage() {
             <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
           </div>
 
-          {/* GitHub 登录（次级描边按钮） */}
+          {/* passkey 登录 */}
+          <button
+            type="button"
+            onClick={handlePasskey}
+            disabled={pending}
+            className="flex w-full items-center justify-center gap-2.5 border px-4 py-3 text-[14px] font-medium text-ink transition-colors duration-150 hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ borderColor: 'color-mix(in oklab, var(--ink) 20%, transparent)', fontFamily: MONO }}
+          >
+            <KeyRound size={15} />
+            <span>使用 passkey 登录</span>
+          </button>
+
+          {/* GitHub 登录 */}
           <button
             type="button"
             onClick={handleGithub}
@@ -410,18 +430,6 @@ function LoginPage() {
             <GithubMark size={15} />
             <span>使用 GitHub 登录</span>
           </button>
-
-          {/* 模式切换 */}
-          <p className="text-center text-[12px] text-ink-soft" style={{ fontFamily: MONO }}>
-            {isLogin ? '还没有账号？' : '已有账号？'}{' '}
-            <button
-              type="button"
-              onClick={() => switchMode(isLogin ? 'register' : 'login')}
-              className="text-ink underline-offset-2 hover:underline"
-            >
-              {isLogin ? '注册' : '去登录'}
-            </button>
-          </p>
 
           {/* 页脚小字 */}
           <p className="text-center text-[11px] leading-relaxed text-ink-faint" style={{ fontFamily: MONO }}>
