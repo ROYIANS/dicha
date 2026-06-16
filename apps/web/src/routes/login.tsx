@@ -1,8 +1,10 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useId, useState, type CSSProperties } from 'react';
-import { KeyRound, Mail, ArrowLeft, Loader2 } from 'lucide-react';
+import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
 import { InputOTP } from '@heroui/react';
 import { authClient } from '@/lib/auth-client';
+import { FrameNode } from '@/components/FrameNode';
+import { EdgeRuler } from '@/components/EdgeRuler';
 
 /** GitHub 标识（lucide v1 已移除品牌图标，内联官方 mark）。 */
 function GithubMark({ size = 15 }: { size?: number }) {
@@ -19,27 +21,11 @@ export const Route = createFileRoute('/login')({
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 const SERIF = "'Noto Serif SC', serif";
+// 结构线 —— 与落地页同定义（blueprint-aesthetic.md §4.2）
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
 
-type NodePos = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-
-function Node({ pos }: { pos: NodePos }) {
-  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute z-10 size-2 border"
-      style={{
-        borderColor: 'color-mix(in oklab, var(--ink) 38%, transparent)',
-        backgroundColor: 'var(--surface)',
-        [v]: 'calc(-1 * var(--node-vertical-offset))',
-        [h]: 'var(--node-horizontal-offset)',
-      }}
-    />
-  );
-}
-
+/** 双层工程纸网格（细 8px + 主 32px），radial 渐隐遮罩 —— 登录页辨识度底景。 */
 function GridPattern() {
   const fine = useId().replace(/:/g, '');
   const major = useId().replace(/:/g, '');
@@ -69,38 +55,36 @@ function GridPattern() {
   );
 }
 
-/** Zed 式物理感按钮：底边 inset 阴影 + hover 摊平 + active 下压 */
-function PhysicalButton({
-  onClick,
-  type = 'button',
-  disabled = false,
-  children,
-}: {
-  onClick?: () => void;
-  type?: 'button' | 'submit';
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
+/** mono 文字包裹（落地页 Mono 的本地等价）。 */
+function Mono({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className="group relative w-full border border-transparent px-4 py-3 text-white transition-all duration-150 active:translate-y-px active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-60"
-      style={{
-        backgroundColor: 'var(--lp-brand)',
-        boxShadow:
-          'color-mix(in oklab, var(--lp-brand) 70%, black) 0 -2px 0 0 inset, color-mix(in oklab, var(--lp-brand) 95%, white) 0 1px 3px 0',
-      }}
-    >
-      <span className="flex items-center justify-center gap-2.5 text-[14px] font-medium" style={{ fontFamily: MONO }}>
-        {children}
-      </span>
-    </button>
+    <span className={className} style={{ fontFamily: MONO }}>
+      {children}
+    </span>
   );
 }
 
-/** Zed 式描边输入框（次按钮风格的中性边 + focus 提亮）。 */
+/** 角落坐标标注（蓝图工程细节）。 */
+function Corner({
+  pos,
+  label,
+}: {
+  pos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  label: string;
+}) {
+  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute z-10 text-[9px] tracking-[0.15em] tabular-nums"
+      style={{ color: 'var(--ink-faint)', fontFamily: MONO, [v]: 10, [h]: 12 }}
+    >
+      {label}
+    </span>
+  );
+}
+
+/** 蓝图描边输入框：奇纸底 + hairline 边 + 方角 + focus 提亮 brand（呼应 --field-* token）。 */
 function Field({
   label,
   type = 'text',
@@ -119,9 +103,7 @@ function Field({
   const id = useId();
   return (
     <label htmlFor={id} className="block space-y-1.5">
-      <span className="block text-[11px] tracking-wider text-ink-soft" style={{ fontFamily: MONO }}>
-        {label}
-      </span>
+      <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono>
       <input
         id={id}
         type={type}
@@ -129,54 +111,27 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="w-full border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
-        style={{ borderColor: 'color-mix(in oklab, var(--ink) 20%, transparent)', fontFamily: MONO }}
+        className="w-full rounded-[2px] border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+        style={{ borderColor: 'var(--hairline)', fontFamily: MONO }}
       />
     </label>
   );
 }
 
-/** 工程刻度尺：主竖线 + 等距 tick 刻度（结构即装饰）。 */
-function Ruler({ side }: { side: 'left' | 'right' }) {
-  const inward = side === 'left' ? 'right' : 'left';
+/** 分隔线（中心十字标记 —— 蓝图标注语汇）。 */
+function CrossDivider() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-y-0"
-      style={{ width: 12, color: RULE, [side]: 0 }}
-    >
-      {/* 主竖线 */}
-      <div className="absolute inset-y-0" style={{ width: 1, backgroundColor: 'currentColor', [side]: 0 }} />
-      {/* 等距刻度：每 24px 一个 tick，每第 5 个加长 */}
-      <div
-        className="absolute inset-y-0"
-        style={{
-          width: 12,
-          [side]: 0,
-          backgroundImage:
-            'repeating-linear-gradient(to bottom, currentColor 0 1px, transparent 1px 24px)',
-          maskImage: `linear-gradient(to ${inward}, #000 0, #000 5px, transparent 6px)`,
-          WebkitMaskImage: `linear-gradient(to ${inward}, #000 0, #000 5px, transparent 6px)`,
-        }}
-      />
+    <div className="relative h-px w-full" style={{ backgroundColor: LINE }}>
+      <span
+        aria-hidden
+        className="absolute left-1/2 top-1/2 grid size-3 -translate-x-1/2 -translate-y-1/2 place-items-center text-[12px] leading-none text-ink-faint"
+        style={{ backgroundColor: 'var(--surface)', fontFamily: MONO }}
+      >
+        +
+      </span>
     </div>
   );
 }
-
-/** 角落坐标标注（蓝图工程细节）。 */
-function Corner({ pos, label }: { pos: NodePos; label: string }) {
-  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute z-10 text-[9px] tracking-[0.15em] tabular-nums"
-      style={{ color: 'var(--ink-faint)', fontFamily: MONO, [v]: 8, [h]: 10 }}
-    >
-      {label}
-    </span>
-  );
-}
-
 
 type Step = 'email' | 'otp';
 
@@ -268,198 +223,246 @@ function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-clip bg-canvas p-4">
-      <GridPattern />
+    <div className="lp-outer-node-offset relative flex min-h-dvh min-w-0 bg-canvas">
+      {/* 外侧节点对：骑框架顶线（lg+） */}
+      <FrameNode pos="top-left" className="hidden lg:block" />
+      <FrameNode pos="top-right" className="hidden lg:block" />
 
-      <div className="pointer-events-none absolute inset-y-0 left-0 hidden sm:block">
-        <Ruler side="left" />
-      </div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 hidden sm:block">
-        <Ruler side="right" />
-      </div>
+      {/* 五段框架：窄rail / 弹性rail / container / 弹性rail / 窄rail（对照 zed sign_up） */}
+      <span className="relative w-4 shrink-0 sm:w-6 md:w-12">
+        <EdgeRuler side="right" color={RULE} segs={[{ f: 2.6 }, { f: 3.3, dash: true }]} />
+      </span>
+      <span className="relative hidden flex-1 lg:block">
+        <EdgeRuler
+          side="right"
+          color={RULE}
+          segs={[{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.6 }]}
+        />
+      </span>
 
-      <div
-        className="relative isolate w-full max-w-md border bg-surface/95 p-8 backdrop-blur-[1px]"
-        style={{
-          borderColor: 'color-mix(in oklab, var(--ink) 22%, transparent)',
-          boxShadow: 'color-mix(in oklab, var(--ink) 6%, transparent) 0 -2px 0 0 inset, var(--shadow-lg)',
-          '--node-vertical-offset': '4.5px',
-          '--node-horizontal-offset': '-4.5px',
-        } as CSSProperties}
-      >
-        <Node pos="top-left" />
-        <Node pos="top-right" />
-        <Node pos="bottom-left" />
-        <Node pos="bottom-right" />
-        <Corner pos="top-left" label="A1" />
-        <Corner pos="bottom-right" label={step === 'otp' ? 'AUTH·OTP' : 'AUTH·01'} />
+      <div className="lp-container-max-w relative max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
+        {/* container 内侧节点对：压 container 边线 × 顶线，常显 */}
+        <FrameNode pos="top-left" />
+        <FrameNode pos="top-right" />
 
-        <div className="space-y-6">
-          {/* 品牌头 */}
-          <div className="flex items-center gap-3">
-            <span
-              className="grid h-10 w-10 place-items-center border text-[15px] font-bold transition-transform hover:scale-105"
-              style={{
-                backgroundColor: 'var(--sidebar-bg)',
-                color: 'var(--sidebar-ink)',
-                borderColor: 'color-mix(in oklab, var(--ink) 30%, transparent)',
-                fontFamily: SERIF,
-              }}
-            >
-              物
-            </span>
-            <div>
-              <h1 className="text-[18px] font-semibold leading-tight text-ink" style={{ fontFamily: SERIF }}>
-                物有所安
-              </h1>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-ink-faint" style={{ fontFamily: MONO }}>
-                vidorra — sign in
-              </span>
-            </div>
-          </div>
+        {/* 工程纸网格底景 */}
+        <GridPattern />
 
-          {/* 分隔线（带中心十字标记） */}
-          <div className="relative h-px w-full" style={{ backgroundColor: LINE }}>
-            <span
-              aria-hidden
-              className="absolute left-1/2 top-1/2 grid size-3 -translate-x-1/2 -translate-y-1/2 place-items-center text-[12px] leading-none text-ink-faint"
-              style={{ backgroundColor: 'var(--surface)', fontFamily: MONO }}
-            >
-              +
-            </span>
-          </div>
+        {/* 居中区 */}
+        <div className="relative z-10 flex min-h-dvh items-center justify-center p-4">
+          <div
+            className="relative isolate w-full max-w-sm border bg-surface p-8"
+            style={
+              {
+                borderColor: 'var(--hairline)',
+                borderRadius: '0.125rem', // 方角 blueprint（rounded-sm）
+                boxShadow:
+                  '6px 6px 0 color-mix(in oklab, var(--ink) 6%, transparent)', // zed 邮戳阴影（vidorra 暖墨低透明）
+                '--node-vertical-offset': '3.5px',
+                '--node-horizontal-offset': '-3.5px',
+              } as CSSProperties
+            }
+          >
+            {/* 卡片四角骑节点 */}
+            <FrameNode pos="top-left" />
+            <FrameNode pos="top-right" />
+            <FrameNode pos="bottom-left" />
+            <FrameNode pos="bottom-right" />
+            <Corner pos="top-left" label="A1" />
+            <Corner pos="bottom-right" label={step === 'otp' ? 'AUTH·OTP' : 'AUTH·01'} />
 
-          {error && (
-            <div
-              className="border border-l-2 p-3 transition-all duration-200"
-              style={{
-                borderColor: 'color-mix(in oklab, var(--accent-pink) 60%, var(--ink) 8%)',
-                borderLeftColor: 'var(--accent-pink)',
-                backgroundColor: 'var(--chip-pink)',
-              }}
-            >
-              <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft" style={{ fontFamily: MONO }}>
-                ERR
-              </span>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink">{error}</p>
-            </div>
-          )}
-
-          {notice && (
-            <div
-              className="border border-l-2 p-3 transition-all duration-200"
-              style={{
-                borderColor: 'color-mix(in oklab, var(--accent-sage) 60%, var(--ink) 8%)',
-                borderLeftColor: 'var(--accent-sage)',
-                backgroundColor: 'var(--chip-sage)',
-              }}
-            >
-              <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft" style={{ fontFamily: MONO }}>
-                OK
-              </span>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink">{notice}</p>
-            </div>
-          )}
-
-          {/* 邮箱 OTP — 第一步：输入邮箱发码 */}
-          {step === 'email' && (
-            <form className="space-y-4" onSubmit={handleSendOtp}>
-              <Field
-                label="邮箱"
-                type="email"
-                value={email}
-                onChange={setEmail}
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
-              <PhysicalButton type="submit" disabled={pending}>
-                {pending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
-                <span>发送验证码</span>
-              </PhysicalButton>
-            </form>
-          )}
-
-          {/* 邮箱 OTP — 第二步：输入验证码登录 */}
-          {step === 'otp' && (
-            <form className="space-y-4" onSubmit={handleVerifyOtp}>
-              <div className="space-y-2">
-                <span className="block text-[11px] tracking-wider text-ink-soft" style={{ fontFamily: MONO }}>
-                  验证码（已发送至 {email}）
-                </span>
-                <InputOTP
-                  maxLength={6}
-                  value={otp}
-                  onChange={setOtp}
-                  onComplete={(code) => void verifyOtp(code)}
-                  autoFocus
+            <div className="space-y-6">
+              {/* 品牌头 */}
+              <div className="flex items-center gap-3">
+                <span
+                  className="grid h-10 w-10 place-items-center rounded-[3px] text-[15px] font-bold transition-transform hover:scale-105"
+                  style={{ backgroundColor: 'var(--sidebar-bg)', color: 'var(--sidebar-ink)', fontFamily: SERIF }}
                 >
-                  <InputOTP.Group>
-                    <InputOTP.Slot index={0} />
-                    <InputOTP.Slot index={1} />
-                    <InputOTP.Slot index={2} />
-                    <InputOTP.Slot index={3} />
-                    <InputOTP.Slot index={4} />
-                    <InputOTP.Slot index={5} />
-                  </InputOTP.Group>
-                </InputOTP>
+                  物
+                </span>
+                <div>
+                  <h1 className="text-[18px] font-semibold leading-tight text-ink" style={{ fontFamily: SERIF }}>
+                    物有所安
+                  </h1>
+                  <Mono className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+                    vidorra — sign in
+                  </Mono>
+                </div>
               </div>
-              <PhysicalButton type="submit" disabled={pending}>
-                {pending ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
-                <span>验证并登录</span>
-              </PhysicalButton>
+
+              {/* 分隔线（中心十字标记） */}
+              <CrossDivider />
+
+              {error && (
+                <div
+                  className="rounded-[2px] border border-l-2 p-3 transition-all duration-200"
+                  style={{
+                    borderColor: 'color-mix(in oklab, var(--accent-pink) 60%, var(--ink) 8%)',
+                    borderLeftColor: 'var(--accent-pink)',
+                    backgroundColor: 'var(--chip-pink)',
+                  }}
+                >
+                  <Mono className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">ERR</Mono>
+                  <p className="mt-1 text-[13px] leading-relaxed text-ink">{error}</p>
+                </div>
+              )}
+
+              {notice && (
+                <div
+                  className="rounded-[2px] border border-l-2 p-3 transition-all duration-200"
+                  style={{
+                    borderColor: 'color-mix(in oklab, var(--accent-sage) 60%, var(--ink) 8%)',
+                    borderLeftColor: 'var(--accent-sage)',
+                    backgroundColor: 'var(--chip-sage)',
+                  }}
+                >
+                  <Mono className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">OK</Mono>
+                  <p className="mt-1 text-[13px] leading-relaxed text-ink">{notice}</p>
+                </div>
+              )}
+
+              {/* 邮箱 OTP — 第一步：输入邮箱发码 */}
+              {step === 'email' && (
+                <form className="space-y-4" onSubmit={handleSendOtp}>
+                  <Field
+                    label="邮箱"
+                    type="email"
+                    value={email}
+                    onChange={setEmail}
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                  />
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {pending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Mail size={14} />
+                    )}
+                    <Mono className="text-[14px] font-medium">
+                      {pending ? '发送中…' : '发送验证码'}
+                    </Mono>
+                  </button>
+                </form>
+              )}
+
+              {/* 邮箱 OTP — 第二步：输入验证码登录 */}
+              {step === 'otp' && (
+                <form className="space-y-4" onSubmit={handleVerifyOtp}>
+                  <div className="space-y-2">
+                    <Mono className="block text-[11px] tracking-wider text-ink-soft">
+                      验证码（已发送至 {email}）
+                    </Mono>
+                    <InputOTP
+                      maxLength={6}
+                      value={otp}
+                      onChange={setOtp}
+                      onComplete={(code) => void verifyOtp(code)}
+                      autoFocus
+                    >
+                      <InputOTP.Group>
+                        <InputOTP.Slot index={0} />
+                        <InputOTP.Slot index={1} />
+                        <InputOTP.Slot index={2} />
+                        <InputOTP.Slot index={3} />
+                        <InputOTP.Slot index={4} />
+                        <InputOTP.Slot index={5} />
+                      </InputOTP.Group>
+                    </InputOTP>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {pending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <KeyRound size={14} />
+                    )}
+                    <Mono className="text-[14px] font-medium">
+                      {pending ? '验证中…' : '验证并登录'}
+                    </Mono>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={backToEmail}
+                    className="lp-nav-link inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-[12px]"
+                  >
+                    <ArrowLeft size={12} />
+                    <Mono>换一个邮箱</Mono>
+                  </button>
+                </form>
+              )}
+
+              {/* 分隔：或（蓝图式 mono 标记） */}
+              <div className="relative flex items-center gap-3">
+                <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
+                <Mono className="flex items-center gap-1 text-[11px] tracking-wider text-ink-faint">
+                  <Plus size={10} className="rotate-45" />
+                  OR
+                </Mono>
+                <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
+              </div>
+
+              {/* passkey 登录 */}
               <button
                 type="button"
-                onClick={backToEmail}
-                className="flex items-center justify-center gap-1.5 text-[12px] text-ink-soft hover:text-ink"
-                style={{ fontFamily: MONO }}
+                onClick={handlePasskey}
+                disabled={pending}
+                className="lp-btn lp-btn-ghost inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <ArrowLeft size={12} />
-                换一个邮箱
+                <KeyRound size={15} />
+                <Mono className="text-[14px] font-medium">使用 passkey 登录</Mono>
               </button>
-            </form>
-          )}
 
-          {/* 分隔：或 */}
-          <div className="relative flex items-center gap-3">
-            <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
-            <span className="text-[11px] tracking-wider text-ink-faint" style={{ fontFamily: MONO }}>
-              OR
-            </span>
-            <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
+              {/* GitHub 登录 */}
+              <button
+                type="button"
+                onClick={handleGithub}
+                disabled={pending}
+                className="lp-btn lp-btn-ghost inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <GithubMark size={15} />
+                <Mono className="text-[14px] font-medium">使用 GitHub 登录</Mono>
+              </button>
+
+              {/* 页脚小字 —— zed 式下划线渐显链接 */}
+              <p className="text-center text-[11px] leading-relaxed text-ink-faint" style={{ fontFamily: MONO }}>
+                登录即表示您同意
+                <br />
+                <a
+                  href="#"
+                  className="underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
+                >
+                  服务条款
+                </a>
+                {' · '}
+                <a
+                  href="#"
+                  className="underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
+                >
+                  隐私政策
+                </a>
+              </p>
+            </div>
           </div>
-
-          {/* passkey 登录 */}
-          <button
-            type="button"
-            onClick={handlePasskey}
-            disabled={pending}
-            className="flex w-full items-center justify-center gap-2.5 border px-4 py-3 text-[14px] font-medium text-ink transition-colors duration-150 hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ borderColor: 'color-mix(in oklab, var(--ink) 20%, transparent)', fontFamily: MONO }}
-          >
-            <KeyRound size={15} />
-            <span>使用 passkey 登录</span>
-          </button>
-
-          {/* GitHub 登录 */}
-          <button
-            type="button"
-            onClick={handleGithub}
-            disabled={pending}
-            className="flex w-full items-center justify-center gap-2.5 border px-4 py-3 text-[14px] font-medium text-ink transition-colors duration-150 hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ borderColor: 'color-mix(in oklab, var(--ink) 20%, transparent)', fontFamily: MONO }}
-          >
-            <GithubMark size={15} />
-            <span>使用 GitHub 登录</span>
-          </button>
-
-          {/* 页脚小字 */}
-          <p className="text-center text-[11px] leading-relaxed text-ink-faint" style={{ fontFamily: MONO }}>
-            登录即表示您同意
-            <br />
-            服务条款 · 隐私政策
-          </p>
         </div>
       </div>
+
+      <span className="relative hidden flex-1 lg:block">
+        <EdgeRuler
+          side="left"
+          color={RULE}
+          segs={[{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.6 }]}
+        />
+      </span>
+      <span className="relative w-4 shrink-0 sm:w-6 md:w-12">
+        <EdgeRuler side="left" color={RULE} segs={[{ f: 2.6 }, { f: 3.3, dash: true }]} />
+      </span>
     </div>
   );
 }

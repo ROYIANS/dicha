@@ -1,8 +1,10 @@
 # Design System — 暖白柔面哑光（Warm Matte）
 
-> vidorra 视觉基调的**单一出处**。来源：2026-06-05 与 ROYIANS 基于确认 mock 的定调会话。
+> vidorra 视觉基调的**单一出处（材质 / token / 色彩层）**。来源：2026-06-05 与 ROYIANS 基于确认 mock 的定调会话。
 > 取代原 Liquid Glass + 紫色方案（见 [architecture.md §4/§5](./architecture.md)，已回链本文）。
 > 落地实现：`apps/web/src/index.css`（token 层）+ `apps/web/src/components/Surface.tsx`（卡片底座）。
+>
+> **本文管「用什么材料」**（暖哑光 token / 色彩 / Surface 材质）。**结构语汇**（zed 式工程纸/蓝图——五段轨道框架、骑线菱形节点、分段标尺、条码刻线、斜线舱壁、物理感按钮）见对篇 **[blueprint-aesthetic.md](./blueprint-aesthetic.md)**。落地页 `apps/web/src/routes/index.tsx` 是两者的最佳范本。
 
 ---
 

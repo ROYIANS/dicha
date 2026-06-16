@@ -45,3 +45,7 @@ pnpm-debug.log*
 # Local storage (MinIO / dev uploads)
 .storage/
 uploads/
+
+# Zed editor preview files
+zed*.html
+
