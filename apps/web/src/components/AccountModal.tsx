@@ -1,18 +1,9 @@
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, useId, type ReactNode, type CSSProperties } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import {
-  Modal,
-  Avatar,
-  TextField,
-  Label,
-  Input,
-  FieldError,
-  Button,
-  Spinner,
-} from '@heroui/react';
+import { Modal, Avatar, Spinner } from '@heroui/react';
 import {
   X,
   LogOut,
@@ -23,8 +14,10 @@ import {
   Unlink,
   ShieldCheck,
   ShieldAlert,
+  Loader2,
 } from 'lucide-react';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
+import { FrameNode } from '@/components/FrameNode';
 import {
   updateUser,
   linkSocial,
@@ -39,6 +32,8 @@ import { authQueryOptions } from '@/api/auth';
 import type { UserDto } from '@vidorra/shared';
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
+// 结构线 —— 与登录卡 / 落地页同定义（blueprint-aesthetic.md §4.2）
+const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const PRESET_AVATARS = [1, 2, 3, 4, 5, 6].map((n) => `/avatars/avatar-${n}.svg`);
 
 type AccountModalProps = {
@@ -49,7 +44,16 @@ type AccountModalProps = {
 
 type Tab = 'profile' | 'security';
 
-/** 区块标题（mono 小标 + 细线）。 */
+/** mono 文字包裹（登录卡 Mono 的本地等价）。 */
+function Mono({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <span className={className} style={{ fontFamily: MONO }}>
+      {children}
+    </span>
+  );
+}
+
+/** 区块标题（mono 小标）。 */
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <span
@@ -61,7 +65,93 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-// PLACEHOLDER_BODY
+/** 角落坐标标注（蓝图工程细节，与登录卡同语汇）。 */
+function Corner({
+  pos,
+  label,
+}: {
+  pos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  label: string;
+}) {
+  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute z-10 text-[9px] tracking-[0.15em] tabular-nums"
+      style={{ color: 'var(--ink-faint)', fontFamily: MONO, [v]: 10, [h]: 12 }}
+    >
+      {label}
+    </span>
+  );
+}
+
+/** 双层工程纸网格（细 8px + 主 32px），radial 渐隐遮罩 —— 与登录卡同底景。 */
+function GridPattern() {
+  const fine = useId().replace(/:/g, '');
+  const major = useId().replace(/:/g, '');
+  return (
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-0 size-full"
+      style={{
+        color: 'var(--lp-deco)',
+        maskImage: 'radial-gradient(ellipse 100% 70% at center, #000 30%, transparent 85%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 100% 70% at center, #000 30%, transparent 85%)',
+      }}
+    >
+      <defs>
+        <pattern id={fine} width="8" height="8" patternUnits="userSpaceOnUse">
+          <path d="M8 0H0V8" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1" />
+        </pattern>
+        <pattern id={major} width="32" height="32" patternUnits="userSpaceOnUse">
+          <rect width="32" height="32" fill={`url(#${fine})`} />
+          <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.18" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${major})`} />
+    </svg>
+  );
+}
+
+/** 蓝图描边输入框：奇纸底 + hairline 边 + 方角 + focus 提亮 brand（呼应登录卡 Field）。 */
+function Field({
+  label,
+  value,
+  onChange,
+  invalid,
+  errorText,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  invalid?: boolean;
+  errorText?: string;
+  placeholder?: string;
+}) {
+  const id = useId();
+  return (
+    <label htmlFor={id} className="block space-y-1.5">
+      {label ? <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono> : null}
+      <input
+        id={id}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-invalid={invalid}
+        className="w-full rounded-[2px] border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+        style={{
+          borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)',
+          fontFamily: MONO,
+        }}
+      />
+      {invalid && errorText ? (
+        <Mono className="block text-[11px] text-accent-pink">{errorText}</Mono>
+      ) : null}
+    </label>
+  );
+}
 
 /** 账户弹窗：HeroUI Modal + 在 Backdrop 内渲染 DotsBackdrop 点阵遮罩。 */
 export function AccountModal({ user, isOpen, onOpenChange }: AccountModalProps) {
@@ -74,9 +164,23 @@ export function AccountModal({ user, isOpen, onOpenChange }: AccountModalProps) 
         <DotsBackdrop visible={isOpen} className="pointer-events-none absolute inset-0 size-full" />
         <Modal.Container placement="center">
           <Modal.Dialog
-            className="relative isolate w-[min(92vw,520px)] max-h-[88dvh] overflow-hidden border bg-surface/95 p-0 shadow-float outline-none"
-            style={{ borderColor: 'color-mix(in oklab, var(--ink) 22%, transparent)' }}
+            className="relative isolate w-[min(92vw,520px)] max-h-[88dvh] border bg-surface p-0 outline-none"
+            style={
+              {
+                borderColor: 'var(--hairline)',
+                borderRadius: '0.125rem', // 方角 blueprint（rounded-sm）
+                boxShadow: '8px 8px 0 color-mix(in oklab, var(--ink) 7%, transparent)', // 邮戳偏移阴影
+                '--node-vertical-offset': '3.5px',
+                '--node-horizontal-offset': '-3.5px',
+              } as CSSProperties
+            }
           >
+            {/* 卡片四角骑节点 */}
+            <FrameNode pos="top-left" />
+            <FrameNode pos="top-right" />
+            <FrameNode pos="bottom-left" />
+            <FrameNode pos="bottom-right" />
+
             <AccountModalContent
               user={user}
               tab={tab}
@@ -126,9 +230,13 @@ function AccountModalContent({ user, tab, setTab, onClose, t }: ContentProps) {
   );
 
   return (
-    <div className="flex max-h-[88dvh] flex-col">
-      {/* 头部：标题 + tabs + 关闭 */}
-      <div className="flex shrink-0 items-center justify-between border-b border-hairline px-4 pt-3">
+    <div className="relative flex max-h-[88dvh] flex-col">
+      {/* 角落坐标标注（工程图纸编号） */}
+      <Corner pos="top-right" label="ACCT·01" />
+      <Corner pos="bottom-left" label={tab === 'security' ? 'SEC·02' : 'PRO·01'} />
+
+      {/* 头部：品牌徽 + tabs + 关闭 */}
+      <div className="relative z-10 flex shrink-0 items-center justify-between border-b border-hairline px-4 pt-3">
         <div className="flex items-center gap-1">
           {tabBtn('profile', t('account.tabProfile'))}
           {tabBtn('security', t('account.tabSecurity'))}
@@ -143,24 +251,25 @@ function AccountModalContent({ user, tab, setTab, onClose, t }: ContentProps) {
         </button>
       </div>
 
-      {/* 主体：可滚动 */}
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5">
-        {tab === 'profile' ? (
-          <ProfileTab user={user} t={t} />
-        ) : (
-          <SecurityTab user={user} t={t} />
-        )}
+      {/* 主体：可滚动，工程纸网格底景 */}
+      <div className="relative min-h-0 flex-1 overflow-y-auto">
+        <GridPattern />
+        <div className="relative z-10 space-y-6 p-5">
+          {tab === 'profile' ? (
+            <ProfileTab user={user} t={t} />
+          ) : (
+            <SecurityTab user={user} t={t} />
+          )}
+        </div>
       </div>
 
-      {/* 底部：退出登录 */}
-      <div className="flex shrink-0 items-center justify-between border-t border-hairline px-5 py-3">
-        <span className="text-[11px] text-ink-faint" style={{ fontFamily: MONO }}>
-          {user.email}
-        </span>
+      {/* 底部：邮箱读数 + 退出登录（lp-btn ghost 物理按钮） */}
+      <div className="relative z-10 flex shrink-0 items-center justify-between gap-3 border-t border-hairline px-5 py-3">
+        <Mono className="min-w-0 truncate text-[11px] text-ink-faint">{user.email}</Mono>
         <button
           type="button"
           onClick={() => void handleLogout()}
-          className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-[12px] text-ink-soft transition-colors hover:text-ink"
+          className="lp-btn lp-btn-ghost inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px]"
           style={{ fontFamily: MONO }}
         >
           <LogOut size={13} />
@@ -257,7 +366,7 @@ function ProfileTab({ user, t }: TabProps) {
       <section className="space-y-3">
         <SectionLabel>{t('account.avatar')}</SectionLabel>
         <div className="flex items-center gap-4">
-          <Avatar size="lg" className="size-16 shrink-0 rounded-lg">
+          <Avatar size="lg" className="size-16 shrink-0 rounded-[3px]">
             {image ? <Avatar.Image src={image} alt={name} /> : null}
             <Avatar.Fallback>{(name || 'V').slice(0, 1).toUpperCase()}</Avatar.Fallback>
           </Avatar>
@@ -268,7 +377,7 @@ function ProfileTab({ user, t }: TabProps) {
                 type="button"
                 onClick={() => void applyImage(src)}
                 aria-label={src}
-                className="size-9 overflow-hidden rounded-md border transition-transform hover:scale-105"
+                className="size-9 overflow-hidden rounded-[3px] border transition-transform hover:scale-105"
                 style={{
                   borderColor:
                     image === src ? 'var(--lp-brand)' : 'color-mix(in oklab, var(--ink) 18%, transparent)',
@@ -291,15 +400,13 @@ function ProfileTab({ user, t }: TabProps) {
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-[12px] text-ink-soft transition-colors hover:text-ink disabled:opacity-60"
+            className="lp-btn lp-btn-ghost inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
             style={{ fontFamily: MONO }}
           >
-            {uploading ? <Spinner size="sm" /> : <Upload size={13} />}
+            {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
             {uploading ? t('account.avatarUploading') : t('account.avatarUpload')}
           </button>
-          <p className="mt-1.5 text-[11px] text-ink-faint" style={{ fontFamily: MONO }}>
-            {t('account.avatarHint')}
-          </p>
+          <Mono className="mt-1.5 block text-[11px] text-ink-faint">{t('account.avatarHint')}</Mono>
         </div>
       </section>
 
@@ -307,41 +414,39 @@ function ProfileTab({ user, t }: TabProps) {
       <section className="space-y-3">
         <SectionLabel>{t('account.displayName')}</SectionLabel>
         <div className="flex items-end gap-2">
-          <TextField
-            className="flex-1"
-            value={name}
-            onChange={setName}
-            isInvalid={nameInvalid}
-            isRequired
+          <div className="flex-1">
+            <Field
+              label=""
+              value={name}
+              onChange={setName}
+              invalid={nameInvalid}
+              errorText={t('account.displayNameRequired')}
+              placeholder={t('account.displayNamePlaceholder')}
+            />
+          </div>
+          <button
+            type="button"
+            disabled={nameInvalid || !dirty || savingName}
+            onClick={() => void handleSaveName()}
+            className="lp-btn lp-btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-md px-4 py-2.5 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ fontFamily: MONO }}
           >
-            <Label className="sr-only">{t('account.displayName')}</Label>
-            <Input placeholder={t('account.displayNamePlaceholder')} />
-            {nameInvalid ? <FieldError>{t('account.displayNameRequired')}</FieldError> : null}
-          </TextField>
-          <Button
-            isDisabled={nameInvalid || !dirty || savingName}
-            onPress={() => void handleSaveName()}
-          >
+            {savingName ? <Loader2 size={13} className="animate-spin" /> : null}
             {savingName ? t('account.saving') : t('account.save')}
-          </Button>
+          </button>
         </div>
       </section>
 
       {/* 邮箱（仅展示 + 验证状态） */}
       <section className="space-y-3">
         <SectionLabel>{t('account.email')}</SectionLabel>
-        <div className="flex items-center justify-between gap-3 rounded-md border border-hairline px-3 py-2.5">
-          <span className="min-w-0 truncate text-[13px] text-ink" style={{ fontFamily: MONO }}>
-            {user.email}
-          </span>
+        <div className="flex items-center justify-between gap-3 rounded-[2px] border bg-canvas px-3 py-2.5" style={{ borderColor: 'var(--hairline)' }}>
+          <Mono className="min-w-0 truncate text-[13px] text-ink">{user.email}</Mono>
           {user.emailVerified ? (
-            <span
-              className="inline-flex shrink-0 items-center gap-1 text-[11px] text-accent-sage"
-              style={{ fontFamily: MONO }}
-            >
+            <Mono className="inline-flex shrink-0 items-center gap-1 text-[11px] text-accent-sage">
               <ShieldCheck size={13} />
               {t('account.emailVerified')}
-            </span>
+            </Mono>
           ) : (
             <button
               type="button"
@@ -427,7 +532,7 @@ function SecurityTab({ t }: TabProps) {
       {/* GitHub 绑定 */}
       <section className="space-y-3">
         <SectionLabel>{t('account.github')}</SectionLabel>
-        <div className="flex items-center justify-between gap-3 rounded-md border border-hairline px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3 rounded-[2px] border bg-canvas px-3 py-2.5" style={{ borderColor: 'var(--hairline)' }}>
           <span className="flex items-center gap-2 text-[13px] text-ink" style={{ fontFamily: MONO }}>
             <GithubMark size={15} />
             {githubLinked ? t('account.githubLinked') : t('account.github')}
@@ -437,7 +542,7 @@ function SecurityTab({ t }: TabProps) {
               type="button"
               onClick={() => void handleUnlinkGithub()}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-2.5 py-1.5 text-[12px] text-ink-soft transition-colors hover:text-ink disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               <Unlink size={13} />
@@ -448,7 +553,7 @@ function SecurityTab({ t }: TabProps) {
               type="button"
               onClick={() => void handleLinkGithub()}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-2.5 py-1.5 text-[12px] text-ink-soft transition-colors hover:text-ink disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               <Link2 size={13} />
@@ -479,7 +584,7 @@ function SecurityTab({ t }: TabProps) {
             <Spinner size="sm" />
           </div>
         ) : !passkeys || passkeys.length === 0 ? (
-          <p className="rounded-md border border-dashed border-hairline px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO }}>
+          <p className="rounded-[2px] border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO, borderColor: LINE }}>
             {t('account.passkeyEmpty')}
           </p>
         ) : (
@@ -487,7 +592,8 @@ function SecurityTab({ t }: TabProps) {
             {passkeys.map((pk) => (
               <li
                 key={pk.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-hairline px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-[2px] border bg-canvas px-3 py-2"
+                style={{ borderColor: 'var(--hairline)' }}
               >
                 <span className="flex items-center gap-2 text-[13px] text-ink" style={{ fontFamily: MONO }}>
                   <KeyRound size={13} className="text-ink-soft" />

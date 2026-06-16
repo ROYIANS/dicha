@@ -91,17 +91,16 @@ export function DotsBackdrop({ visible, className = '' }: { visible: boolean; cl
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const dpr = Math.round(Math.max(1, Math.min(window.devicePixelRatio ?? 1, 2)));
-    const offscreen = document.createElement('canvas');
 
     const setSize = () => {
-      canvas.width = offscreen.width = Math.max(1, canvas.offsetWidth * dpr);
-      canvas.height = offscreen.height = Math.max(1, canvas.offsetHeight * dpr);
+      canvas.width = Math.max(1, canvas.offsetWidth * dpr);
+      canvas.height = Math.max(1, canvas.offsetHeight * dpr);
     };
     setSize();
 
-    const gl = offscreen.getContext('webgl2');
-    const ctx2d = canvas.getContext('2d');
-    if (!gl || !ctx2d) return;
+    // 直接渲染到可见 canvas（透明底，scrim 走 CSS background）。
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true });
+    if (!gl) return;
 
     const vert = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
     const frag = compileShader(gl, gl.FRAGMENT_SHADER, buildFragmentShader());
@@ -130,18 +129,22 @@ export function DotsBackdrop({ visible, className = '' }: { visible: boolean; cl
 
     const opacities = new Float32Array([0.08, 0.08, 0.08, 0.08, 0.08, 0.16, 0.16, 0.16, 0.16, 0.28]);
 
-    const syncDotColors = () => {
-      const [r, g, b] = readDrawerTokens().dot;
+    // token 缓存：仅在挂载 / 主题切换时读取，不在渲染循环里调 getComputedStyle。
+    const applyTokens = () => {
+      const { scrim, dot } = readDrawerTokens();
+      canvas.style.backgroundColor = scrim;
+      const [r, g, b] = dot;
       gl.uniform3fv(
         uColors,
         new Float32Array([r, g, b, r, g, b, r, g, b, r, g, b, r, g, b, r, g, b]),
       );
     };
 
-    syncDotColors();
+    applyTokens();
     gl.uniform1fv(uOpacities, opacities);
     gl.uniform1f(uTotalSize, 4);
     gl.uniform1f(uDotSize, 2);
+    gl.uniform2f(uResolution, canvas.width / dpr, canvas.height / dpr);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.disable(gl.DEPTH_TEST);
@@ -152,24 +155,22 @@ export function DotsBackdrop({ visible, className = '' }: { visible: boolean; cl
 
     const draw = (ts: number) => {
       if (startTime === null) startTime = ts / 1000;
-      if (!reducedMotion && ts - lastFrame < 1000 / 30) {
+      // 静态模式：画一帧即停，不占 rAF。
+      if (reducedMotion) {
+        gl.uniform1f(uTime, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        return;
+      }
+      if (ts - lastFrame < 1000 / 30) {
         raf = requestAnimationFrame(draw);
         return;
       }
       lastFrame = ts;
 
-      const t = reducedMotion ? 0 : ts / 1000 - startTime;
-      gl.uniform1f(uTime, t);
-      gl.uniform2f(uResolution, canvas.width / dpr, canvas.height / dpr);
-      gl.viewport(0, 0, offscreen.width, offscreen.height);
+      gl.uniform1f(uTime, ts / 1000 - startTime);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-      const { scrim } = readDrawerTokens();
-      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
-      ctx2d.fillStyle = scrim;
-      ctx2d.fillRect(0, 0, canvas.width, canvas.height);
-      if (offscreen.width > 0 && offscreen.height > 0) ctx2d.drawImage(offscreen, 0, 0);
 
       raf = requestAnimationFrame(draw);
     };
@@ -177,11 +178,12 @@ export function DotsBackdrop({ visible, className = '' }: { visible: boolean; cl
 
     const ro = new ResizeObserver(() => {
       setSize();
+      gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(uResolution, canvas.width / dpr, canvas.height / dpr);
     });
     ro.observe(canvas);
 
-    const themeObserver = new MutationObserver(() => syncDotColors());
+    const themeObserver = new MutationObserver(() => applyTokens());
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     return () => {
