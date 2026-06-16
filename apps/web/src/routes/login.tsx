@@ -278,11 +278,11 @@ function LoginPage() {
                   className="grid h-10 w-10 place-items-center rounded-[3px] text-[15px] font-bold transition-transform hover:scale-105"
                   style={{ backgroundColor: 'var(--sidebar-bg)', color: 'var(--sidebar-ink)', fontFamily: SERIF }}
                 >
-                  物
+                  茶
                 </span>
                 <div>
                   <h1 className="text-[18px] font-semibold leading-tight text-ink" style={{ fontFamily: SERIF }}>
-                    物有所安
+                    滴茶
                   </h1>
                   <Mono className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
                     dicha — sign in

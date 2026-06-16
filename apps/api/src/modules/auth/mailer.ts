@@ -82,9 +82,9 @@ ${cornerNode(true, true)}${cornerNode(true, false)}${cornerNode(false, true)}${c
 <span style="position:absolute;top:10px;right:12px;font-family:${MONO};font-size:9px;letter-spacing:2px;color:${C.inkFaint};">${opts.tag}</span>
 <!-- 品牌头 -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="width:40px;height:40px;text-align:center;vertical-align:middle;background:${C.ink};border:1px solid ${C.border};font-family:serif;font-size:18px;font-weight:bold;color:${C.canvas};">物</td>
+<td style="width:40px;height:40px;text-align:center;vertical-align:middle;background:${C.ink};border:1px solid ${C.border};font-family:serif;font-size:18px;font-weight:bold;color:${C.canvas};">茶</td>
 <td style="padding-left:12px;">
-<div style="font-family:serif;font-size:17px;font-weight:600;color:${C.ink};line-height:1.2;">物有所安</div>
+<div style="font-family:serif;font-size:17px;font-weight:600;color:${C.ink};line-height:1.2;">滴茶</div>
 <div style="font-family:${MONO};font-size:10px;letter-spacing:2px;color:${C.inkFaint};text-transform:uppercase;">dicha</div>
 </td></tr></table>
 <!-- 分隔线 -->
@@ -93,7 +93,7 @@ ${opts.body}
 </td></tr>
 <!-- 页脚 -->
 <tr><td style="padding:16px 4px;font-family:${MONO};font-size:10px;color:${C.inkFaint};text-align:center;letter-spacing:1px;">
-dicha · 滴茶 · 物有所安
+dicha · 滴茶
 </td></tr>
 </table></td></tr></table></body></html>`;
 }

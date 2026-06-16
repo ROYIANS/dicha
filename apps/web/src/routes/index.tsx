@@ -57,7 +57,7 @@ const LP = {
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
 const FEATURES: { id: string; code: string; icon: LucideIcon; title: string; body: string }[] = [
-  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进 dicha，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
+  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进滴茶，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
   { id: 'poem', code: 'F.02', icon: Feather, title: '物品会自己长出一句诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
   { id: 'dust', code: 'F.03', icon: Wind, title: '旧了的东西，会落一点灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
   { id: 'zimomo', code: 'F.04', icon: MessageSquareText, title: '齐默默在旁边，不催你', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
@@ -72,14 +72,14 @@ const MARQUEE_ITEMS = [
 const SPECS: { k: string; v: string }[] = [
   { k: '房间', v: '6 间' },
   { k: '物品', v: '无上限' },
-  { k: '提醒', v: '智能到期' },
+  { k: '提醒', v: '不急，但刚好记得' },
   { k: '平台', v: 'Web · iOS · Android' },
   { k: '同步', v: '实时' },
 ];
 
 const ROOMS: { id: string; no: string; icon: LucideIcon; label: string; caption: string; tint: string }[] = [
-  { id: 'wardrobe', no: '01', icon: Shirt, label: '衣橱', caption: '每一件，都连着某一天的心情。', tint: 'lavender' },
-  { id: 'library', no: '02', icon: BookOpen, label: '书房', caption: '书放着，时间好像也慢一点。', tint: 'peach' },
+  { id: 'wardrobe', no: '01', icon: Shirt, label: '衣橱', caption: '挂着一整年的晴雨。', tint: 'lavender' },
+  { id: 'library', no: '02', icon: BookOpen, label: '书房', caption: '书在，时间就慢一点。', tint: 'peach' },
   { id: 'storage', no: '03', icon: Package, label: '杂物间', caption: '「以后用得上」，是家里最温柔的理由。', tint: 'sage' },
   { id: 'fridge', no: '04', icon: Refrigerator, label: '冰箱', caption: '新鲜的、快过期的，都值得看一眼。', tint: 'mist' },
   { id: 'meds', no: '05', icon: Pill, label: '药盒', caption: '不生病的时候，也记得打开看看。', tint: 'pink' },
@@ -406,7 +406,7 @@ function Announce() {
       <Node pos="bottom-left" className="hidden lg:block" />
       <Node pos="bottom-right" className="hidden lg:block" />
       <span className="text-[13px] tracking-wide text-lp-brand" style={{ fontFamily: SERIF }}>新功能：</span>
-      <span className="text-[13px] font-medium tracking-wide text-ink" style={{ fontFamily: SERIF }}>齐默默 —— 不催促的物品管家</span>
+      <span className="text-[13px] font-medium tracking-wide text-ink" style={{ fontFamily: SERIF }}>齐默默 —— 陪你慢慢归置</span>
       <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">→</span>
     </a>
   );
@@ -514,10 +514,13 @@ function Hero() {
       <HeroArt />
       <Reveal className="relative z-10">
         <h1 className="mx-auto max-w-[16ch] font-medium leading-[1.05] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
-          物有所安
+          滴茶。
         </h1>
         <p className="mx-auto mt-6 max-w-[32ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
-          一个安静的角落，记着每一件东西。
+          把日子，一件一件归置妥帖。
+        </p>
+        <p className="mx-auto mt-3 max-w-[40ch] text-[12px] leading-relaxed text-ink-faint" style={{ textWrap: 'balance', fontFamily: MONO }}>
+          dicha /ˈdiː.tʃɑː/ · 西语里的「幸福」，中文里的「慢下来」
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-4 py-2.5">
@@ -789,7 +792,7 @@ function AppWindow() {
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-pink)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-peach)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-sage)' }} />
-        <Mono className="mx-auto text-[12px] text-ink-soft">dicha — 我的小窝</Mono>
+        <Mono className="mx-auto text-[12px] text-ink-soft">滴茶 — 我的小窝</Mono>
       </div>
       <div className="flex h-[360px] sm:h-[420px]">
         <div className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
@@ -798,7 +801,7 @@ function AppWindow() {
         </div>
         <div className="flex-1 overflow-hidden p-7">
           <div className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>早，Serena。</div>
-          <Mono className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里好像也静了一点。</Mono>
+          <Mono className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里也静下来了。</Mono>
           <div className="mt-6 grid grid-cols-4 gap-3">
             {chips.map((c, i) => (
               <div key={i} className="rounded-xl p-3" style={{ border: `1px solid var(--hairline)`, backgroundColor: 'var(--surface)' }}>
@@ -889,6 +892,9 @@ function Principles() {
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
           <GridPattern />
           <Mono className="text-[12px] text-lp-brand">// 为什么</Mono>
+          <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.15rem,2.2vw,1.6rem)' }}>
+            像滴茶一样，一滴一滴地，把日子放好。
+          </p>
           <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.55rem,3.2vw,2.65rem)' }}>
             东西不是数字，也不该只是清单上的一行字。你录入一件衬衫，它会变成衣橱里<Mark tint="lavender">一抹蓝</Mark>——挂在那里，连着某一天的心情；那本三年没翻的书，边上真的<Mark tint="mist">落了灰</Mark>，摸得到，也懒得解释为什么还留着。
           </p>
@@ -982,10 +988,10 @@ function AuthorLetter() {
         <blockquote className="text-[clamp(1.15rem,2.2vw,1.5rem)] leading-loose text-ink" style={{ fontFamily: SERIF }}>
           <p>「有时候收拾，有时候乱着。很少问自己：<Mark tint="mist">这些东西，为什么还留着？</Mark>」</p>
           <p className="mt-5">
-            「dicha 不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
+            「滴茶不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
           </p>
         </blockquote>
-        <Mono className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于 dicha 的第一个清晨</Mono>
+        <Mono className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于滴茶的第一个清晨</Mono>
       </Reveal>
     </section>
   );
@@ -1035,7 +1041,7 @@ function FooterBand() {
       </svg>
       <div aria-hidden className="lp-footer-band-ticks pointer-events-none absolute inset-0" />
       <span aria-hidden className="lp-footer-wordmark block select-none font-bold leading-[0.85] tracking-tighter">
-        dicha
+        滴茶
       </span>
     </div>
   );
@@ -1071,7 +1077,8 @@ function Footer() {
                 <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chromeFg, color: LP.chrome }}>v</span>
                 <Mono className="text-[15px] font-semibold" style={{ color: LP.chromeFg }}>dicha</Mono>
               </div>
-              <Mono className="mt-4 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</Mono>
+              <Mono className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>滴茶</Mono>
+              <Mono className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</Mono>
               <hr className="my-3 w-20 border-t" style={{ borderColor: LP.footHair }} />
               <Link to="/home" className="lp-foot-link w-fit"><Mono className="text-[12px]">已有账号？登录</Mono></Link>
               <Mono className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>服务条款 · 隐私政策</Mono>
