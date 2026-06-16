@@ -1,6 +1,6 @@
 # apps/web
 
-`@vidorra/web` — React 19 + Vite SPA。前端架构单一出处见
+`@dicha/web` — React 19 + Vite SPA。前端架构单一出处见
 [`.trellis/spec/frontend/architecture.md`](../../.trellis/spec/frontend/architecture.md)。
 
 技术栈：TanStack Router(file-based, loader-first) + TanStack Query · ts-rest + zod 合约（住

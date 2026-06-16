@@ -17,7 +17,7 @@ import { env } from '@/lib/env';
  * Passing the relative `/api` straight through would make the client treat it
  * as a full base and skip the `/api/auth` basePath — hence the origin extraction.
  *
- * `inferAdditionalFields` teaches the client about the vidorra app columns
+ * `inferAdditionalFields` teaches the client about the dicha app columns
  * merged into the user table (displayName/city/gender/... + coins) so
  * `signUp.email({ displayName })` and `session.user.displayName` are typed.
  */

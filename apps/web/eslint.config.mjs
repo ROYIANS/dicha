@@ -1,4 +1,4 @@
-// @vidorra/web ESLint config — extends the shared base, adds React rules.
+// @dicha/web ESLint config — extends the shared base, adds React rules.
 // react-hooks runs in its strict/recommended preset (quality-guidelines.md).
 import { baseConfig } from '../../eslint.config.base.mjs';
 import reactHooks from 'eslint-plugin-react-hooks';

@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
-import { contract } from '@vidorra/shared';
+import { contract } from '@dicha/shared';
 import { HealthService } from './health.service';
 
 // No path on @Controller — ts-rest derives it from the contract ('/health').

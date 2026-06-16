@@ -2,9 +2,9 @@
 export const zh = {
   translation: {
     app: {
-      title: '安逸生活',
-      subtitle: '像素风 2.5D 个人物品管理 OS',
-      tagline: 'Your cozy pocket.',
+      title: '滴茶',
+      subtitle: 'dicha · 像素风 2.5D 个人物品管理 OS',
+      tagline: 'dicha（西语：幸福）· 你的安逸小窝',
     },
     health: {
       title: '系统状态',

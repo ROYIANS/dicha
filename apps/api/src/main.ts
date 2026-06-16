@@ -58,7 +58,7 @@ async function bootstrap(): Promise<void> {
   const port = config.get<number>('PORT', 3000);
   await app.listen(port);
 
-  Logger.log(`vidorra api listening on :${port}`, 'Bootstrap');
+  Logger.log(`dicha api listening on :${port}`, 'Bootstrap');
 }
 
 void bootstrap();

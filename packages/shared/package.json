@@ -1,5 +1,5 @@
 {
-  "name": "@vidorra/shared",
+  "name": "@dicha/shared",
   "version": "0.0.0",
   "private": true,
   "main": "./dist/index.js",

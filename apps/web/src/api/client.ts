@@ -1,5 +1,5 @@
 import { initClient } from '@ts-rest/core';
-import { contract } from '@vidorra/shared';
+import { contract } from '@dicha/shared';
 import { env } from '@/lib/env';
 
 /**

@@ -85,7 +85,7 @@ ${cornerNode(true, true)}${cornerNode(true, false)}${cornerNode(false, true)}${c
 <td style="width:40px;height:40px;text-align:center;vertical-align:middle;background:${C.ink};border:1px solid ${C.border};font-family:serif;font-size:18px;font-weight:bold;color:${C.canvas};">物</td>
 <td style="padding-left:12px;">
 <div style="font-family:serif;font-size:17px;font-weight:600;color:${C.ink};line-height:1.2;">物有所安</div>
-<div style="font-family:${MONO};font-size:10px;letter-spacing:2px;color:${C.inkFaint};text-transform:uppercase;">vidorra</div>
+<div style="font-family:${MONO};font-size:10px;letter-spacing:2px;color:${C.inkFaint};text-transform:uppercase;">dicha</div>
 </td></tr></table>
 <!-- 分隔线 -->
 <div style="border-top:1px solid ${C.hairline};margin:24px 0;"></div>
@@ -93,19 +93,19 @@ ${opts.body}
 </td></tr>
 <!-- 页脚 -->
 <tr><td style="padding:16px 4px;font-family:${MONO};font-size:10px;color:${C.inkFaint};text-align:center;letter-spacing:1px;">
-vidorra · 物有所安
+dicha · 滴茶 · 物有所安
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
 
 const OTP_SUBJECT: Record<string, string> = {
-  'sign-in': '你的 vidorra 登录验证码',
-  'email-verification': '你的 vidorra 邮箱验证码',
-  'forget-password': '你的 vidorra 密码重置验证码',
+  'sign-in': '你的 dicha 登录验证码',
+  'email-verification': '你的 dicha 邮箱验证码',
+  'forget-password': '你的 dicha 密码重置验证码',
 };
 
 const OTP_INTRO: Record<string, string> = {
-  'sign-in': '使用以下验证码登录 vidorra：',
+  'sign-in': '使用以下验证码登录 dicha：',
   'email-verification': '使用以下验证码验证你的邮箱：',
   'forget-password': '使用以下验证码重置密码：',
 };
@@ -124,10 +124,10 @@ export function renderOtpMail(otp: string, type: string): string {
 ${otpCells(otp)}
 <p style="margin:20px 0 0;font-family:${MONO};font-size:11px;line-height:1.6;color:${C.inkSoft};">验证码 5 分钟内有效。</p>
 <p style="margin:8px 0 0;font-family:${MONO};font-size:11px;line-height:1.6;color:${C.inkFaint};">若非你本人操作，请忽略此邮件。</p>`;
-  return shell({ tag: OTP_TAG[type] ?? 'OTP', title: OTP_SUBJECT[type] ?? 'vidorra 验证码', body });
+  return shell({ tag: OTP_TAG[type] ?? 'OTP', title: OTP_SUBJECT[type] ?? 'dicha 验证码', body });
 }
 
 /** 发送邮箱 OTP 验证码（登录 / 邮箱验证 / 密码重置共用）。 */
 export async function sendOtpMail(to: string, otp: string, type: string): Promise<void> {
-  await send(to, OTP_SUBJECT[type] ?? '你的 vidorra 验证码', renderOtpMail(otp, type));
+  await send(to, OTP_SUBJECT[type] ?? '你的 dicha 验证码', renderOtpMail(otp, type));
 }

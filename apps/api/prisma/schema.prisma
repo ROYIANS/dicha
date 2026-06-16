@@ -1,4 +1,4 @@
-// vidorra-life · v0 数据模型（M1 Week 1-2）
+// dicha-life · v0 数据模型（M1 Week 1-2）
 // 约定见 .trellis/spec/backend/database-guidelines.md
 // 显式关系命名 / 硬删除（断舍离 g1）/ coins schema MVP 就装 / 互动统一进 Event
 
@@ -62,7 +62,7 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // ── vidorra 应用字段（additionalFields）────────────────
+  // ── dicha 应用字段（additionalFields）────────────────
   displayName          String
   city                 String?
   gender               String?

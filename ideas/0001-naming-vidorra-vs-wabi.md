@@ -1,37 +1,60 @@
-# 0001 · 项目命名：vidorra 还是 wabi
+# 0001 · 项目命名：从 vidorra 到 dicha
 
-**状态**：🤔 思考中
-**提出**：2026-06-04，ROYIANS（"我一直在想这个"）
+**状态**：✅ 已决定
+**提出**：2026-06-04，ROYIANS
+**决定**：2026-06-16，改名为 dicha / 滴茶
 
 ## 背景
 
-- 当前 repo / plan.md / spec / README 全部用 **vidorra**（副标题"安逸生活 · Your cozy pocket"）。
-- **wabi** 是 ROYIANS 之前测试的习惯跟踪项目的名字（dev 库 `wabi` 即来自它，见 [0002](./0002-habit-tracking-room.md)）。
-- 两个名字都还在心里掂量。
+- 原名 **vidorra**（拼造词，近"安逸/惬意生活"，vida + ...）
+- 曾考虑 **wabi**（日语侘寂 wabi-sabi，朴素、安静、接受不完美之美）
+- 最终选择 **dicha**（西班牙语：幸福、快乐、福祉）
 
-## 两个名字的气质
+## 为什么选 dicha
 
-| | vidorra | wabi |
-|---|---|---|
-| 词源 | 拼造词，近"安逸/惬意生活"（vida + ...） | 日语 **侘**（wabi-sabi 侘寂）——朴素、安静、接受不完美之美 |
-| 情绪 | 温暖、cozy、pocket（口袋里的小窝） | 寂静、留白、物哀、时间感 |
-| 与情感愿景的契合 | "安逸生活"直白对应 cozy 路线 | **侘寂 = 承认生活有重量、物有时间痕迹（落灰/落尘）** —— 与"物品有重量、有诗""落灰系统"高度同构 |
-| 已有资产 | repo / 域名 vidorra.life / README manifesto / LICENSE 均已用 | 旧项目名、dev 库名 |
-| 风险 | —— | 改名牵动域名、repo、品牌文案；中文用户对"wabi"认知门槛 |
+| 维度 | dicha |
+|---|---|
+| 词源 | 西班牙语，意为"幸福、快乐、福祉" |
+| 发音 | di-cha，与中文"滴茶"谐音 |
+| 中文名 | 滴茶 —— 一杯茶的温暖，安静的幸福感 |
+| 情绪 | 温暖、安逸、日常的小确幸 |
+| 与产品愿景的契合 | "安逸生活"直白对应，"幸福"是物品管理的终极目标 |
+| 域名 | dicha.life（待注册） |
 
-## 当前想法（待 grill）
+## 改名范围
 
-- wabi 的**侘寂**意象和 vidorra 的核心机制（落灰、诗、时间感、断舍离）其实更深层契合——"侘寂"本就是"残缺、无常、朴素中的美"。
-- 但 vidorra 已有域名 `vidorra.life` + 一整套对外文案，沉没成本不小。
-- 也许不是二选一：一个做**产品名/品牌**，一个做**某个子概念**（如 wabi 作为"落灰/时间感"系统的内部代号？或 wabi 作为习惯房间的名字？）。
+- [x] README.md
+- [x] plan.md
+- [x] package.json（根 + apps/* + packages/*）
+- [x] docker-compose.yml
+- [x] .env.example
+- [x] apps/api/.env.example
+- [x] deploy.ps1 / deploy.sh
+- [x] .github/workflows/build-images.yml
+- [x] docker/api-entrypoint.sh
+- [x] prisma/schema.prisma
+- [x] auth.ts / mailer.ts
+- [x] 前端所有 @vidorra/* 引用
+- [x] CSS design system 注释
+- [x] 落地页文案
+- [x] login 页面文案
+- [x] i18n 文案
 
-## 待决策
+## 品牌解释
 
-- [ ] 产品最终对外名 = ?
-- [ ] 域名是否随之变动（vidorra.life 已持有）
-- [ ] 若改名，README/plan/spec/品牌文案的迁移成本评估
+**dicha**（西语发音：/ˈditʃa/）= 幸福、快乐、福祉
 
-## 与铁律的关系
+**滴茶** = 中文名，取"dicha"谐音，也有"一杯茶的温暖"意象
 
-- 不阻塞 M1（代码层用 `@vidorra/*` 包名，改名是后期 rebrand 的事，不影响地基）。
-- 建议 **M1 结束（自己用起来）后**再定——用过一阵子，哪个名字"叫得顺口"会更清楚。
+**品牌 tagline**：
+- 中文：dicha（西语：幸福）· 你的安逸小窝
+- 英文：dicha（Spanish for "happiness"）· Your cozy pocket
+
+**品牌哲学**：
+dicha 相信，记录生活中的物品，本身就是一种幸福的仪式。
+不是冷冰冰的清单，而是有温度的小窝。
+每一件物品都值得被温柔对待，每一句诗都在低声说话。
+
+---
+
+*Last updated: 2026-06-16*

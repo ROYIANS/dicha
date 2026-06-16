@@ -1,8 +1,8 @@
 {
-  "name": "vidorra-life",
+  "name": "dicha-life",
   "version": "0.0.0",
   "private": true,
-  "description": "安逸生活 · 像素风 2.5D 个人物品管理 OS",
+  "description": "dicha · 像素风 2.5D 个人物品管理 OS",
   "license": "MIT",
   "packageManager": "pnpm@9.12.0",
   "engines": {

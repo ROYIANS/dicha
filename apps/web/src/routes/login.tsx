@@ -257,7 +257,7 @@ function LoginPage() {
                 borderColor: 'var(--hairline)',
                 borderRadius: '0.125rem', // 方角 blueprint（rounded-sm）
                 boxShadow:
-                  '6px 6px 0 color-mix(in oklab, var(--ink) 6%, transparent)', // zed 邮戳阴影（vidorra 暖墨低透明）
+                  '6px 6px 0 color-mix(in oklab, var(--ink) 6%, transparent)', // zed 邮戳阴影（dicha 暖墨低透明）
                 '--node-vertical-offset': '3.5px',
                 '--node-horizontal-offset': '-3.5px',
               } as CSSProperties
@@ -285,7 +285,7 @@ function LoginPage() {
                     物有所安
                   </h1>
                   <Mono className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-                    vidorra — sign in
+                    dicha — sign in
                   </Mono>
                 </div>
               </div>

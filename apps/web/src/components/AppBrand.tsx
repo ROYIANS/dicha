@@ -11,7 +11,7 @@ type AppBrandProps = {
   onClick?: () => void;
 };
 
-/** 落地页同款的 v 徽标 + vidorra 字标。 */
+/** 落地页同款的 v 徽标 + dicha 字标。 */
 export function AppBrand({ variant = 'canvas', to, className = '', onClick }: AppBrandProps) {
   const isSidebar = variant === 'sidebar';
   const badgeBg = isSidebar ? 'var(--sidebar-ink)' : 'var(--sidebar-bg)';
@@ -30,7 +30,7 @@ export function AppBrand({ variant = 'canvas', to, className = '', onClick }: Ap
         className="text-[15px] font-semibold tracking-tight"
         style={{ fontFamily: MONO, color: wordColor }}
       >
-        vidorra
+        dicha
       </span>
     </>
   );

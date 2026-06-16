@@ -7,7 +7,7 @@
 ## Monorepo 全局骨架
 
 ```
-vidorra-life/
+dicha-life/
 ├── apps/
 │   ├── web/              # React + Vite + PixiJS
 │   ├── api/              # NestJS + Prisma（本文档范围）

@@ -29,7 +29,7 @@ import {
   signOut,
 } from '@/lib/auth-client';
 import { authQueryOptions } from '@/api/auth';
-import type { UserDto } from '@vidorra/shared';
+import type { UserDto } from '@dicha/shared';
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 // 结构线 —— 与登录卡 / 落地页同定义（blueprint-aesthetic.md §4.2）

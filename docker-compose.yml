@@ -1,4 +1,4 @@
-# vidorra self-hosted stack
+# dicha self-hosted stack
 # Quick start:  ./deploy.sh   (Linux/macOS)  or  .\deploy.ps1   (Windows)
 # Re-run anytime to upgrade: stops containers, no-cache rebuild, recreates (DB kept).
 # Blank slate:  ./deploy.sh --fresh   or   .\deploy.ps1 -Fresh
@@ -6,20 +6,20 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: vidorra-postgres
+    container_name: dicha-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-vidorra}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vidorra}
-      POSTGRES_DB: ${POSTGRES_DB:-vidorra}
+      POSTGRES_USER: ${POSTGRES_USER:-dicha}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dicha}
+      POSTGRES_DB: ${POSTGRES_DB:-dicha}
     volumes:
-      - vidorra-pgdata:/var/lib/postgresql/data
+      - dicha-pgdata:/var/lib/postgresql/data
       - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test:
         [
           'CMD-SHELL',
-          'pg_isready -U ${POSTGRES_USER:-vidorra} -d ${POSTGRES_DB:-vidorra}',
+          'pg_isready -U ${POSTGRES_USER:-dicha} -d ${POSTGRES_DB:-dicha}',
         ]
       interval: 5s
       timeout: 5s
@@ -28,17 +28,17 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
 
   api:
-    image: ${IMAGE_PREFIX:-ghcr.io/royians/vidorra}-api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ghcr.io/royians/dicha}-api:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-    container_name: vidorra-api
+    container_name: dicha-api
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-vidorra}:${POSTGRES_PASSWORD:-vidorra}@postgres:5432/${POSTGRES_DB:-vidorra}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-dicha}:${POSTGRES_PASSWORD:-dicha}@postgres:5432/${POSTGRES_DB:-dicha}?schema=public
       PORT: '3000'
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
@@ -51,7 +51,7 @@ services:
       SMTP_FROM: ${SMTP_FROM}
       UPLOAD_DIR: /data/uploads
     volumes:
-      - vidorra-uploads:/data/uploads
+      - dicha-uploads:/data/uploads
     expose:
       - '3000'
     healthcheck:
@@ -66,7 +66,7 @@ services:
       retries: 8
 
   web:
-    image: ${IMAGE_PREFIX:-ghcr.io/royians/vidorra}-web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ghcr.io/royians/dicha}-web:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.web
@@ -75,7 +75,7 @@ services:
         VITE_DEV_BYPASS_AUTH: ${VITE_DEV_BYPASS_AUTH:-true}
         VITE_UMAMI_SCRIPT_URL: ${VITE_UMAMI_SCRIPT_URL:-}
         VITE_UMAMI_WEBSITE_ID: ${VITE_UMAMI_WEBSITE_ID:-}
-    container_name: vidorra-web
+    container_name: dicha-web
     restart: unless-stopped
     depends_on:
       api:
@@ -90,5 +90,5 @@ services:
       retries: 5
 
 volumes:
-  vidorra-pgdata:
-  vidorra-uploads:
+  dicha-pgdata:
+  dicha-uploads:

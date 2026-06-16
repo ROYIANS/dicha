@@ -1,4 +1,4 @@
-# vidorra API — multi-stage build (pnpm monorepo + NestJS + Prisma v7)
+# dicha API — multi-stage build (pnpm monorepo + NestJS + Prisma v7)
 FROM node:22-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -17,13 +17,13 @@ FROM deps AS build
 COPY packages/shared packages/shared
 COPY apps/api apps/api
 
-RUN pnpm --filter @vidorra/shared build
+RUN pnpm --filter @dicha/shared build
 
 # prisma generate needs a URL at build time (no DB connection is made)
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
-RUN pnpm --filter @vidorra/api run prisma:generate
+RUN pnpm --filter @dicha/api run prisma:generate
 
-RUN pnpm --filter @vidorra/api build
+RUN pnpm --filter @dicha/api build
 
 # ── Production runtime ────────────────────────────────────────────────────────
 FROM base AS runner

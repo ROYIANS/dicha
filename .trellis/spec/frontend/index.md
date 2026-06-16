@@ -1,6 +1,6 @@
 # Frontend Development Guidelines
 
-> vidorra-life 前端开发约定。栈：React 19 + Vite + TanStack Router/Query + ts-rest + Zustand + HeroUI（Tailwind v4）。
+> dicha-life 前端开发约定。栈：React 19 + Vite + TanStack Router/Query + ts-rest + Zustand + HeroUI（Tailwind v4）。
 > 语言：**中文优先**（与各 spec 文件一致）。
 
 ---

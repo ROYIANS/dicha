@@ -18,7 +18,7 @@ const variantClass: Record<SurfaceVariant, string> = {
 };
 
 /**
- * Shared matte surface primitive — vidorra 暖白哑光设计系统的卡片底座。
+ * Shared matte surface primitive — dicha 暖白哑光设计系统的卡片底座。
  * 靠暖描边 + 极轻暖阴影制造层次（非玻璃模糊）。日夜随 data-theme 自动切换。
  * 契约见 .trellis/spec/frontend/design-system.md。
  */

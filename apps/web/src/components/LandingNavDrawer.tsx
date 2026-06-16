@@ -77,7 +77,7 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
               v
             </span>
             <DrawerMono className="text-[15px] font-semibold tracking-tight text-ink">
-              <span id={titleId}>vidorra</span>
+              <span id={titleId}>dicha</span>
             </DrawerMono>
           </div>
           <button

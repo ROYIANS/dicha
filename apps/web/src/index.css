@@ -7,7 +7,7 @@
 @import '@heroui/styles';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   vidorra design system — 暖白柔面哑光（Warm Matte）
+   dicha design system — 暖白柔面哑光（Warm Matte）
    Single source of truth: .trellis/spec/frontend/design-system.md
    材质 = 柔面哑光（非玻璃）· 主色 = 暖中性 · 强调 = 功能性柔彩 · 日夜两套
    昼夜只换下面的语义变量值，组件零改动（@theme inline 让工具类跟随）。
@@ -75,11 +75,11 @@
   --lp-drawer-scrim-a: 0.38;
   --lp-drawer-dot-rgb: 46, 42, 38;
 
-  /* ── HeroUI v3 语义 token → 对齐 vidorra 暖色 blueprint（日间）──────────── */
+   /* ── HeroUI v3 语义 token → 对齐 dicha 暖色 blueprint（日间）──────────── */
   /* 结构即装饰：方角偏好（小 radius）、hairline 描边、暖中性主色、无渐变。 */
   --background: var(--canvas);
   --foreground: var(--ink);
-  /* --surface 已由 vidorra 系统定义（#ffffff），HeroUI 直接复用 */
+  /* --surface 已由 dicha 系统定义（#ffffff），HeroUI 直接复用 */
   --surface-foreground: var(--ink);
   --overlay: var(--surface);
   --overlay-foreground: var(--ink);
@@ -91,7 +91,7 @@
   --accent-foreground: var(--sidebar-ink);
   --segment: var(--surface-alt);
   --segment-foreground: var(--ink);
-  /* 功能色映射到 vidorra 柔彩 */
+  /* 功能色映射到 dicha 柔彩 */
   --success: var(--accent-sage);
   --success-foreground: var(--ink);
   --warning: var(--accent-peach);
@@ -158,10 +158,10 @@
   --lp-drawer-scrim-a: 0.55;
   --lp-drawer-dot-rgb: 243, 239, 232;
 
-  /* ── HeroUI v3 语义 token → vidorra 暖色 blueprint（夜间）──────────────── */
+  /* ── HeroUI v3 语义 token → dicha 暖色 blueprint（夜间）──────────────── */
   --background: var(--canvas);
   --foreground: var(--ink);
-  /* --surface 已由 vidorra 系统定义（#212121），HeroUI 直接复用 */
+  /* --surface 已由 dicha 系统定义（#212121），HeroUI 直接复用 */
   --surface-foreground: var(--ink);
   --overlay: var(--surface);
   --overlay-foreground: var(--ink);
@@ -375,7 +375,7 @@ body {
 .lp-nav-link:active {
   transform: translateY(1px) scale(0.99);
 }
-/* intro banner：暖桃色横向渐变 + hover 整行高亮（vidorra 配色） */
+/* intro banner：暖桃色横向渐变 + hover 整行高亮（dicha 配色） */
 .lp-intro-banner {
   background: linear-gradient(
     to right,

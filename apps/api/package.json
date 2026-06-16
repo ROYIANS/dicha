@@ -1,5 +1,5 @@
 {
-  "name": "@vidorra/api",
+  "name": "@dicha/api",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -23,7 +23,7 @@
     "@prisma/client": "^7.8.0",
     "@ts-rest/core": "^3.52.1",
     "@ts-rest/nest": "^3.52.1",
-    "@vidorra/shared": "workspace:*",
+    "@dicha/shared": "workspace:*",
     "better-auth": "^1.6.17",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",

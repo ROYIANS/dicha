@@ -1,6 +1,6 @@
 # Design System — 暖白柔面哑光（Warm Matte）
 
-> vidorra 视觉基调的**单一出处（材质 / token / 色彩层）**。来源：2026-06-05 与 ROYIANS 基于确认 mock 的定调会话。
+> dicha 视觉基调的**单一出处（材质 / token / 色彩层）**。来源：2026-06-05 与 ROYIANS 基于确认 mock 的定调会话。
 > 取代原 Liquid Glass + 紫色方案（见 [architecture.md §4/§5](./architecture.md)，已回链本文）。
 > 落地实现：`apps/web/src/index.css`（token 层）+ `apps/web/src/components/Surface.tsx`（卡片底座）。
 >

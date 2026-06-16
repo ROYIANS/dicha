@@ -2,7 +2,7 @@ import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { type QueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { UmamiAnalytics } from '@/components/UmamiAnalytics';
-import { type UserDto } from '@vidorra/shared';
+import { type UserDto } from '@dicha/shared';
 import { type DevUser } from '@/lib/auth';
 
 export interface RouterContext {

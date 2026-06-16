@@ -5,7 +5,7 @@ export const DEV_USER = {
   id: 'dev',
   name: 'Royians',
   displayName: 'Royians',
-  email: 'dev@vidorra.life',
+  email: 'dev@dicha.life',
   emailVerified: true,
   image: null,
   city: null,

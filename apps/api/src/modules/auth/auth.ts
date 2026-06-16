@@ -5,7 +5,7 @@ import { passkey } from '@better-auth/passkey';
 import type { PrismaClient } from '../../generated/prisma/client';
 import { sendOtpMail } from './mailer';
 
-// vidorra-life 应用字段（合并进 Better Auth user 表 → 领域 User 单一身份源）。
+// dicha-life 应用字段（合并进 Better Auth user 表 → 领域 User 单一身份源）。
 // 必需列 name/emailVerified/image/createdAt/updatedAt 由 Better Auth 自身管理。
 // displayName 不设 required：OTP/OAuth 自动注册不会传它，由 databaseHook 兜底填充
 // （否则必填校验先于 hook 触发，报 "displayName is required"）。
@@ -24,18 +24,18 @@ function trustedOrigins(): string[] {
   return [
     'http://localhost:8080',
     'http://localhost:5173',
-    'https://*.vidorra.life',
+    'https://*.dicha.life',
   ];
 }
 
-// passkey rpID：生产用裸域 vidorra.life（覆盖 app./www. 等子域），
+// passkey rpID：生产用裸域 dicha.life（覆盖 app./www. 等子域），
 // 本地用 localhost。origin 取 BETTER_AUTH_URL。
 function passkeyOptions() {
   const baseUrl = process.env.BETTER_AUTH_URL;
   const isProd = !!baseUrl && baseUrl.startsWith('https://');
   return {
-    rpID: isProd ? 'vidorra.life' : 'localhost',
-    rpName: 'vidorra',
+    rpID: isProd ? 'dicha.life' : 'localhost',
+    rpName: 'dicha',
     origin: baseUrl ?? 'http://localhost:8080',
   };
 }

@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * Domain user shape, aligned with the merged Better Auth `user` table.
  * Better Auth owns the required columns (id/name/email/emailVerified/image/
- * createdAt/updatedAt); vidorra app fields live as `additionalFields`.
+ * createdAt/updatedAt); dicha app fields live as `additionalFields`.
  *
  * Auth itself (sign-in/up/out, session) is no longer a ts-rest endpoint —
  * the frontend drives it via `better-auth/react` client + session endpoints.

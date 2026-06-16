@@ -25,7 +25,7 @@ export const Route = createFileRoute('/')({
 });
 
 /* ════════════════════════════════════════════════════════════════════════════
-   vidorra landing — 工业 / 蓝图（深度参考 zed.dev 源码的结构语汇）· 暖棕配色
+   dicha landing — 工业 / 蓝图（深度参考 zed.dev 源码的结构语汇）· 暖棕配色
    语汇清单（均来自 zed.html 实测）：
    · 斜线舱壁分隔（divider-slash，细线全幅贯穿视口）
    · 侧沟分段标尺 + 条码刻线纹（不等宽水平 rect pattern）
@@ -57,7 +57,7 @@ const LP = {
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
 const FEATURES: { id: string; code: string; icon: LucideIcon; title: string; body: string }[] = [
-  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进 vidorra，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
+  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进 dicha，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
   { id: 'poem', code: 'F.02', icon: Feather, title: '物品会自己长出一句诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
   { id: 'dust', code: 'F.03', icon: Wind, title: '旧了的东西，会落一点灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
   { id: 'zimomo', code: 'F.04', icon: MessageSquareText, title: '齐默默在旁边，不催你', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
@@ -358,7 +358,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
         <div className="flex min-w-0 items-center gap-4">
           <a href="#top" className="flex shrink-0 items-center gap-2">
             <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>v</span>
-            <Mono className="text-[15px] font-semibold tracking-tight text-ink">vidorra</Mono>
+            <Mono className="text-[15px] font-semibold tracking-tight text-ink">dicha</Mono>
           </a>
           <div className="hidden items-center gap-0.5 lg:flex">
             {NAV.map((n) => (
@@ -536,7 +536,7 @@ function Hero() {
   );
 }
 
-/** Hero 底景：细网格（zed opacity-8 层次，vidorra 暖棕线色）+ 慢旋嵌套方块水印。 */
+/** Hero 底景：细网格（zed opacity-8 层次，dicha 暖棕线色）+ 慢旋嵌套方块水印。 */
 function HeroArt() {
   const squares = Array.from({ length: 9 });
   const gridId = useId().replace(/:/g, '');
@@ -789,7 +789,7 @@ function AppWindow() {
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-pink)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-peach)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-sage)' }} />
-        <Mono className="mx-auto text-[12px] text-ink-soft">vidorra — 我的小窝</Mono>
+        <Mono className="mx-auto text-[12px] text-ink-soft">dicha — 我的小窝</Mono>
       </div>
       <div className="flex h-[360px] sm:h-[420px]">
         <div className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
@@ -982,10 +982,10 @@ function AuthorLetter() {
         <blockquote className="text-[clamp(1.15rem,2.2vw,1.5rem)] leading-loose text-ink" style={{ fontFamily: SERIF }}>
           <p>「有时候收拾，有时候乱着。很少问自己：<Mark tint="mist">这些东西，为什么还留着？</Mark>」</p>
           <p className="mt-5">
-            「vidorra 不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
+            「dicha 不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
           </p>
         </blockquote>
-        <Mono className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于 vidorra 的第一个清晨</Mono>
+        <Mono className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于 dicha 的第一个清晨</Mono>
       </Reveal>
     </section>
   );
@@ -1035,7 +1035,7 @@ function FooterBand() {
       </svg>
       <div aria-hidden className="lp-footer-band-ticks pointer-events-none absolute inset-0" />
       <span aria-hidden className="lp-footer-wordmark block select-none font-bold leading-[0.85] tracking-tighter">
-        vidorra
+        dicha
       </span>
     </div>
   );
@@ -1069,9 +1069,9 @@ function Footer() {
             <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
               <div className="flex items-center gap-2">
                 <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chromeFg, color: LP.chrome }}>v</span>
-                <Mono className="text-[15px] font-semibold" style={{ color: LP.chromeFg }}>vidorra</Mono>
+                <Mono className="text-[15px] font-semibold" style={{ color: LP.chromeFg }}>dicha</Mono>
               </div>
-              <Mono className="mt-4 block text-[12px]" style={{ color: LP.footMuted }}>vidorra © 2026</Mono>
+              <Mono className="mt-4 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</Mono>
               <hr className="my-3 w-20 border-t" style={{ borderColor: LP.footHair }} />
               <Link to="/home" className="lp-foot-link w-fit"><Mono className="text-[12px]">已有账号？登录</Mono></Link>
               <Mono className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>服务条款 · 隐私政策</Mono>

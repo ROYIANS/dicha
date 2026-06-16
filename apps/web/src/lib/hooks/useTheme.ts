@@ -1,6 +1,6 @@
 import { useSyncExternalStore, useCallback } from 'react';
 
-const STORAGE_KEY = 'vidorra-theme';
+const STORAGE_KEY = 'dicha-theme';
 
 type Theme = 'light' | 'dark';
 

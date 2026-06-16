@@ -21,7 +21,7 @@ export default defineConfig({
       // import of `contract` fails at runtime. Source keeps dev/build/typecheck
       // consistent and gives instant HMR on shared edits. `apps/api` (CJS) keeps
       // consuming the `dist` build — only web maps to source.
-      '@vidorra/shared': fileURLToPath(
+      '@dicha/shared': fileURLToPath(
         new URL('../../packages/shared/src/index.ts', import.meta.url),
       ),
     },

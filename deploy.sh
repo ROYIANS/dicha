@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vidorra one-click self-hosted deploy (Linux / macOS / Git Bash)
+# dicha one-click self-hosted deploy (Linux / macOS / Git Bash)
 #
 # Images are built in CI (GitHub Actions) and pushed to GHCR on every push to main.
 # This script pulls those prebuilt images and (re)starts the stack — no local build.
@@ -59,7 +59,7 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 if [[ "$DOWN" -eq 1 ]]; then
-  info "Stopping vidorra stack…"
+  info "Stopping dicha stack…"
   docker compose down --remove-orphans
   exit 0
 fi
@@ -97,7 +97,7 @@ if [[ "$BUILD" -eq 1 ]]; then
   info "Building api + web images locally (no cache)…"
   docker compose build --no-cache
 else
-  info "Pulling prebuilt images from ${IMAGE_PREFIX:-ghcr.io/royians/vidorra} (tag: ${IMAGE_TAG:-latest})…"
+  info "Pulling prebuilt images from ${IMAGE_PREFIX:-ghcr.io/royians/dicha} (tag: ${IMAGE_TAG:-latest})…"
   docker compose pull api web
 fi
 
@@ -120,7 +120,7 @@ while (( SECONDS < deadline )); do
 done
 
 echo ""
-info "vidorra is up."
+info "dicha is up."
 echo "  App:  http://localhost:${WEB_PORT}/"
 echo "  API:  http://localhost:${WEB_PORT}/api/health"
 echo ""

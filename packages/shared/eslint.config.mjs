@@ -1,4 +1,4 @@
-// @vidorra/shared ESLint config — extends the shared base with type-aware linting.
+// @dicha/shared ESLint config — extends the shared base with type-aware linting.
 import { baseConfig } from '../../eslint.config.base.mjs';
 
 export default [

@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  One-click self-hosted deploy for vidorra (Docker Compose).
+  One-click self-hosted deploy for dicha (Docker Compose).
 
 .DESCRIPTION
   Images are built in CI (GitHub Actions) and pushed to GHCR on every push to main.
@@ -53,7 +53,7 @@ try {
 }
 
 if ($Down) {
-    Write-Step "Stopping vidorra stack…"
+    Write-Step "Stopping dicha stack…"
     docker compose down --remove-orphans
     exit 0
 }
@@ -99,7 +99,7 @@ if ($Build) {
     docker compose build --no-cache
     if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed" }
 } else {
-    $prefix = if ($env:IMAGE_PREFIX) { $env:IMAGE_PREFIX } else { 'ghcr.io/royians/vidorra' }
+    $prefix = if ($env:IMAGE_PREFIX) { $env:IMAGE_PREFIX } else { 'ghcr.io/royians/dicha' }
     $tag = if ($env:IMAGE_TAG) { $env:IMAGE_TAG } else { 'latest' }
     Write-Step "Pulling prebuilt images from $prefix (tag: $tag)…"
     docker compose pull api web
@@ -123,7 +123,7 @@ while ((Get-Date) -lt $deadline) {
 }
 
 Write-Host ""
-Write-Step "vidorra is up."
+Write-Step "dicha is up."
 Write-Host "  App:  http://localhost:${webPort}/"
 Write-Host "  API:  http://localhost:${webPort}/api/health"
 Write-Host ""

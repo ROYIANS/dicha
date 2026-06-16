@@ -1,4 +1,4 @@
-// @vidorra/api ESLint config — extends the shared base, adds NestJS specifics.
+// @dicha/api ESLint config — extends the shared base, adds NestJS specifics.
 import { baseConfig } from '../../eslint.config.base.mjs';
 
 export default [

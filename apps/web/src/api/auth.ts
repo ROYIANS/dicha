@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { authClient } from '@/lib/auth-client';
 import { DEV_USER, shouldBypassAuth } from '@/lib/auth';
-import type { UserDto } from '@vidorra/shared';
+import type { UserDto } from '@dicha/shared';
 
 /**
  * Query options factory for the current auth user.

@@ -6,7 +6,7 @@ import { useRouteContext } from '@tanstack/react-router';
 import { FrameNode } from '@/components/FrameNode';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AccountModal } from '@/components/AccountModal';
-import type { UserDto } from '@vidorra/shared';
+import type { UserDto } from '@dicha/shared';
 
 type HeaderProps = {
   navOpen?: boolean;
