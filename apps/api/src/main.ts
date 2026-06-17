@@ -10,6 +10,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { PrismaService } from './prisma/prisma.service';
 import { createAuth, setAuth } from './modules/auth/auth';
+import { createAltchaChallenge } from './modules/auth/altcha';
 
 async function bootstrap(): Promise<void> {
   // Better Auth 直接读原始请求流 → 必须关掉 Nest/Express 全局 body parser，
@@ -28,6 +29,16 @@ async function bootstrap(): Promise<void> {
   const prisma = app.get(PrismaService);
   const auth = createAuth(prisma);
   setAuth(auth);
+
+  // ALTCHA 挑战端点：widget 经此拉取一道新 proof-of-work 挑战（GET，无 body）。
+  // 路径独立于 /api/auth/*，不被下方 Better Auth 通配 handler 吞掉；前端默认走
+  // 同源相对 /api/altcha/challenge（dev 经 Vite 代理、prod 经 nginx 反代）。
+  expressApp.get(
+    '/api/altcha/challenge',
+    async (_req: express.Request, res: express.Response) => {
+      res.json(await createAltchaChallenge());
+    },
+  );
 
   // 在任何 body parser 之前挂 Better Auth handler（research §2）。
   // Express 5 通配符语法为 `*splat`（Express 4 是 `*`）。

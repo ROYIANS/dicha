@@ -74,5 +74,6 @@ apps/api/
 
 - `common/all-exceptions.filter.ts`：全局兜底 ExceptionFilter（≥500 记 error log；错误码体系待 Week 3-6）
 - `prisma/`：`PrismaModule`（@Global）+ `PrismaService`（OnModuleInit `$connect`）
-- `config/env.validation.ts`：class-validator 校验 `DATABASE_URL` / `PORT`
+- `config/env.validation.ts`：class-validator 校验 `DATABASE_URL` / `PORT` / `BETTER_AUTH_*` / `ALTCHA_HMAC_SECRET` 等（缺失即启动失败，fail-fast）
 - `modules/health/`：`GET /health` → DB ping，是 controller/service 分层的最小范例
+- `modules/auth/`：Better Auth（直挂在 `main.ts` 的 Express 层，非 Nest 控制器）+ `auth.guard.ts`（业务路由复用）。**第三方 PoW / captcha 集成模式见 [third-party-integration.md](./third-party-integration.md)**（ALTCHA 邮箱发码防滥用是首个范例）

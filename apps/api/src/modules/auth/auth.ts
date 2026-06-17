@@ -1,9 +1,11 @@
 import { betterAuth } from 'better-auth';
+import type { BetterAuthPlugin } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { emailOTP } from 'better-auth/plugins';
 import { passkey } from '@better-auth/passkey';
 import type { PrismaClient } from '../../generated/prisma/client';
 import { sendOtpMail } from './mailer';
+import { verifyAltchaPayload } from './altcha';
 
 // dicha-life 应用字段（合并进 Better Auth user 表 → 领域 User 单一身份源）。
 // 必需列 name/emailVerified/image/createdAt/updatedAt 由 Better Auth 自身管理。
@@ -40,6 +42,30 @@ function passkeyOptions() {
   };
 }
 
+// ALTCHA 守卫：在「邮箱发码」端点前校验 proof-of-work，挡邮件轰炸 / 刷库。
+// 仿 Better Auth 内置 captcha 插件的 onRequest 模式——从 header 读 payload（不消费
+// 原始 body 流，避开与 Better Auth 读流的冲突），失败直接短路返回 400。
+// token 走 header `x-altcha-response`（前端 sendVerificationOtp 的 fetchOptions 注入）。
+const altchaGuard: BetterAuthPlugin = {
+  id: 'altcha-guard',
+  onRequest: async (request, ctx) => {
+    const basePath = ctx.options.basePath ?? '/api/auth';
+    const pathname = new URL(request.url).pathname.replace(basePath, '');
+    // 仅 gate 发码端点；其余 auth 路由放行。
+    if (!pathname.includes('/email-otp/send-verification-otp')) return;
+    const ok = await verifyAltchaPayload(
+      request.headers.get('x-altcha-response'),
+    );
+    if (ok) return; // 通过 → 交还 Better Auth 继续发码
+    return {
+      response: new Response(
+        JSON.stringify({ message: '人机验证失败，请重试', code: 'ALTCHA_FAILED' }),
+        { status: 400, headers: { 'content-type': 'application/json' } },
+      ),
+    };
+  },
+};
+
 export function createAuth(prisma: PrismaClient) {
   return betterAuth({
     // 复用 PrismaService 同一实例（自定义生成目录的 PrismaClient），不另建 client
@@ -75,6 +101,7 @@ export function createAuth(prisma: PrismaClient) {
         },
       }),
       passkey(passkeyOptions()),
+      altchaGuard,
     ],
     user: {
       additionalFields,

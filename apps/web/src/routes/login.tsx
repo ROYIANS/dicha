@@ -1,10 +1,24 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
-import { useId, useState, type CSSProperties } from 'react';
+import { useId, useRef, useState, type CSSProperties } from 'react';
 import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
 import { InputOTP } from '@heroui/react';
+import 'altcha';
+import type { AltchaWidgetElement } from 'altcha';
 import { authClient } from '@/lib/auth-client';
+import { env } from '@/lib/env';
 import { FrameNode } from '@/components/FrameNode';
 import { EdgeRuler } from '@/components/EdgeRuler';
+
+/**
+ * ALTCHA 挑战端点 URL。与 auth-client 的 origin 推导一致：
+ * VITE_API_BASE_URL 为绝对地址时取其 origin，否则用同源相对路径
+ * （dev 经 Vite 代理 /api、prod 经 nginx 反代）。
+ */
+function altchaChallengeUrl(): string {
+  const raw = env.VITE_API_BASE_URL;
+  if (/^https?:\/\//i.test(raw)) return `${new URL(raw).origin}/api/altcha/challenge`;
+  return '/api/altcha/challenge';
+}
 
 /** GitHub 标识（lucide v1 已移除品牌图标，内联官方 mark）。 */
 function GithubMark({ size = 15 }: { size?: number }) {
@@ -146,6 +160,8 @@ function LoginPage() {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  // ALTCHA widget：发码前在此解 proof-of-work，payload 经 header 透传给后端守卫。
+  const altchaRef = useRef<AltchaWidgetElement>(null);
 
   const error = formError ?? (urlError ? decodeURIComponent(urlError) : null);
 
@@ -154,15 +170,35 @@ function LoginPage() {
     setFormError(null);
   };
 
-  // 第一步：发送邮箱登录验证码
+  // 第一步：发送邮箱登录验证码。
+  // 发码前先解 ALTCHA proof-of-work（后台静默，几乎无感），把 payload 放进
+  // x-altcha-response header 透传给后端守卫；解题失败则不发码并提示。
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     resetFeedback();
     setPending(true);
-    const { error: err } = await authClient.emailOtp.sendVerificationOtp({
-      email,
-      type: 'sign-in',
-    });
+
+    let altchaPayload: string | undefined;
+    try {
+      const widget = altchaRef.current;
+      const result = widget ? await widget.verify() : null;
+      altchaPayload = result?.payload;
+    } catch {
+      altchaPayload = undefined;
+    }
+    if (!altchaPayload) {
+      setPending(false);
+      altchaRef.current?.reset();
+      setFormError('人机验证未通过，请重试');
+      return;
+    }
+
+    const { error: err } = await authClient.emailOtp.sendVerificationOtp(
+      { email, type: 'sign-in' },
+      { headers: { 'x-altcha-response': altchaPayload } },
+    );
+    // 一次性：无论成败都复位 widget，下次发码取新挑战（防回放被后端挡）。
+    altchaRef.current?.reset();
     setPending(false);
     if (err) {
       setFormError(err.message ?? '验证码发送失败，请稍后再试');
@@ -347,6 +383,22 @@ function LoginPage() {
                     </Mono>
                   </button>
                 </form>
+              )}
+
+              {/* ALTCHA proof-of-work：隐藏运行，发码时由 handleSendOtp 调 verify()
+                  静默解题，payload 经 header 透传。auto=off → 仅命令式触发。
+                  必须放在 <form> 外：widget 内部含 required checkbox，留在表单里会被
+                  原生校验当成「不可聚焦的必填项」，提交时报错并拦截。display=invisible
+                  让其零占位且不渲染可交互 UI。 */}
+              {step === 'email' && (
+                <altcha-widget
+                  ref={altchaRef}
+                  challenge={altchaChallengeUrl()}
+                  auto="off"
+                  display="invisible"
+                  hidefooter
+                  hidelogo
+                />
               )}
 
               {/* 邮箱 OTP — 第二步：输入验证码登录 */}

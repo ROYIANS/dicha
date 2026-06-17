@@ -18,6 +18,12 @@ class EnvVars {
   @IsString()
   BETTER_AUTH_URL!: string;
 
+  // ── ALTCHA（邮箱发码 proof-of-work 防滥用）────────────────
+  // 自托管 PoW 的 HMAC 签名密钥；缺失则发码守卫无法校验，故必填（fail fast）。
+  // 生成：openssl rand -base64 32
+  @IsString()
+  ALTCHA_HMAC_SECRET!: string;
+
   // ── GitHub OAuth ─────────────────────────────────────────
   @IsString()
   GITHUB_CLIENT_ID!: string;

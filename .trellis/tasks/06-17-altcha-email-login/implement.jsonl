@@ -1,0 +1,9 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/tasks/06-17-altcha-email-login/research/altcha-lib-notes.md", "reason": "ALTCHA/altcha-lib 集成结论：Better Auth captcha 插件不支持 ALTCHA，需自定义；createChallenge/verifySolution 用法、回放保护、发码链路"}
+{"file": "apps/api/src/main.ts", "reason": "Better Auth handler 直挂点 + 全局 body parser 关闭，ALTCHA 校验需插在 handler 前或插件层"}
+{"file": "apps/api/src/modules/auth/auth.ts", "reason": "emailOTP 插件 sendVerificationOTP 回调，方案A 在此层拦截校验 altcha"}
+{"file": "apps/api/src/config/env.validation.ts", "reason": "新增 ALTCHA_HMAC_SECRET 必填校验"}
+{"file": "apps/web/src/routes/login.tsx", "reason": "登录页发码入口 handleSendOtp，嵌入 ALTCHA widget(auto=onsubmit) 并透传 payload"}
+{"file": "apps/web/src/lib/auth-client.ts", "reason": "emailOtp.sendVerificationOtp 透传 altcha payload 的位置(fetchOptions)"}
+{"file": ".trellis/spec/backend/index.md", "reason": "后端 spec 入口：开发前检查 + 质量检查"}
+{"file": ".trellis/spec/frontend/blueprint-aesthetic.md", "reason": "widget 视觉需贴合蓝图登录卡片美学"}

@@ -30,6 +30,24 @@
 
 ---
 
+## Web Component（自定义元素）集成
+
+接入非 React 的 Web Component（如 ALTCHA `<altcha-widget>`）时：
+
+- **JSX 类型**：库的 React 类型常未通过 `exports` 暴露子路径 → 在
+  `apps/web/src/types/<x>.d.ts` 写最小 `declare module 'react/jsx-runtime'` +
+  `declare module 'react'` 的 `IntrinsicElements` 声明（见 `types/altcha.d.ts`）。
+- **副作用注册**：`import 'altcha'` 注册自定义元素，不是默认导出组件。
+- **命令式驱动优先**：能用 `ref` 调元素方法（如 `widget.verify()` 拿结果）就别依赖它
+  往 form 里塞隐藏 input —— 取到值后自己走 fetch/header，控制流更清晰。
+- **⚠️ 含 `required` 控件的 widget 必须放 `<form>` 外**：很多 captcha/PoW widget 内部渲染
+  `<input required>`。若把它（即便 `display:none`）放在 `<form>` 里，提交时浏览器原生校验
+  会因「不可聚焦的必填项」抛 `An invalid form control... is not focusable` 并**拦截提交**。
+  做法：widget 作为 form 的**兄弟节点**，用元素自带的 `display="invisible"` 隐身
+  （而非手动 `style={{display:'none'}}`），命令式 `verify()` 触发。
+
+---
+
 ## PixiJS 与 React 边界
 
 - 用 `@pixi/react` 把 Pixi 场景嵌进 React 组件树
