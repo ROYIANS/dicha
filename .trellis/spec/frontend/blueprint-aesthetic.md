@@ -2,7 +2,7 @@
 
 > dicha 的**结构装饰层**。与 [design-system.md](./design-system.md)（材质 / token / 色彩系统）成对：
 > - `design-system.md` 管「**用什么材料**」——暖白柔面哑光、暖中性色、柔彩。
-> - **本文管「结构怎么长出来」**——工程纸网格、五段轨道框架、骑线菱形节点、分段标尺、条码刻线、斜线舱壁、物理感按钮。
+> - **本文管「结构怎么长出来」**——工程纸网格、五段轨道框架、骑线菱形节点、分段标尺、条码刻线、斜线舱壁、物理感按钮；**不包含装饰性工程文字**。
 >
 > **调色板以落地页为准**：落地页（`apps/web/src/routes/index.tsx`）是 dicha 落实 zed 风格的最佳范本，其他页面（含早期 login）只用了其子集。结构语汇（几何 / 间距 / 装饰原子）以本文为单一出处。
 
@@ -19,12 +19,13 @@
 
 **Structure IS the decoration.**（结构即装饰）。
 
-一套网格底、蓝框、标尺、节点、刻线、斜纹构成的工程制图语汇——**不用插画、不用渐变背景、不用装饰性图片**，靠**结构本身的精确与秩序**完成视觉表达。气质是 **precision / clarity / engineering craft**（精准、清晰、工程匠心），但配色是**暖棕中性**而非冷蓝钢，让「蓝图的严谨」落在「手帐的温度」上。
+一套网格底、蓝框、标尺、节点、刻线、斜纹构成的工程制图语汇——**不用插画、不用渐变背景、不用装饰性图片，也不用装饰性文字编号**，靠**结构本身的精确与秩序**完成视觉表达。气质是 **precision / clarity / engineering craft**（精准、清晰、工程匠心），但配色是**暖棕中性**而非冷蓝钢，让「蓝图的严谨」落在「手帐的温度」上。
 
 铁律（来自 zed，dicha 照搬）：
 1. **No gradients**（作背景装饰）· **No illustrations** · **No decorative images** ——例外只有功能性的横向光带（公告 banner）、极淡 hero 渐隐层次、暗角 scrim（盖图压字），均为**结构服务的层次**而非装饰。
 2. **细线全幅贯穿视口** ——分界线永远是 200vw 的 1px 线，不收在容器里。
 3. **每个元素都要骑线/对齐** ——节点压线、标尺贴边、刻度对格子；半像素都不放过。
+4. **No decorative blueprint text** ——禁止 `PRO / 01`、`ACCT / 01`、`AUTH·OTP`、`A1`、`F.01`、`№001` 这类无业务含义的工程编号、角落坐标、仿制图标签。只有真实导航、字段名、状态、数据、快捷键等功能文本可以显示。
 
 ---
 
@@ -90,6 +91,7 @@
 ## 3. 装饰原子（Decorative Atoms）
 
 > 这些是「结构即装饰」的字面体现——把工程图纸里的元素拿来当视觉。**全部无图片，纯 SVG/CSS。**
+> **边界**：这些原子只能是线、点、网格、刻线、斜纹等几何结构。不要用文字来伪造工程图纸氛围；无业务含义的缩写、编号、坐标角标都属于禁用装饰。
 
 ### 3.1 分段标尺（Ruler）
 > 一条被切成不等段的竖线，部分实段部分虚段。贴 rail 内边界画。
@@ -188,10 +190,10 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 | 声部 | 字体 | 用途 | 实现 |
 |---|---|---|---|
 | **衬线（主体/情感）** | `'Noto Serif SC', 'Songti SC', serif` | H1/大金句/正文/blockquote | `@theme --font-sans` 已指向它，Tailwind 默认 `font-sans` 即衬线 |
-| **等宽（工程/技术）** | `'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace` | 导航、标签（`// 功能`）、代号（`F.01`、`№001`）、kbd、读数、编号 | 落地页 `Mono` 组件 / app `app-mono` 类 |
+| **等宽（工程/技术）** | `'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace` | 导航、字段标签、kbd、真实读数、真实编号 | 落地页 `Mono` 组件 / app `app-mono` 类 |
 | （落地页 SERIF 别名） | `'Noto Serif SC', serif` | 与主体同，落地页内 `SERIF` 常量显式标注情感性标题 | — |
 
-> **铁律**：技术性 / 读数性 / 导航性文字**一律走 mono**；情感性 / 叙事性文字走 serif。两者从不混用——这是「蓝图严谨 × 手帐温度」在字体层的体现。
+> **铁律**：技术性 / 读数性 / 导航性文字**一律走 mono**；情感性 / 叙事性文字走 serif。两者从不混用。mono 不能被用来生成纯装饰的工程编号或角标。
 >
 > zed 对应是 `font-plex-serif`（衬线，情感）+ `font-plex-mono`（等宽，技术）。dicha 换成 Noto Serif SC + IBM Plex Mono，分工一致。
 
@@ -200,7 +202,7 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 - 段落大金句：`clamp(1.55rem, 3.2vw, 2.65rem)` `leading-[1.55]`
 - section 标题 H2：`clamp(1.6rem, 3.6vw, 2.4~2.6rem)` `font-semibold`
 - 正文：`13.5~16px` `leading-relaxed`
-- mono 标签：`11~13px`，代号用 `tracking-[0.2em]`（`№001`）/ `letter-spacing:0.08em uppercase`（section 标题）
+- mono 标签：`11~13px`，仅用于真实字段、导航、kbd、数据读数；不要添加 `PRO / 01`、`AUTH·OTP`、`№001` 这类氛围型代号。
 
 ---
 
@@ -214,11 +216,11 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 4. **读数条**（SpecPanel）——横排 `flex-wrap`，项间虚线竖隔。
 5. **编目网格**（Rooms）——`grid-cols-2 lg:grid-cols-3`，每格虚线十字分隔 + hover `bg-surface-alt`。
 6. **大金句拼格**（Principles）——`gap-px` 网格用 `background:--line` 当分隔线（1px 缝隙显线）；左列跨两行大金句 + 右上四格小原则 + 右下斜纹填充格（HatchCell 补齐 3×3）。
-7. **清单台账**（Extras）——左右双列，`№01 ____ 描述` 领导线式（中间 `border-b border-dotted` 伸缩填充）。
+7. **清单台账**（Extras）——左右双列，描述之间可用领导线式（中间 `border-b border-dotted` 伸缩填充）；不要用 `№01` 这类装饰编号，除非它是真实排序数据。
 8. **非对称信笺**（AuthorLetter）——`grid-cols-12`，左 4 列作者卡 / 右 8 列 blockquote，中间虚线竖隔。
 9. **留白收尾**（FinalCTA）——居中大字 CTA，无网格无装饰。
 
-**变奏原则**：相邻 section **禁止同款布局**；网格 / 清单 / 居中 / 非对称轮换。每个 section 顶部用 mono `// 标签`（`text-lp-brand`）做「图纸标题栏」。
+**变奏原则**：相邻 section **禁止同款布局**；网格 / 清单 / 居中 / 非对称轮换。section 顶部只放真实标题或业务标签，不加 `// 标签`、缩写编号、坐标角标来营造图纸感。
 
 ---
 
@@ -327,13 +329,14 @@ app-shell 特有：
 1. **No gradients**（背景装饰）/ **No illustrations** / **No decorative images**。例外：公告光带、hero 渐隐层次、暗角 scrim——都是结构服务的层次。
 2. **分界线全幅贯穿视口**（`w-[200vw]`），不收容器宽。
 3. **节点骑线**走 `--node-*-offset` 变量，**不用 translate 居中**；6px、显式 offset。
-4. **技术文字走 mono，情感文字走 serif**，不混用。
-5. **rail 装饰组合逐段不同**（`RAILS` 预设），相邻 section 禁同款布局。
-6. **颜色只走 token**（`var(--ink)` / `--hairline` / `--lp-brand` …），禁硬编码 `text-gray-*` / `oklch()` / `bg-white/NN`（见 design-system.md §8）。
-7. **物理感**：按钮/卡片默认有 inset 底边凸起，hover 摊平、active 下压 `translateY(1px) scale(0.99)`。
-8. **昼夜只换变量值**，组件零改动（`@theme inline` + `data-theme`）。
-9. **无 legacy 双套**：仓库内不得并存玻璃 + 哑光、冷蓝 + 暖棕两套视觉语言。
-10. **抽屉 / 弹窗 overlay 一律用 `DotsBackdrop`**（见 §9.5），不得用纯色 / 纯 blur / 其它点阵。
+4. **禁止装饰性工程文字**：不得添加 `PRO / 01`、`ACCT / 01`、`AUTH·OTP`、`A1`、`F.01`、`№001`、`// 标签` 这类无业务含义的角标、编号、代号、图纸标题栏。
+5. **技术文字走 mono，情感文字走 serif**，不混用；mono 只服务真实内容。
+6. **rail 装饰组合逐段不同**（`RAILS` 预设），相邻 section 禁同款布局；业务页可以完全不用 rail，避免内容被挤压。
+7. **颜色只走 token**（`var(--ink)` / `--hairline` / `--lp-brand` …），禁硬编码 `text-gray-*` / `oklch()` / `bg-white/NN`（见 design-system.md §8）。
+8. **物理感**：按钮/卡片默认有 inset 底边凸起，hover 摊平、active 下压 `translateY(1px) scale(0.99)`。
+9. **昼夜只换变量值**，组件零改动（`@theme inline` + `data-theme`）。
+10. **无 legacy 双套**：仓库内不得并存玻璃 + 哑光、冷蓝 + 暖棕两套视觉语言。
+11. **抽屉 / 弹窗 overlay 一律用 `DotsBackdrop`**（见 §9.5），不得用纯色 / 纯 blur / 其它点阵。
 
 ---
 

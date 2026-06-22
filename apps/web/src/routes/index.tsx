@@ -56,11 +56,11 @@ const LP = {
 
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
-const FEATURES: { id: string; code: string; icon: LucideIcon; title: string; body: string }[] = [
-  { id: 'capture', code: 'F.01', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进滴茶，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
-  { id: 'poem', code: 'F.02', icon: Feather, title: '物品会自己长出一句诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
-  { id: 'dust', code: 'F.03', icon: Wind, title: '旧了的东西，会落一点灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
-  { id: 'zimomo', code: 'F.04', icon: MessageSquareText, title: '齐默默在旁边，不催你', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
+const FEATURES: { id: string; icon: LucideIcon; title: string; body: string }[] = [
+  { id: 'capture', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进滴茶，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
+  { id: 'poem', icon: Feather, title: '物品会自己长出一句诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
+  { id: 'dust', icon: Wind, title: '旧了的东西，会落一点灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
+  { id: 'zimomo', icon: MessageSquareText, title: '齐默默在旁边，不催你', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
 ];
 
 const MARQUEE_ITEMS = [
@@ -651,8 +651,7 @@ function FeatureTabs() {
                   <div className="relative py-7" style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}>
                     <DotPattern />
                     <div className="relative">
-                      <Mono className="text-[11px] text-ink-faint">{f.code}</Mono>
-                      <h3 className="mt-1.5 text-[20px] font-semibold text-ink" style={{ fontFamily: SERIF }}>{f.title}</h3>
+                      <h3 className="text-[20px] font-semibold text-ink" style={{ fontFamily: SERIF }}>{f.title}</h3>
                       <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-soft">{f.body}</p>
                     </div>
                   </div>

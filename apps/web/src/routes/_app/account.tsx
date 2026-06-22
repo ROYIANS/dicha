@@ -25,7 +25,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
-import { EdgeRuler } from '@/components/EdgeRuler';
 import { FrameNode } from '@/components/FrameNode';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import {
@@ -55,7 +54,6 @@ export const Route = createFileRoute('/_app/account')({
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
-const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
 const AVATAR_COLORS = ['#2E2A26', '#7A6248', '#F0C3A3', '#A9C0A0', '#A8C4D6'];
 
 type PasskeyRecord = {
@@ -78,25 +76,16 @@ function AccountPage() {
 
   return (
     <main className="relative min-h-full overflow-hidden">
-      <div className="flex min-h-full">
-        <span className="relative hidden w-6 shrink-0 border-r border-hairline md:block lg:w-12">
-          <EdgeRuler side="right" color={RULE} segs={[{ f: 2.4 }, { f: 1.2, dash: true }, { f: 3.1 }]} />
-        </span>
-        <span className="relative hidden flex-1 lg:block">
-          <EdgeRuler side="right" color={RULE} segs={[{ f: 1.7, dash: true }, { f: 3.8 }, { f: 2.6 }]} />
-        </span>
-
-        <div className="lp-container-max-w relative min-w-0 flex-1 border-x border-hairline [--node-horizontal-offset:-3.5px]">
+      <div className="mx-auto min-h-full w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="relative min-w-0 [--node-horizontal-offset:-3.5px]">
           <FrameNode pos="top-left" />
           <FrameNode pos="top-right" />
           <GridPattern />
 
           <div className="relative z-10 pb-36">
             <header className="relative border-b border-hairline px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
-              <Corner pos="top-right" label="ACCT·SET" />
               <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-end">
                 <div className="space-y-2">
-                  <Mono className="text-[10px] uppercase tracking-[0.24em] text-ink-faint">ACCT / 01</Mono>
                   <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
                     {t('account.pageTitle')}
                   </h1>
@@ -121,13 +110,6 @@ function AccountPage() {
             </div>
           </div>
         </div>
-
-        <span className="relative hidden flex-1 lg:block">
-          <EdgeRuler side="left" color={RULE} segs={[{ f: 2.2 }, { f: 1.8, dash: true }, { f: 3.2 }]} />
-        </span>
-        <span className="relative hidden w-6 shrink-0 border-l border-hairline md:block lg:w-12">
-          <EdgeRuler side="left" color={RULE} segs={[{ f: 2.9 }, { f: 2.2, dash: true }]} />
-        </span>
       </div>
     </main>
   );
@@ -195,7 +177,7 @@ function ProfileSection({ user }: { user: UserDto }) {
   };
 
   return (
-    <Panel title={t('account.profileTitle')} code="PRO / 01">
+    <Panel title={t('account.profileTitle')}>
       <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
         <Field
           label={t('account.displayName')}
@@ -302,7 +284,7 @@ function AvatarSection({ user }: { user: UserDto }) {
   };
 
   return (
-    <Panel title={t('account.avatarTitle')} code="AVA / 02">
+    <Panel title={t('account.avatarTitle')}>
       <div className="grid gap-5 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-start">
         <div className="size-24 shrink-0 overflow-hidden rounded-[2px] border border-hairline bg-canvas">
           {uploadedImage ? (
@@ -494,7 +476,7 @@ function SecuritySection({ user }: { user: UserDto }) {
   };
 
   return (
-    <Panel title={t('account.securityTitle')} code="SEC / 03">
+    <Panel title={t('account.securityTitle')}>
       <section className="space-y-3">
         <SectionLabel>{t('account.email')}</SectionLabel>
         <div className="flex flex-col gap-3 border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -671,12 +653,10 @@ function SecuritySection({ user }: { user: UserDto }) {
 
 function Panel({
   title,
-  code,
   children,
   className = '',
 }: {
   title: string;
-  code: string;
   children: ReactNode;
   className?: string;
 }) {
@@ -686,14 +666,12 @@ function Panel({
     >
       <FrameNode pos="top-left" />
       <FrameNode pos="top-right" />
-      <Corner pos="bottom-left" label={code.replaceAll(' ', '')} />
       <div className="absolute inset-x-0 top-0 h-8 opacity-35 [mask-image:linear-gradient(to_bottom,#000,transparent)]">
         <Hatch />
       </div>
       <div className="relative z-10 mb-5 flex items-center justify-between gap-3 border-b border-hairline pb-4">
         <div>
-          <Mono className="block text-[10px] uppercase tracking-[0.22em] text-ink-faint">{code}</Mono>
-          <h2 className="mt-1 text-[17px] font-semibold text-ink">{title}</h2>
+          <h2 className="text-[17px] font-semibold text-ink">{title}</h2>
         </div>
         <span aria-hidden className="h-px w-14 bg-[color-mix(in_oklab,var(--ink)_16%,transparent)]" />
       </div>
@@ -743,25 +721,6 @@ function SectionLabel({ children }: { children: ReactNode }) {
     <Mono className="block text-[10px] uppercase tracking-[0.2em] text-ink-faint">
       {children}
     </Mono>
-  );
-}
-
-function Corner({
-  pos,
-  label,
-}: {
-  pos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  label: string;
-}) {
-  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute z-10 text-[9px] uppercase tracking-[0.16em] tabular-nums text-ink-faint"
-      style={{ fontFamily: MONO, [v]: 10, [h]: 12 }}
-    >
-      {label}
-    </span>
   );
 }
 

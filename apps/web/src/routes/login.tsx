@@ -67,26 +67,6 @@ function Mono({ children, className = '' }: { children: React.ReactNode; classNa
   );
 }
 
-/** 角落坐标标注（蓝图工程细节）。 */
-function Corner({
-  pos,
-  label,
-}: {
-  pos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  label: string;
-}) {
-  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute z-10 text-[9px] tracking-[0.15em] tabular-nums"
-      style={{ color: 'var(--ink-faint)', fontFamily: MONO, [v]: 10, [h]: 12 }}
-    >
-      {label}
-    </span>
-  );
-}
-
 /** 蓝图描边输入框：奇纸底 + hairline 边 + 方角 + focus 提亮 brand（呼应 --field-* token）。 */
 function Field({
   label,
@@ -293,8 +273,6 @@ function LoginPage() {
             <FrameNode pos="top-right" />
             <FrameNode pos="bottom-left" />
             <FrameNode pos="bottom-right" />
-            <Corner pos="top-left" label="A1" />
-            <Corner pos="bottom-right" label={step === 'otp' ? 'AUTH·OTP' : 'AUTH·01'} />
 
             <div className="space-y-6">
               {/* 品牌头 */}
