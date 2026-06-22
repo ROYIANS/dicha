@@ -10,7 +10,7 @@ This skill is for local Trellis users who have already run `trellis init` in a p
 The default operating scope is local files in the user project:
 
 - `.trellis/`: workflow, config, tasks, spec, workspace, scripts, and runtime state.
-- Platform directories: `.Codex/`, `.codex/`, `.cursor/`, `.opencode/`, `.kiro/`, `.gemini/`, `.qoder/`, `.codebuddy/`, `.github/`, `.factory/`, `.pi/`, `.kilocode/`, `.agent/`, `.windsurf/`, and similar directories.
+- Platform directories: `.claude/`, `.codex/`, `.cursor/`, `.opencode/`, `.kiro/`, `.gemini/`, `.qoder/`, `.codebuddy/`, `.github/`, `.factory/`, `.pi/`, `.kilocode/`, `.agent/`, `.windsurf/`, and similar directories.
 - Shared skill layer: `.agents/skills/`.
 
 Do not assume the user has the Trellis source repository. Do not default to modifying the global npm install directory or `node_modules`.
