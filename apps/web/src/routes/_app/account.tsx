@@ -25,7 +25,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
-import { FrameNode } from '@/components/FrameNode';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import {
   accountFormFromUser,
@@ -77,9 +76,7 @@ function AccountPage() {
   return (
     <main className="relative min-h-full overflow-hidden">
       <div className="mx-auto min-h-full w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="relative min-w-0 [--node-horizontal-offset:-3.5px]">
-          <FrameNode pos="top-left" />
-          <FrameNode pos="top-right" />
+        <div className="relative min-w-0">
           <GridPattern />
 
           <div className="relative z-10 pb-36">
@@ -121,9 +118,7 @@ function AccountSummary({ user }: { user: UserDto }) {
   const displayName = user.displayName || user.name;
 
   return (
-    <div className="relative isolate min-w-0 overflow-hidden border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)] [--node-horizontal-offset:-3.5px] [--node-vertical-offset:3.5px]">
-      <FrameNode pos="top-left" />
-      <FrameNode pos="bottom-right" />
+    <div className="relative isolate min-w-0 overflow-hidden rounded-md border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
       <div className="flex min-w-0 items-center gap-3">
         <div className="size-12 shrink-0 overflow-hidden rounded-md border border-hairline bg-canvas">
           {uploadedImage ? (
@@ -211,7 +206,7 @@ function ProfileSection({ user }: { user: UserDto }) {
       </div>
 
       <div className="flex flex-col gap-4 border-t border-hairline pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="border border-hairline bg-canvas px-3 py-2">
+        <div className="rounded-md border border-hairline bg-canvas px-3 py-2">
           <Mono className="block text-[10px] uppercase tracking-[0.18em] text-ink-faint">
             {t('account.coins')}
           </Mono>
@@ -479,7 +474,7 @@ function SecuritySection({ user }: { user: UserDto }) {
     <Panel title={t('account.securityTitle')}>
       <section className="space-y-3">
         <SectionLabel>{t('account.email')}</SectionLabel>
-        <div className="flex flex-col gap-3 border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-md border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <Mono className="block truncate text-[12px] text-ink">{user.email}</Mono>
             <Mono className="mt-1 inline-flex items-center gap-1 text-[11px] text-ink-soft">
@@ -512,7 +507,7 @@ function SecuritySection({ user }: { user: UserDto }) {
 
       <section className="space-y-3 border-t border-hairline pt-5">
         <SectionLabel>{t('account.github')}</SectionLabel>
-        <div className="flex flex-col gap-3 border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-md border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="inline-flex items-center gap-2 text-[13px] text-ink" style={{ fontFamily: MONO }}>
             <GithubMark size={15} />
             {githubLinked ? t('account.githubLinked') : t('account.githubNotLinked')}
@@ -569,13 +564,13 @@ function SecuritySection({ user }: { user: UserDto }) {
             <Loader2 size={16} className="animate-spin text-ink-soft" />
           </div>
         ) : typedPasskeys.length === 0 ? (
-          <p className="border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO, borderColor: LINE }}>
+          <p className="rounded-md border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO, borderColor: LINE }}>
             {t('account.passkeyEmpty')}
           </p>
         ) : (
           <ul className="space-y-2">
             {typedPasskeys.map((record) => (
-              <li key={record.id} className="border border-hairline bg-canvas px-3 py-3">
+              <li key={record.id} className="rounded-md border border-hairline bg-canvas px-3 py-3">
                 {editingPasskeyId === record.id ? (
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
@@ -662,10 +657,8 @@ function Panel({
 }) {
   return (
     <section
-      className={`relative isolate overflow-hidden border border-hairline bg-surface p-5 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)] sm:p-6 [--node-horizontal-offset:-3.5px] [--node-vertical-offset:3.5px] ${className}`}
+      className={`relative isolate overflow-hidden rounded-md border border-hairline bg-surface p-5 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)] sm:p-6 ${className}`}
     >
-      <FrameNode pos="top-left" />
-      <FrameNode pos="top-right" />
       <div className="absolute inset-x-0 top-0 h-8 opacity-35 [mask-image:linear-gradient(to_bottom,#000,transparent)]">
         <Hatch />
       </div>
