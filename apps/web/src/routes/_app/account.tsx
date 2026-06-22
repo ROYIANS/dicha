@@ -25,8 +25,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
+import { EdgeRuler } from '@/components/EdgeRuler';
 import { FrameNode } from '@/components/FrameNode';
-import { Surface } from '@/components/Surface';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import {
   accountFormFromUser,
@@ -55,6 +55,7 @@ export const Route = createFileRoute('/_app/account')({
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
+const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
 const AVATAR_COLORS = ['#2E2A26', '#7A6248', '#F0C3A3', '#A9C0A0', '#A8C4D6'];
 
 type PasskeyRecord = {
@@ -76,29 +77,57 @@ function AccountPage() {
   const { t } = useTranslation();
 
   return (
-    <main className="relative min-h-full overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
-      <GridPattern />
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-5 pb-24">
-        <header className="flex flex-col gap-4 border-b border-hairline pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <Mono className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">ACCT / 01</Mono>
-            <h1 className="text-2xl font-semibold leading-tight text-ink sm:text-3xl">
-              {t('account.pageTitle')}
-            </h1>
-            <p className="max-w-2xl text-[14px] leading-relaxed text-ink-soft">
-              {t('account.pageSubtitle')}
-            </p>
-          </div>
-          <AccountSummary user={user as UserDto} />
-        </header>
+    <main className="relative min-h-full overflow-hidden">
+      <div className="flex min-h-full">
+        <span className="relative hidden w-6 shrink-0 border-r border-hairline md:block lg:w-12">
+          <EdgeRuler side="right" color={RULE} segs={[{ f: 2.4 }, { f: 1.2, dash: true }, { f: 3.1 }]} />
+        </span>
+        <span className="relative hidden flex-1 lg:block">
+          <EdgeRuler side="right" color={RULE} segs={[{ f: 1.7, dash: true }, { f: 3.8 }, { f: 2.6 }]} />
+        </span>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
-          <div className="space-y-5">
-            <ProfileSection user={user as UserDto} />
-            <AvatarSection user={user as UserDto} />
+        <div className="lp-container-max-w relative min-w-0 flex-1 border-x border-hairline [--node-horizontal-offset:-3.5px]">
+          <FrameNode pos="top-left" />
+          <FrameNode pos="top-right" />
+          <GridPattern />
+
+          <div className="relative z-10 pb-36">
+            <header className="relative border-b border-hairline px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+              <Corner pos="top-right" label="ACCT·SET" />
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-end">
+                <div className="space-y-2">
+                  <Mono className="text-[10px] uppercase tracking-[0.24em] text-ink-faint">ACCT / 01</Mono>
+                  <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
+                    {t('account.pageTitle')}
+                  </h1>
+                  <p className="max-w-2xl text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
+                    {t('account.pageSubtitle')}
+                  </p>
+                </div>
+                <AccountSummary user={user as UserDto} />
+              </div>
+            </header>
+
+            <Slash />
+
+            <div className="grid gap-7 bg-canvas px-5 py-7 sm:px-8 sm:py-9 lg:grid-cols-[minmax(0,1.04fr)_minmax(340px,0.96fr)] lg:px-10">
+              <div className="space-y-7">
+                <ProfileSection user={user as UserDto} />
+                <AvatarSection user={user as UserDto} />
+              </div>
+              <div>
+                <SecuritySection user={user as UserDto} />
+              </div>
+            </div>
           </div>
-          <SecuritySection user={user as UserDto} />
         </div>
+
+        <span className="relative hidden flex-1 lg:block">
+          <EdgeRuler side="left" color={RULE} segs={[{ f: 2.2 }, { f: 1.8, dash: true }, { f: 3.2 }]} />
+        </span>
+        <span className="relative hidden w-6 shrink-0 border-l border-hairline md:block lg:w-12">
+          <EdgeRuler side="left" color={RULE} segs={[{ f: 2.9 }, { f: 2.2, dash: true }]} />
+        </span>
       </div>
     </main>
   );
@@ -110,11 +139,11 @@ function AccountSummary({ user }: { user: UserDto }) {
   const displayName = user.displayName || user.name;
 
   return (
-    <Surface className="relative isolate min-w-0 overflow-hidden rounded-[3px] px-4 py-3 [--node-horizontal-offset:-3.5px] [--node-vertical-offset:3.5px]">
+    <div className="relative isolate min-w-0 overflow-hidden border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)] [--node-horizontal-offset:-3.5px] [--node-vertical-offset:3.5px]">
       <FrameNode pos="top-left" />
       <FrameNode pos="bottom-right" />
       <div className="flex min-w-0 items-center gap-3">
-        <div className="size-12 shrink-0 overflow-hidden rounded-[3px] border border-hairline bg-canvas">
+        <div className="size-12 shrink-0 overflow-hidden rounded-[2px] border border-hairline bg-canvas">
           {uploadedImage ? (
             <img src={uploadedImage} alt={displayName} className="size-full object-cover" />
           ) : (
@@ -126,7 +155,7 @@ function AccountSummary({ user }: { user: UserDto }) {
           <Mono className="block max-w-[32ch] truncate text-[11px] text-ink-faint">{user.email}</Mono>
         </div>
       </div>
-    </Surface>
+    </div>
   );
 }
 
@@ -167,7 +196,7 @@ function ProfileSection({ user }: { user: UserDto }) {
 
   return (
     <Panel title={t('account.profileTitle')} code="PRO / 01">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-x-5 gap-y-4 md:grid-cols-2">
         <Field
           label={t('account.displayName')}
           value={form.displayName}
@@ -199,8 +228,8 @@ function ProfileSection({ user }: { user: UserDto }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-hairline pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="rounded-[2px] border border-hairline bg-canvas px-3 py-2">
+      <div className="flex flex-col gap-4 border-t border-hairline pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="border border-hairline bg-canvas px-3 py-2">
           <Mono className="block text-[10px] uppercase tracking-[0.18em] text-ink-faint">
             {t('account.coins')}
           </Mono>
@@ -210,7 +239,7 @@ function ProfileSection({ user }: { user: UserDto }) {
           type="button"
           onClick={() => void handleSave()}
           disabled={!dirty || nameInvalid || saving}
-          className="lp-btn lp-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+          className="lp-btn lp-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-[2px] px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
           style={{ fontFamily: MONO }}
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -274,8 +303,8 @@ function AvatarSection({ user }: { user: UserDto }) {
 
   return (
     <Panel title={t('account.avatarTitle')} code="AVA / 02">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="size-24 shrink-0 overflow-hidden rounded-[3px] border border-hairline bg-canvas">
+      <div className="grid gap-5 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-start">
+        <div className="size-24 shrink-0 overflow-hidden rounded-[2px] border border-hairline bg-canvas">
           {uploadedImage ? (
             <img src={uploadedImage} alt={user.displayName ?? user.name} className="size-full object-cover" />
           ) : (
@@ -286,14 +315,14 @@ function AvatarSection({ user }: { user: UserDto }) {
           <Mono className="block text-[11px] tracking-wider text-ink-soft">
             {t('account.avatarGenerated')}
           </Mono>
-          <div className="mt-2 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {seeds.map((seed) => (
               <button
                 key={seed}
                 type="button"
                 onClick={() => void applyGeneratedAvatar(seed)}
                 aria-label={seed}
-                className="size-14 overflow-hidden rounded-[3px] border bg-canvas transition-transform hover:scale-[1.03]"
+                className="size-14 overflow-hidden rounded-[2px] border bg-canvas transition-transform hover:scale-[1.03]"
                 style={{ borderColor: selectedSeed === seed ? 'var(--lp-brand)' : 'var(--hairline)' }}
               >
                 <Avatar name={seed} variant="beam" colors={AVATAR_COLORS} size={56} square />
@@ -303,7 +332,7 @@ function AvatarSection({ user }: { user: UserDto }) {
         </div>
       </div>
 
-      <div className="border-t border-hairline pt-4">
+      <div className="border-t border-hairline pt-5">
         <input
           ref={fileRef}
           type="file"
@@ -315,7 +344,7 @@ function AvatarSection({ user }: { user: UserDto }) {
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[2px] px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           style={{ fontFamily: MONO }}
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
@@ -465,10 +494,10 @@ function SecuritySection({ user }: { user: UserDto }) {
   };
 
   return (
-    <Panel title={t('account.securityTitle')} code="SEC / 03" className="xl:sticky xl:top-5">
+    <Panel title={t('account.securityTitle')} code="SEC / 03">
       <section className="space-y-3">
         <SectionLabel>{t('account.email')}</SectionLabel>
-        <div className="flex flex-col gap-3 rounded-[2px] border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <Mono className="block truncate text-[12px] text-ink">{user.email}</Mono>
             <Mono className="mt-1 inline-flex items-center gap-1 text-[11px] text-ink-soft">
@@ -481,7 +510,7 @@ function SecuritySection({ user }: { user: UserDto }) {
               type="button"
               onClick={() => void handleResend()}
               disabled={resending}
-              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               {resending ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
@@ -499,9 +528,9 @@ function SecuritySection({ user }: { user: UserDto }) {
         />
       </section>
 
-      <section className="space-y-3 border-t border-hairline pt-4">
+      <section className="space-y-3 border-t border-hairline pt-5">
         <SectionLabel>{t('account.github')}</SectionLabel>
-        <div className="flex flex-col gap-3 rounded-[2px] border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="inline-flex items-center gap-2 text-[13px] text-ink" style={{ fontFamily: MONO }}>
             <GithubMark size={15} />
             {githubLinked ? t('account.githubLinked') : t('account.githubNotLinked')}
@@ -511,7 +540,7 @@ function SecuritySection({ user }: { user: UserDto }) {
               type="button"
               onClick={() => void handleUnlinkGithub()}
               disabled={busy}
-              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               <Unlink size={13} />
@@ -522,7 +551,7 @@ function SecuritySection({ user }: { user: UserDto }) {
               type="button"
               onClick={() => void handleLinkGithub()}
               disabled={busy}
-              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               <Link2 size={13} />
@@ -532,7 +561,7 @@ function SecuritySection({ user }: { user: UserDto }) {
         </div>
       </section>
 
-      <section className="space-y-3 border-t border-hairline pt-4">
+      <section className="space-y-3 border-t border-hairline pt-5">
         <SectionLabel>{t('account.passkey')}</SectionLabel>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
@@ -545,7 +574,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             type="button"
             onClick={() => void handleAddPasskey()}
             disabled={busy}
-            className="lp-btn lp-btn-primary inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+            className="lp-btn lp-btn-primary inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[2px] px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
             style={{ fontFamily: MONO }}
           >
             <KeyRound size={14} />
@@ -558,13 +587,13 @@ function SecuritySection({ user }: { user: UserDto }) {
             <Loader2 size={16} className="animate-spin text-ink-soft" />
           </div>
         ) : typedPasskeys.length === 0 ? (
-          <p className="rounded-[2px] border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO, borderColor: LINE }}>
+          <p className="border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO, borderColor: LINE }}>
             {t('account.passkeyEmpty')}
           </p>
         ) : (
           <ul className="space-y-2">
             {typedPasskeys.map((record) => (
-              <li key={record.id} className="rounded-[2px] border border-hairline bg-canvas px-3 py-3">
+              <li key={record.id} className="border border-hairline bg-canvas px-3 py-3">
                 {editingPasskeyId === record.id ? (
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
@@ -577,7 +606,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                       type="button"
                       onClick={() => void handleRenamePasskey()}
                       disabled={busy || !editingPasskeyName.trim()}
-                      className="lp-btn lp-btn-primary inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:opacity-60"
+                      className="lp-btn lp-btn-primary inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:opacity-60"
                       style={{ fontFamily: MONO }}
                     >
                       <Check size={13} />
@@ -599,7 +628,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                       <button
                         type="button"
                         onClick={() => handleStartRename(record)}
-                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md text-ink-soft"
+                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-[2px] text-ink-soft"
                         aria-label={t('account.passkeyRename')}
                       >
                         <Pencil size={13} />
@@ -608,7 +637,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                         type="button"
                         onClick={() => void handleDeletePasskey(record)}
                         disabled={busy}
-                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md text-ink-soft hover:text-accent-pink disabled:opacity-60"
+                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-[2px] text-ink-soft hover:text-accent-pink disabled:opacity-60"
                         aria-label={t('account.passkeyDelete')}
                       >
                         <Trash2 size={13} />
@@ -622,11 +651,11 @@ function SecuritySection({ user }: { user: UserDto }) {
         )}
       </section>
 
-      <section className="border-t border-hairline pt-4">
+      <section className="border-t border-hairline pt-5">
         <button
           type="button"
           onClick={() => void handleLogout()}
-          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px]"
+          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[2px] px-4 text-[13px]"
           style={{ fontFamily: MONO }}
         >
           <User size={14} />
@@ -652,15 +681,24 @@ function Panel({
   className?: string;
 }) {
   return (
-    <Surface className={`relative isolate overflow-hidden rounded-[3px] p-4 sm:p-5 [--node-horizontal-offset:-3.5px] [--node-vertical-offset:3.5px] ${className}`}>
+    <section
+      className={`relative isolate overflow-hidden border border-hairline bg-surface p-5 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)] sm:p-6 [--node-horizontal-offset:-3.5px] [--node-vertical-offset:3.5px] ${className}`}
+    >
       <FrameNode pos="top-left" />
       <FrameNode pos="top-right" />
-      <div className="mb-4 flex items-center justify-between gap-3 border-b border-hairline pb-3">
-        <h2 className="text-[17px] font-semibold text-ink">{title}</h2>
-        <Mono className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-ink-faint">{code}</Mono>
+      <Corner pos="bottom-left" label={code.replaceAll(' ', '')} />
+      <div className="absolute inset-x-0 top-0 h-8 opacity-35 [mask-image:linear-gradient(to_bottom,#000,transparent)]">
+        <Hatch />
       </div>
-      <div className="space-y-4">{children}</div>
-    </Surface>
+      <div className="relative z-10 mb-5 flex items-center justify-between gap-3 border-b border-hairline pb-4">
+        <div>
+          <Mono className="block text-[10px] uppercase tracking-[0.22em] text-ink-faint">{code}</Mono>
+          <h2 className="mt-1 text-[17px] font-semibold text-ink">{title}</h2>
+        </div>
+        <span aria-hidden className="h-px w-14 bg-[color-mix(in_oklab,var(--ink)_16%,transparent)]" />
+      </div>
+      <div className="relative z-10 space-y-5">{children}</div>
+    </section>
   );
 }
 
@@ -708,6 +746,25 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
+function Corner({
+  pos,
+  label,
+}: {
+  pos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  label: string;
+}) {
+  const [v, h] = pos.split('-') as ['top' | 'bottom', 'left' | 'right'];
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute z-10 text-[9px] uppercase tracking-[0.16em] tabular-nums text-ink-faint"
+      style={{ fontFamily: MONO, [v]: 10, [h]: 12 }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function GridPattern() {
   return (
     <svg
@@ -720,11 +777,36 @@ function GridPattern() {
       }}
     >
       <defs>
+        <pattern id="account-grid-fine" width="8" height="8" patternUnits="userSpaceOnUse">
+          <path d="M8 0H0V8" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1" />
+        </pattern>
         <pattern id="account-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-          <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.1" />
+          <rect width="32" height="32" fill="url(#account-grid-fine)" />
+          <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.18" />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill="url(#account-grid)" />
+    </svg>
+  );
+}
+
+function Slash() {
+  return (
+    <div className="relative h-3.5 border-b border-hairline bg-canvas">
+      <Hatch />
+    </div>
+  );
+}
+
+function Hatch() {
+  return (
+    <svg aria-hidden className="pointer-events-none size-full text-ink-faint">
+      <defs>
+        <pattern id="account-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#account-hatch)" opacity="0.28" />
     </svg>
   );
 }
