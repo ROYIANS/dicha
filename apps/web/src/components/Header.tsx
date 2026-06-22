@@ -1,12 +1,11 @@
+import Avatar from 'boring-avatars';
 import { Search, Bell, User, Menu } from 'lucide-react';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { useRouteContext } from '@tanstack/react-router';
+import { Link, useRouteContext } from '@tanstack/react-router';
 import { FrameNode } from '@/components/FrameNode';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { AccountModal } from '@/components/AccountModal';
-import type { UserDto } from '@dicha/shared';
+import { parseGeneratedAvatarMarker } from '@/lib/account-settings';
 
 type HeaderProps = {
   navOpen?: boolean;
@@ -18,7 +17,8 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
   const { t } = useTranslation();
   const { user } = useRouteContext({ from: '/_app' });
   const displayName = user?.displayName || user?.name || '';
-  const [accountOpen, setAccountOpen] = useState(false);
+  const generatedSeed = parseGeneratedAvatarMarker(user?.image);
+  const uploadedImage = user?.image && !generatedSeed ? user.image : null;
 
   return (
     <header className="app-chrome-header relative z-20 w-full shrink-0 border-b border-hairline [--node-horizontal-offset:-3.5px]">
@@ -66,19 +66,27 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
             <Bell size={16} />
             <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-peach" />
           </button>
-          <button
-            type="button"
-            onClick={() => setAccountOpen(true)}
-            aria-haspopup="dialog"
+          <Link
+            to="/account"
             className="app-icon-btn inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-1.5 sm:px-2"
             title={displayName}
           >
-            {user?.image ? (
+            {uploadedImage ? (
               <img
-                src={user.image}
+                src={uploadedImage}
                 alt={displayName}
                 className="size-5 shrink-0 rounded-[5px] object-cover"
               />
+            ) : generatedSeed ? (
+              <span className="size-5 shrink-0 overflow-hidden rounded-[5px]">
+                <Avatar
+                  name={generatedSeed}
+                  variant="beam"
+                  colors={['#2E2A26', '#7A6248', '#F0C3A3', '#A9C0A0', '#A8C4D6']}
+                  size={20}
+                  square
+                />
+              </span>
             ) : (
               <User size={15} className="shrink-0" />
             )}
@@ -87,17 +95,9 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
                 {displayName}
               </span>
             ) : null}
-          </button>
+          </Link>
         </div>
       </div>
-
-      {user ? (
-        <AccountModal
-          user={user as UserDto}
-          isOpen={accountOpen}
-          onOpenChange={setAccountOpen}
-        />
-      ) : null}
     </header>
   );
 }

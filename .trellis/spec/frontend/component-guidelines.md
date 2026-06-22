@@ -48,6 +48,18 @@
 
 ---
 
+## 头像组件与持久化
+
+- 生成头像统一使用 `boring-avatars` 本地 React SVG 组件，不调用远程头像 API。
+- 生成头像写入 `user.image` 时使用 marker：`boring:beam:<encodeURIComponent(seed)>`。
+- 渲染头像时先用 `parseGeneratedAvatarMarker(image)` 判断：
+  - 返回 seed → 用 `<Avatar name={seed} variant="beam" colors={...} square />` 渲染。
+  - 返回 `null` 且 `image` 有值 → 当作上传图片 URL 渲染。
+- seed 优先来自稳定身份字段：`email`、`displayName`、`homeName`，候选生成规则集中在 `apps/web/src/lib/account-settings.ts`。
+- Header、账户页、未来其它用户入口必须复用同一 marker 解析规则，避免一处显示上传图、一处误把 marker 当 URL。
+
+---
+
 ## PixiJS 与 React 边界
 
 - 用 `@pixi/react` 把 Pixi 场景嵌进 React 组件树

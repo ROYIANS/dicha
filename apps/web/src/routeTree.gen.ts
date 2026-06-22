@@ -17,6 +17,7 @@ import { Route as AppWardrobeRouteImport } from './routes/_app/wardrobe'
 import { Route as AppStorageRoomRouteImport } from './routes/_app/storage-room'
 import { Route as AppLibraryRouteImport } from './routes/_app/library'
 import { Route as AppHomeRouteImport } from './routes/_app/home'
+import { Route as AppAccountRouteImport } from './routes/_app/account'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -57,10 +58,16 @@ const AppHomeRoute = AppHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/account': typeof AppAccountRoute
   '/home': typeof AppHomeRoute
   '/library': typeof AppLibraryRoute
   '/storage-room': typeof AppStorageRoomRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/account': typeof AppAccountRoute
   '/home': typeof AppHomeRoute
   '/library': typeof AppLibraryRoute
   '/storage-room': typeof AppStorageRoomRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/account': typeof AppAccountRoute
   '/_app/home': typeof AppHomeRoute
   '/_app/library': typeof AppLibraryRoute
   '/_app/storage-room': typeof AppStorageRoomRoute
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/account'
     | '/home'
     | '/library'
     | '/storage-room'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/account'
     | '/home'
     | '/library'
     | '/storage-room'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/account'
     | '/_app/home'
     | '/_app/library'
     | '/_app/storage-room'
@@ -182,10 +194,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHomeRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/account': {
+      id: '/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAccountRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
   AppHomeRoute: typeof AppHomeRoute
   AppLibraryRoute: typeof AppLibraryRoute
   AppStorageRoomRoute: typeof AppStorageRoomRoute
@@ -194,6 +214,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
   AppHomeRoute: AppHomeRoute,
   AppLibraryRoute: AppLibraryRoute,
   AppStorageRoomRoute: AppStorageRoomRoute,

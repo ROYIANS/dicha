@@ -5,20 +5,9 @@ import { InputOTP } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { authClient } from '@/lib/auth-client';
-import { env } from '@/lib/env';
+import { altchaChallengeUrl } from '@/lib/altcha';
 import { FrameNode } from '@/components/FrameNode';
 import { EdgeRuler } from '@/components/EdgeRuler';
-
-/**
- * ALTCHA 挑战端点 URL。与 auth-client 的 origin 推导一致：
- * VITE_API_BASE_URL 为绝对地址时取其 origin，否则用同源相对路径
- * （dev 经 Vite 代理 /api、prod 经 nginx 反代）。
- */
-function altchaChallengeUrl(): string {
-  const raw = env.VITE_API_BASE_URL;
-  if (/^https?:\/\//i.test(raw)) return `${new URL(raw).origin}/api/altcha/challenge`;
-  return '/api/altcha/challenge';
-}
 
 /** GitHub 标识（lucide v1 已移除品牌图标，内联官方 mark）。 */
 function GithubMark({ size = 15 }: { size?: number }) {
@@ -220,7 +209,7 @@ function LoginPage() {
       setFormError(err.message ?? '验证码错误或已过期');
       return;
     }
-    await router.navigate({ to: '/' });
+    await router.navigate({ to: '/home' });
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -238,13 +227,13 @@ function LoginPage() {
       setPending(false);
       return;
     }
-    await router.navigate({ to: '/' });
+    await router.navigate({ to: '/home' });
   };
 
   const handleGithub = async () => {
     resetFeedback();
     setPending(true);
-    const { error: err } = await authClient.signIn.social({ provider: 'github', callbackURL: '/' });
+    const { error: err } = await authClient.signIn.social({ provider: 'github', callbackURL: '/home' });
     if (err) {
       setFormError(err.message ?? 'GitHub 登录失败，请稍后再试');
       setPending(false);
