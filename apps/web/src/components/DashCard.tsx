@@ -13,7 +13,7 @@ type DashCardProps<T extends ElementType = 'div'> = {
 
 /**
  * Dashboard 卡片 — Zed/landing 工业语汇：
- * rounded-sm · hairline · 底边 inset 物理阴影 · hover 摊平。
+ * rounded-md · hairline · 底边 inset 物理阴影 · hover 摊平。
  */
 export function DashCard<T extends ElementType = 'div'>({
   variant = 'stat',

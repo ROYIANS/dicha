@@ -247,13 +247,14 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 }
 ```
 > zed primary 用 `hsl(219,93%,30%) 0 -2px 0 0 inset`（冷蓝底边）；dicha 换成 `--sidebar-ink` 低透明（暖墨底边）。**结构同，色温换**。
+> 圆角基准：常规按钮、输入框、选择项一律使用 `rounded-md`（`--radius: 0.375rem`）。不要用 `rounded-[2px]` / `0.125rem` 的针尖感，也不要把常规按钮做成胶囊或大圆角。
 
 ### 7.2 导航 / icon 按钮
 - `lp-nav-link` / `app-icon-btn`：`color:--ink-soft`，hover `bg: color-mix(in oklab, var(--ink) 6%, transparent)` + `color:--ink`，active `translateY(1px) scale(0.99)`。
 - 块状 hover 底（非纯文字变色）——这是 zed nav item 的标志。
 
 ### 7.3 卡片（DashCard）
-`dash-card` = `rounded-sm`(6px) + `1px var(--hairline)` + `inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 8%, transparent)` 底边凸起。`--interactive:hover` 摊平（`bg:surface-alt, box-shadow:none`），`:active` 下压。
+`dash-card` = `rounded-md`(6px) + `1px var(--hairline)` + `inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 8%, transparent)` 底边凸起。`--interactive:hover` 摊平（`bg:surface-alt, box-shadow:none`），`:active` 下压。
 
 ### 7.4 kbd 徽标
 `h-[18px] min-w-[18px] rounded px-1 text-[11px]`，mono；普通态 `1px solid --line` + `color:--ink-soft`；chrome 块上用 `.lp-key-on-chrome`（`border: sidebar-ink 35%`, `color: sidebar-ink 85%`）。主按钮内 kbd 用 onDark 变体。
@@ -291,7 +292,7 @@ app-shell 特有：
 | `dash-card` | HeroUI `Card` | variant=flat + 覆盖 `box-shadow` 为 inset |
 | kbd 徽标 | HeroUI `Kbd` | 覆盖 border/bg 为 `--hairline` |
 | nav link / icon btn | HeroUI `Button variant=light` |  |
-| 搜索框 / input | HeroUI `Input` | `--field-*` token 已对齐方角奇纸底 |
+| 搜索框 / input | HeroUI `Input` | `--field-*` token 已对齐 rounded-md 奇纸底 |
 
 **HeroUI token 对齐已在 `index.css` 完成**（`--background`/`--surface`/`--accent`/`--border`/`--radius:0.375rem`/`--field-*` 全部映射到 dicha 暖色 blueprint）。封装时优先复用这些 seam，不要另起炉灶（见 design-system.md §实现约束）。
 
@@ -332,11 +333,12 @@ app-shell 特有：
 4. **禁止装饰性工程文字**：不得添加 `PRO / 01`、`ACCT / 01`、`AUTH·OTP`、`A1`、`F.01`、`№001`、`// 标签` 这类无业务含义的角标、编号、代号、图纸标题栏。
 5. **技术文字走 mono，情感文字走 serif**，不混用；mono 只服务真实内容。
 6. **rail 装饰组合逐段不同**（`RAILS` 预设），相邻 section 禁同款布局；业务页可以完全不用 rail，避免内容被挤压。
-7. **颜色只走 token**（`var(--ink)` / `--hairline` / `--lp-brand` …），禁硬编码 `text-gray-*` / `oklch()` / `bg-white/NN`（见 design-system.md §8）。
-8. **物理感**：按钮/卡片默认有 inset 底边凸起，hover 摊平、active 下压 `translateY(1px) scale(0.99)`。
-9. **昼夜只换变量值**，组件零改动（`@theme inline` + `data-theme`）。
-10. **无 legacy 双套**：仓库内不得并存玻璃 + 哑光、冷蓝 + 暖棕两套视觉语言。
-11. **抽屉 / 弹窗 overlay 一律用 `DotsBackdrop`**（见 §9.5），不得用纯色 / 纯 blur / 其它点阵。
+7. **交互控件统一 `rounded-md`**：按钮、输入框、选择项不得使用 `rounded-[2px]` / `0.125rem`，也不要用胶囊或大圆角替代。
+8. **颜色只走 token**（`var(--ink)` / `--hairline` / `--lp-brand` …），禁硬编码 `text-gray-*` / `oklch()` / `bg-white/NN`（见 design-system.md §8）。
+9. **物理感**：按钮/卡片默认有 inset 底边凸起，hover 摊平、active 下压 `translateY(1px) scale(0.99)`。
+10. **昼夜只换变量值**，组件零改动（`@theme inline` + `data-theme`）。
+11. **无 legacy 双套**：仓库内不得并存玻璃 + 哑光、冷蓝 + 暖棕两套视觉语言。
+12. **抽屉 / 弹窗 overlay 一律用 `DotsBackdrop`**（见 §9.5），不得用纯色 / 纯 blur / 其它点阵。
 
 ---
 

@@ -371,7 +371,7 @@ function Reading() {
           src={READING_COVER}
           alt="《最好的告别》封面"
           loading="lazy"
-          className="h-16 w-12 shrink-0 rounded-sm border border-hairline object-cover bg-surface-alt"
+          className="h-16 w-12 shrink-0 rounded-md border border-hairline object-cover bg-surface-alt"
         />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-semibold text-ink">《最好的告别》</div>

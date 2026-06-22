@@ -94,7 +94,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="w-full rounded-[2px] border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+        className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
         style={{ borderColor: 'var(--hairline)', fontFamily: MONO }}
       />
     </label>
@@ -260,7 +260,7 @@ function LoginPage() {
             style={
               {
                 borderColor: 'var(--hairline)',
-                borderRadius: '0.125rem', // 方角 blueprint（rounded-sm）
+                borderRadius: '0.375rem',
                 boxShadow:
                   '6px 6px 0 color-mix(in oklab, var(--ink) 6%, transparent)', // zed 邮戳阴影（dicha 暖墨低透明）
                 '--node-vertical-offset': '3.5px',
@@ -298,7 +298,7 @@ function LoginPage() {
 
               {error && (
                 <div
-                  className="rounded-[2px] border border-l-2 p-3 transition-all duration-200"
+                  className="rounded-md border border-l-2 p-3 transition-all duration-200"
                   style={{
                     borderColor: 'color-mix(in oklab, var(--accent-pink) 60%, var(--ink) 8%)',
                     borderLeftColor: 'var(--accent-pink)',
@@ -312,7 +312,7 @@ function LoginPage() {
 
               {notice && (
                 <div
-                  className="rounded-[2px] border border-l-2 p-3 transition-all duration-200"
+                  className="rounded-md border border-l-2 p-3 transition-all duration-200"
                   style={{
                     borderColor: 'color-mix(in oklab, var(--accent-sage) 60%, var(--ink) 8%)',
                     borderLeftColor: 'var(--accent-sage)',

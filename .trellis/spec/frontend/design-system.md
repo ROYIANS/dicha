@@ -73,7 +73,7 @@
 
 ## 3. 形状 / 深度
 
-- **圆角**：`4 / 8 / 12 / 16 / 20`；卡片用 `16`（token `--radius-card`，工具类 `rounded-card`），按钮胶囊（full）。
+- **圆角**：常规按钮、输入框、选择项统一 `rounded-md`（`--radius: 0.375rem`）。不要用 `rounded-[2px]` / `0.125rem` 这类过尖圆角，也不要把常规按钮做成胶囊或大圆角。卡片用 `16`（token `--radius-card`，工具类 `rounded-card`）。仅圆形头像、圆形图标按钮、进度条等天然圆形控件可用 `rounded-full`。
 - **阴影**：极轻、弥散、暖调。**不使用 backdrop-blur / 玻璃模糊。**
   - 卡片 / 列表项 **默认扁平无阴影**（`.surface-card { box-shadow: none }`）——靠 hairline 描边 + surface/canvas 微差制造层次，不靠投影。
   - `--shadow-md`（`--shadow-raised`）：**仅** chrome / overlay —— 侧栏 / 顶栏 / 浮层。

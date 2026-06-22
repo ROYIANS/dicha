@@ -75,8 +75,8 @@
   --lp-drawer-scrim-a: 0.38;
   --lp-drawer-dot-rgb: 46, 42, 38;
 
-   /* ── HeroUI v3 语义 token → 对齐 dicha 暖色 blueprint（日间）──────────── */
-  /* 结构即装饰：方角偏好（小 radius）、hairline 描边、暖中性主色、无渐变。 */
+  /* ── HeroUI v3 语义 token → 对齐 dicha 暖色 blueprint（日间）──────────── */
+  /* 结构即装饰：rounded-md 基准、hairline 描边、暖中性主色、无渐变。 */
   --background: var(--canvas);
   --foreground: var(--ink);
   /* --surface 已由 dicha 系统定义（#ffffff），HeroUI 直接复用 */
@@ -103,12 +103,12 @@
   --separator: var(--hairline);
   --focus: var(--accent-warm);
   --link: var(--accent-warm);
-  /* 表单字段：奇纸底 + hairline 边 + 方角（呼应登录页 Field/InputOTP） */
+  /* 表单字段：奇纸底 + hairline 边 + rounded-md（呼应登录页 Field/InputOTP） */
   --field-background: var(--canvas);
   --field-foreground: var(--ink);
   --field-placeholder: var(--ink-faint);
   --field-border: color-mix(in oklab, var(--ink) 20%, transparent);
-  /* 方角 blueprint：小基准 radius + 字段同步收方 */
+  /* 舒适小圆角基准：按钮、输入框、选择项统一 rounded-md */
   --radius: 0.375rem;
   --field-radius: var(--radius);
   --border-width: 1px;
@@ -714,7 +714,7 @@ body {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
-/* ─── Dashboard 卡片（Zed fv-style：rounded-sm + inset 物理阴影）────────── */
+/* ─── Dashboard 卡片（Zed fv-style：rounded-md + inset 物理阴影）────────── */
 .dash-card {
   position: relative;
   overflow: hidden;

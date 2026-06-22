@@ -125,7 +125,7 @@ function AccountSummary({ user }: { user: UserDto }) {
       <FrameNode pos="top-left" />
       <FrameNode pos="bottom-right" />
       <div className="flex min-w-0 items-center gap-3">
-        <div className="size-12 shrink-0 overflow-hidden rounded-[2px] border border-hairline bg-canvas">
+        <div className="size-12 shrink-0 overflow-hidden rounded-md border border-hairline bg-canvas">
           {uploadedImage ? (
             <img src={uploadedImage} alt={displayName} className="size-full object-cover" />
           ) : (
@@ -221,7 +221,7 @@ function ProfileSection({ user }: { user: UserDto }) {
           type="button"
           onClick={() => void handleSave()}
           disabled={!dirty || nameInvalid || saving}
-          className="lp-btn lp-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-[2px] px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+          className="lp-btn lp-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
           style={{ fontFamily: MONO }}
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -286,7 +286,7 @@ function AvatarSection({ user }: { user: UserDto }) {
   return (
     <Panel title={t('account.avatarTitle')}>
       <div className="grid gap-5 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-start">
-        <div className="size-24 shrink-0 overflow-hidden rounded-[2px] border border-hairline bg-canvas">
+        <div className="size-24 shrink-0 overflow-hidden rounded-md border border-hairline bg-canvas">
           {uploadedImage ? (
             <img src={uploadedImage} alt={user.displayName ?? user.name} className="size-full object-cover" />
           ) : (
@@ -304,7 +304,7 @@ function AvatarSection({ user }: { user: UserDto }) {
                 type="button"
                 onClick={() => void applyGeneratedAvatar(seed)}
                 aria-label={seed}
-                className="size-14 overflow-hidden rounded-[2px] border bg-canvas transition-transform hover:scale-[1.03]"
+                className="size-14 overflow-hidden rounded-md border bg-canvas transition-transform hover:scale-[1.03]"
                 style={{ borderColor: selectedSeed === seed ? 'var(--lp-brand)' : 'var(--hairline)' }}
               >
                 <Avatar name={seed} variant="beam" colors={AVATAR_COLORS} size={56} square />
@@ -326,7 +326,7 @@ function AvatarSection({ user }: { user: UserDto }) {
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[2px] px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           style={{ fontFamily: MONO }}
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
@@ -492,7 +492,7 @@ function SecuritySection({ user }: { user: UserDto }) {
               type="button"
               onClick={() => void handleResend()}
               disabled={resending}
-              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               {resending ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
@@ -522,7 +522,7 @@ function SecuritySection({ user }: { user: UserDto }) {
               type="button"
               onClick={() => void handleUnlinkGithub()}
               disabled={busy}
-              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               <Unlink size={13} />
@@ -533,7 +533,7 @@ function SecuritySection({ user }: { user: UserDto }) {
               type="button"
               onClick={() => void handleLinkGithub()}
               disabled={busy}
-              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
               style={{ fontFamily: MONO }}
             >
               <Link2 size={13} />
@@ -549,14 +549,14 @@ function SecuritySection({ user }: { user: UserDto }) {
           <input
             value={newPasskeyName}
             onChange={(event) => setNewPasskeyName(event.target.value)}
-            className="w-full rounded-[2px] border border-hairline bg-canvas px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+            className="w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
             style={{ fontFamily: MONO }}
           />
           <button
             type="button"
             onClick={() => void handleAddPasskey()}
             disabled={busy}
-            className="lp-btn lp-btn-primary inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[2px] px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+            className="lp-btn lp-btn-primary inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
             style={{ fontFamily: MONO }}
           >
             <KeyRound size={14} />
@@ -581,14 +581,14 @@ function SecuritySection({ user }: { user: UserDto }) {
                     <input
                       value={editingPasskeyName}
                       onChange={(event) => setEditingPasskeyName(event.target.value)}
-                      className="w-full rounded-[2px] border border-hairline bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-[var(--lp-brand)]"
+                      className="w-full rounded-md border border-hairline bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-[var(--lp-brand)]"
                       style={{ fontFamily: MONO }}
                     />
                     <button
                       type="button"
                       onClick={() => void handleRenamePasskey()}
                       disabled={busy || !editingPasskeyName.trim()}
-                      className="lp-btn lp-btn-primary inline-flex min-h-9 items-center justify-center gap-2 rounded-[2px] px-3 text-[12px] disabled:opacity-60"
+                      className="lp-btn lp-btn-primary inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:opacity-60"
                       style={{ fontFamily: MONO }}
                     >
                       <Check size={13} />
@@ -610,7 +610,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                       <button
                         type="button"
                         onClick={() => handleStartRename(record)}
-                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-[2px] text-ink-soft"
+                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md text-ink-soft"
                         aria-label={t('account.passkeyRename')}
                       >
                         <Pencil size={13} />
@@ -619,7 +619,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                         type="button"
                         onClick={() => void handleDeletePasskey(record)}
                         disabled={busy}
-                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-[2px] text-ink-soft hover:text-accent-pink disabled:opacity-60"
+                        className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md text-ink-soft hover:text-accent-pink disabled:opacity-60"
                         aria-label={t('account.passkeyDelete')}
                       >
                         <Trash2 size={13} />
@@ -637,7 +637,7 @@ function SecuritySection({ user }: { user: UserDto }) {
         <button
           type="button"
           onClick={() => void handleLogout()}
-          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[2px] px-4 text-[13px]"
+          className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px]"
           style={{ fontFamily: MONO }}
         >
           <User size={14} />
@@ -700,7 +700,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={invalid}
-        className="w-full rounded-[2px] border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+        className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
         style={{ borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)', fontFamily: MONO }}
       />
       {invalid && errorText ? <Mono className="block text-[11px] text-accent-pink">{errorText}</Mono> : null}
