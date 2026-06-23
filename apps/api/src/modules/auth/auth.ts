@@ -15,6 +15,7 @@ const additionalFields = {
   displayName: { type: 'string', required: false },
   city: { type: 'string', required: false },
   gender: { type: 'string', required: false },
+  bio: { type: 'string', required: false },
   personalityArchetype: { type: 'string', required: false },
   homeName: { type: 'string', required: false },
   coins: { type: 'number', required: false, defaultValue: 0 },

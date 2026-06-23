@@ -18,7 +18,7 @@ import { env } from '@/lib/env';
  * as a full base and skip the `/api/auth` basePath — hence the origin extraction.
  *
  * `inferAdditionalFields` teaches the client about the dicha app columns
- * merged into the user table (displayName/city/gender/... + coins) so
+ * merged into the user table (displayName/city/gender/bio/... + coins) so
  * `signUp.email({ displayName })` and `session.user.displayName` are typed.
  */
 function resolveAuthBaseURL(): string | undefined {
@@ -37,6 +37,7 @@ export const authClient = createAuthClient({
         displayName: { type: 'string', required: false },
         city: { type: 'string', required: false },
         gender: { type: 'string', required: false },
+        bio: { type: 'string', required: false },
         personalityArchetype: { type: 'string', required: false },
         homeName: { type: 'string', required: false },
         coins: { type: 'number', required: false },

@@ -17,6 +17,7 @@ describe('account settings helpers', () => {
       homeName: '温暖小窝',
       city: '成都',
       gender: '不限定',
+      bio: '慢慢整理生活。',
       personalityArchetype: '整理型',
       coins: 88,
     });
@@ -26,7 +27,7 @@ describe('account settings helpers', () => {
       homeName: '温暖小窝',
       city: '成都',
       gender: '不限定',
-      personalityArchetype: '整理型',
+      bio: '慢慢整理生活。',
     });
   });
 
@@ -45,7 +46,7 @@ describe('account settings helpers', () => {
       homeName: '',
       city: '',
       gender: '',
-      personalityArchetype: '',
+      bio: '',
     });
   });
 

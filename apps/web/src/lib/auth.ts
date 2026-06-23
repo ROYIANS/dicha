@@ -10,6 +10,7 @@ export const DEV_USER = {
   image: null,
   city: null,
   gender: null,
+  bio: null,
   personalityArchetype: null,
   homeName: null,
   coins: 0,

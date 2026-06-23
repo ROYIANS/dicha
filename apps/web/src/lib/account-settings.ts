@@ -5,7 +5,7 @@ export type AccountProfileForm = {
   homeName: string;
   city: string;
   gender: string;
-  personalityArchetype: string;
+  bio: string;
 };
 
 type SeedUser = Pick<UserDto, 'email'> &
@@ -19,7 +19,7 @@ export function accountFormFromUser(
     homeName: user.homeName ?? '',
     city: user.city ?? '',
     gender: user.gender ?? '',
-    personalityArchetype: user.personalityArchetype ?? '',
+    bio: user.bio ?? '',
   };
 }
 

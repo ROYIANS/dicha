@@ -19,6 +19,7 @@ export const UserDto = z.object({
   image: z.string().nullable(),
   city: z.string().nullable(),
   gender: z.string().nullable(),
+  bio: z.string().nullable(),
   personalityArchetype: z.string().nullable(),
   homeName: z.string().nullable(),
   coins: z.number(),

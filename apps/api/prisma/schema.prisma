@@ -66,6 +66,7 @@ model User {
   displayName          String
   city                 String?
   gender               String?
+  bio                  String?
   personalityArchetype String?
   homeName             String?
 

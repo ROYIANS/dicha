@@ -5,6 +5,7 @@ import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import {
   Check,
+  Dices,
   KeyRound,
   Link2,
   Loader2,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import {
   useMemo,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -26,6 +28,12 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
 import { altchaChallengeUrl } from '@/lib/altcha';
+import {
+  childDistrictOptions,
+  loadChineseDistricts,
+  provinceOptions,
+  type DistrictOption,
+} from '@/lib/chinese-districts';
 import {
   accountFormFromUser,
   generatedAvatarMarker,
@@ -54,6 +62,7 @@ export const Route = createFileRoute('/_app/account')({
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const AVATAR_COLORS = ['#2E2A26', '#7A6248', '#F0C3A3', '#A9C0A0', '#A8C4D6'];
+const GENDER_OPTIONS = ['男', '女', '保密'];
 
 type PasskeyRecord = {
   id: string;
@@ -98,8 +107,8 @@ function AccountPage() {
 
             <div className="grid gap-7 bg-canvas px-5 py-7 sm:px-8 sm:py-9 lg:grid-cols-[minmax(0,1.04fr)_minmax(340px,0.96fr)] lg:px-10">
               <div className="space-y-7">
-                <ProfileSection user={user as UserDto} />
                 <AvatarSection user={user as UserDto} />
+                <ProfileSection user={user as UserDto} />
               </div>
               <div>
                 <SecuritySection user={user as UserDto} />
@@ -141,16 +150,64 @@ function ProfileSection({ user }: { user: UserDto }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AccountProfileForm>(() => accountFormFromUser(user));
   const [saving, setSaving] = useState(false);
+  const [districts, setDistricts] = useState<Awaited<ReturnType<typeof loadChineseDistricts>> | null>(null);
 
   const initial = useMemo(() => accountFormFromUser(user), [user]);
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
   const nameInvalid = form.displayName.trim().length === 0;
+  const provinceList = useMemo(() => (districts ? provinceOptions(districts) : []), [districts]);
+  const parsedCity = useMemo(
+    () => parseCityValue(form.city, provinceList, districts),
+    [districts, form.city, provinceList],
+  );
+  const cityList = useMemo(
+    () => (districts && parsedCity.provinceCode ? childDistrictOptions(districts, parsedCity.provinceCode) : []),
+    [districts, parsedCity.provinceCode],
+  );
+  const districtList = useMemo(
+    () => (districts && parsedCity.cityCode ? childDistrictOptions(districts, parsedCity.cityCode) : []),
+    [districts, parsedCity.cityCode],
+  );
 
   const updateField = (key: keyof AccountProfileForm, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
   const refreshSession = () => queryClient.invalidateQueries({ queryKey: authQueryOptions().queryKey });
+
+  useEffect(() => {
+    let mounted = true;
+    void loadChineseDistricts()
+      .then((data) => {
+        if (mounted) setDistricts(data);
+      })
+      .catch(() => {
+        if (mounted) setDistricts({});
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const updateCitySelection = (level: 'province' | 'city' | 'district', code: string) => {
+    if (!districts) return;
+
+    if (level === 'province') {
+      const province = provinceList.find((item) => item.code === code);
+      updateField('city', province?.name ?? '');
+      return;
+    }
+
+    if (level === 'city') {
+      const city = cityList.find((item) => item.code === code);
+      updateField('city', joinCityParts([parsedCity.provinceName, city?.name]));
+      return;
+    }
+
+    const district = districtList.find((item) => item.code === code);
+    updateField('city', joinCityParts([parsedCity.provinceName, parsedCity.cityName, district?.name]));
+  };
 
   const handleSave = async () => {
     if (!dirty || nameInvalid) return;
@@ -160,7 +217,7 @@ function ProfileSection({ user }: { user: UserDto }) {
       homeName: form.homeName.trim() || null,
       city: form.city.trim() || null,
       gender: form.gender.trim() || null,
-      personalityArchetype: form.personalityArchetype.trim() || null,
+      bio: form.bio.trim() || null,
     });
     setSaving(false);
     if (error) {
@@ -186,37 +243,54 @@ function ProfileSection({ user }: { user: UserDto }) {
           value={form.homeName}
           onChange={(value) => updateField('homeName', value)}
         />
-        <Field
-          label={t('account.city')}
-          value={form.city}
-          onChange={(value) => updateField('city', value)}
-        />
+        <div className="space-y-1.5 md:col-span-2">
+          <Mono className="block text-[11px] tracking-wider text-ink-soft">{t('account.city')}</Mono>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <SelectControl
+              value={parsedCity.provinceCode}
+              onChange={(value) => updateCitySelection('province', value)}
+              options={provinceList}
+              placeholder={t('account.provincePlaceholder')}
+            />
+            <SelectControl
+              value={parsedCity.cityCode}
+              onChange={(value) => updateCitySelection('city', value)}
+              options={cityList}
+              placeholder={t('account.cityPlaceholder')}
+              disabled={!parsedCity.provinceCode}
+            />
+            <SelectControl
+              value={parsedCity.districtCode}
+              onChange={(value) => updateCitySelection('district', value)}
+              options={districtList}
+              placeholder={t('account.districtPlaceholder')}
+              disabled={!parsedCity.cityCode}
+            />
+          </div>
+        </div>
         <Field
           label={t('account.gender')}
           value={form.gender}
           onChange={(value) => updateField('gender', value)}
+          options={GENDER_OPTIONS}
+          placeholder={t('account.genderPlaceholder')}
         />
         <div className="md:col-span-2">
           <Field
-            label={t('account.personalityArchetype')}
-            value={form.personalityArchetype}
-            onChange={(value) => updateField('personalityArchetype', value)}
+            label={t('account.bio')}
+            value={form.bio}
+            onChange={(value) => updateField('bio', value)}
+            multiline
           />
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-hairline pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="rounded-md border border-hairline bg-canvas px-3 py-2">
-          <Mono className="block text-[10px] uppercase tracking-[0.18em] text-ink-faint">
-            {t('account.coins')}
-          </Mono>
-          <span className="text-[18px] font-semibold text-ink">{user.coins}</span>
-        </div>
+      <div className="flex justify-end border-t border-hairline pt-5">
         <button
           type="button"
           onClick={() => void handleSave()}
           disabled={!dirty || nameInvalid || saving}
-          className="lp-btn lp-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
+          className="lp-btn lp-btn-primary inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           style={{ fontFamily: MONO }}
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -252,6 +326,14 @@ function AvatarSection({ user }: { user: UserDto }) {
     toast.success(t('account.saved'));
   };
 
+  const handleRandomAvatar = () => {
+    const randomSeed =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? `${user.email}:random:${crypto.randomUUID()}`
+        : `${user.email}:random:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+    void applyGeneratedAvatar(randomSeed);
+  };
+
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -280,13 +362,24 @@ function AvatarSection({ user }: { user: UserDto }) {
 
   return (
     <Panel title={t('account.avatarTitle')}>
-      <div className="grid gap-5 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-start">
-        <div className="size-24 shrink-0 overflow-hidden rounded-md border border-hairline bg-canvas">
-          {uploadedImage ? (
-            <img src={uploadedImage} alt={user.displayName ?? user.name} className="size-full object-cover" />
-          ) : (
-            <Avatar name={selectedSeed ?? user.email} variant="beam" colors={AVATAR_COLORS} size={96} square />
-          )}
+      <div className="grid gap-5 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-start">
+        <div className="space-y-3">
+          <div className="size-28 shrink-0 overflow-hidden rounded-md border border-hairline bg-canvas">
+            {uploadedImage ? (
+              <img src={uploadedImage} alt={user.displayName ?? user.name} className="size-full object-cover" />
+            ) : (
+              <Avatar name={selectedSeed ?? user.email} variant="beam" colors={AVATAR_COLORS} size={112} square />
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleRandomAvatar}
+            className="lp-btn lp-btn-ghost inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md px-3 text-[12px]"
+            style={{ fontFamily: MONO }}
+          >
+            <Dices size={14} />
+            {t('account.avatarRandom')}
+          </button>
         </div>
         <div className="min-w-0 flex-1">
           <Mono className="block text-[11px] tracking-wider text-ink-soft">
@@ -679,25 +772,95 @@ function Field({
   onChange,
   invalid,
   errorText,
+  options,
+  placeholder,
+  multiline,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   invalid?: boolean;
   errorText?: string;
+  options?: string[];
+  placeholder?: string;
+  multiline?: boolean;
 }) {
+  const controlClass =
+    'w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]';
+  const controlStyle = { borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)', fontFamily: MONO };
+
   return (
     <label className="block space-y-1.5">
       <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono>
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-invalid={invalid}
-        className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
-        style={{ borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)', fontFamily: MONO }}
-      />
+      {options ? (
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-invalid={invalid}
+          className={`${controlClass} appearance-none`}
+          style={controlStyle}
+        >
+          <option value="">{placeholder ?? ''}</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : multiline ? (
+        <textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-invalid={invalid}
+          rows={4}
+          className={`${controlClass} min-h-28 resize-none leading-relaxed`}
+          style={controlStyle}
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-invalid={invalid}
+          className={controlClass}
+          style={controlStyle}
+        />
+      )}
       {invalid && errorText ? <Mono className="block text-[11px] text-accent-pink">{errorText}</Mono> : null}
     </label>
+  );
+}
+
+function SelectControl({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: DistrictOption[];
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  const controlClass =
+    'w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors focus:border-[var(--lp-brand)] disabled:cursor-not-allowed disabled:opacity-55';
+
+  return (
+    <select
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      disabled={disabled}
+      className={`${controlClass} appearance-none`}
+      style={{ fontFamily: MONO }}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => (
+        <option key={option.code} value={option.code}>
+          {option.name}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -771,6 +934,35 @@ function formatPasskeyMeta(record: PasskeyRecord, fallback: string) {
   ].filter(Boolean);
 
   return parts.length > 0 ? parts.join(' / ') : fallback;
+}
+
+function parseCityValue(
+  value: string,
+  provinces: DistrictOption[],
+  districts: Awaited<ReturnType<typeof loadChineseDistricts>> | null,
+) {
+  const [provinceName = '', cityName = '', districtName = ''] = value
+    .split('/')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const province = provinces.find((item) => item.name === provinceName);
+  const cities = districts && province ? childDistrictOptions(districts, province.code) : [];
+  const city = cities.find((item) => item.name === cityName);
+  const areas = districts && city ? childDistrictOptions(districts, city.code) : [];
+  const district = areas.find((item) => item.name === districtName);
+
+  return {
+    provinceCode: province?.code ?? '',
+    provinceName: province?.name ?? provinceName,
+    cityCode: city?.code ?? '',
+    cityName: city?.name ?? cityName,
+    districtCode: district?.code ?? '',
+    districtName: district?.name ?? districtName,
+  };
+}
+
+function joinCityParts(parts: Array<string | undefined>): string {
+  return parts.map((part) => part?.trim()).filter(Boolean).join(' / ');
 }
 
 function GithubMark({ size = 15 }: { size?: number }) {
