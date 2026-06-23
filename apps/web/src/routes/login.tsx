@@ -1,11 +1,12 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
-import { useId, useRef, useState, type CSSProperties } from 'react';
+import { useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
 import { InputOTP } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { authClient } from '@/lib/auth-client';
 import { altchaChallengeUrl } from '@/lib/altcha';
+import { suggestEmailCompletions } from '@/lib/email-suggestions';
 import { FrameNode } from '@/components/FrameNode';
 import { EdgeRuler } from '@/components/EdgeRuler';
 
@@ -67,37 +68,111 @@ function Mono({ children, className = '' }: { children: React.ReactNode; classNa
   );
 }
 
-/** 蓝图描边输入框：奇纸底 + hairline 边 + 方角 + focus 提亮 brand（呼应 --field-* token）。 */
-function Field({
+/** 蓝图描边邮箱输入框：奇纸底 + hairline 边 + 常见邮箱域名补全。 */
+function EmailField({
   label,
-  type = 'text',
   value,
   onChange,
   autoComplete,
   placeholder,
 }: {
   label: string;
-  type?: string;
   value: string;
   onChange: (v: string) => void;
   autoComplete?: string;
   placeholder?: string;
 }) {
   const id = useId();
+  const listboxId = `${id}-suggestions`;
+  const suggestions = useMemo(() => suggestEmailCompletions(value), [value]);
+  const [focused, setFocused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const open = focused && suggestions.length > 0;
+
+  const pickSuggestion = (nextEmail: string) => {
+    onChange(nextEmail);
+    setActiveIndex(0);
+  };
+
+  const handleChange = (nextValue: string) => {
+    onChange(nextValue);
+    setActiveIndex(0);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!open) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((current) => (current + 1) % suggestions.length);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((current) => (current - 1 + suggestions.length) % suggestions.length);
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const suggestion = suggestions[activeIndex] ?? suggestions[0];
+      if (suggestion) pickSuggestion(suggestion);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      setFocused(false);
+    }
+  };
+
   return (
-    <label htmlFor={id} className="block space-y-1.5">
-      <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono>
+    <div className="relative block space-y-1.5">
+      <label htmlFor={id}>
+        <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono>
+      </label>
       <input
         id={id}
-        type={type}
+        type="email"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onKeyDown={handleKeyDown}
         autoComplete={autoComplete}
         placeholder={placeholder}
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-controls={open ? listboxId : undefined}
         className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
         style={{ borderColor: 'var(--hairline)', fontFamily: MONO }}
       />
-    </label>
+      {open ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-hairline bg-surface shadow-float"
+        >
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={suggestion}
+              type="button"
+              role="option"
+              aria-selected={index === activeIndex}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                pickSuggestion(suggestion);
+              }}
+              onMouseEnter={() => setActiveIndex(index)}
+              className="block w-full px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-surface-alt aria-selected:bg-surface-alt"
+              style={{ fontFamily: MONO }}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -327,9 +402,8 @@ function LoginPage() {
               {/* 邮箱 OTP — 第一步：输入邮箱发码 */}
               {step === 'email' && (
                 <form className="space-y-4" onSubmit={handleSendOtp}>
-                  <Field
+                  <EmailField
                     label="邮箱"
-                    type="email"
                     value={email}
                     onChange={setEmail}
                     autoComplete="email"
