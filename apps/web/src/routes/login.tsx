@@ -4,6 +4,7 @@ import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
 import { InputOTP } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
+import { BrandMark } from '@/components/AppBrand';
 import { authClient } from '@/lib/auth-client';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import { suggestEmailCompletions } from '@/lib/email-suggestions';
@@ -353,10 +354,10 @@ function LoginPage() {
               {/* 品牌头 */}
               <div className="flex items-center gap-3">
                 <span
-                  className="grid h-10 w-10 place-items-center rounded-[3px] text-[15px] font-bold transition-transform hover:scale-105"
-                  style={{ backgroundColor: 'var(--sidebar-bg)', color: 'var(--sidebar-ink)', fontFamily: SERIF }}
+                  className="grid h-10 w-12 place-items-center rounded-md bg-sidebar-bg transition-transform hover:scale-105"
+                  style={{ color: 'var(--sidebar-ink)' }}
                 >
-                  茶
+                  <BrandMark className="h-[18px] w-[27px]" />
                 </span>
                 <div>
                   <h1 className="text-[18px] font-semibold leading-tight text-ink" style={{ fontFamily: SERIF }}>

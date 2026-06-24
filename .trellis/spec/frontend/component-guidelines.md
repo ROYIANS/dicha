@@ -21,6 +21,22 @@
 
 ---
 
+## 品牌标识
+
+- 全站品牌图形统一使用 `components/AppBrand.tsx` 导出的 `BrandMark`，不要在页面里复制 SVG，也不要直接 `<img src="/assets/logo.svg">`。
+- `BrandMark` 使用 `public/assets/logo.svg` 做 CSS mask，外层通过 `color` / `text-*` / `bg-current` 控制单色图标颜色；这样落地页、深色侧栏、footer、登录页可以跟随各自 token 自动适配。
+- 需要图形 + 中文字标时优先用 `AppBrand`；页面里只在布局特殊（如 landing header/footer）时直接组合 `BrandMark` + 文案。
+
+```tsx
+// Good
+<BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
+
+// Bad: 不能继承外层 currentColor，主题适配会断
+<img src="/assets/logo.svg" alt="dicha" />
+```
+
+---
+
 ## 组件库：HeroUI v3
 
 - **基建优先用 HeroUI**（按钮 / 输入 / 弹窗 / 表格等），底层 React Aria（可访问性）+ Tailwind v4。不重复造轮子。

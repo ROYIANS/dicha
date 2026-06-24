@@ -2,10 +2,12 @@ import { Link } from '@tanstack/react-router';
 import { X } from 'lucide-react';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { BrandMark } from '@/components/AppBrand';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
+const SERIF = "'Noto Serif SC', 'Songti SC', serif";
 
 export type NavDrawerItem = { href: string; label: string };
 
@@ -73,12 +75,10 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
 
         <div className="flex shrink-0 items-center justify-between border-b border-hairline px-4 pb-3 pt-1">
           <div className="flex items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded-[5px] bg-sidebar-bg text-[12px] font-bold text-sidebar-ink">
-              v
+            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
+            <span id={titleId} className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>
+              滴茶
             </span>
-            <DrawerMono className="text-[15px] font-semibold tracking-tight text-ink">
-              <span id={titleId}>dicha</span>
-            </DrawerMono>
           </div>
           <button
             ref={closeRef}

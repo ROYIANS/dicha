@@ -1,6 +1,17 @@
 import { Link } from '@tanstack/react-router';
+import type { CSSProperties } from 'react';
 
-const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
+const SERIF = "'Noto Serif SC', 'Songti SC', serif";
+const LOGO_MASK_STYLE: CSSProperties = {
+  maskImage: "url('/assets/logo.svg')",
+  WebkitMaskImage: "url('/assets/logo.svg')",
+  maskPosition: 'center',
+  WebkitMaskPosition: 'center',
+  maskRepeat: 'no-repeat',
+  WebkitMaskRepeat: 'no-repeat',
+  maskSize: 'contain',
+  WebkitMaskSize: 'contain',
+};
 
 type AppBrandProps = {
   /** 深色侧栏 / 浅色内容区 */
@@ -11,26 +22,38 @@ type AppBrandProps = {
   onClick?: () => void;
 };
 
-/** 落地页同款的 v 徽标 + dicha 字标。 */
+type BrandMarkProps = {
+  className?: string;
+  style?: CSSProperties;
+  title?: string;
+};
+
+export function BrandMark({ className = '', style, title }: BrandMarkProps) {
+  return (
+    <span
+      role={title ? 'img' : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+      className={`inline-block shrink-0 bg-current ${className}`}
+      style={{ ...LOGO_MASK_STYLE, ...style }}
+    />
+  );
+}
+
+/** 全站品牌 mark + 中文字标。 */
 export function AppBrand({ variant = 'canvas', to, className = '', onClick }: AppBrandProps) {
   const isSidebar = variant === 'sidebar';
-  const badgeBg = isSidebar ? 'var(--sidebar-ink)' : 'var(--sidebar-bg)';
-  const badgeFg = isSidebar ? 'var(--sidebar-bg)' : 'var(--sidebar-ink)';
+  const markColor = isSidebar ? 'var(--sidebar-ink)' : 'var(--ink)';
   const wordColor = isSidebar ? 'var(--sidebar-ink)' : 'var(--ink)';
 
   const inner = (
     <>
+      <BrandMark className="h-5 w-[30px]" style={{ color: markColor }} />
       <span
-        className="grid size-6 shrink-0 place-items-center rounded-[5px] text-[12px] font-bold"
-        style={{ backgroundColor: badgeBg, color: badgeFg }}
+        className="text-[16px] font-semibold"
+        style={{ fontFamily: SERIF, color: wordColor }}
       >
-        v
-      </span>
-      <span
-        className="text-[15px] font-semibold tracking-tight"
-        style={{ fontFamily: MONO, color: wordColor }}
-      >
-        dicha
+        滴茶
       </span>
     </>
   );

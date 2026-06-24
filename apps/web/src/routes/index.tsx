@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { BrandMark } from '@/components/AppBrand';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LandingNavDrawer } from '@/components/LandingNavDrawer';
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
@@ -25,7 +26,7 @@ export const Route = createFileRoute('/')({
 });
 
 /* ════════════════════════════════════════════════════════════════════════════
-   dicha landing — 工业 / 蓝图（深度参考 zed.dev 源码的结构语汇）· 暖棕配色
+   dicha landing — 工程纸结构（深度参考 zed.dev 源码的结构语汇）· 暖棕配色
    语汇清单（均来自 zed.html 实测）：
    · 斜线舱壁分隔（divider-slash，细线全幅贯穿视口）
    · 侧沟分段标尺 + 条码刻线纹（不等宽水平 rect pattern）
@@ -357,8 +358,10 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
 
         <div className="flex min-w-0 items-center gap-4">
           <a href="#top" className="flex shrink-0 items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>v</span>
-            <Mono className="text-[15px] font-semibold tracking-tight text-ink">dicha</Mono>
+            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
+            <span className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>
+              滴茶
+            </span>
           </a>
           <div className="hidden items-center gap-0.5 lg:flex">
             {NAV.map((n) => (
@@ -513,8 +516,9 @@ function Hero() {
       <div aria-hidden className="lp-hero-gradient pointer-events-none absolute inset-0" />
       <HeroArt />
       <Reveal className="relative z-10">
-        <h1 className="mx-auto max-w-[16ch] font-medium leading-[1.05] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.8rem, 8vw, 6.5rem)', letterSpacing: '-0.01em' }}>
-          滴茶。
+        <h1 className="mx-auto flex justify-center text-ink" aria-label="滴茶">
+          <span className="sr-only">滴茶</span>
+          <BrandMark className="h-[clamp(4.5rem,12vw,8.5rem)] w-[clamp(6.75rem,18vw,12.75rem)]" />
         </h1>
         <p className="mx-auto mt-6 max-w-[32ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
           把日子，一件一件归置妥帖。
@@ -795,7 +799,9 @@ function AppWindow() {
       </div>
       <div className="flex h-[360px] sm:h-[420px]">
         <div className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
-          <span className="grid h-8 w-8 place-items-center rounded-lg text-[13px] font-bold" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>v</span>
+          <span className="grid h-8 w-8 place-items-center rounded-md" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>
+            <BrandMark className="h-4 w-6" />
+          </span>
           {[0, 1, 2, 3].map((k) => (<span key={k} className="h-7 w-7 rounded-lg" style={{ backgroundColor: 'var(--sidebar-hover)' }} />))}
         </div>
         <div className="flex-1 overflow-hidden p-7">
@@ -1073,10 +1079,10 @@ function Footer() {
             {/* 第 1 列：品牌 + 短 hr + 法务 */}
             <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
               <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-bold" style={{ backgroundColor: LP.chromeFg, color: LP.chrome }}>v</span>
-                <Mono className="text-[15px] font-semibold" style={{ color: LP.chromeFg }}>dicha</Mono>
+                <BrandMark className="h-5 w-[30px]" style={{ color: LP.chromeFg }} />
+                <span className="text-[16px] font-semibold" style={{ color: LP.chromeFg, fontFamily: SERIF }}>滴茶</span>
               </div>
-              <Mono className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>滴茶</Mono>
+              <BrandMark className="mt-4 h-9 w-[54px] opacity-[0.65]" style={{ color: LP.footMuted }} />
               <Mono className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</Mono>
               <hr className="my-3 w-20 border-t" style={{ borderColor: LP.footHair }} />
               <Link to="/home" className="lp-foot-link w-fit"><Mono className="text-[12px]">已有账号？登录</Mono></Link>
