@@ -1,6 +1,6 @@
-# Blueprint Aesthetic — 工程纸 / 蓝图结构语汇（Structural Design Language）
+# Structural Aesthetic — 工程纸结构规则（Structural Design Language）
 
-> dicha 的**结构装饰层**。与 [design-system.md](./design-system.md)（材质 / token / 色彩系统）成对：
+> dicha 的**结构层**。与 [design-system.md](./design-system.md)（材质 / token / 色彩系统）成对：
 > - `design-system.md` 管「**用什么材料**」——暖白柔面哑光、暖中性色、柔彩。
 > - **本文管「结构怎么长出来」**——工程纸网格、五段轨道框架、骑线菱形节点、分段标尺、条码刻线、斜线舱壁、物理感按钮；**不包含装饰性工程文字**。
 >
@@ -19,13 +19,13 @@
 
 **Structure IS the decoration.**（结构即装饰）。
 
-一套网格底、蓝框、标尺、节点、刻线、斜纹构成的工程制图语汇——**不用插画、不用渐变背景、不用装饰性图片，也不用装饰性文字编号**，靠**结构本身的精确与秩序**完成视觉表达。气质是 **precision / clarity / engineering craft**（精准、清晰、工程匠心），但配色是**暖棕中性**而非冷蓝钢，让「蓝图的严谨」落在「手帐的温度」上。
+一套网格底、细线框架、标尺、节点、刻线、斜纹构成的工程纸结构规则——**不用插画、不用渐变背景、不用装饰性图片，也不用装饰性文字编号**，靠**结构本身的精确与秩序**完成视觉表达。气质是 **precision / clarity / engineering craft**（精准、清晰、工程匠心），但配色是**暖棕中性**而非冷蓝钢，让结构的秩序落在「手帐的温度」上。
 
 铁律（来自 zed，dicha 照搬）：
 1. **No gradients**（作背景装饰）· **No illustrations** · **No decorative images** ——例外只有功能性的横向光带（公告 banner）、极淡 hero 渐隐层次、暗角 scrim（盖图压字），均为**结构服务的层次**而非装饰。
 2. **细线全幅贯穿视口** ——分界线永远是 200vw 的 1px 线，不收在容器里。
 3. **每个元素都要骑线/对齐** ——节点压线、标尺贴边、刻度对格子；半像素都不放过。
-4. **No decorative blueprint text** ——禁止 `PRO / 01`、`ACCT / 01`、`AUTH·OTP`、`A1`、`F.01`、`№001` 这类无业务含义的工程编号、角落坐标、仿制图标签。只有真实导航、字段名、状态、数据、快捷键等功能文本可以显示。
+4. **No decorative engineering text** ——禁止 `PRO / 01`、`ACCT / 01`、`AUTH·OTP`、`A1`、`F.01`、`№001` 这类无业务含义的工程编号、角落坐标、仿制图标签。只有真实导航、字段名、状态、数据、快捷键等功能文本可以显示。
 
 ---
 
@@ -86,7 +86,7 @@
 
 **禁用**：用 `translate -50%` 居中节点（半像素误差 + 奇数尺寸渲染发虚，zed 实测已废弃此法）。dicha 组件契约：节点一律走 `FrameNode`（app）/ `Node`（landing），不散写。
 
-**业务页克制**：账户设置、表单密集页、工具页等以内容操作为主的页面可以完全省略菱形节点，不要为了套蓝图语汇强行加节点。此类页面优先用 `rounded-md` 卡片、hairline 描边、留白和层级承载结构感。
+**业务页克制**：账户设置、表单密集页、工具页等以内容操作为主的页面可以完全省略菱形节点，不要为了套结构规则强行加节点。此类页面优先用 `rounded-md` 卡片、hairline 描边、留白和层级承载结构感。
 
 ---
 
@@ -183,7 +183,7 @@ background: linear-gradient(to right, transparent, color-mix(in oklab, var(--chi
 ### 4.3 功能柔彩（accents，日/夜同色相）
 lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点、进度条、分类标识、Mark 高亮短语底。详见 design-system.md §1.3。**禁止用作大面积背景或唯一品牌主色**（品牌主色是暖棕 `--accent-warm`）。
 
-> **关键区分**：zed 的「蓝图」用的是**冷蓝钢**（`accent-blue hsl(219,93%,...)`、`offgray` 灰阶）。dicha 把同一套结构语汇**换皮**成**暖棕中性 + 柔彩**——结构照搬 zed，色温是自己的。这是落地页作为「最佳范本」的核心价值。
+> **关键区分**：zed 原始参考偏**冷蓝钢**（`accent-blue hsl(219,93%,...)`、`offgray` 灰阶）。dicha 采用同一类工程纸结构，但色彩落在**暖棕中性 + 柔彩**——结构秩序借鉴 zed，色温是自己的。这是落地页作为「最佳范本」的核心价值。
 
 ---
 
@@ -296,7 +296,7 @@ app-shell 特有：
 | nav link / icon btn | HeroUI `Button variant=light` |  |
 | 搜索框 / input | HeroUI `Input` | `--field-*` token 已对齐 rounded-md 奇纸底 |
 
-**HeroUI token 对齐已在 `index.css` 完成**（`--background`/`--surface`/`--accent`/`--border`/`--radius:0.375rem`/`--field-*` 全部映射到 dicha 暖色 blueprint）。封装时优先复用这些 seam，不要另起炉灶（见 design-system.md §实现约束）。
+**HeroUI token 对齐已在 `index.css` 完成**（`--background`/`--surface`/`--accent`/`--border`/`--radius:0.375rem`/`--field-*` 全部映射到 dicha 暖色结构系统）。封装时优先复用这些 seam，不要另起炉灶（见 design-system.md §实现约束）。
 
 ---
 

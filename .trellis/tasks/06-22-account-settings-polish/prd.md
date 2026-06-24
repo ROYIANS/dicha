@@ -2,7 +2,7 @@
 
 ## Goal
 
-把现有右上角账户弹窗升级为真正可长期承载的账户设置体验：解决卡顿、移动端布局差、Passkey 未命名且不可重命名、预设头像不合适等问题，同时补齐账户资料与安全管理的核心闭环。
+把现有右上角账户弹窗迁移为真正可长期承载的独立账户设置页：解决卡顿、移动端布局差、Passkey 未命名且不可重命名、预设头像不合适等问题，同时补齐账户资料与安全管理的核心闭环。
 
 ## What I Already Know
 
@@ -19,7 +19,7 @@
   - 现有预设头像不合适，希望采用 Boring Avatars。
 - 我此前评估的账户缺口：
   - 没有独立 `/account` / `/settings` 页面。
-  - `city / gender / personalityArchetype / homeName / coins` 等用户字段未完整纳入账户 UI。
+  - `homeName / city / gender / bio` 等用户资料字段未完整纳入账户 UI；`coins`/茶币入口先从页面移除，不做半成品付费积分口。
   - 缺少设备/session 管理、删除账号、导出数据、隐私/通知设置等后续账户能力。
   - 邮箱验证重发目前没有 ALTCHA header，可能被后端守卫拒绝。
   - 登录成功后跳 `/`，可能应该进入 `/home`。
@@ -53,9 +53,9 @@
 ### Repo Constraints
 
 - 前端栈：React 19 + TanStack Router + TanStack Query + HeroUI + Tailwind v4。
-- 账户 UI 应遵守 `.trellis/spec/frontend/design-system.md` 与 `blueprint-aesthetic.md`：
+- 账户 UI 应遵守 `.trellis/spec/frontend/design-system.md` 与 `blueprint-aesthetic.md` 中已收敛的结构规则：
   - 暖白柔面哑光 token。
-  - 工程纸 / blueprint 结构语汇。
+  - 可克制使用工程纸式线、网格、斜纹和结构层级；不得使用无业务含义的装饰文字、编号、坐标角标。
   - 浮层遮罩统一 `DotsBackdrop`，但本任务主方向是独立页面，尽量减少 modal 使用。
 - 当前 auth 客户端在 `apps/web/src/lib/auth-client.ts`，已导出：
   - `updateUser`
@@ -74,7 +74,7 @@
 - Header 用户入口改为导航到该页面，不再打开 `AccountModal` 作为主账户管理入口。
 - 删除旧 `AccountModal` 组件与相关引用，避免保留重复账户 UI 和卡顿源。
 - 页面应在桌面端提供清晰分区，在移动端作为单列完整页面使用。
-- 页面要延续 app shell 与 blueprint 语汇，不做后台 admin 风格。
+- 页面要延续 app shell 的暖白哑光、hairline 描边、`rounded-md` 控件和克制结构层级，不做后台 admin 风格。
 
 ### R2. 性能与卡顿治理
 
@@ -109,8 +109,8 @@
   - `homeName`
   - `city`
   - `gender`
-  - `personalityArchetype`
-- `coins` 只展示，不允许编辑。
+  - `bio`
+- `coins`/茶币先从账户页面移除；后续若要做付费积分，再单独设计完整入口。
 - 字段保存后刷新 session/query cache，Header 和页面同步更新。
 
 ### R7. 安全账户能力补齐
@@ -129,8 +129,8 @@
 - [ ] 访问账户入口进入独立账户设置页面，而不是打开账户管理弹窗。
 - [ ] 旧 `AccountModal` 被移除，代码库不再保留完整账户弹窗实现。
 - [ ] 页面在 desktop / tablet / mobile 宽度下无横向溢出，表单和操作按钮布局合理。
-- [ ] displayName、homeName、city、gender、personalityArchetype 可编辑并保存。
-- [ ] coins 仅展示，不可编辑。
+- [ ] displayName、homeName、city、gender、bio 可编辑并保存。
+- [ ] coins/茶币不出现在账户页面。
 - [ ] 头像默认/候选由 Boring Avatars 本地生成，上传头像仍可用。
 - [ ] 添加 Passkey 后有可读名称；已有 Passkey 可重命名。
 - [ ] 删除 Passkey 与解绑 GitHub 均有确认步骤。
