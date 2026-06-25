@@ -66,7 +66,8 @@
 
 - **UI sans-first**：全局 UI 正文、表单、导航、密集信息默认使用 **Sarasa UI SC**（本地静态资源 `apps/web/public/assets/fonts/SarasaUiSC.ttf`），fallback 为 `Sarasa Gothic SC` / `Microsoft YaHei UI` / `PingFang SC` / 系统 sans。Sarasa 的字面更适合界面扫描，避免正文全部衬线造成操作界面过软。
 - 双保险落地：`html, body` 与 `@theme --font-sans` 都指向 Sarasa UI SC，使 Tailwind 默认 `font-sans` 和 HeroUI 基础文本一致。
-- **Noto Serif SC 用于装饰 / 叙事**：品牌字标、落地页宣言、大金句、blockquote、少量情感性标题可显式使用 `font-serif` 或本地 `SERIF` 常量；不要把普通 UI 正文改回全局衬线。
+- **Noto Serif SC 用于装饰 / 叙事**：品牌字标「滴茶」、落地页宣言、大金句、blockquote、section H2、情感引文、旁白角色齐默默的叙事发言，显式使用 `font-serif` 工具类（由 `@theme --font-serif` 生成）。功能 / 操作性标题（如特性卡名称）走 sans，不要用 serif。不要把普通 UI 正文改回全局衬线。
+- **不要重新引入本地 `SERIF` 常量**：历史代码里曾用各文件 `const SERIF` 内联字体栈，已统一收口为 `font-serif` 类。新增 serif 用法一律用 `font-serif`，不要再定义 `SERIF` 常量——常量分散会绕开 `@theme` 的 fallback 栈并制造重复。
 - **层级**：亲切大问候（xl bold）→ 中号分区标题（sm semibold）→ 小号标签（xs）。数据数字加粗突出（2xl bold）。
 
 ---

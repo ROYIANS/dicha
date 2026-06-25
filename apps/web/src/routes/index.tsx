@@ -41,7 +41,6 @@ export const Route = createFileRoute('/')({
    ════════════════════════════════════════════════════════════════════════════ */
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
-const SERIF = "'Noto Serif SC', serif";
 
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
@@ -359,7 +358,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
         <div className="flex min-w-0 items-center gap-4">
           <a href="#top" className="flex shrink-0 items-center gap-2">
             <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
-            <span className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>
+            <span className="text-[16px] font-semibold font-serif text-ink">
               滴茶
             </span>
           </a>
@@ -408,8 +407,8 @@ function Announce() {
       <span aria-hidden className="absolute bottom-0 left-1/2 block h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
       <Node pos="bottom-left" className="hidden lg:block" />
       <Node pos="bottom-right" className="hidden lg:block" />
-      <span className="text-[13px] tracking-wide text-lp-brand" style={{ fontFamily: SERIF }}>新功能：</span>
-      <span className="text-[13px] font-medium tracking-wide text-ink" style={{ fontFamily: SERIF }}>齐默默 —— 陪你慢慢归置</span>
+      <Mono className="text-[13px] tracking-wide text-lp-brand">新功能：</Mono>
+      <span className="text-[13px] font-medium font-serif tracking-wide text-ink">齐默默 —— 陪你慢慢归置</span>
       <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">→</span>
     </a>
   );
@@ -591,7 +590,7 @@ function Marquee() {
       {MARQUEE_ITEMS.map((it, i) => (
         <span key={i} className="flex items-center">
           <Mono className="text-[11px] text-ink-faint">№{String(i + 1).padStart(3, '0')}</Mono>
-          <span className="ml-2 mr-6 text-[13px] text-ink-soft" style={{ fontFamily: SERIF }}>{it}</span>
+          <span className="ml-2 mr-6 text-[13px] text-ink-soft">{it}</span>
           <span className="mr-6 size-1 rotate-45 border" style={{ borderColor: LINE }} />
         </span>
       ))}
@@ -655,7 +654,7 @@ function FeatureTabs() {
                   <div className="relative py-7" style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}>
                     <DotPattern />
                     <div className="relative">
-                      <h3 className="text-[20px] font-semibold text-ink" style={{ fontFamily: SERIF }}>{f.title}</h3>
+                      <h3 className="text-[20px] font-semibold text-ink">{f.title}</h3>
                       <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-soft">{f.body}</p>
                     </div>
                   </div>
@@ -711,7 +710,7 @@ function FeatureVignette({ id }: { id: string }) {
     return (
       <VignetteCard label="poem — 翻开一件物品时">
         <div className="px-2 py-6 text-center">
-          <p className="text-[19px] leading-loose text-ink" style={{ fontFamily: SERIF }}>
+          <p className="text-[19px] font-serif leading-loose text-ink">
             「杯沿的一道细纹，<br />是去年冬天的事了。」
           </p>
           <Mono className="mt-5 block text-[11px] text-ink-faint">—— 写给：白瓷盖碗</Mono>
@@ -747,7 +746,7 @@ function FeatureVignette({ id }: { id: string }) {
     <VignetteCard label="zimomo — 不轻易开口">
       <div className="flex flex-col gap-3 py-2">
         <div className="max-w-[80%] self-start rounded-xl rounded-bl-sm px-4 py-3" style={{ backgroundColor: 'var(--chip-sage)' }}>
-          <p className="text-[13.5px] leading-relaxed text-ink" style={{ fontFamily: SERIF }}>创可贴在药盒第二格。上次用，是三月你切到手指那回。</p>
+          <p className="text-[13.5px] font-serif leading-relaxed text-ink">创可贴在药盒第二格。上次用，是三月你切到手指那回。</p>
         </div>
         <Mono className="self-start pl-1 text-[10px] text-ink-faint">齐默默 · 仅在被问起时</Mono>
         <div className="mt-2 flex items-center gap-2 self-end rounded-full px-3 py-1.5" style={{ border: `1px solid ${LINE}` }}>
@@ -805,7 +804,7 @@ function AppWindow() {
           {[0, 1, 2, 3].map((k) => (<span key={k} className="h-7 w-7 rounded-lg" style={{ backgroundColor: 'var(--sidebar-hover)' }} />))}
         </div>
         <div className="flex-1 overflow-hidden p-7">
-          <div className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>早，Serena。</div>
+          <div className="text-[16px] font-semibold font-serif text-ink">早，Serena。</div>
           <Mono className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里也静下来了。</Mono>
           <div className="mt-6 grid grid-cols-4 gap-3">
             {chips.map((c, i) => (
@@ -897,10 +896,10 @@ function Principles() {
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
           <GridPattern />
           <Mono className="text-[12px] text-lp-brand">// 为什么</Mono>
-          <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.15rem,2.2vw,1.6rem)' }}>
+          <p className="mt-5 font-serif leading-[1.55] text-ink" style={{ fontSize: 'clamp(1.15rem,2.2vw,1.6rem)' }}>
             像滴茶一样，一滴一滴地，把日子放好。
           </p>
-          <p className="mt-5 leading-[1.55] text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(1.55rem,3.2vw,2.65rem)' }}>
+          <p className="mt-5 font-serif leading-[1.55] text-ink" style={{ fontSize: 'clamp(1.55rem,3.2vw,2.65rem)' }}>
             东西不是数字，也不该只是清单上的一行字。你录入一件衬衫，它会变成衣橱里<Mark tint="lavender">一抹蓝</Mark>——挂在那里，连着某一天的心情；那本三年没翻的书，边上真的<Mark tint="mist">落了灰</Mark>，摸得到，也懒得解释为什么还留着。
           </p>
           <p className="mt-6 max-w-[40ch] text-[13px] leading-relaxed text-ink-soft">
@@ -990,7 +989,7 @@ function AuthorLetter() {
       </div>
       <Reveal className="relative px-8 py-12 lg:col-span-8">
         <div className="pointer-events-none absolute inset-y-0 left-0 hidden border-l border-dashed lg:block" style={{ borderColor: LINE }} />
-        <blockquote className="text-[clamp(1.15rem,2.2vw,1.5rem)] leading-loose text-ink" style={{ fontFamily: SERIF }}>
+        <blockquote className="text-[clamp(1.15rem,2.2vw,1.5rem)] font-serif leading-loose text-ink">
           <p>「有时候收拾，有时候乱着。很少问自己：<Mark tint="mist">这些东西，为什么还留着？</Mark>」</p>
           <p className="mt-5">
             「滴茶不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
@@ -1008,7 +1007,7 @@ function FinalCTA() {
   return (
     <section className="relative px-8 py-24 text-center">
       <Reveal>
-        <h2 className="font-medium leading-tight text-ink" style={{ fontFamily: SERIF, fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推开门，进来坐坐。</h2>
+        <h2 className="font-medium font-serif leading-tight text-ink" style={{ fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推开门，进来坐坐。</h2>
         <p className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft" style={{ textWrap: 'balance' }}>在忙忙碌碌的日子里，给自己留一个安静的、住得下来的地方。</p>
         <div className="mt-9 flex items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-5 py-3">
@@ -1080,7 +1079,7 @@ function Footer() {
             <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
               <div className="flex items-center gap-2">
                 <BrandMark className="h-5 w-[30px]" style={{ color: LP.chromeFg }} />
-                <span className="text-[16px] font-semibold" style={{ color: LP.chromeFg, fontFamily: SERIF }}>滴茶</span>
+                <span className="text-[16px] font-semibold font-serif" style={{ color: LP.chromeFg }}>滴茶</span>
               </div>
               <BrandMark className="mt-4 h-9 w-[54px] opacity-[0.65]" style={{ color: LP.footMuted }} />
               <Mono className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</Mono>

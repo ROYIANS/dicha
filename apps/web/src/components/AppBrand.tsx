@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import type { CSSProperties } from 'react';
 
-const SERIF = "'Noto Serif SC', 'Songti SC', serif";
 const LOGO_MASK_STYLE: CSSProperties = {
   maskImage: "url('/assets/logo.svg')",
   WebkitMaskImage: "url('/assets/logo.svg')",
@@ -50,8 +49,8 @@ export function AppBrand({ variant = 'canvas', to, className = '', onClick }: Ap
     <>
       <BrandMark className="h-5 w-[30px]" style={{ color: markColor }} />
       <span
-        className="text-[16px] font-semibold"
-        style={{ fontFamily: SERIF, color: wordColor }}
+        className="text-[16px] font-semibold font-serif"
+        style={{ color: wordColor }}
       >
         滴茶
       </span>

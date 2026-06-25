@@ -7,7 +7,6 @@ import { DotsBackdrop } from '@/components/DotsBackdrop';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
-const SERIF = "'Noto Serif SC', 'Songti SC', serif";
 
 export type NavDrawerItem = { href: string; label: string };
 
@@ -76,7 +75,7 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
         <div className="flex shrink-0 items-center justify-between border-b border-hairline px-4 pb-3 pt-1">
           <div className="flex items-center gap-2">
             <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
-            <span id={titleId} className="text-[16px] font-semibold text-ink" style={{ fontFamily: SERIF }}>
+            <span id={titleId} className="text-[16px] font-semibold font-serif text-ink">
               滴茶
             </span>
           </div>

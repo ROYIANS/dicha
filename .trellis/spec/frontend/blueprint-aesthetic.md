@@ -192,7 +192,7 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 | 声部 | 字体 | 用途 | 实现 |
 |---|---|---|---|
 | **无衬线（UI/操作）** | `'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', sans-serif` | UI 正文、导航、表单、按钮、密集信息 | `@font-face` 指向本地 `SarasaUiSC.ttf`，`@theme --font-sans` 与 `html, body` 默认指向它 |
-| **衬线（装饰/情感）** | `'Noto Serif SC', 'Songti SC', serif` | H1/大金句/blockquote/品牌字标/少量叙事标题 | `@theme --font-serif` 指向它；落地页 / 品牌组件可用本地 `SERIF` 常量显式标注 |
+| **衬线（装饰/情感）** | `'Noto Serif SC', 'Songti SC', serif` | 品牌字标「滴茶」/ manifesto 大金句 / blockquote / section H2 / 情感引文 / 旁白角色齐默默的叙事发言 | 仅 `font-serif` 工具类（由 `@theme --font-serif` 生成） |
 | **等宽（工程/技术）** | `'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace` | 导航、字段标签、kbd、真实读数、真实编号 | 落地页 `Mono` 组件 / app `app-mono` 类 |
 
 > **铁律**：操作性 UI 默认走 Sarasa UI SC；技术性 / 读数性文字走 mono；情感性 / 叙事性文字走 serif。三者按语义分工，不混用。mono 不能被用来生成纯装饰的工程编号或角标。

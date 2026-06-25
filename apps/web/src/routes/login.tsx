@@ -25,7 +25,6 @@ export const Route = createFileRoute('/login')({
 });
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
-const SERIF = "'Noto Serif SC', serif";
 // 结构线 —— 与落地页同定义（blueprint-aesthetic.md §4.2）
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
@@ -360,7 +359,7 @@ function LoginPage() {
                   <BrandMark className="h-[18px] w-[27px]" />
                 </span>
                 <div>
-                  <h1 className="text-[18px] font-semibold leading-tight text-ink" style={{ fontFamily: SERIF }}>
+                  <h1 className="text-[18px] font-semibold font-serif leading-tight text-ink">
                     滴茶
                   </h1>
                   <Mono className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
