@@ -373,7 +373,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
         <div className="flex items-center gap-2">
           <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md" iconSize={15} />
           <Link to="/home" className="lp-btn lp-btn-primary hidden items-center rounded-md px-3 py-1.5 lg:inline-flex">
-            <Mono className="text-[13px] font-medium">开始入住</Mono>
+            <span className="text-[13px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
           <button
@@ -528,11 +528,11 @@ function Hero() {
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-4 py-2.5">
             <Play size={14} className="mr-2" />
-            <Mono className="text-[14px] font-medium">开始入住</Mono>
+            <span className="text-[14px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
           <a href="#demo" className="lp-btn lp-btn-ghost inline-flex items-center rounded-md px-4 py-2.5">
-            <Mono className="text-[14px]">查看演示</Mono>
+            <span className="text-[14px]">查看演示</span>
             <Key>C</Key>
           </a>
         </div>
@@ -626,7 +626,7 @@ function FeatureTabs() {
           <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink" style={{ textWrap: 'balance' }}>记录，不是完成任务，是慢慢地归置。</h2>
         </hgroup>
         <a href="#demo" className="lp-btn lp-btn-ghost inline-flex h-9 w-fit items-center gap-1 rounded-md pl-3 pr-2">
-          <Mono className="text-[13px]">看完整演示</Mono>
+          <span className="text-[13px]">看完整演示</span>
           <ChevronRight size={15} className="text-ink-soft" />
         </a>
       </div>
@@ -1011,7 +1011,7 @@ function FinalCTA() {
         <p className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft" style={{ textWrap: 'balance' }}>在忙忙碌碌的日子里，给自己留一个安静的、住得下来的地方。</p>
         <div className="mt-9 flex items-center justify-center gap-3">
           <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-5 py-3">
-            <Mono className="text-[15px] font-medium">开始入住</Mono>
+            <span className="text-[15px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
         </div>

@@ -1,0 +1,10 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": "apps/web/src/components/Sidebar.tsx", "reason": "侧栏菜单 label/分区标题/像素世界卡片 误用 app-mono，导航项走 app-sidebar-link"}
+{"file": "apps/web/src/components/Header.tsx", "reason": "搜索框/用户名 误用 app-mono"}
+{"file": "apps/web/src/components/InputBar.tsx", "reason": "聊天输入框文字误用 app-mono"}
+{"file": "apps/web/src/routes/_app/home.tsx", "reason": "dashboard 问候/卡片 label/单位词 误用 app-mono"}
+{"file": "apps/web/src/index.css", "reason": ".app-mono 保留；.app-sidebar-link 须删 font-family 行继承 sans"}
+{"file": ".trellis/spec/frontend/blueprint-aesthetic.md", "reason": "字体三声部铁律 §5；mono 用途措辞需移除导航"}
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "字体 §2 mono 用途措辞同步"}
+{"file": "apps/web/src/routes/_app/account.tsx", "reason": "第二轮补漏：18处 fontFamily:MONO 内联，中文操作性文字降 sans"}
+{"file": "apps/web/src/routes/index.tsx", "reason": "第二轮补漏：仅 lp-btn 按钮内 Mono 文案降 sans，其余 Mono 标签/读数保留"}

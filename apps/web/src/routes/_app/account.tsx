@@ -59,7 +59,6 @@ export const Route = createFileRoute('/_app/account')({
   component: AccountPage,
 });
 
-const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const AVATAR_COLORS = ['#2E2A26', '#7A6248', '#F0C3A3', '#A9C0A0', '#A8C4D6'];
 const GENDER_OPTIONS = ['男', '女', '保密'];
@@ -138,7 +137,7 @@ function AccountSummary({ user }: { user: UserDto }) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-[15px] font-semibold text-ink">{displayName}</p>
-          <Mono className="block max-w-[32ch] truncate text-[11px] text-ink-faint">{user.email}</Mono>
+          <span className="block max-w-[32ch] truncate text-[11px] text-ink-faint">{user.email}</span>
         </div>
       </div>
     </div>
@@ -244,7 +243,7 @@ function ProfileSection({ user }: { user: UserDto }) {
           onChange={(value) => updateField('homeName', value)}
         />
         <div className="space-y-1.5 md:col-span-2">
-          <Mono className="block text-[11px] tracking-wider text-ink-soft">{t('account.city')}</Mono>
+          <span className="block text-[11px] tracking-wider text-ink-soft">{t('account.city')}</span>
           <div className="grid gap-2 sm:grid-cols-3">
             <SelectControl
               value={parsedCity.provinceCode}
@@ -291,7 +290,6 @@ function ProfileSection({ user }: { user: UserDto }) {
           onClick={() => void handleSave()}
           disabled={!dirty || nameInvalid || saving}
           className="lp-btn lp-btn-primary inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          style={{ fontFamily: MONO }}
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
           {saving ? t('account.saving') : t('account.save')}
@@ -375,16 +373,15 @@ function AvatarSection({ user }: { user: UserDto }) {
             type="button"
             onClick={handleRandomAvatar}
             className="lp-btn lp-btn-ghost inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md px-3 text-[12px]"
-            style={{ fontFamily: MONO }}
           >
             <Dices size={14} />
             {t('account.avatarRandom')}
           </button>
         </div>
         <div className="min-w-0 flex-1">
-          <Mono className="block text-[11px] tracking-wider text-ink-soft">
+          <span className="block text-[11px] tracking-wider text-ink-soft">
             {t('account.avatarGenerated')}
-          </Mono>
+          </span>
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {seeds.map((seed) => (
               <button
@@ -415,12 +412,11 @@ function AvatarSection({ user }: { user: UserDto }) {
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
           className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          style={{ fontFamily: MONO }}
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? t('account.avatarUploading') : t('account.avatarUpload')}
         </button>
-        <Mono className="mt-2 block text-[11px] text-ink-faint">{t('account.avatarHint')}</Mono>
+        <span className="mt-2 block text-[11px] text-ink-faint">{t('account.avatarHint')}</span>
       </div>
     </Panel>
   );
@@ -569,11 +565,11 @@ function SecuritySection({ user }: { user: UserDto }) {
         <SectionLabel>{t('account.email')}</SectionLabel>
         <div className="flex flex-col gap-3 rounded-md border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <Mono className="block truncate text-[12px] text-ink">{user.email}</Mono>
-            <Mono className="mt-1 inline-flex items-center gap-1 text-[11px] text-ink-soft">
+            <span className="block truncate text-[12px] text-ink">{user.email}</span>
+            <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-ink-soft">
               {user.emailVerified ? <ShieldCheck size={13} /> : <ShieldAlert size={13} />}
               {user.emailVerified ? t('account.emailVerified') : t('account.emailUnverified')}
-            </Mono>
+            </span>
           </div>
           {!user.emailVerified ? (
             <button
@@ -581,7 +577,6 @@ function SecuritySection({ user }: { user: UserDto }) {
               onClick={() => void handleResend()}
               disabled={resending}
               className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
-              style={{ fontFamily: MONO }}
             >
               {resending ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
               {resending ? t('account.sending') : t('account.emailResend')}
@@ -601,7 +596,7 @@ function SecuritySection({ user }: { user: UserDto }) {
       <section className="space-y-3 border-t border-hairline pt-5">
         <SectionLabel>{t('account.github')}</SectionLabel>
         <div className="flex flex-col gap-3 rounded-md border border-hairline bg-canvas px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <span className="inline-flex items-center gap-2 text-[13px] text-ink" style={{ fontFamily: MONO }}>
+          <span className="inline-flex items-center gap-2 text-[13px] text-ink">
             <GithubMark size={15} />
             {githubLinked ? t('account.githubLinked') : t('account.githubNotLinked')}
           </span>
@@ -611,7 +606,6 @@ function SecuritySection({ user }: { user: UserDto }) {
               onClick={() => void handleUnlinkGithub()}
               disabled={busy}
               className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
-              style={{ fontFamily: MONO }}
             >
               <Unlink size={13} />
               {t('account.githubUnlink')}
@@ -622,7 +616,6 @@ function SecuritySection({ user }: { user: UserDto }) {
               onClick={() => void handleLinkGithub()}
               disabled={busy}
               className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
-              style={{ fontFamily: MONO }}
             >
               <Link2 size={13} />
               {t('account.githubLink')}
@@ -638,14 +631,12 @@ function SecuritySection({ user }: { user: UserDto }) {
             value={newPasskeyName}
             onChange={(event) => setNewPasskeyName(event.target.value)}
             className="w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
-            style={{ fontFamily: MONO }}
           />
           <button
             type="button"
             onClick={() => void handleAddPasskey()}
             disabled={busy}
             className="lp-btn lp-btn-primary inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-[13px] disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ fontFamily: MONO }}
           >
             <KeyRound size={14} />
             {t('account.passkeyAdd')}
@@ -657,7 +648,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             <Loader2 size={16} className="animate-spin text-ink-soft" />
           </div>
         ) : typedPasskeys.length === 0 ? (
-          <p className="rounded-md border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ fontFamily: MONO, borderColor: LINE }}>
+          <p className="rounded-md border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ borderColor: LINE }}>
             {t('account.passkeyEmpty')}
           </p>
         ) : (
@@ -670,14 +661,12 @@ function SecuritySection({ user }: { user: UserDto }) {
                       value={editingPasskeyName}
                       onChange={(event) => setEditingPasskeyName(event.target.value)}
                       className="w-full rounded-md border border-hairline bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-[var(--lp-brand)]"
-                      style={{ fontFamily: MONO }}
                     />
                     <button
                       type="button"
                       onClick={() => void handleRenamePasskey()}
                       disabled={busy || !editingPasskeyName.trim()}
                       className="lp-btn lp-btn-primary inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:opacity-60"
-                      style={{ fontFamily: MONO }}
                     >
                       <Check size={13} />
                       {t('account.save')}
@@ -686,13 +675,13 @@ function SecuritySection({ user }: { user: UserDto }) {
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <span className="flex min-w-0 items-center gap-2 text-[13px] text-ink" style={{ fontFamily: MONO }}>
+                      <span className="flex min-w-0 items-center gap-2 text-[13px] text-ink">
                         <KeyRound size={13} className="shrink-0 text-ink-soft" />
                         <span className="truncate">{record.name || t('account.passkeyUnnamed')}</span>
                       </span>
-                      <Mono className="mt-1 block text-[11px] text-ink-faint">
+                      <span className="mt-1 block text-[11px] text-ink-faint">
                         {formatPasskeyMeta(record, t('account.passkeyMetaUnknown'))}
-                      </Mono>
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -726,14 +715,13 @@ function SecuritySection({ user }: { user: UserDto }) {
           type="button"
           onClick={() => void handleLogout()}
           className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px]"
-          style={{ fontFamily: MONO }}
         >
           <User size={14} />
           {t('account.logout')}
         </button>
-        <Mono className="mt-3 block text-[11px] leading-relaxed text-ink-faint">
+        <span className="mt-3 block text-[11px] leading-relaxed text-ink-faint">
           {t('account.futureSettingsNote')}
-        </Mono>
+        </span>
       </section>
     </Panel>
   );
@@ -787,11 +775,11 @@ function Field({
 }) {
   const controlClass =
     'w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]';
-  const controlStyle = { borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)', fontFamily: MONO };
+  const controlStyle = { borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)' };
 
   return (
     <label className="block space-y-1.5">
-      <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono>
+      <span className="block text-[11px] tracking-wider text-ink-soft">{label}</span>
       {options ? (
         <select
           value={value}
@@ -825,7 +813,7 @@ function Field({
           style={controlStyle}
         />
       )}
-      {invalid && errorText ? <Mono className="block text-[11px] text-accent-pink">{errorText}</Mono> : null}
+      {invalid && errorText ? <span className="block text-[11px] text-accent-pink">{errorText}</span> : null}
     </label>
   );
 }
@@ -852,7 +840,6 @@ function SelectControl({
       onChange={(event) => onChange(event.target.value)}
       disabled={disabled}
       className={`${controlClass} appearance-none`}
-      style={{ fontFamily: MONO }}
     >
       <option value="">{placeholder}</option>
       {options.map((option) => (
@@ -864,19 +851,11 @@ function SelectControl({
   );
 }
 
-function Mono({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <span className={className} style={{ fontFamily: MONO }}>
-      {children}
-    </span>
-  );
-}
-
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <Mono className="block text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+    <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-faint">
       {children}
-    </Mono>
+    </span>
   );
 }
 
