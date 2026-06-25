@@ -64,9 +64,9 @@
 
 ## 2. 字体
 
-- **serif-first（文艺基调核心）**：UI 正文与标题统一用人文衬线。中文 **Noto Serif SC**（Google Fonts，`@import` 于 `index.css` 最顶部），fallback `Songti SC` / 拉丁衬线。
-- 双保险落地：`html, body { font-family: 'Noto Serif SC', 'Songti SC', serif }` **且** `@theme` 设 `--font-sans: 'Noto Serif SC', 'Songti SC', ui-serif, serif`，使 Tailwind 默认 `font-sans` 也指向衬线——组件无需散写 `font-serif`。
-- **不再 sans-first**：原 PingFang / Inter 无衬线正文方案已弃用（衬线才是活泼文艺气质的来源）。
+- **UI sans-first**：全局 UI 正文、表单、导航、密集信息默认使用 **Sarasa UI SC**（本地静态资源 `apps/web/public/assets/fonts/SarasaUiSC.ttf`），fallback 为 `Sarasa Gothic SC` / `Microsoft YaHei UI` / `PingFang SC` / 系统 sans。Sarasa 的字面更适合界面扫描，避免正文全部衬线造成操作界面过软。
+- 双保险落地：`html, body` 与 `@theme --font-sans` 都指向 Sarasa UI SC，使 Tailwind 默认 `font-sans` 和 HeroUI 基础文本一致。
+- **Noto Serif SC 用于装饰 / 叙事**：品牌字标、落地页宣言、大金句、blockquote、少量情感性标题可显式使用 `font-serif` 或本地 `SERIF` 常量；不要把普通 UI 正文改回全局衬线。
 - **层级**：亲切大问候（xl bold）→ 中号分区标题（sm semibold）→ 小号标签（xs）。数据数字加粗突出（2xl bold）。
 
 ---
@@ -138,7 +138,7 @@
 
 - 颜色：`bg-canvas` `bg-surface` `bg-surface-alt` · `text-ink` `text-ink-soft` `text-ink-faint` · `border-hairline` · `text-lavender`/`-peach`/`-sage`/`-pink`/`-mist` 及 `bg-chip-*`
 - 侧栏 chrome：`bg-sidebar-bg` `text-sidebar-ink` `text-sidebar-ink-soft`（进 `@theme inline`）；选中/hover 叠加直接用 `bg-[var(--sidebar-active)]` / `bg-[var(--sidebar-hover)]`（不进 @theme）
-- 字体：默认 `font-sans` 已映射为 serif（`--font-sans` = Noto Serif SC）
+- 字体：默认 `font-sans` 映射为 Sarasa UI SC；装饰 / 叙事内容用 `font-serif`（Noto Serif SC）
 - 圆角：`rounded-card`
 - 阴影：`shadow-card` `shadow-raised` `shadow-float`
 

@@ -1,10 +1,21 @@
-/* Google Fonts must come before all other @import (CSS spec). serif-first 文艺基调。 */
+/* Font imports must come before all other @import (CSS spec). */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 /* IBM Plex Mono — 工程/工业气质的等宽体，用于 landing 的技术性标签、导航、按键徽标。 */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 /* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
 @import 'tailwindcss';
 @import '@heroui/styles';
+
+@font-face {
+  font-family: 'Sarasa UI SC';
+  src:
+    local('Sarasa UI SC'),
+    local('SarasaUiSC'),
+    url('/assets/fonts/SarasaUiSC.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    dicha design system — 暖白柔面哑光（Warm Matte）
@@ -219,8 +230,11 @@
 
   --radius-card: 16px;
 
-  /* serif-first — 文艺基调核心；Tailwind 默认 font-sans 也指向衬线 */
-  --font-sans: 'Noto Serif SC', 'Songti SC', ui-serif, serif;
+  /* UI sans-first；装饰 / 叙事标题显式使用 font-serif。 */
+  --font-sans:
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui,
+    sans-serif;
+  --font-serif: 'Noto Serif SC', 'Songti SC', ui-serif, serif;
 
   --shadow-card: var(--shadow-sm);
   --shadow-raised: var(--shadow-md);
@@ -235,7 +249,9 @@ body {
   background: var(--canvas);
   color: var(--ink);
   min-height: 100dvh;
-  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-family:
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui,
+    sans-serif;
 }
 
 /* ─── 全局滚动条 — 彻底隐藏（任何情况都不显示，hover 也不），内容仍可滚 ──────── */
