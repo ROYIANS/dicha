@@ -42,7 +42,7 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
         <button
           type="button"
           onClick={() => toast.info('搜索功能即将开放')}
-          className="app-input-field app-mono flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-hairline bg-surface/80 px-2.5 text-left text-ink-faint sm:px-3"
+          className="app-input-field flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-hairline bg-surface/80 px-2.5 text-left text-ink-faint sm:px-3"
         >
           <Search size={14} className="shrink-0" />
           <span className="truncate text-[12px] sm:text-[13px]">
@@ -91,7 +91,7 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
               <User size={15} className="shrink-0" />
             )}
             {displayName ? (
-              <span className="app-mono hidden max-w-[10ch] truncate text-[12px] sm:inline">
+              <span className="hidden max-w-[10ch] truncate text-[12px] sm:inline">
                 {displayName}
               </span>
             ) : null}

@@ -58,8 +58,8 @@ function NavLink({
     return (
       <div className={cls} title="即将开放">
         <span className="size-4 shrink-0 opacity-70">{item.icon}</span>
-        <span className="app-mono truncate">{item.label}</span>
-        <span className="app-mono ml-auto shrink-0 text-[10px] tracking-wide text-sidebar-ink-soft">即将</span>
+        <span className="truncate">{item.label}</span>
+        <span className="ml-auto shrink-0 text-[10px] tracking-wide text-sidebar-ink-soft">即将</span>
       </div>
     );
   }
@@ -75,7 +75,7 @@ function NavLink({
         className={`${cls} w-full text-left`}
       >
         <span className="size-4 shrink-0">{item.icon}</span>
-        <span className="app-mono truncate">{item.label}</span>
+        <span className="truncate">{item.label}</span>
       </button>
     );
   }
@@ -84,7 +84,7 @@ function NavLink({
     return (
       <Link to={item.to} onClick={onNavigate} className={cls}>
         <span className="size-4 shrink-0">{item.icon}</span>
-        <span className="app-mono truncate">{item.label}</span>
+        <span className="truncate">{item.label}</span>
       </Link>
     );
   }
@@ -141,18 +141,18 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
   const sectionClass =
     variant === 'sidebar'
       ? 'app-sidebar-section'
-      : 'app-mono text-[11px] font-semibold uppercase tracking-wider text-ink-faint';
+      : 'text-[11px] font-semibold uppercase tracking-wider text-ink-faint';
 
   const worldCard =
     variant === 'sidebar' ? (
       <div className="app-sidebar-world mx-3 mb-3 overflow-hidden rounded-lg border border-white/10">
         <div className="p-3">
-          <div className="app-mono text-[13px] font-semibold text-sidebar-ink">{t('sidebar.pixelWorld')}</div>
-          <div className="app-mono mt-1 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('sidebar.pixelWorldDesc')}</div>
+          <div className="text-[13px] font-semibold text-sidebar-ink">{t('sidebar.pixelWorld')}</div>
+          <div className="mt-1 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('sidebar.pixelWorldDesc')}</div>
           <Link
             to="/world"
             onClick={onNavigate}
-            className="app-mono app-sidebar-world-btn mt-2.5 block rounded-md py-1.5 text-center text-[11px] font-medium text-sidebar-ink"
+            className="app-sidebar-world-btn mt-2.5 block rounded-md py-1.5 text-center text-[11px] font-medium text-sidebar-ink"
           >
             {t('dashboard.enterWorld')}
           </Link>
@@ -161,12 +161,12 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
     ) : (
       <div className="mx-3 mb-3 overflow-hidden rounded-xl border border-hairline bg-surface-alt">
         <div className="p-3">
-          <div className="app-mono text-sm font-semibold text-ink">{t('sidebar.pixelWorld')}</div>
-          <div className="app-mono mt-0.5 text-xs text-ink-soft">{t('sidebar.pixelWorldDesc')}</div>
+          <div className="text-sm font-semibold text-ink">{t('sidebar.pixelWorld')}</div>
+          <div className="mt-0.5 text-xs text-ink-soft">{t('sidebar.pixelWorldDesc')}</div>
           <Link
             to="/world"
             onClick={onNavigate}
-            className="lp-btn lp-btn-primary app-mono mt-2 inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium"
+            className="lp-btn lp-btn-primary mt-2 inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium"
           >
             {t('dashboard.enterWorld')}
           </Link>
@@ -216,7 +216,7 @@ export function Sidebar() {
 
       <div className="relative border-b border-white/8 px-4 py-4">
         <AppBrand variant="sidebar" to="/home" />
-        <p className="app-mono mt-2 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('app.tagline')}</p>
+        <p className="mt-2 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('app.tagline')}</p>
       </div>
 
       <SidebarNav className="relative z-[1] flex-1 overflow-y-auto" variant="sidebar" />

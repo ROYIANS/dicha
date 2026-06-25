@@ -25,7 +25,7 @@ export function InputBar() {
         <button
           type="button"
           onClick={handleStub}
-          className="app-input-field app-mono h-8 min-w-0 flex-1 rounded-md border border-hairline bg-surface px-3 text-left text-ink-faint sm:h-9 sm:px-4"
+          className="app-input-field h-8 min-w-0 flex-1 rounded-md border border-hairline bg-surface px-3 text-left text-ink-faint sm:h-9 sm:px-4"
         >
           <span className="truncate">{t('inputBar.placeholder')}</span>
         </button>

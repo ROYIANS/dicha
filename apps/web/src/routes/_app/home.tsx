@@ -168,13 +168,13 @@ function TopBar() {
         className="pointer-events-none absolute inset-y-0 left-0 w-[min(100%,300px)] bg-gradient-to-r from-canvas from-55% via-canvas/88 to-transparent sm:from-45%"
       />
       <div className="relative max-w-xl">
-        <p className="app-mono text-[11px] uppercase tracking-wider text-ink-faint">Dashboard</p>
+        <p className="text-[11px] uppercase tracking-wider text-ink-faint">Dashboard</p>
         <div className="mt-2 flex items-center gap-2">
           <Sun size={18} className="shrink-0 text-peach" />
           <h1 className="text-lg font-bold tracking-tight text-ink sm:text-xl">早安，{DEV_NAME}</h1>
         </div>
-        <p className="app-mono mt-1 pl-6 text-[13px] leading-snug text-ink-soft">有序的空间，安定的心。今天也很棒</p>
-        <p className="app-mono mt-1 pl-6 text-[12px] leading-snug text-ink-faint">5月 20日 · 星期二 · 22°C 多云转晴</p>
+        <p className="mt-1 pl-6 text-[13px] leading-snug text-ink-soft">有序的空间，安定的心。今天也很棒</p>
+        <p className="mt-1 pl-6 text-[12px] leading-snug text-ink-faint">5月 20日 · 星期二 · 22°C 多云转晴</p>
       </div>
     </header>
   );
@@ -193,14 +193,14 @@ function TodayOverview() {
             <DashCard key={w.key} variant="stat">
               <div className="dash-card-stat-row">
                 <div className="min-w-0 flex-1">
-                  <div className="app-mono mb-2 text-[10px] uppercase tracking-wide text-ink-soft sm:text-[11px]">
+                  <div className="mb-2 text-[10px] uppercase tracking-wide text-ink-soft sm:text-[11px]">
                     {w.label}
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="dash-card-stat-value text-xl font-bold text-ink sm:text-2xl">{w.value}</span>
-                    {w.unit ? <span className="app-mono text-[10px] text-ink-faint sm:text-[11px]">{w.unit}</span> : null}
+                    {w.unit ? <span className="text-[10px] text-ink-faint sm:text-[11px]">{w.unit}</span> : null}
                   </div>
-                  <div className="app-mono mt-1.5 text-[10px] leading-snug text-ink-faint sm:text-[11px]">{w.sub}</div>
+                  <div className="mt-1.5 text-[10px] leading-snug text-ink-faint sm:text-[11px]">{w.sub}</div>
                 </div>
                 <IconChip tint={w.tint}>
                   <Icon size={15} />
@@ -231,8 +231,8 @@ function SpaceCard({ space }: { space: Space }) {
           <Icon size={13} />
         </span>
         <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3">
-          <div className="app-mono truncate text-[13px] font-semibold text-white">{space.label}</div>
-          <div className="app-mono mt-0.5 text-[10px] text-white/75 sm:text-[11px]">{space.count}</div>
+          <div className="truncate text-[13px] font-semibold text-white">{space.label}</div>
+          <div className="mt-0.5 text-[10px] text-white/75 sm:text-[11px]">{space.count}</div>
         </div>
       </div>
     </>
@@ -286,7 +286,7 @@ function MySpaces() {
           onClick={stub}
         >
           <Plus size={18} className="text-ink-faint" />
-          <span className="app-mono mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.addSpace')}</span>
+          <span className="mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.addSpace')}</span>
         </DashCard>
       </ScrollArea>
     </section>
@@ -310,8 +310,8 @@ function RecentAdded() {
             </div>
             <div className="dash-card-media-body">
               <div className="truncate text-[13px] font-semibold text-ink">{item.name}</div>
-              <div className="app-mono mt-0.5 truncate text-[10px] text-ink-faint sm:text-[11px]">{item.tag}</div>
-              <div className="app-mono mt-0.5 text-[10px] text-ink-faint">{item.time}</div>
+              <div className="mt-0.5 truncate text-[10px] text-ink-faint sm:text-[11px]">{item.tag}</div>
+              <div className="mt-0.5 text-[10px] text-ink-faint">{item.time}</div>
             </div>
           </DashCard>
         ))}
@@ -324,7 +324,7 @@ function RecentAdded() {
           onClick={stub}
         >
           <Plus size={18} className="text-ink-faint" />
-          <span className="app-mono mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.recordNew')}</span>
+          <span className="mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.recordNew')}</span>
         </DashCard>
       </ScrollArea>
     </section>
@@ -351,7 +351,7 @@ function Reminders() {
             <span className="dash-card-check" aria-hidden />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] leading-snug text-ink">{r.text}</div>
-              <div className={`app-mono mt-0.5 text-[11px] ${r.urgent ? 'text-pink' : 'text-ink-faint'}`}>{r.due}</div>
+              <div className={`mt-0.5 text-[11px] ${r.urgent ? 'text-pink' : 'text-ink-faint'}`}>{r.due}</div>
             </div>
           </div>
         ))}
@@ -375,14 +375,14 @@ function Reading() {
         />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-semibold text-ink">《最好的告别》</div>
-          <div className="app-mono mt-0.5 text-[11px] text-ink-faint">阿图·葛文德</div>
+          <div className="mt-0.5 text-[11px] text-ink-faint">阿图·葛文德</div>
           <div className="dash-card-progress mt-2.5 bg-chip-peach">
             <div className="w-[68%] bg-peach" />
           </div>
           <div className="app-mono mt-1 text-[11px] text-ink-faint">68%</div>
         </div>
       </div>
-      <button type="button" onClick={stub} className="lp-btn lp-btn-ghost app-mono mt-3 w-full rounded-md py-2 text-[12px] text-ink">
+      <button type="button" onClick={stub} className="lp-btn lp-btn-ghost mt-3 w-full rounded-md py-2 text-[12px] text-ink">
         {t('dashboard.continueReading')}
       </button>
     </DashCard>
@@ -415,14 +415,14 @@ function SpaceUsage() {
         <div className="relative size-[5.5rem] shrink-0 rounded-full sm:size-28" style={{ background: conic }}>
           <div className="absolute inset-[12px] flex flex-col items-center justify-center rounded-full border border-hairline bg-surface sm:inset-[14px]">
             <span className="dash-card-stat-value text-lg font-bold leading-none text-ink">{USAGE_TOTAL}</span>
-            <span className="app-mono mt-0.5 text-[10px] text-ink-faint">件物品</span>
+            <span className="mt-0.5 text-[10px] text-ink-faint">件物品</span>
           </div>
         </div>
         <div className="w-full flex-1 space-y-1.5 sm:w-auto">
           {USAGE.map((u) => (
             <div key={u.key} className="flex items-center gap-2">
               <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: `var(--accent-${u.tint})` }} />
-              <span className="app-mono min-w-0 flex-1 truncate text-[11px] text-ink">{u.label}</span>
+              <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{u.label}</span>
               <span className="app-mono text-[11px] tabular-nums text-ink-faint">{u.pct}%</span>
             </div>
           ))}

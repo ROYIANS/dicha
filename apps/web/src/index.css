@@ -675,7 +675,6 @@ body {
 }
 /* 侧栏导航 — 块状 hover + active 下压（lp-nav-link 的深色侧栏版） */
 .app-sidebar-link {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 13px;
   letter-spacing: -0.01em;
   transition:
