@@ -454,3 +454,36 @@ Moved account management from modal to /account, refined the account UI to the f
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: 字体纪律收口：收紧 serif 边界 + 统一 font-serif
+
+**Date**: 2026-06-25
+**Task**: 字体纪律收口：收紧 serif 边界 + 统一 font-serif
+**Branch**: `main`
+
+### Summary
+
+把 serif-first→sans-first 改造收尾：删除 4 处重复 const SERIF 常量统一为 Tailwind font-serif 工具类（补齐 Songti SC fallback），3 处 serif 泄漏降级（落地页「新功能：」标签→mono、跑马灯物件名/功能卡片标题→sans），保留品牌字标/manifesto/blockquote/H2/情感引文及旁白角色齐默默的叙事发言为 serif。对齐 design-system.md / blueprint-aesthetic.md 移除已失效的本地 SERIF 常量引用。归档 logo-global-replacement 任务。下一步：清理 app shell（Sidebar/home/Header）大面积误用 mono 当正文的问题——已与用户对齐边界规则（菜单label/按钮/问候/日期/卡片tag/分区标题/用户名→sans，mono 仅留真读数：百分比/单位/kbd），待开新任务推进。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `27301a7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
