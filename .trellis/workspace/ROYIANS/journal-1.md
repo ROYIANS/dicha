@@ -487,3 +487,36 @@ Moved account management from modal to /account, refined the account UI to the f
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: 清理页面等宽字体
+
+**Date**: 2026-06-26
+**Task**: 清理页面等宽字体
+**Branch**: `main`
+
+### Summary
+
+全量审查前端页面与共享组件中的 mono 使用，移除 Mono/app-mono/IBM Plex Mono 字体栈，同步前端字体规范，并完成 lint、typecheck、build、dev module graph 与 vitest 验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `aaa1165` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

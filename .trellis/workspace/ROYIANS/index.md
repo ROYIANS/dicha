@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 12
-- **Last Active**: 2026-06-25
+- **Total Sessions**: 13
+- **Last Active**: 2026-06-26
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~489 | Active |
+| `journal-1.md` | ~522 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 13 | 2026-06-26 | 清理页面等宽字体 | `aaa1165` | `main` |
 | 12 | 2026-06-25 | 字体纪律收口：收紧 serif 边界 + 统一 font-serif | `27301a7` | `main` |
 | 11 | 2026-06-24 | Finish account settings page | `a1588ba`, `498c76d`, `14ec43e`, `8f36565`, `d451155`, `73fcd00`, `316ac8e`, `2574d67` | `main` |
 | 10 | 2026-06-22 | Finish landing frame polish | `c42c05f` | `main` |
