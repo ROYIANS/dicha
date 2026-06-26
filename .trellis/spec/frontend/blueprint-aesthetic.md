@@ -187,24 +187,23 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 
 ---
 
-## 5. 字体（三声部）
+## 5. 字体（UI sans-first + 叙事 serif）
 
 | 声部 | 字体 | 用途 | 实现 |
 |---|---|---|---|
 | **无衬线（UI/操作）** | `'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', sans-serif` | UI 正文、导航、表单、按钮、密集信息 | `@font-face` 指向本地 `SarasaUiSC.ttf`，`@theme --font-sans` 与 `html, body` 默认指向它 |
 | **衬线（装饰/情感）** | `'Noto Serif SC', 'Songti SC', serif` | 品牌字标「滴茶」/ manifesto 大金句 / blockquote / section H2 / 情感引文 / 旁白角色齐默默的叙事发言 | 仅 `font-serif` 工具类（由 `@theme --font-serif` 生成） |
-| **等宽（工程/技术）** | `'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace` | kbd、真实读数（数字 / 百分比 / 温度）、真实编号、技术符号 | 落地页 `Mono` 组件 / app `app-mono` 类 |
 
-> **铁律**：操作性 UI 默认走 Sarasa UI SC；技术性 / 读数性文字走 mono；情感性 / 叙事性文字走 serif。三者按语义分工，不混用。mono 不能被用来生成纯装饰的工程编号或角标。**侧栏菜单 / 按钮 / 卡片标签 = sans，不用 mono**；中文一律 sans，纯数字 / 符号才 mono。
+> **铁律**：操作性 UI 默认走 Sarasa UI SC；情感性 / 叙事性文字走 serif。页面 UI 不使用 mono：不得新增 `Mono` 组件、`app-mono`、`font-mono`、`IBM Plex Mono`、`ui-monospace` 或内联 monospace 字体栈。读数、编号、kbd 和技术符号仍走 sans；需要数字对齐只用 `tabular-nums`。
 >
-> zed 对应是 `font-plex-serif`（衬线，情感）+ `font-plex-mono`（等宽，技术）。dicha 在此基础上加入 Sarasa UI SC 承担界面正文，Noto Serif SC 保留给装饰 / 叙事，IBM Plex Mono 保留给技术读数。
+> zed 对应是 `font-plex-serif`（衬线，情感）+ `font-plex-mono`（等宽，技术）。dicha 保留 Sarasa UI SC 承担界面正文，Noto Serif SC 保留给装饰 / 叙事；不再借用 mono 作为工程感来源，工程感由线框、标尺、节点、间距和物理按钮承担。
 
 字号节奏（落地页实测，`clamp()` 流体）：
 - 巨型宣言 H1：`clamp(2.8rem, 8vw, 6.5rem)` `font-medium` `leading-[1.05]` `tracking:-0.01em`
 - 段落大金句：`clamp(1.55rem, 3.2vw, 2.65rem)` `leading-[1.55]`
 - section 标题 H2：`clamp(1.6rem, 3.6vw, 2.4~2.6rem)` `font-semibold`
 - 正文：`13.5~16px` `leading-relaxed`
-- mono 标签：`11~13px`，仅用于真实数字读数、kbd、技术符号；不要添加 `PRO / 01`、`AUTH·OTP`、`№001` 这类氛围型代号，也不要用于中文导航 / 按钮 / 标签。
+- 小标签 / 读数：`11~13px`，走 sans；数字需要等宽对齐时使用 `tabular-nums`。不要添加 `PRO / 01`、`AUTH·OTP`、`№001` 这类氛围型代号，也不要用字体切换来伪造工程感。
 
 ---
 
@@ -259,7 +258,7 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 `dash-card` = `rounded-md`(6px) + `1px var(--hairline)` + `inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 8%, transparent)` 底边凸起。`--interactive:hover` 摊平（`bg:surface-alt, box-shadow:none`），`:active` 下压。
 
 ### 7.4 kbd 徽标
-`h-[18px] min-w-[18px] rounded px-1 text-[11px]`，mono；普通态 `1px solid --line` + `color:--ink-soft`；chrome 块上用 `.lp-key-on-chrome`（`border: sidebar-ink 35%`, `color: sidebar-ink 85%`）。主按钮内 kbd 用 onDark 变体。
+`h-[18px] min-w-[18px] rounded px-1 text-[11px]`，字体继承 sans；普通态 `1px solid --line` + `color:--ink-soft`；chrome 块上用 `.lp-key-on-chrome`（`border: sidebar-ink 35%`, `color: sidebar-ink 85%`）。主按钮内 kbd 用 onDark 变体。
 
 ---
 
@@ -274,7 +273,7 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 | `lp-nav-link` | `app-sidebar-link`（深色侧栏版：hover `--sidebar-hover`） | 同上 |
 | — | `dash-card`（Zed `fv-style`） | `components/DashCard.tsx` |
 | `GridPattern` | `app-shell-noise`（subtle 噪点，zed body noise 轻量版） | `index.css` |
-| `Mono` | `app-mono` / `app-dash-section`（`11px uppercase tracking:0.06em`） | 同上 |
+| 小标签 / 读数 | `app-dash-section`（`11px uppercase tracking:0.06em`） | 同上；字体继承 sans |
 
 app-shell 特有：
 - **深色侧栏**（`--sidebar-bg`，日夜都深）+ 浮起内容区（`rounded-l-[20px] shadow-float`），**用阴影代替边框分界**（去后台感）。
@@ -333,7 +332,7 @@ app-shell 特有：
 2. **分界线全幅贯穿视口**（`w-[200vw]`），不收容器宽。
 3. **节点骑线**走 `--node-*-offset` 变量，**不用 translate 居中**；6px、显式 offset。
 4. **禁止装饰性工程文字**：不得添加 `PRO / 01`、`ACCT / 01`、`AUTH·OTP`、`A1`、`F.01`、`№001`、`// 标签` 这类无业务含义的角标、编号、代号、图纸标题栏。
-5. **技术文字走 mono，情感文字走 serif**，不混用；mono 只服务真实内容。
+5. **页面 UI 不使用 mono，情感文字走 serif**；数字对齐用 `tabular-nums`，不要恢复 `Mono` / `app-mono` / monospace 字体栈。
 6. **rail 装饰组合逐段不同**（`RAILS` 预设），相邻 section 禁同款布局；业务页可以完全不用 rail，避免内容被挤压。
 7. **交互控件统一 `rounded-md`**：按钮、输入框、选择项不得使用 `rounded-[2px]` / `0.125rem`，也不要用胶囊或大圆角替代。
 8. **颜色只走 token**（`var(--ink)` / `--hairline` / `--lp-brand` …），禁硬编码 `text-gray-*` / `oklch()` / `bg-white/NN`（见 design-system.md §8）。
@@ -347,7 +346,7 @@ app-shell 特有：
 ## 参考
 
 - zed 精确拆解：`.trellis/tasks/06-10-landing-frame-polish/research/zed-header-footer.md`、`zed-section-reference.md`、`current-gap-analysis.md`
-- 落地页实现：`apps/web/src/routes/index.tsx`（`SectionFrame` / `RAILS` / `Node` / `Slash` / `Ruler` / `Barcode` / `GridPattern` / `DotPattern` / `Mark` / `Reveal` / `Mono` / `Key`）
+- 落地页实现：`apps/web/src/routes/index.tsx`（`SectionFrame` / `RAILS` / `Node` / `Slash` / `Ruler` / `Barcode` / `GridPattern` / `DotPattern` / `Mark` / `Reveal` / `Key`）
 - token 与工具类：`apps/web/src/index.css`（`lp-*` 行 315–646、`app-*` 行 648–939、`dash-card-*` 行 717–883、`surface-*` 行 941–961）
 - app-shell 语汇：`apps/web/src/components/{FrameNode,DashCard,Header,Sidebar}.tsx`
 - 材质 / 色彩细则：[design-system.md](./design-system.md)

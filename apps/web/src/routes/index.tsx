@@ -40,7 +40,6 @@ export const Route = createFileRoute('/')({
    编目网格 / 大金句拼格 / 清单台账 / 非对称信笺 / 留白收尾。
    ════════════════════════════════════════════════════════════════════════════ */
 
-const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
@@ -294,23 +293,14 @@ function Reveal({
   );
 }
 
-function Mono({ children, className = '', style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
-  return (
-    <span className={className} style={{ fontFamily: MONO, ...style }}>
-      {children}
-    </span>
-  );
-}
-
 function Key({ children, onDark = false }: { children: ReactNode; onDark?: boolean }) {
   return (
     <span
       className={`ml-2 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded px-1 text-[11px] leading-none ${onDark ? 'lp-key-on-chrome' : ''}`}
       style={
         onDark
-          ? { fontFamily: MONO }
+          ? undefined
           : {
-              fontFamily: MONO,
               border: `1px solid ${LINE}`,
               color: 'var(--ink-soft)',
             }
@@ -365,7 +355,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
           <div className="hidden items-center gap-0.5 lg:flex">
             {NAV.map((n) => (
               <a key={n.href} href={n.href} className="lp-nav-link inline-flex h-8 items-center rounded-md px-2.5">
-                <Mono className="text-[13px]">{n.label}</Mono>
+                <span className="text-[13px]">{n.label}</span>
               </a>
             ))}
           </div>
@@ -407,7 +397,7 @@ function Announce() {
       <span aria-hidden className="absolute bottom-0 left-1/2 block h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
       <Node pos="bottom-left" className="hidden lg:block" />
       <Node pos="bottom-right" className="hidden lg:block" />
-      <Mono className="text-[13px] tracking-wide text-lp-brand">新功能：</Mono>
+      <span className="text-[13px] tracking-wide text-lp-brand">新功能：</span>
       <span className="text-[13px] font-medium font-serif tracking-wide text-ink">齐默默 —— 陪你慢慢归置</span>
       <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">→</span>
     </a>
@@ -522,7 +512,7 @@ function Hero() {
         <p className="mx-auto mt-6 max-w-[32ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
           把日子，一件一件归置妥帖。
         </p>
-        <p className="mx-auto mt-3 max-w-[40ch] text-[12px] leading-relaxed text-ink-faint" style={{ textWrap: 'balance', fontFamily: MONO }}>
+        <p className="mx-auto mt-3 max-w-[40ch] text-[12px] leading-relaxed text-ink-faint" style={{ textWrap: 'balance' }}>
           dicha /ˈdiː.tʃɑː/ · 西语里的「幸福」，中文里的「慢下来」
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -536,7 +526,7 @@ function Hero() {
             <Key>C</Key>
           </a>
         </div>
-        <Mono className="mt-6 block text-[12px] text-ink-faint">支持 · 网页 · iOS · Android</Mono>
+        <span className="mt-6 block text-[12px] text-ink-faint">支持 · 网页 · iOS · Android</span>
       </Reveal>
     </section>
   );
@@ -589,7 +579,7 @@ function Marquee() {
     <div aria-hidden={hidden || undefined} className="flex shrink-0 items-center">
       {MARQUEE_ITEMS.map((it, i) => (
         <span key={i} className="flex items-center">
-          <Mono className="text-[11px] text-ink-faint">№{String(i + 1).padStart(3, '0')}</Mono>
+          <span className="text-[11px] text-ink-faint">№{String(i + 1).padStart(3, '0')}</span>
           <span className="ml-2 mr-6 text-[13px] text-ink-soft">{it}</span>
           <span className="mr-6 size-1 rotate-45 border" style={{ borderColor: LINE }} />
         </span>
@@ -598,7 +588,7 @@ function Marquee() {
   );
   return (
     <section className="py-7">
-      <Mono className="mb-3 block px-6 text-center text-[11px] tracking-[0.2em] text-ink-faint sm:px-10">刚刚，有人收进了这些——</Mono>
+      <span className="mb-3 block px-6 text-center text-[11px] tracking-[0.2em] text-ink-faint sm:px-10">刚刚，有人收进了这些——</span>
       <div
         className="overflow-hidden border-y py-2.5"
         style={{ borderColor: LINE, maskImage: 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)' }}
@@ -622,7 +612,7 @@ function FeatureTabs() {
       {/* 头排：左标题 + 右幽灵按钮（Zed "AI that works..." 的头排布局） */}
       <div className="flex flex-col gap-5 px-6 py-10 sm:px-10 lg:flex-row lg:items-end lg:justify-between" style={{ borderBottom: `1px solid ${LINE}` }}>
         <hgroup className="max-w-2xl">
-          <Mono className="text-[12px] text-lp-brand">// 功能</Mono>
+          <span className="text-[12px] text-lp-brand">// 功能</span>
           <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink" style={{ textWrap: 'balance' }}>记录，不是完成任务，是慢慢地归置。</h2>
         </hgroup>
         <a href="#demo" className="lp-btn lp-btn-ghost inline-flex h-9 w-fit items-center gap-1 rounded-md pl-3 pr-2">
@@ -694,7 +684,7 @@ function FeatureVignette({ id }: { id: string }) {
             <span key={pos} aria-hidden className={`absolute size-4 border-lp-brand ${pos}`} />
           ))}
           <div className="absolute left-1/2 top-1/2 w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-lg p-4" style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--hairline)`, boxShadow: 'var(--shadow-md)' }}>
-            <Mono className="text-[10px] text-lp-brand">已识别</Mono>
+            <span className="text-[10px] text-lp-brand">已识别</span>
             <div className="mt-1 text-[15px] font-semibold text-ink">白瓷盖碗</div>
             <div className="mt-2 flex gap-1.5">
               {['茶具', '厨房', '易碎'].map((t) => (
@@ -713,7 +703,7 @@ function FeatureVignette({ id }: { id: string }) {
           <p className="text-[19px] font-serif leading-loose text-ink">
             「杯沿的一道细纹，<br />是去年冬天的事了。」
           </p>
-          <Mono className="mt-5 block text-[11px] text-ink-faint">—— 写给：白瓷盖碗</Mono>
+          <span className="mt-5 block text-[11px] text-ink-faint">—— 写给：白瓷盖碗</span>
         </div>
       </VignetteCard>
     );
@@ -727,7 +717,7 @@ function FeatureVignette({ id }: { id: string }) {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[15px] font-semibold text-ink">《百年孤独》</div>
-              <Mono className="mt-1 block text-[11px] text-ink-faint">书房 · 第三层书架</Mono>
+              <span className="mt-1 block text-[11px] text-ink-faint">书房 · 第三层书架</span>
             </div>
             <Wind size={18} className="text-ink-faint" />
           </div>
@@ -748,9 +738,9 @@ function FeatureVignette({ id }: { id: string }) {
         <div className="max-w-[80%] self-start rounded-xl rounded-bl-sm px-4 py-3" style={{ backgroundColor: 'var(--chip-sage)' }}>
           <p className="text-[13.5px] font-serif leading-relaxed text-ink">创可贴在药盒第二格。上次用，是三月你切到手指那回。</p>
         </div>
-        <Mono className="self-start pl-1 text-[10px] text-ink-faint">齐默默 · 仅在被问起时</Mono>
+        <span className="self-start pl-1 text-[10px] text-ink-faint">齐默默 · 仅在被问起时</span>
         <div className="mt-2 flex items-center gap-2 self-end rounded-full px-3 py-1.5" style={{ border: `1px solid ${LINE}` }}>
-          <Mono className="text-[11px] text-ink-soft">创可贴放哪了？</Mono>
+          <span className="text-[11px] text-ink-soft">创可贴放哪了？</span>
         </div>
       </div>
     </VignetteCard>
@@ -760,7 +750,7 @@ function FeatureVignette({ id }: { id: string }) {
 function VignetteCard({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="relative">
-      <Mono className="mb-3 block text-[11px] text-ink-faint">{label}</Mono>
+      <span className="mb-3 block text-[11px] text-ink-faint">{label}</span>
       {children}
     </div>
   );
@@ -776,10 +766,10 @@ function Demo() {
           <span className="grid h-5 w-5 place-items-center rounded-full" style={{ backgroundColor: LP.chrome }}>
             <Play size={10} style={{ color: LP.chromeFg }} />
           </span>
-          <Mono className="text-[12px] text-ink">亲手试试</Mono>
+          <span className="text-[12px] text-ink">亲手试试</span>
         </Link>
         <AppWindow />
-        <Mono className="mt-4 block text-center text-[12px] text-ink-faint">一眼看过去，房间、物品、还有那些怕忘记的小事，都在这里了。</Mono>
+        <span className="mt-4 block text-center text-[12px] text-ink-faint">一眼看过去，房间、物品、还有那些怕忘记的小事，都在这里了。</span>
       </Reveal>
     </section>
   );
@@ -794,7 +784,7 @@ function AppWindow() {
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-pink)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-peach)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-sage)' }} />
-        <Mono className="mx-auto text-[12px] text-ink-soft">滴茶 — 我的小窝</Mono>
+        <span className="mx-auto text-[12px] text-ink-soft">滴茶 — 我的小窝</span>
       </div>
       <div className="flex h-[360px] sm:h-[420px]">
         <div className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
@@ -805,7 +795,7 @@ function AppWindow() {
         </div>
         <div className="flex-1 overflow-hidden p-7">
           <div className="text-[16px] font-semibold font-serif text-ink">早，Serena。</div>
-          <Mono className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里也静下来了。</Mono>
+          <span className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里也静下来了。</span>
           <div className="mt-6 grid grid-cols-4 gap-3">
             {chips.map((c, i) => (
               <div key={i} className="rounded-xl p-3" style={{ border: `1px solid var(--hairline)`, backgroundColor: 'var(--surface)' }}>
@@ -815,7 +805,7 @@ function AppWindow() {
               </div>
             ))}
           </div>
-          <Mono className="mt-6 block text-[11px] text-ink-faint">我的收纳空间</Mono>
+          <span className="mt-6 block text-[11px] text-ink-faint">我的收纳空间</span>
           <div className="mt-2.5 flex gap-3">
             {rooms.map((c, i) => (<div key={i} className="h-24 w-[96px] shrink-0 rounded-xl" style={{ backgroundColor: `var(--chip-${c})`, border: `1px solid var(--hairline)` }} />))}
           </div>
@@ -833,8 +823,8 @@ function SpecPanel() {
       {SPECS.map((s, i) => (
         <div key={s.k} className="relative min-w-[150px] flex-1 px-7 py-7">
           {i !== 0 && <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-dashed" style={{ borderColor: LINE }} />}
-          <Mono className="text-[11px] tracking-wider text-ink-faint">{s.k}</Mono>
-          <Mono className="mt-2 block text-[18px] font-semibold text-ink">{s.v}</Mono>
+          <span className="text-[11px] tracking-wider text-ink-faint">{s.k}</span>
+          <span className="mt-2 block text-[18px] font-semibold text-ink">{s.v}</span>
         </div>
       ))}
     </section>
@@ -848,10 +838,10 @@ function Rooms() {
     <section id="rooms">
       <div className="flex items-end justify-between px-8 py-9">
         <div>
-          <Mono className="text-[12px] text-lp-brand">// 房间</Mono>
+          <span className="text-[12px] text-lp-brand">// 房间</span>
           <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">每样东西，都有自己的房间。</h2>
         </div>
-        <Mono className="hidden text-[12px] text-ink-faint sm:block">06 间</Mono>
+        <span className="hidden text-[12px] text-ink-faint sm:block">06 间</span>
       </div>
       <HRule />
       <div className="grid grid-cols-2 lg:grid-cols-3">
@@ -872,13 +862,13 @@ function RoomCell({ room: r, index }: { room: (typeof ROOMS)[number]; index: num
         <span className="grid h-11 w-11 place-items-center rounded-xl" style={{ backgroundColor: isMore ? 'transparent' : `var(--chip-${r.tint})`, border: isMore ? `1px dashed ${LINE}` : 'none' }}>
           <Icon size={20} style={{ color: isMore ? 'var(--ink-faint)' : `var(--accent-${r.tint})` }} />
         </span>
-        <Mono className="text-[12px] text-ink-faint">{r.no}</Mono>
+        <span className="text-[12px] text-ink-faint">{r.no}</span>
       </div>
       <h3 className="mt-4 text-[18px] font-semibold text-ink">{r.label}</h3>
       <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{r.caption}</p>
       {!isMore && (
         <span className="mt-4 inline-flex items-center text-ink-soft transition-colors group-hover:text-ink">
-          <Mono className="text-[12px]">进入</Mono>
+          <span className="text-[12px]">进入</span>
           <ArrowRight size={13} className="ml-1 transition-transform group-hover:translate-x-0.5" />
         </span>
       )}
@@ -895,7 +885,7 @@ function Principles() {
         {/* 大金句卡（左列跨两行）*/}
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
           <GridPattern />
-          <Mono className="text-[12px] text-lp-brand">// 为什么</Mono>
+          <span className="text-[12px] text-lp-brand">// 为什么</span>
           <p className="mt-5 font-serif leading-[1.55] text-ink" style={{ fontSize: 'clamp(1.15rem,2.2vw,1.6rem)' }}>
             像滴茶一样，一滴一滴地，把日子放好。
           </p>
@@ -913,7 +903,7 @@ function Principles() {
         {/* 四个原则小格 */}
         {PRINCIPLES.map((p, i) => (
           <Reveal as="article" key={p.t} delay={i * 50} className="bg-surface relative p-7">
-            <Mono className="text-[11px] text-ink-faint">0{i + 1}</Mono>
+            <span className="text-[11px] text-ink-faint">0{i + 1}</span>
             <h3 className="mt-2 text-[16px] font-semibold text-ink">{p.t}</h3>
             <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{p.d}</p>
           </Reveal>
@@ -950,7 +940,7 @@ function Extras() {
   return (
     <section>
       <div className="px-8 py-9">
-        <Mono className="text-[12px] text-lp-brand">// 细节台账</Mono>
+        <span className="text-[12px] text-lp-brand">// 细节台账</span>
         <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">每一处，都为安心而造。</h2>
       </div>
       <HRule />
@@ -959,7 +949,7 @@ function Extras() {
           <Reveal as="article" key={e.t} delay={(i % 2) * 50} className="relative flex items-baseline gap-3 px-8 py-5">
             <div className="pointer-events-none absolute inset-x-0 bottom-0 border-b border-dashed" style={{ borderColor: LINE }} />
             {i % 2 === 0 && <div className="pointer-events-none absolute inset-y-0 right-0 hidden border-r border-dashed lg:block" style={{ borderColor: LINE }} />}
-            <Mono className="shrink-0 text-[11px] text-ink-faint">№{String(i + 1).padStart(2, '0')}</Mono>
+            <span className="shrink-0 text-[11px] text-ink-faint">№{String(i + 1).padStart(2, '0')}</span>
             <span className="shrink-0 text-[15px] font-semibold text-ink">{e.t}</span>
             <span aria-hidden className="mx-1 flex-1 border-b border-dotted" style={{ borderColor: LINE, transform: 'translateY(-3px)' }} />
             <span className="shrink-0 text-[12.5px] text-ink-soft">{e.d}</span>
@@ -976,14 +966,14 @@ function AuthorLetter() {
   return (
     <section id="author" className="grid grid-cols-1 lg:grid-cols-12">
       <div className="relative px-8 py-12 lg:col-span-4">
-        <Mono className="text-[12px] text-lp-brand">// 来自作者</Mono>
+        <span className="text-[12px] text-lp-brand">// 来自作者</span>
         <div className="mt-6 flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-2xl" style={{ backgroundColor: 'var(--chip-sage)' }}>
             <MessageSquareText size={22} style={{ color: 'var(--accent-sage)' }} />
           </span>
           <div>
             <div className="text-[15px] font-semibold text-ink">齐默默</div>
-            <Mono className="text-[11px] text-ink-faint">引导者 · 作者</Mono>
+            <span className="text-[11px] text-ink-faint">引导者 · 作者</span>
           </div>
         </div>
       </div>
@@ -995,7 +985,7 @@ function AuthorLetter() {
             「滴茶不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
           </p>
         </blockquote>
-        <Mono className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于滴茶的第一个清晨</Mono>
+        <span className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于滴茶的第一个清晨</span>
       </Reveal>
     </section>
   );
@@ -1082,19 +1072,19 @@ function Footer() {
                 <span className="text-[16px] font-semibold font-serif" style={{ color: LP.chromeFg }}>滴茶</span>
               </div>
               <BrandMark className="mt-4 h-9 w-[54px] opacity-[0.65]" style={{ color: LP.footMuted }} />
-              <Mono className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</Mono>
+              <span className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</span>
               <hr className="my-3 w-20 border-t" style={{ borderColor: LP.footHair }} />
-              <Link to="/home" className="lp-foot-link w-fit"><Mono className="text-[12px]">已有账号？登录</Mono></Link>
-              <Mono className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>服务条款 · 隐私政策</Mono>
+              <Link to="/home" className="lp-foot-link w-fit"><span className="text-[12px]">已有账号？登录</span></Link>
+              <span className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>服务条款 · 隐私政策</span>
             </div>
             {FOOT_COLS.map((c) => (
               <div key={c.h} className="flex flex-col gap-4 px-5 py-4 md:py-8 lg:py-10">
-                <Mono className="text-[12px] font-semibold" style={{ color: LP.chromeFg }}>{c.h}</Mono>
+                <span className="text-[12px] font-semibold" style={{ color: LP.chromeFg }}>{c.h}</span>
                 <ul className="flex flex-col gap-3">
                   {c.items.map((it) => (
                     <li key={it.label}>
                       <a href="#about" className="lp-foot-link">
-                        <Mono className="text-[12px]">{it.label}</Mono>
+                        <span className="text-[12px]">{it.label}</span>
                         {it.ext && <span aria-hidden className="ml-2 text-[12px]" style={{ color: LP.footFaint }}>↗</span>}
                       </a>
                     </li>

@@ -49,7 +49,7 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
             <span className="sm:hidden">{t('header.searchShort', { defaultValue: '搜索' })}</span>
             <span className="hidden sm:inline">{t('header.searchPlaceholder')}</span>
           </span>
-          <span className="app-mono ml-auto hidden shrink-0 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline">
+          <span className="ml-auto hidden shrink-0 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline">
             /
           </span>
         </button>

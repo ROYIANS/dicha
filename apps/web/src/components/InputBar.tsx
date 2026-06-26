@@ -6,7 +6,7 @@ function handleStub() {
   toast.info('录入功能即将开放');
 }
 
-/** 底部录入栏 — Zed 式 hairline + mono 输入 + 物理感主按钮。 */
+/** 底部录入栏 — Zed 式 hairline + 物理感主按钮。 */
 export function InputBar() {
   const { t } = useTranslation();
 

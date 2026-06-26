@@ -379,7 +379,7 @@ function Reading() {
           <div className="dash-card-progress mt-2.5 bg-chip-peach">
             <div className="w-[68%] bg-peach" />
           </div>
-          <div className="app-mono mt-1 text-[11px] text-ink-faint">68%</div>
+          <div className="mt-1 text-[11px] tabular-nums text-ink-faint">68%</div>
         </div>
       </div>
       <button type="button" onClick={stub} className="lp-btn lp-btn-ghost mt-3 w-full rounded-md py-2 text-[12px] text-ink">
@@ -423,7 +423,7 @@ function SpaceUsage() {
             <div key={u.key} className="flex items-center gap-2">
               <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: `var(--accent-${u.tint})` }} />
               <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{u.label}</span>
-              <span className="app-mono text-[11px] tabular-nums text-ink-faint">{u.pct}%</span>
+              <span className="text-[11px] tabular-nums text-ink-faint">{u.pct}%</span>
             </div>
           ))}
         </div>

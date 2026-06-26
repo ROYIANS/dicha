@@ -1,7 +1,5 @@
 /* Font imports must come before all other @import (CSS spec). */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
-/* IBM Plex Mono — 工程/工业气质的等宽体，用于 landing 的技术性标签、导航、按键徽标。 */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 /* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
 @import 'tailwindcss';
 @import '@heroui/styles';
@@ -496,7 +494,6 @@ body {
   }
 }
 .lp-footer-wordmark {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: clamp(2.5rem, 13vw, 4.25rem);
   color: color-mix(in oklab, var(--sidebar-ink) 3%, transparent);
   -webkit-text-stroke: 1.2px color-mix(in oklab, var(--sidebar-ink) 20%, transparent);
@@ -670,9 +667,6 @@ body {
   backdrop-filter: saturate(160%) blur(14px);
   -webkit-backdrop-filter: saturate(160%) blur(14px);
 }
-.app-mono {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-}
 /* 侧栏导航 — 块状 hover + active 下压（lp-nav-link 的深色侧栏版） */
 .app-sidebar-link {
   font-size: 13px;
@@ -694,7 +688,6 @@ body {
   color: var(--sidebar-ink);
 }
 .app-sidebar-section {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -722,7 +715,6 @@ body {
 }
 /* Dashboard 区块标题 — 与侧栏 section 同语汇 */
 .app-dash-section {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -863,7 +855,6 @@ a.dash-card:active {
   border-radius: inherit;
 }
 .dash-card-action {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 11px;
   color: var(--ink-faint);
   transition: color 150ms ease;
@@ -912,13 +903,12 @@ a.dash-card:active {
     padding-right: 1.75rem;
   }
 }
-/* 录入栏 — 物理感主按钮 + mono 输入 */
+/* 录入栏 — 物理感主按钮 */
 .app-input-bar {
   background-color: color-mix(in oklab, var(--canvas) 92%, var(--surface));
   border-top: 1px solid var(--hairline);
 }
 .app-input-field {
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 13px;
   transition: background-color 150ms ease;
 }

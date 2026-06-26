@@ -1,12 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BrandMark } from '@/components/AppBrand';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
-const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 
 export type NavDrawerItem = { href: string; label: string };
 
@@ -15,14 +13,6 @@ type LandingNavDrawerProps = {
   onOpenChange: (open: boolean) => void;
   items: NavDrawerItem[];
 };
-
-function DrawerMono({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <span className={className} style={{ fontFamily: MONO }}>
-      {children}
-    </span>
-  );
-}
 
 /** Zed 式 bottom drawer：Portal 遮罩 + 点阵 + 自底部滑出面板。 */
 export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawerProps) {
@@ -93,14 +83,14 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
         <nav aria-label="站点主导航" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-2">
           {items.map((item) => (
             <a key={item.href} href={item.href} className="lp-drawer-link rounded-md px-3 py-3.5" onClick={close}>
-              <DrawerMono className="text-[15px]">{item.label}</DrawerMono>
+              <span className="text-[15px]">{item.label}</span>
             </a>
           ))}
         </nav>
 
         <div className="flex shrink-0 flex-col gap-3 border-t border-hairline px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-between">
-            <DrawerMono className="text-[12px] text-ink-soft">主题</DrawerMono>
+            <span className="text-[12px] text-ink-soft">主题</span>
             <ThemeToggle className="lp-nav-link inline-flex size-9 items-center justify-center rounded-md border border-hairline" />
           </div>
           <Link
@@ -108,7 +98,7 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
             className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center rounded-md px-4 py-3"
             onClick={close}
           >
-            <DrawerMono className="text-[13px] font-medium">开始入住</DrawerMono>
+            <span className="text-[13px] font-medium">开始入住</span>
           </Link>
         </div>
       </section>

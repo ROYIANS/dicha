@@ -24,7 +24,6 @@ export const Route = createFileRoute('/login')({
   component: LoginPage,
 });
 
-const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 // 结构线 —— 与落地页同定义（blueprint-aesthetic.md §4.2）
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
@@ -56,15 +55,6 @@ function GridPattern() {
       </defs>
       <rect width="100%" height="100%" fill={`url(#${major})`} />
     </svg>
-  );
-}
-
-/** mono 文字包裹（落地页 Mono 的本地等价）。 */
-function Mono({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <span className={className} style={{ fontFamily: MONO }}>
-      {children}
-    </span>
   );
 }
 
@@ -129,7 +119,7 @@ function EmailField({
   return (
     <div className="relative block space-y-1.5">
       <label htmlFor={id}>
-        <Mono className="block text-[11px] tracking-wider text-ink-soft">{label}</Mono>
+        <span className="block text-[11px] tracking-wider text-ink-soft">{label}</span>
       </label>
       <input
         id={id}
@@ -145,7 +135,7 @@ function EmailField({
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
         className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
-        style={{ borderColor: 'var(--hairline)', fontFamily: MONO }}
+        style={{ borderColor: 'var(--hairline)' }}
       />
       {open ? (
         <div
@@ -165,7 +155,6 @@ function EmailField({
               }}
               onMouseEnter={() => setActiveIndex(index)}
               className="block w-full px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-surface-alt aria-selected:bg-surface-alt"
-              style={{ fontFamily: MONO }}
             >
               {suggestion}
             </button>
@@ -183,7 +172,7 @@ function CrossDivider() {
       <span
         aria-hidden
         className="absolute left-1/2 top-1/2 grid size-3 -translate-x-1/2 -translate-y-1/2 place-items-center text-[12px] leading-none text-ink-faint"
-        style={{ backgroundColor: 'var(--surface)', fontFamily: MONO }}
+        style={{ backgroundColor: 'var(--surface)' }}
       >
         +
       </span>
@@ -362,9 +351,9 @@ function LoginPage() {
                   <h1 className="text-[18px] font-semibold font-serif leading-tight text-ink">
                     滴茶
                   </h1>
-                  <Mono className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-ink-faint">
                     dicha — sign in
-                  </Mono>
+                  </span>
                 </div>
               </div>
 
@@ -380,7 +369,7 @@ function LoginPage() {
                     backgroundColor: 'var(--chip-pink)',
                   }}
                 >
-                  <Mono className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">ERR</Mono>
+                  <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">ERR</span>
                   <p className="mt-1 text-[13px] leading-relaxed text-ink">{error}</p>
                 </div>
               )}
@@ -394,7 +383,7 @@ function LoginPage() {
                     backgroundColor: 'var(--chip-sage)',
                   }}
                 >
-                  <Mono className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">OK</Mono>
+                  <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">OK</span>
                   <p className="mt-1 text-[13px] leading-relaxed text-ink">{notice}</p>
                 </div>
               )}
@@ -419,9 +408,9 @@ function LoginPage() {
                     ) : (
                       <Mail size={14} />
                     )}
-                    <Mono className="text-[14px] font-medium">
+                    <span className="text-[14px] font-medium">
                       {pending ? '发送中…' : '发送验证码'}
-                    </Mono>
+                    </span>
                   </button>
                 </form>
               )}
@@ -446,9 +435,9 @@ function LoginPage() {
               {step === 'otp' && (
                 <form className="space-y-4" onSubmit={handleVerifyOtp}>
                   <div className="space-y-2">
-                    <Mono className="block text-[11px] tracking-wider text-ink-soft">
+                    <span className="block text-[11px] tracking-wider text-ink-soft">
                       验证码（已发送至 {email}）
-                    </Mono>
+                    </span>
                     <InputOTP
                       maxLength={6}
                       value={otp}
@@ -476,9 +465,9 @@ function LoginPage() {
                     ) : (
                       <KeyRound size={14} />
                     )}
-                    <Mono className="text-[14px] font-medium">
+                    <span className="text-[14px] font-medium">
                       {pending ? '验证中…' : '验证并登录'}
-                    </Mono>
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -486,18 +475,18 @@ function LoginPage() {
                     className="lp-nav-link inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-[12px]"
                   >
                     <ArrowLeft size={12} />
-                    <Mono>换一个邮箱</Mono>
+                    <span>换一个邮箱</span>
                   </button>
                 </form>
               )}
 
-              {/* 分隔：或（蓝图式 mono 标记） */}
+              {/* 分隔：或。 */}
               <div className="relative flex items-center gap-3">
                 <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
-                <Mono className="flex items-center gap-1 text-[11px] tracking-wider text-ink-faint">
+                <span className="flex items-center gap-1 text-[11px] tracking-wider text-ink-faint">
                   <Plus size={10} className="rotate-45" />
                   OR
-                </Mono>
+                </span>
                 <span className="h-px flex-1" style={{ backgroundColor: LINE }} />
               </div>
 
@@ -509,7 +498,7 @@ function LoginPage() {
                 className="lp-btn lp-btn-ghost inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <KeyRound size={15} />
-                <Mono className="text-[14px] font-medium">使用 passkey 登录</Mono>
+                <span className="text-[14px] font-medium">使用 passkey 登录</span>
               </button>
 
               {/* GitHub 登录 */}
@@ -520,11 +509,11 @@ function LoginPage() {
                 className="lp-btn lp-btn-ghost inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <GithubMark size={15} />
-                <Mono className="text-[14px] font-medium">使用 GitHub 登录</Mono>
+                <span className="text-[14px] font-medium">使用 GitHub 登录</span>
               </button>
 
               {/* 页脚小字 —— zed 式下划线渐显链接 */}
-              <p className="text-center text-[11px] leading-relaxed text-ink-faint" style={{ fontFamily: MONO }}>
+              <p className="text-center text-[11px] leading-relaxed text-ink-faint">
                 登录即表示您同意
                 <br />
                 <a
