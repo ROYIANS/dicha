@@ -586,3 +586,36 @@ Wired the new favicon package into the web entry HTML, updated the web manifest 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 16: Landing release QA
+
+**Date**: 2026-06-26
+**Task**: Landing release QA
+**Branch**: `main`
+
+### Summary
+
+Checked landing page desktop/mobile screenshots, verified footer logo sizing, added landing SEO/social meta, confirmed dev favicon/manifest paths and Vite build.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c9cf62a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
