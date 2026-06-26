@@ -495,18 +495,18 @@ body {
 }
 .lp-footer-wordmark {
   display: block;
-  width: clamp(8rem, 48vw, 15rem);
+  width: clamp(6.5rem, 38vw, 11.5rem);
   aspect-ratio: 1033 / 698;
   color: color-mix(in oklab, var(--sidebar-ink) 10%, transparent);
 }
 @media (min-width: 640px) {
   .lp-footer-wordmark {
-    width: clamp(14rem, 58vw, 34rem);
+    width: clamp(10rem, 44vw, 24rem);
   }
 }
 @media (min-width: 1024px) {
   .lp-footer-wordmark {
-    width: clamp(24rem, 64vw, 52rem);
+    width: clamp(16rem, 46vw, 36rem);
   }
 }
 /* 移动端不裁切 + 留底距；桌面端 Zed 式 overflow-clip 深裁切 */
