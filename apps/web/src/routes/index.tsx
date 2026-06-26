@@ -1019,7 +1019,7 @@ const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
   { h: '社交', items: [{ label: '微博', ext: true }, { label: '小红书', ext: true }, { label: 'GitHub', ext: true }, { label: 'X', ext: true }] },
 ];
 
-/** 页脚底部装饰带：border-t + 45° 斜纹 + 渐隐水平刻线 + 描边 wordmark
+/** 页脚底部装饰带：border-t + 45° 斜纹 + 渐隐水平刻线 + 低透明 logo mark
     （负 margin 伸出 container，由父级 overflow-clip 裁掉下缘；移动端少裁切）。 */
 function FooterBand() {
   const id = useId().replace(/:/g, '');
@@ -1034,9 +1034,7 @@ function FooterBand() {
         <rect width="100%" height="100%" fill={`url(#${id})`} />
       </svg>
       <div aria-hidden className="lp-footer-band-ticks pointer-events-none absolute inset-0" />
-      <span aria-hidden className="lp-footer-wordmark block select-none font-bold leading-[0.85] tracking-tighter">
-        滴茶
-      </span>
+      <BrandMark className="lp-footer-wordmark select-none" />
     </div>
   );
 }

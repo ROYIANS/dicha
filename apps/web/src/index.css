@@ -494,18 +494,19 @@ body {
   }
 }
 .lp-footer-wordmark {
-  font-size: clamp(2.5rem, 13vw, 4.25rem);
-  color: color-mix(in oklab, var(--sidebar-ink) 3%, transparent);
-  -webkit-text-stroke: 1.2px color-mix(in oklab, var(--sidebar-ink) 20%, transparent);
+  display: block;
+  width: clamp(8rem, 48vw, 15rem);
+  aspect-ratio: 1033 / 698;
+  color: color-mix(in oklab, var(--sidebar-ink) 10%, transparent);
 }
 @media (min-width: 640px) {
   .lp-footer-wordmark {
-    font-size: clamp(3.25rem, 16vw, 10rem);
+    width: clamp(14rem, 58vw, 34rem);
   }
 }
 @media (min-width: 1024px) {
   .lp-footer-wordmark {
-    font-size: clamp(4.5rem, 20vw, 17rem);
+    width: clamp(24rem, 64vw, 52rem);
   }
 }
 /* 移动端不裁切 + 留底距；桌面端 Zed 式 overflow-clip 深裁切 */
