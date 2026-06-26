@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 14
+- **Total Sessions**: 15
 - **Last Active**: 2026-06-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~555 | Active |
+| `journal-1.md` | ~588 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 15 | 2026-06-26 | Site favicon update | `0347653` | `main` |
 | 14 | 2026-06-26 | Footer wordmark logo mark | `cbbbda6` | `main` |
 | 13 | 2026-06-26 | 清理页面等宽字体 | `aaa1165` | `main` |
 | 12 | 2026-06-25 | 字体纪律收口：收紧 serif 边界 + 统一 font-serif | `27301a7` | `main` |

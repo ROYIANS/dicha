@@ -553,3 +553,36 @@ Replaced the landing footer wordmark text with the shared BrandMark logo mask, u
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: Site favicon update
+
+**Date**: 2026-06-26
+**Task**: Site favicon update
+**Branch**: `main`
+
+### Summary
+
+Wired the new favicon package into the web entry HTML, updated the web manifest branding while preserving #d6eacd theme/background colors, verified build and dev public asset loading, and archived the Trellis task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0347653` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
