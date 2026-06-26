@@ -520,3 +520,36 @@ Moved account management from modal to /account, refined the account UI to the f
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Footer wordmark logo mark
+
+**Date**: 2026-06-26
+**Task**: Footer wordmark logo mark
+**Branch**: `main`
+
+### Summary
+
+Replaced the landing footer wordmark text with the shared BrandMark logo mask, updated responsive footer mark sizing, verified lint/typecheck/build/dev module loading, and archived the Trellis task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cbbbda6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
