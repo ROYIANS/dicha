@@ -189,7 +189,7 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
     <div className={`flex min-h-0 flex-col ${className}`}>
       <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-3">
         {sections.map((section, idx) => (
-          <div key={section.title} className={idx > 0 && variant === 'sidebar' ? 'border-t border-white/8 pt-4' : ''}>
+          <div key={section.title} className={idx > 0 && variant === 'sidebar' ? 'pt-3' : ''}>
             <div className={`mb-1.5 px-2.5 ${sectionClass}`}>{section.title}</div>
             <div className="space-y-0.5">
               {section.items.map((item) => (
@@ -233,7 +233,7 @@ export function Sidebar() {
         className="z-[1]"
       />
 
-      <div className="relative border-b border-white/8 px-4 py-4">
+      <div className="relative px-4 py-4">
         <AppBrand variant="sidebar" to="/home" />
         <p className="mt-2 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('app.tagline')}</p>
       </div>
