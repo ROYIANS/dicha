@@ -165,7 +165,7 @@ export function SettingsSwitch({
       }`}
     >
       <span
-        className={`absolute left-1 top-1 size-5 rounded-full border border-hairline bg-surface transition-transform ${
+        className={`absolute left-1 top-1/2 size-5 -translate-y-1/2 rounded-full border border-hairline bg-surface transition-transform ${
           checked ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
