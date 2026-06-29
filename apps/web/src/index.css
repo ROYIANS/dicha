@@ -904,17 +904,304 @@ a.dash-card:active {
     padding-right: 1.75rem;
   }
 }
-/* 录入栏 — 物理感主按钮 */
-.app-input-bar {
-  background-color: color-mix(in oklab, var(--canvas) 92%, var(--surface));
-  border-top: 1px solid var(--hairline);
+/* 右下角浮动录入动作盘 */
+.app-action-dial {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  width: 5.75rem;
+  height: 5.75rem;
+  overflow: hidden;
+  pointer-events: auto;
+  transition: none;
 }
-.app-input-field {
-  font-size: 13px;
-  transition: background-color 150ms ease;
+.app-action-dial:hover,
+.app-action-dial:focus-within,
+.app-action-dial[data-open='true'] {
+  width: min(28rem, 84vw);
+  height: min(28rem, 84vw);
 }
-.app-input-field:hover {
-  background-color: var(--surface-alt);
+.app-action-dial::before {
+  content: '';
+  position: absolute;
+  right: -2.5rem;
+  bottom: -2.5rem;
+  width: 32rem;
+  height: 32rem;
+  border-radius: 100% 0 0 0;
+  background: radial-gradient(
+    farthest-side at bottom right,
+    color-mix(in oklab, var(--canvas) 99%, var(--surface)) 0 50%,
+    color-mix(in oklab, var(--canvas) 82%, transparent) 68%,
+    transparent 100%
+  );
+  filter: blur(22px);
+  opacity: 0;
+  transform: scale(0.82);
+  transform-origin: bottom right;
+  transition:
+    opacity var(--dur-base) var(--ease-soft),
+    transform var(--dur-base) var(--ease-soft);
+  mask: radial-gradient(farthest-side at bottom right, #000 0 46%, rgb(0 0 0 / 72%) 66%, transparent 84%);
+  -webkit-mask: radial-gradient(farthest-side at bottom right, #000 0 46%, rgb(0 0 0 / 72%) 66%, transparent 84%);
+}
+.app-action-dial-plate {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 27rem;
+  height: 27rem;
+  border-radius: 100% 0 0 0;
+  background: radial-gradient(
+    farthest-side at bottom right,
+    color-mix(in oklab, var(--canvas) 98%, var(--surface)) 0 48%,
+    color-mix(in oklab, var(--canvas) 90%, transparent) 66%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: scale(0.74);
+  transform-origin: bottom right;
+  transition:
+    opacity 180ms var(--ease-soft),
+    transform 260ms var(--ease-soft);
+  mask: radial-gradient(farthest-side at bottom right, #000 0 58%, rgb(0 0 0 / 64%) 70%, transparent 86%);
+  -webkit-mask: radial-gradient(farthest-side at bottom right, #000 0 58%, rgb(0 0 0 / 64%) 70%, transparent 86%);
+}
+.app-action-dial-anchor,
+.app-action-dial-item,
+.app-action-dial-main {
+  pointer-events: auto;
+}
+.app-action-dial-anchor {
+  position: absolute;
+  right: max(1.15rem, env(safe-area-inset-right));
+  bottom: max(1.15rem, env(safe-area-inset-bottom));
+}
+.app-action-dial-main {
+  display: grid;
+  width: 2.9rem;
+  height: 2.9rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--surface) 88%, var(--canvas));
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 6%, transparent);
+  transition:
+    transform var(--dur-base) var(--ease-soft),
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+.app-action-dial-main:hover {
+  background: var(--surface);
+  border-color: color-mix(in oklab, var(--ink) 16%, transparent);
+}
+.app-action-dial-main:active {
+  transform: translateY(1px) scale(0.98);
+}
+.app-action-dial-main svg {
+  transition: transform var(--dur-base) var(--ease-soft);
+}
+.app-action-dial-actions {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.app-action-dial-actions::before {
+  content: '';
+  position: absolute;
+  right: calc(max(1.15rem, env(safe-area-inset-right)) + 1.45rem - 8rem);
+  bottom: calc(max(1.15rem, env(safe-area-inset-bottom)) + 1.45rem - 8rem);
+  width: 16rem;
+  height: 16rem;
+  border: 1px solid color-mix(in oklab, var(--ink) 9%, transparent);
+  border-radius: 9999px;
+  opacity: 0;
+  transform: scale(0.72);
+  transform-origin: center;
+  transition:
+    opacity 180ms var(--ease-soft),
+    transform 260ms var(--ease-soft);
+  mask: linear-gradient(to top left, #000 0 62%, transparent 82%);
+  -webkit-mask: linear-gradient(to top left, #000 0 62%, transparent 82%);
+}
+.app-action-dial-item {
+  position: absolute;
+  right: calc(max(1.15rem, env(safe-area-inset-right)) + 0.05rem);
+  bottom: calc(max(1.15rem, env(safe-area-inset-bottom)) + 0.05rem);
+  display: inline-flex;
+  width: 2.9rem;
+  min-width: 2.9rem;
+  height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, var(--ink) 9%, transparent);
+  border-radius: 0.95rem;
+  background: color-mix(in oklab, var(--surface) 90%, var(--canvas));
+  color: var(--ink-soft);
+  box-shadow: inset 0 -1px 0 0 color-mix(in oklab, var(--ink) 5%, transparent);
+  opacity: 0;
+  padding: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0) scale(0.72);
+  transform-origin: center;
+  transition:
+    opacity 160ms var(--ease-soft),
+    transform 260ms var(--ease-soft),
+    color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+.app-action-dial-item:hover {
+  background: var(--surface);
+  border-color: color-mix(in oklab, var(--ink) 16%, transparent);
+  color: var(--ink);
+}
+.app-action-dial-hint {
+  position: absolute;
+  right: calc(max(1.15rem, env(safe-area-inset-right)) + 3.85rem);
+  bottom: calc(max(1.15rem, env(safe-area-inset-bottom)) + 0.72rem);
+  z-index: 1;
+  max-width: min(12rem, 46vw);
+  overflow: hidden;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--canvas) 82%, var(--surface));
+  color: var(--ink-soft);
+  padding: 0.38rem 0.62rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0.35rem, 0, 0);
+  transition:
+    opacity 140ms ease,
+    transform 180ms var(--ease-soft);
+}
+.app-action-dial:hover::before,
+.app-action-dial:focus-within::before,
+.app-action-dial[data-open='true']::before {
+  opacity: 0.96;
+  transform: scale(1);
+}
+.app-action-dial:hover .app-action-dial-plate,
+.app-action-dial:focus-within .app-action-dial-plate,
+.app-action-dial[data-open='true'] .app-action-dial-plate {
+  opacity: 0.96;
+  transform: scale(1);
+}
+.app-action-dial:hover .app-action-dial-actions::before,
+.app-action-dial:focus-within .app-action-dial-actions::before,
+.app-action-dial[data-open='true'] .app-action-dial-actions::before {
+  opacity: 1;
+  transform: scale(1);
+}
+.app-action-dial:hover .app-action-dial-main,
+.app-action-dial:focus-within .app-action-dial-main,
+.app-action-dial[data-open='true'] .app-action-dial-main {
+  border-color: color-mix(in oklab, var(--accent-warm, var(--ink)) 46%, var(--hairline));
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--accent-warm, var(--ink)) 18%, transparent);
+}
+.app-action-dial:hover .app-action-dial-main svg,
+.app-action-dial:focus-within .app-action-dial-main svg,
+.app-action-dial[data-open='true'] .app-action-dial-main svg {
+  transform: rotate(45deg);
+}
+.app-action-dial:hover .app-action-dial-item,
+.app-action-dial:focus-within .app-action-dial-item,
+.app-action-dial[data-open='true'] .app-action-dial-item {
+  opacity: 1;
+  pointer-events: auto;
+}
+.app-action-dial-hint[data-visible='true'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.app-action-dial:hover .app-action-dial-item--record,
+.app-action-dial:focus-within .app-action-dial-item--record,
+.app-action-dial[data-open='true'] .app-action-dial-item--record {
+  transform: translate3d(0, -7.35rem, 0) scale(1);
+}
+.app-action-dial:hover .app-action-dial-item--camera,
+.app-action-dial:focus-within .app-action-dial-item--camera,
+.app-action-dial[data-open='true'] .app-action-dial-item--camera {
+  transform: translate3d(-3.7rem, -6.35rem, 0) scale(1);
+}
+.app-action-dial:hover .app-action-dial-item--scan,
+.app-action-dial:focus-within .app-action-dial-item--scan,
+.app-action-dial[data-open='true'] .app-action-dial-item--scan {
+  transform: translate3d(-7.35rem, 0, 0) scale(1);
+}
+.app-action-dial:hover .app-action-dial-item--ai,
+.app-action-dial:focus-within .app-action-dial-item--ai,
+.app-action-dial[data-open='true'] .app-action-dial-item--ai {
+  transform: translate3d(-6.35rem, -3.7rem, 0) scale(1);
+}
+@media (max-width: 639px) {
+  .app-action-dial:hover,
+  .app-action-dial:focus-within,
+  .app-action-dial[data-open='true'] {
+    width: min(21rem, 88vw);
+    height: min(21rem, 88vw);
+  }
+  .app-action-dial::before {
+    right: -1.75rem;
+    bottom: -1.75rem;
+    width: 23.5rem;
+    height: 23.5rem;
+  }
+  .app-action-dial-plate {
+    width: 19.5rem;
+    height: 19.5rem;
+  }
+  .app-action-dial-actions::before {
+    right: calc(max(1rem, env(safe-area-inset-right)) + 1.45rem - 6.7rem);
+    bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 1.45rem - 6.7rem);
+    width: 13.4rem;
+    height: 13.4rem;
+  }
+  .app-action-dial-hint {
+    display: none;
+  }
+  .app-action-dial-item {
+    width: 2.6rem;
+    min-width: 2.6rem;
+    height: 2.6rem;
+  }
+  .app-action-dial:hover .app-action-dial-item--record,
+  .app-action-dial:focus-within .app-action-dial-item--record,
+  .app-action-dial[data-open='true'] .app-action-dial-item--record {
+    transform: translate3d(0, -6rem, 0) scale(1);
+  }
+  .app-action-dial:hover .app-action-dial-item--camera,
+  .app-action-dial:focus-within .app-action-dial-item--camera,
+  .app-action-dial[data-open='true'] .app-action-dial-item--camera {
+    transform: translate3d(-3rem, -5.2rem, 0) scale(1);
+  }
+  .app-action-dial:hover .app-action-dial-item--scan,
+  .app-action-dial:focus-within .app-action-dial-item--scan,
+  .app-action-dial[data-open='true'] .app-action-dial-item--scan {
+    transform: translate3d(-6rem, 0, 0) scale(1);
+  }
+  .app-action-dial:hover .app-action-dial-item--ai,
+  .app-action-dial:focus-within .app-action-dial-item--ai,
+  .app-action-dial[data-open='true'] .app-action-dial-item--ai {
+    transform: translate3d(-5.2rem, -3rem, 0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-action-dial::before,
+  .app-action-dial-plate,
+  .app-action-dial-actions::before,
+  .app-action-dial-main,
+  .app-action-dial-main svg,
+  .app-action-dial-item,
+  .app-action-dial-hint {
+    transition: none;
+  }
 }
 .app-icon-btn {
   color: var(--ink-soft);

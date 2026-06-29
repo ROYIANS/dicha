@@ -63,7 +63,14 @@ export const zh = {
     },
     inputBar: {
       placeholder: '记录一件物品...',
+      add: '添加物品',
       comingSoon: '录入功能即将开放',
+      actions: {
+        record: '记录一件物品',
+        camera: '拍照',
+        scan: '扫码',
+        ai: 'AI 辅助',
+      },
     },
     sidebar: {
       pixelWorld: '像素世界',

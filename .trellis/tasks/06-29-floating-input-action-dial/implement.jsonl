@@ -1,0 +1,6 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端规范入口"}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "app shell 与前端架构"}
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "Warm Matte 视觉系统"}
+{"file": ".trellis/spec/frontend/blueprint-aesthetic.md", "reason": "结构美学与动效约束"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件实现约定"}

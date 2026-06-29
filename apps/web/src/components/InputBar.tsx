@@ -1,50 +1,84 @@
-import { Camera, QrCode, Sparkles, Plus } from 'lucide-react';
+import { Camera, Plus, QrCode, ScanLine, Sparkles } from 'lucide-react';
+import { useState, type ComponentType } from 'react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
-function handleStub() {
-  toast.info('录入功能即将开放');
+type ActionItem = {
+  label: 'inputBar.actions.record' | 'inputBar.actions.camera' | 'inputBar.actions.scan' | 'inputBar.actions.ai';
+  icon: ComponentType<{ size?: number; className?: string }>;
+  className: string;
+};
+
+function handleStub(label: string) {
+  toast.info(`${label}功能即将开放`);
 }
 
-/** 底部录入栏 — Zed 式 hairline + 物理感主按钮。 */
+const actions: ActionItem[] = [
+  { label: 'inputBar.actions.record', icon: ScanLine, className: 'app-action-dial-item--record' },
+  { label: 'inputBar.actions.camera', icon: Camera, className: 'app-action-dial-item--camera' },
+  { label: 'inputBar.actions.scan', icon: QrCode, className: 'app-action-dial-item--scan' },
+  { label: 'inputBar.actions.ai', icon: Sparkles, className: 'app-action-dial-item--ai' },
+];
+
+/** 右下角浮动录入动作盘 — 默认只露出小白点，hover/focus/click 展开快捷动作。 */
 export function InputBar() {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [activeLabel, setActiveLabel] = useState<string | null>(null);
 
   return (
-    <div className="app-input-bar relative z-10 w-full px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:px-5 sm:py-3">
-      <div className="flex items-center gap-2 sm:gap-3">
+    <div
+      className="app-action-dial group"
+      data-open={open ? 'true' : undefined}
+      onPointerLeave={() => {
+        setOpen(false);
+        setActiveLabel(null);
+      }}
+    >
+      <div className="app-action-dial-plate" aria-hidden />
+
+      <div className="app-action-dial-anchor">
         <button
           type="button"
-          onClick={handleStub}
-          className="lp-btn lp-btn-primary flex size-8 shrink-0 items-center justify-center rounded-md sm:size-9"
-          aria-label="添加物品"
+          onClick={() => setOpen((value) => !value)}
+          className="app-action-dial-main"
+          aria-label={t('inputBar.add')}
+          aria-expanded={open}
         >
-          <Plus size={16} />
+          <Plus size={18} />
         </button>
+      </div>
 
-        <button
-          type="button"
-          onClick={handleStub}
-          className="app-input-field h-8 min-w-0 flex-1 rounded-md border border-hairline bg-surface px-3 text-left text-ink-faint sm:h-9 sm:px-4"
-        >
-          <span className="truncate">{t('inputBar.placeholder')}</span>
-        </button>
+      <div className="app-action-dial-actions">
+        {actions.map((action, index) => {
+          const Icon = action.icon;
+          const label = t(action.label);
 
-        <div className="flex shrink-0 items-center gap-0.5">
-          <button type="button" onClick={handleStub} className="app-icon-btn flex size-8 items-center justify-center rounded-md">
-            <Camera size={15} />
-          </button>
-          <button
-            type="button"
-            onClick={handleStub}
-            className="app-icon-btn hidden size-8 items-center justify-center rounded-md sm:flex"
-          >
-            <QrCode size={15} />
-          </button>
-          <button type="button" onClick={handleStub} className="app-icon-btn flex size-8 items-center justify-center rounded-md text-lavender">
-            <Sparkles size={15} />
-          </button>
-        </div>
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                handleStub(label);
+                setOpen(false);
+                setActiveLabel(null);
+              }}
+              onPointerEnter={() => setActiveLabel(label)}
+              onPointerLeave={() => setActiveLabel(null)}
+              onFocus={() => setActiveLabel(label)}
+              onBlur={() => setActiveLabel(null)}
+              className={`app-action-dial-item ${action.className}`}
+              style={{ transitionDelay: `${index * 22}ms` }}
+              aria-label={label}
+            >
+              <Icon size={16} />
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="app-action-dial-hint" data-visible={activeLabel ? 'true' : undefined} aria-hidden>
+        {activeLabel}
       </div>
     </div>
   );
