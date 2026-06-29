@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWorldRouteImport } from './routes/_app/world'
 import { Route as AppWardrobeRouteImport } from './routes/_app/wardrobe'
 import { Route as AppStorageRoomRouteImport } from './routes/_app/storage-room'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppLibraryRouteImport } from './routes/_app/library'
 import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppAccountRouteImport } from './routes/_app/account'
@@ -48,6 +49,11 @@ const AppStorageRoomRoute = AppStorageRoomRouteImport.update({
   path: '/storage-room',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLibraryRoute = AppLibraryRouteImport.update({
   id: '/library',
   path: '/library',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AppAccountRoute
   '/home': typeof AppHomeRoute
   '/library': typeof AppLibraryRoute
+  '/settings': typeof AppSettingsRoute
   '/storage-room': typeof AppStorageRoomRoute
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/account': typeof AppAccountRoute
   '/home': typeof AppHomeRoute
   '/library': typeof AppLibraryRoute
+  '/settings': typeof AppSettingsRoute
   '/storage-room': typeof AppStorageRoomRoute
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_app/account': typeof AppAccountRoute
   '/_app/home': typeof AppHomeRoute
   '/_app/library': typeof AppLibraryRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/storage-room': typeof AppStorageRoomRoute
   '/_app/wardrobe': typeof AppWardrobeRoute
   '/_app/world': typeof AppWorldRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/home'
     | '/library'
+    | '/settings'
     | '/storage-room'
     | '/wardrobe'
     | '/world'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/home'
     | '/library'
+    | '/settings'
     | '/storage-room'
     | '/wardrobe'
     | '/world'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/_app/account'
     | '/_app/home'
     | '/_app/library'
+    | '/_app/settings'
     | '/_app/storage-room'
     | '/_app/wardrobe'
     | '/_app/world'
@@ -180,6 +192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStorageRoomRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/library': {
       id: '/_app/library'
       path: '/library'
@@ -208,6 +227,7 @@ interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppHomeRoute: typeof AppHomeRoute
   AppLibraryRoute: typeof AppLibraryRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppStorageRoomRoute: typeof AppStorageRoomRoute
   AppWardrobeRoute: typeof AppWardrobeRoute
   AppWorldRoute: typeof AppWorldRoute
@@ -217,6 +237,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppHomeRoute: AppHomeRoute,
   AppLibraryRoute: AppLibraryRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppStorageRoomRoute: AppStorageRoomRoute,
   AppWardrobeRoute: AppWardrobeRoute,
   AppWorldRoute: AppWorldRoute,

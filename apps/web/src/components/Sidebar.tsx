@@ -1,11 +1,11 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { LayoutDashboard, Shirt, BookOpen, Package } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Package, Settings, Shirt } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppBrand } from '@/components/AppBrand';
 import { EdgeRuler } from '@/components/EdgeRuler';
 
 /** Union of all registered route paths — matches FileRouteTypes['to'] in routeTree.gen.ts */
-type AppRoute = '/home' | '/storage-room' | '/wardrobe' | '/library' | '/world';
+type AppRoute = '/home' | '/storage-room' | '/wardrobe' | '/library' | '/world' | '/settings';
 
 type NavItem = {
   label: string;
@@ -55,11 +55,16 @@ function NavLink({
   const cls = navLinkClass(active, variant, item.disabled);
 
   if (item.disabled) {
+    const badgeClass =
+      variant === 'sidebar'
+        ? 'text-sidebar-ink-soft'
+        : 'rounded border border-hairline px-1.5 py-0.5 text-ink-faint';
+
     return (
       <div className={cls} title="即将开放">
         <span className="size-4 shrink-0 opacity-70">{item.icon}</span>
         <span className="truncate">{item.label}</span>
-        <span className="ml-auto shrink-0 text-[10px] tracking-wide text-sidebar-ink-soft">即将</span>
+        <span className={`ml-auto shrink-0 text-[10px] tracking-wide ${badgeClass}`}>即将</span>
       </div>
     );
   }
@@ -143,9 +148,15 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
       ? 'app-sidebar-section'
       : 'text-[11px] font-semibold uppercase tracking-wider text-ink-faint';
 
+  const settingsActive = location === '/settings';
+  const bottomRailClass =
+    variant === 'sidebar'
+      ? 'bg-sidebar-bg/80 px-3 pb-3 pt-3'
+      : 'bg-canvas px-3 pb-4 pt-3';
+  const settingsClass = navLinkClass(settingsActive, variant);
   const worldCard =
     variant === 'sidebar' ? (
-      <div className="app-sidebar-world mx-3 mb-3 overflow-hidden rounded-lg border border-white/10">
+      <div className="app-sidebar-world mb-2.5 overflow-hidden rounded-lg border border-white/10">
         <div className="p-3">
           <div className="text-[13px] font-semibold text-sidebar-ink">{t('sidebar.pixelWorld')}</div>
           <div className="mt-1 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('sidebar.pixelWorldDesc')}</div>
@@ -159,7 +170,7 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
         </div>
       </div>
     ) : (
-      <div className="mx-3 mb-3 overflow-hidden rounded-xl border border-hairline bg-surface-alt">
+      <div className="mb-2.5 overflow-hidden rounded-xl border border-hairline bg-surface-alt">
         <div className="p-3">
           <div className="text-sm font-semibold text-ink">{t('sidebar.pixelWorld')}</div>
           <div className="mt-0.5 text-xs text-ink-soft">{t('sidebar.pixelWorldDesc')}</div>
@@ -175,8 +186,8 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
     );
 
   return (
-    <div className={className}>
-      <nav className="space-y-4 px-2.5 py-3">
+    <div className={`flex min-h-0 flex-col ${className}`}>
+      <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-3">
         {sections.map((section, idx) => (
           <div key={section.title} className={idx > 0 && variant === 'sidebar' ? 'border-t border-white/8 pt-4' : ''}>
             <div className={`mb-1.5 px-2.5 ${sectionClass}`}>{section.title}</div>
@@ -194,7 +205,15 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
           </div>
         ))}
       </nav>
-      {worldCard}
+      <div className={`shrink-0 ${bottomRailClass}`}>
+        {worldCard}
+        <Link to="/settings" onClick={onNavigate} className={`${settingsClass} w-full`}>
+          <span className="size-4 shrink-0">
+            <Settings size={15} />
+          </span>
+          <span className="truncate">{t('nav.settings')}</span>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -219,7 +238,7 @@ export function Sidebar() {
         <p className="mt-2 text-[11px] leading-relaxed text-sidebar-ink-soft">{t('app.tagline')}</p>
       </div>
 
-      <SidebarNav className="relative z-[1] flex-1 overflow-y-auto" variant="sidebar" />
+      <SidebarNav className="relative z-[1] flex-1" variant="sidebar" />
     </aside>
   );
 }
