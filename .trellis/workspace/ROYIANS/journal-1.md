@@ -619,3 +619,37 @@ Checked landing page desktop/mobile screenshots, verified footer logo sizing, ad
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: 底部输入栏改为浮动动作盘
+
+**Date**: 2026-06-29
+**Task**: 底部输入栏改为浮动动作盘
+**Branch**: `main`
+
+### Summary
+
+将内容区底部常驻输入栏替换为右下角浮动 1/4 radial action dial；补充点击开关、hover 热区、动作分布和关闭行为修复。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `38c8ac4` | (see git log) |
+| `907164c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
