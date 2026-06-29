@@ -25,13 +25,17 @@ export function InputBar() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
+  const [suppressHover, setSuppressHover] = useState(false);
 
   return (
     <div
       className="app-action-dial group"
       data-open={open ? 'true' : undefined}
+      data-suppress-hover={suppressHover ? 'true' : undefined}
+      onPointerEnter={() => setSuppressHover(false)}
       onPointerLeave={() => {
         setOpen(false);
+        setSuppressHover(false);
         setActiveLabel(null);
       }}
     >
@@ -40,7 +44,13 @@ export function InputBar() {
       <div className="app-action-dial-anchor">
         <button
           type="button"
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => {
+            setOpen((value) => {
+              const nextOpen = !value;
+              setSuppressHover(!nextOpen);
+              return nextOpen;
+            });
+          }}
           className="app-action-dial-main"
           aria-label={t('inputBar.add')}
           aria-expanded={open}
