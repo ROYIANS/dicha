@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
 export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
@@ -24,12 +25,24 @@ export const Route = createFileRoute('/_app/settings')({
 
 type SettingsItem = {
   icon: LucideIcon;
-  tint: 'peach' | 'lavender' | 'sage' | 'mist' | 'pink';
+  tint: SettingsTint;
   label: string;
   description?: string;
   value?: string;
-  to?: '/settings/profile' | '/settings/security';
+  to?: SettingsRouteTo;
 };
+
+type SettingsRouteTo =
+  | '/settings/profile'
+  | '/settings/security'
+  | '/settings/privacy'
+  | '/settings/appearance'
+  | '/settings/theme'
+  | '/settings/notifications'
+  | '/settings/language'
+  | '/settings/storage'
+  | '/settings/export'
+  | '/settings/about';
 
 const sections = [
   {
@@ -37,40 +50,32 @@ const sections = [
     items: [
       { icon: User, tint: 'peach', labelKey: 'profile', descKey: 'profileDesc', to: '/settings/profile' },
       { icon: KeyRound, tint: 'lavender', labelKey: 'security', descKey: 'securityDesc', to: '/settings/security' },
-      { icon: ShieldCheck, tint: 'sage', labelKey: 'privacy', descKey: 'privacyDesc', valueKey: 'soon' },
+      { icon: ShieldCheck, tint: 'sage', labelKey: 'privacy', descKey: 'privacyDesc', to: '/settings/privacy' },
     ],
   },
   {
     key: 'app',
     items: [
-      { icon: Palette, tint: 'mist', labelKey: 'appearance', descKey: 'appearanceDesc', valueKey: 'warmMatte' },
-      { icon: Moon, tint: 'lavender', labelKey: 'theme', descKey: 'themeDesc', valueKey: 'autoTheme' },
-      { icon: Bell, tint: 'pink', labelKey: 'notifications', descKey: 'notificationsDesc', valueKey: 'soon' },
-      { icon: Languages, tint: 'sage', labelKey: 'language', descKey: 'languageDesc', valueKey: 'chinese' },
+      { icon: Palette, tint: 'mist', labelKey: 'appearance', descKey: 'appearanceDesc', valueKey: 'warmMatte', to: '/settings/appearance' },
+      { icon: Moon, tint: 'lavender', labelKey: 'theme', descKey: 'themeDesc', valueKey: 'autoTheme', to: '/settings/theme' },
+      { icon: Bell, tint: 'pink', labelKey: 'notifications', descKey: 'notificationsDesc', to: '/settings/notifications' },
+      { icon: Languages, tint: 'sage', labelKey: 'language', descKey: 'languageDesc', valueKey: 'chinese', to: '/settings/language' },
     ],
   },
   {
     key: 'data',
     items: [
-      { icon: Database, tint: 'peach', labelKey: 'storage', descKey: 'storageDesc', valueKey: 'localFirst' },
-      { icon: Download, tint: 'mist', labelKey: 'export', descKey: 'exportDesc', valueKey: 'soon' },
+      { icon: Database, tint: 'peach', labelKey: 'storage', descKey: 'storageDesc', valueKey: 'localFirst', to: '/settings/storage' },
+      { icon: Download, tint: 'mist', labelKey: 'export', descKey: 'exportDesc', to: '/settings/export' },
     ],
   },
   {
     key: 'about',
     items: [
-      { icon: CircleHelp, tint: 'sage', labelKey: 'about', descKey: 'aboutDesc', valueKey: 'preAlpha' },
+      { icon: CircleHelp, tint: 'sage', labelKey: 'about', descKey: 'aboutDesc', valueKey: 'preAlpha', to: '/settings/about' },
     ],
   },
 ] as const;
-
-const tintClass: Record<SettingsItem['tint'], string> = {
-  peach: 'bg-chip-peach text-peach',
-  lavender: 'bg-chip-lavender text-lavender',
-  sage: 'bg-chip-sage text-sage',
-  mist: 'bg-chip-mist text-mist',
-  pink: 'bg-chip-pink text-pink',
-};
 
 function SettingsPage() {
   const { t } = useTranslation();
@@ -177,7 +182,7 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   const content = (
     <>
       <span
-        className={`grid size-8 shrink-0 place-items-center rounded-md border border-hairline ${tintClass[item.tint]}`}
+        className={`grid size-8 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass[item.tint]}`}
       >
         <Icon size={16} />
       </span>

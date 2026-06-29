@@ -1,11 +1,10 @@
-import { createFileRoute, Link, useRouteContext, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useRouteContext, useRouter } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Avatar from 'boring-avatars';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import {
   Check,
-  ChevronLeft,
   Dices,
   KeyRound,
   Link2,
@@ -28,6 +27,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
+import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import {
   childDistrictOptions,
@@ -114,59 +114,6 @@ export function SecuritySettingsPage() {
         <SecuritySection user={user as UserDto} />
       </div>
     </SettingsDetailShell>
-  );
-}
-
-function SettingsDetailShell({
-  title,
-  subtitle,
-  summary,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  summary: ReactNode;
-  children: ReactNode;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <main className="relative min-h-full overflow-hidden">
-      <div className="mx-auto min-h-full w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="relative min-w-0">
-          <GridPattern />
-
-          <div className="relative z-10 pb-36">
-            <header className="relative border-b border-hairline px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
-              <Link
-                to="/settings"
-                className="lp-nav-link mb-5 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-ink-soft"
-              >
-                <ChevronLeft size={16} />
-                {t('account.backToSettings')}
-              </Link>
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-end">
-                <div className="space-y-2">
-                  <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
-                    {title}
-                  </h1>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
-                    {subtitle}
-                  </p>
-                </div>
-                {summary}
-              </div>
-            </header>
-
-            <Slash />
-
-            <div className="bg-canvas px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
-              {children}
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
   );
 }
 
@@ -926,39 +873,6 @@ function SectionLabel({ children }: { children: ReactNode }) {
     <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-faint">
       {children}
     </span>
-  );
-}
-
-function GridPattern() {
-  return (
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute inset-0 size-full"
-      style={{
-        color: 'var(--lp-deco)',
-        maskImage: 'linear-gradient(to bottom, #000 0%, transparent 78%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, transparent 78%)',
-      }}
-    >
-      <defs>
-        <pattern id="account-grid-fine" width="8" height="8" patternUnits="userSpaceOnUse">
-          <path d="M8 0H0V8" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1" />
-        </pattern>
-        <pattern id="account-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-          <rect width="32" height="32" fill="url(#account-grid-fine)" />
-          <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.18" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#account-grid)" />
-    </svg>
-  );
-}
-
-function Slash() {
-  return (
-    <div className="relative h-3.5 border-b border-hairline bg-canvas">
-      <Hatch />
-    </div>
   );
 }
 

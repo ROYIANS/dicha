@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端规范入口"}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "路由与前端架构约定"}
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "暖白柔面哑光设计系统"}
+{"file": ".trellis/spec/frontend/blueprint-aesthetic.md", "reason": "结构美学约束"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件与图标约定"}

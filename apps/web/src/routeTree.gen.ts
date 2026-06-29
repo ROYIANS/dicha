@@ -19,8 +19,16 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppLibraryRouteImport } from './routes/_app/library'
 import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppAccountRouteImport } from './routes/_app/account'
+import { Route as AppSettingsThemeRouteImport } from './routes/_app/settings.theme'
+import { Route as AppSettingsStorageRouteImport } from './routes/_app/settings.storage'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings.security'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
+import { Route as AppSettingsPrivacyRouteImport } from './routes/_app/settings.privacy'
+import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings.notifications'
+import { Route as AppSettingsLanguageRouteImport } from './routes/_app/settings.language'
+import { Route as AppSettingsExportRouteImport } from './routes/_app/settings.export'
+import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings.appearance'
+import { Route as AppSettingsAboutRouteImport } from './routes/_app/settings.about'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -71,6 +79,16 @@ const AppAccountRoute = AppAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsThemeRoute = AppSettingsThemeRouteImport.update({
+  id: '/theme',
+  path: '/theme',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsStorageRoute = AppSettingsStorageRouteImport.update({
+  id: '/storage',
+  path: '/storage',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
   id: '/security',
   path: '/security',
@@ -79,6 +97,37 @@ const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
 const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsPrivacyRoute = AppSettingsPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsNotificationsRoute =
+  AppSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsLanguageRoute = AppSettingsLanguageRouteImport.update({
+  id: '/language',
+  path: '/language',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsExportRoute = AppSettingsExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAboutRoute = AppSettingsAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 
@@ -92,8 +141,16 @@ export interface FileRoutesByFullPath {
   '/storage-room': typeof AppStorageRoomRoute
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
+  '/settings/about': typeof AppSettingsAboutRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/export': typeof AppSettingsExportRoute
+  '/settings/language': typeof AppSettingsLanguageRoute
+  '/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/settings/privacy': typeof AppSettingsPrivacyRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/settings/storage': typeof AppSettingsStorageRoute
+  '/settings/theme': typeof AppSettingsThemeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -105,8 +162,16 @@ export interface FileRoutesByTo {
   '/storage-room': typeof AppStorageRoomRoute
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
+  '/settings/about': typeof AppSettingsAboutRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/export': typeof AppSettingsExportRoute
+  '/settings/language': typeof AppSettingsLanguageRoute
+  '/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/settings/privacy': typeof AppSettingsPrivacyRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/settings/storage': typeof AppSettingsStorageRoute
+  '/settings/theme': typeof AppSettingsThemeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -120,8 +185,16 @@ export interface FileRoutesById {
   '/_app/storage-room': typeof AppStorageRoomRoute
   '/_app/wardrobe': typeof AppWardrobeRoute
   '/_app/world': typeof AppWorldRoute
+  '/_app/settings/about': typeof AppSettingsAboutRoute
+  '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/_app/settings/export': typeof AppSettingsExportRoute
+  '/_app/settings/language': typeof AppSettingsLanguageRoute
+  '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/_app/settings/privacy': typeof AppSettingsPrivacyRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
+  '/_app/settings/storage': typeof AppSettingsStorageRoute
+  '/_app/settings/theme': typeof AppSettingsThemeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,8 +208,16 @@ export interface FileRouteTypes {
     | '/storage-room'
     | '/wardrobe'
     | '/world'
+    | '/settings/about'
+    | '/settings/appearance'
+    | '/settings/export'
+    | '/settings/language'
+    | '/settings/notifications'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/security'
+    | '/settings/storage'
+    | '/settings/theme'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,8 +229,16 @@ export interface FileRouteTypes {
     | '/storage-room'
     | '/wardrobe'
     | '/world'
+    | '/settings/about'
+    | '/settings/appearance'
+    | '/settings/export'
+    | '/settings/language'
+    | '/settings/notifications'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/security'
+    | '/settings/storage'
+    | '/settings/theme'
   id:
     | '__root__'
     | '/'
@@ -162,8 +251,16 @@ export interface FileRouteTypes {
     | '/_app/storage-room'
     | '/_app/wardrobe'
     | '/_app/world'
+    | '/_app/settings/about'
+    | '/_app/settings/appearance'
+    | '/_app/settings/export'
+    | '/_app/settings/language'
+    | '/_app/settings/notifications'
+    | '/_app/settings/privacy'
     | '/_app/settings/profile'
     | '/_app/settings/security'
+    | '/_app/settings/storage'
+    | '/_app/settings/theme'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,6 +341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/theme': {
+      id: '/_app/settings/theme'
+      path: '/theme'
+      fullPath: '/settings/theme'
+      preLoaderRoute: typeof AppSettingsThemeRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/storage': {
+      id: '/_app/settings/storage'
+      path: '/storage'
+      fullPath: '/settings/storage'
+      preLoaderRoute: typeof AppSettingsStorageRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/security': {
       id: '/_app/settings/security'
       path: '/security'
@@ -258,17 +369,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsProfileRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/privacy': {
+      id: '/_app/settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof AppSettingsPrivacyRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/notifications': {
+      id: '/_app/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AppSettingsNotificationsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/language': {
+      id: '/_app/settings/language'
+      path: '/language'
+      fullPath: '/settings/language'
+      preLoaderRoute: typeof AppSettingsLanguageRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/export': {
+      id: '/_app/settings/export'
+      path: '/export'
+      fullPath: '/settings/export'
+      preLoaderRoute: typeof AppSettingsExportRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/appearance': {
+      id: '/_app/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AppSettingsAppearanceRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/about': {
+      id: '/_app/settings/about'
+      path: '/about'
+      fullPath: '/settings/about'
+      preLoaderRoute: typeof AppSettingsAboutRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
   }
 }
 
 interface AppSettingsRouteChildren {
+  AppSettingsAboutRoute: typeof AppSettingsAboutRoute
+  AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
+  AppSettingsExportRoute: typeof AppSettingsExportRoute
+  AppSettingsLanguageRoute: typeof AppSettingsLanguageRoute
+  AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
+  AppSettingsPrivacyRoute: typeof AppSettingsPrivacyRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
+  AppSettingsStorageRoute: typeof AppSettingsStorageRoute
+  AppSettingsThemeRoute: typeof AppSettingsThemeRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsAboutRoute: AppSettingsAboutRoute,
+  AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
+  AppSettingsExportRoute: AppSettingsExportRoute,
+  AppSettingsLanguageRoute: AppSettingsLanguageRoute,
+  AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
+  AppSettingsPrivacyRoute: AppSettingsPrivacyRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
+  AppSettingsStorageRoute: AppSettingsStorageRoute,
+  AppSettingsThemeRoute: AppSettingsThemeRoute,
 }
 
 const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(

@@ -19,6 +19,12 @@
 | `components/` | 跨 feature 复用件：**优先用 HeroUI**，必要时在此薄封装 | `Button`(HeroUI)、`Modal` |
 | `pixi/scenes/` | PixiJS 场景（不是 React 组件，M2） | `StorageRoomScene` |
 
+## 设置二级页
+
+- `/settings/*` 二级页面统一使用 `components/SettingsScaffold.tsx` 的 `SettingsDetailShell` 作为页面骨架：返回 `/settings`、标题/说明、右侧 summary、轻斜纹分隔和内容容器由它负责。
+- 设置页内的 iOS 风格分组行优先复用 `SettingsPanel` / `SettingsValueRow` / `SettingsSwitch`；图标色块使用 `components/settings-ui.ts` 的 `SettingsTint` 与 `settingsTintClass`，不要在 route 文件里重复定义 tint map。
+- 新增设置能力如果没有真实后端/API 支撑，页面文案和状态值必须明确标为“稍后/未统计”等当前状态，不要做假下载、假清理或假推送。
+
 ---
 
 ## 品牌标识
