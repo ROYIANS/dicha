@@ -67,7 +67,7 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
             <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-peach" />
           </button>
           <Link
-            to="/account"
+            to="/settings"
             className="app-icon-btn inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-1.5 sm:px-2"
             title={displayName}
           >

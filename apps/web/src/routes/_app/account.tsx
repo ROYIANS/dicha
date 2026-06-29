@@ -1,10 +1,11 @@
-import { createFileRoute, useRouteContext, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Avatar from 'boring-avatars';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import {
   Check,
+  ChevronLeft,
   Dices,
   KeyRound,
   Link2,
@@ -78,7 +79,55 @@ type UpdatePasskeyClient = {
 };
 
 function AccountPage() {
+  return <ProfileSettingsPage />;
+}
+
+export function ProfileSettingsPage() {
   const { user } = useRouteContext({ from: '/_app' });
+  const { t } = useTranslation();
+
+  return (
+    <SettingsDetailShell
+      title={t('account.pageTitle')}
+      subtitle={t('account.pageSubtitle')}
+      summary={<AccountSummary user={user as UserDto} />}
+    >
+      <div className="mx-auto max-w-3xl space-y-7">
+        <AvatarSection user={user as UserDto} />
+        <ProfileSection user={user as UserDto} />
+      </div>
+    </SettingsDetailShell>
+  );
+}
+
+export function SecuritySettingsPage() {
+  const { user } = useRouteContext({ from: '/_app' });
+  const { t } = useTranslation();
+
+  return (
+    <SettingsDetailShell
+      title={t('account.securityPageTitle')}
+      subtitle={t('account.securityPageSubtitle')}
+      summary={<SecuritySummary user={user as UserDto} />}
+    >
+      <div className="mx-auto max-w-3xl">
+        <SecuritySection user={user as UserDto} />
+      </div>
+    </SettingsDetailShell>
+  );
+}
+
+function SettingsDetailShell({
+  title,
+  subtitle,
+  summary,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  summary: ReactNode;
+  children: ReactNode;
+}) {
   const { t } = useTranslation();
 
   return (
@@ -89,29 +138,30 @@ function AccountPage() {
 
           <div className="relative z-10 pb-36">
             <header className="relative border-b border-hairline px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+              <Link
+                to="/settings"
+                className="lp-nav-link mb-5 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-ink-soft"
+              >
+                <ChevronLeft size={16} />
+                {t('account.backToSettings')}
+              </Link>
               <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-end">
                 <div className="space-y-2">
                   <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
-                    {t('account.pageTitle')}
+                    {title}
                   </h1>
                   <p className="max-w-2xl text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
-                    {t('account.pageSubtitle')}
+                    {subtitle}
                   </p>
                 </div>
-                <AccountSummary user={user as UserDto} />
+                {summary}
               </div>
             </header>
 
             <Slash />
 
-            <div className="grid gap-7 bg-canvas px-5 py-7 sm:px-8 sm:py-9 lg:grid-cols-[minmax(0,1.04fr)_minmax(340px,0.96fr)] lg:px-10">
-              <div className="space-y-7">
-                <AvatarSection user={user as UserDto} />
-                <ProfileSection user={user as UserDto} />
-              </div>
-              <div>
-                <SecuritySection user={user as UserDto} />
-              </div>
+            <div className="bg-canvas px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
+              {children}
             </div>
           </div>
         </div>
@@ -138,6 +188,26 @@ function AccountSummary({ user }: { user: UserDto }) {
         <div className="min-w-0">
           <p className="truncate text-[15px] font-semibold text-ink">{displayName}</p>
           <span className="block max-w-[32ch] truncate text-[11px] text-ink-faint">{user.email}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SecuritySummary({ user }: { user: UserDto }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="relative isolate min-w-0 overflow-hidden rounded-md border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-md border border-hairline bg-chip-sage text-sage">
+          <ShieldCheck size={20} />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-semibold text-ink">{t('account.securitySummaryTitle')}</p>
+          <span className="block max-w-[34ch] text-[11px] leading-relaxed text-ink-faint">
+            {user.email}
+          </span>
         </div>
       </div>
     </div>

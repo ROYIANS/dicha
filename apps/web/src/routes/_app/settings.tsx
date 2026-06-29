@@ -28,15 +28,15 @@ type SettingsItem = {
   label: string;
   description?: string;
   value?: string;
-  to?: '/account';
+  to?: '/settings/profile' | '/settings/security';
 };
 
 const sections = [
   {
     key: 'account',
     items: [
-      { icon: User, tint: 'peach', labelKey: 'profile', descKey: 'profileDesc', to: '/account' },
-      { icon: KeyRound, tint: 'lavender', labelKey: 'security', descKey: 'securityDesc', to: '/account' },
+      { icon: User, tint: 'peach', labelKey: 'profile', descKey: 'profileDesc', to: '/settings/profile' },
+      { icon: KeyRound, tint: 'lavender', labelKey: 'security', descKey: 'securityDesc', to: '/settings/security' },
       { icon: ShieldCheck, tint: 'sage', labelKey: 'privacy', descKey: 'privacyDesc', valueKey: 'soon' },
     ],
   },

@@ -12,6 +12,9 @@
 * 新增 `/settings` 受 `_app` 认证布局保护。
 * 设置页 header 与 account 页面 header 保持一致的页面框架、标题层级和 summary 区域风格。
 * 设置页内容参考 iOS Settings 的分组列表模式：搜索/分组/图标色块/右侧状态/chevron，但使用 dicha 暖白哑光设计系统，不复刻 iOS 视觉皮肤。
+* Account 不再作为割裂的顶层入口体验；顶栏用户入口进入 `/settings`，账户资料/安全从设置页下钻。
+* 设置页的「个人资料」进入 `/settings/profile`，「登录与安全」进入 `/settings/security`。
+* 个人资料与账户安全拆成两个 iOS Settings 风格二级页，顶部提供返回 `/settings` 的轻量返回按钮。
 * 当前设置项以可导航/可预览的静态条目为主，不接入新的后端能力。
 
 ## Acceptance Criteria
@@ -21,6 +24,10 @@
 * [ ] 移动端抽屉里也能看到世界 banner 和设置入口，并能关闭抽屉后导航。
 * [ ] `/settings` 页面可访问，页面 header 与 account 页面结构一致。
 * [ ] 设置内容呈现为分组列表，包含账号/外观/通知/数据/关于等 MVP 级条目。
+* [ ] 顶栏用户入口进入 `/settings`，账户相关设置从设置列表下钻。
+* [ ] `/settings/profile` 只呈现头像与个人资料表单。
+* [ ] `/settings/security` 只呈现邮箱、GitHub、passkey 与退出登录。
+* [ ] 两个二级页顶部都有返回设置的二级页面导航。
 * [ ] 文案走 i18n，不新增 emoji。
 * [ ] `pnpm --filter @dicha/web lint`、`typecheck`、`build` 通过。
 
@@ -42,6 +49,8 @@
 
 * 扩展 `apps/web/src/components/Sidebar.tsx`：将主导航与底部 actions 分离，world banner 和 settings link 放入底部 `shrink-0` 区域。
 * 新增 `apps/web/src/routes/_app/settings.tsx`，复用 account 页面的 header/网格/斜纹语汇，内容采用设置分组列表。
+* 调整 `apps/web/src/components/Header.tsx` 用户入口到 `/settings`。
+* 将现有 `account` 页面内容拆为 `ProfileSettingsPage` 与 `SecuritySettingsPage`，分别挂到 `/settings/profile` 与 `/settings/security`。
 * 更新 `apps/web/src/i18n/locales/zh.ts` 增加 nav/settings 文案。
 * 更新 TanStack Router 生成文件，使 `/settings` 路由参与类型系统。
 
