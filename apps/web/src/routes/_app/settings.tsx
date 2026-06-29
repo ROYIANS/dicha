@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
 import {
   Bell,
   ChevronRight,
@@ -74,6 +74,11 @@ const tintClass: Record<SettingsItem['tint'], string> = {
 
 function SettingsPage() {
   const { t } = useTranslation();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  if (pathname !== '/settings') {
+    return <Outlet />;
+  }
 
   const settingSections = sections.map((section) => ({
     title: t(`settings.sections.${section.key}`),
