@@ -95,14 +95,14 @@ Write-Step "Removing dangling images from previous builds…"
 docker image prune -f | Out-Null
 
 if ($Build) {
-    Write-Step "Building api + web images locally (no cache)…"
+    Write-Step "Building api + ai-gateway + web images locally (no cache)…"
     docker compose build --no-cache
     if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed" }
 } else {
     $prefix = if ($env:IMAGE_PREFIX) { $env:IMAGE_PREFIX } else { 'ghcr.io/royians/dicha' }
     $tag = if ($env:IMAGE_TAG) { $env:IMAGE_TAG } else { 'latest' }
     Write-Step "Pulling prebuilt images from $prefix (tag: $tag)…"
-    docker compose pull api web
+    docker compose pull api ai-gateway web
     if ($LASTEXITCODE -ne 0) { Fail "docker compose pull failed" }
 }
 

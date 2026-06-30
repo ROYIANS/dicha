@@ -94,11 +94,11 @@ fi
 if [[ "$BUILD" -eq 1 ]]; then
   info "Removing dangling images from previous builds…"
   docker image prune -f >/dev/null
-  info "Building api + web images locally (no cache)…"
+  info "Building api + ai-gateway + web images locally (no cache)…"
   docker compose build --no-cache
 else
   info "Pulling prebuilt images from ${IMAGE_PREFIX:-ghcr.io/royians/dicha} (tag: ${IMAGE_TAG:-latest})…"
-  docker compose pull api web
+  docker compose pull api ai-gateway web
 fi
 
 info "Starting stack with recreated containers…"
