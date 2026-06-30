@@ -31,6 +31,8 @@ import { Route as AppSettingsHelpRouteImport } from './routes/_app/settings.help
 import { Route as AppSettingsExportRouteImport } from './routes/_app/settings.export'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings.diagnostics'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings.appearance'
+import { Route as AppSettingsAiProvidersRouteImport } from './routes/_app/settings.ai-providers'
+import { Route as AppSettingsAiModelsRouteImport } from './routes/_app/settings.ai-models'
 import { Route as AppSettingsAboutRouteImport } from './routes/_app/settings.about'
 
 const LoginRoute = LoginRouteImport.update({
@@ -143,6 +145,16 @@ const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
   path: '/appearance',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsAiProvidersRoute = AppSettingsAiProvidersRouteImport.update({
+  id: '/ai-providers',
+  path: '/ai-providers',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAiModelsRoute = AppSettingsAiModelsRouteImport.update({
+  id: '/ai-models',
+  path: '/ai-models',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsAboutRoute = AppSettingsAboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -160,6 +172,8 @@ export interface FileRoutesByFullPath {
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
   '/settings/about': typeof AppSettingsAboutRoute
+  '/settings/ai-models': typeof AppSettingsAiModelsRoute
+  '/settings/ai-providers': typeof AppSettingsAiProvidersRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
@@ -184,6 +198,8 @@ export interface FileRoutesByTo {
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
   '/settings/about': typeof AppSettingsAboutRoute
+  '/settings/ai-models': typeof AppSettingsAiModelsRoute
+  '/settings/ai-providers': typeof AppSettingsAiProvidersRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
@@ -210,6 +226,8 @@ export interface FileRoutesById {
   '/_app/wardrobe': typeof AppWardrobeRoute
   '/_app/world': typeof AppWorldRoute
   '/_app/settings/about': typeof AppSettingsAboutRoute
+  '/_app/settings/ai-models': typeof AppSettingsAiModelsRoute
+  '/_app/settings/ai-providers': typeof AppSettingsAiProvidersRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/_app/settings/export': typeof AppSettingsExportRoute
@@ -236,6 +254,8 @@ export interface FileRouteTypes {
     | '/wardrobe'
     | '/world'
     | '/settings/about'
+    | '/settings/ai-models'
+    | '/settings/ai-providers'
     | '/settings/appearance'
     | '/settings/diagnostics'
     | '/settings/export'
@@ -260,6 +280,8 @@ export interface FileRouteTypes {
     | '/wardrobe'
     | '/world'
     | '/settings/about'
+    | '/settings/ai-models'
+    | '/settings/ai-providers'
     | '/settings/appearance'
     | '/settings/diagnostics'
     | '/settings/export'
@@ -285,6 +307,8 @@ export interface FileRouteTypes {
     | '/_app/wardrobe'
     | '/_app/world'
     | '/_app/settings/about'
+    | '/_app/settings/ai-models'
+    | '/_app/settings/ai-providers'
     | '/_app/settings/appearance'
     | '/_app/settings/diagnostics'
     | '/_app/settings/export'
@@ -461,6 +485,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAppearanceRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/ai-providers': {
+      id: '/_app/settings/ai-providers'
+      path: '/ai-providers'
+      fullPath: '/settings/ai-providers'
+      preLoaderRoute: typeof AppSettingsAiProvidersRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/ai-models': {
+      id: '/_app/settings/ai-models'
+      path: '/ai-models'
+      fullPath: '/settings/ai-models'
+      preLoaderRoute: typeof AppSettingsAiModelsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/about': {
       id: '/_app/settings/about'
       path: '/about'
@@ -473,6 +511,8 @@ declare module '@tanstack/react-router' {
 
 interface AppSettingsRouteChildren {
   AppSettingsAboutRoute: typeof AppSettingsAboutRoute
+  AppSettingsAiModelsRoute: typeof AppSettingsAiModelsRoute
+  AppSettingsAiProvidersRoute: typeof AppSettingsAiProvidersRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
   AppSettingsExportRoute: typeof AppSettingsExportRoute
@@ -489,6 +529,8 @@ interface AppSettingsRouteChildren {
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAboutRoute: AppSettingsAboutRoute,
+  AppSettingsAiModelsRoute: AppSettingsAiModelsRoute,
+  AppSettingsAiProvidersRoute: AppSettingsAiProvidersRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
   AppSettingsExportRoute: AppSettingsExportRoute,

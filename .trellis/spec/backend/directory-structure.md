@@ -67,9 +67,12 @@ apps/api/
 ### 2. Signatures
 
 - Package: `apps/ai-gateway/package.json`
-  - `dev`: `nest start --watch`
-  - `build`: `nest build`
-  - `start:prod`: `node dist/main.js`
+  - `dev`:
+est start --watch`
+  - `build`:
+est build`
+  - `start:prod`:
+ode dist/main.js`
   - `typecheck`: `tsc -p tsconfig.app.json --noEmit`
   - `lint`: `eslint "src/**/*.ts"`
 - HTTP:
@@ -77,6 +80,9 @@ apps/api/
   - `GET /ai/catalog` -> `AiGatewayCatalog`
 - Shared contract source:
   - `packages/shared/src/contracts/ai.contract.ts`
+- Mock catalog fixture:
+  - `packages/shared/src/fixtures/ai-catalog.ts`
+  - `apps/ai-gateway/src/modules/catalog/catalog.seed.ts` must re-export the shared fixture instead of keeping a second copy.
 
 ### 3. Contracts
 
@@ -88,6 +94,7 @@ apps/api/
   - Compose service name: `ai-gateway`.
   - Healthcheck must call `http://127.0.0.1:3100/ai/health`.
 - Cross-package DTOs must come from `@dicha/shared`; do not duplicate AI provider/model/status enums in web/api/ai-gateway.
+- UI previews that need the mock provider/model catalog should consume the shared fixture or the gateway catalog response. Do not maintain a web-only mock with duplicate providers, model ids, capabilities, or assignments.
 
 ### 4. Validation & Error Matrix
 
@@ -101,6 +108,7 @@ apps/api/
 - Good: add a new AI model status in `packages/shared`, consume it from `apps/ai-gateway`, then update web later from the same export.
 - Base: scaffold a mock catalog service with typed seed data and no provider SDKs.
 - Bad: define `type AiModelStatus = string` separately in `apps/web` and `apps/ai-gateway`, or add OpenAI SDK calls directly inside a settings page.
+- Bad: copy the mock catalog into a settings page to unblock UI work; provider/model ids will drift from AI Gateway.
 
 ### 6. Tests Required
 
@@ -109,6 +117,10 @@ apps/api/
   - `pnpm --filter @dicha/ai-gateway lint`
   - `pnpm --filter @dicha/ai-gateway typecheck`
   - `pnpm --filter @dicha/ai-gateway build`
+- Required when web consumes the AI catalog fixture:
+  - `pnpm --filter @dicha/web lint`
+  - `pnpm --filter @dicha/web typecheck`
+  - `pnpm --filter @dicha/web build`
 - Required when Docker CLI is available:
   - `docker compose config --quiet`
   - `docker build -f docker/Dockerfile.ai-gateway -t dicha-ai-gateway:test .`
@@ -132,6 +144,26 @@ export interface ProviderAdapter {
   listModels(): Promise<ProviderModelDescriptor[]>;
   probe(modelId: string): Promise<ProviderProbeResult>;
 }
+```
+
+#### Wrong
+
+```typescript
+// apps/web/src/features/settings/ai-settings-pages.tsx
+const providers = [{ id: 'openai', name: 'OpenAI' }];
+```
+
+#### Correct
+
+```typescript
+// apps/web/src/api/ai.ts
+import { aiCatalogFixture } from '@dicha/shared';
+
+export const aiCatalogQueryOptions = () =>
+  queryOptions({
+    queryKey: ['ai', 'catalog'] as const,
+    queryFn: async () => aiCatalogFixture,
+  });
 ```
 
 ---

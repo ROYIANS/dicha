@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useRouter, useRouterState } from '@tanst
 import {
   Activity,
   Bell,
+  Bot,
   ChevronRight,
   CircleHelp,
   Database,
@@ -14,6 +15,7 @@ import {
   Moon,
   Palette,
   Search,
+  Server,
   Settings,
   ShieldCheck,
   User,
@@ -52,6 +54,8 @@ type SettingsRouteTo =
   | '/settings/language'
   | '/settings/storage'
   | '/settings/export'
+  | '/settings/ai-providers'
+  | '/settings/ai-models'
   | '/settings/help'
   | '/settings/labs'
   | '/settings/diagnostics'
@@ -80,6 +84,27 @@ const sections = [
     items: [
       { icon: Database, tint: 'peach', labelKey: 'storage', descKey: 'storageDesc', valueKey: 'localFirst', to: '/settings/storage' },
       { icon: Download, tint: 'mist', labelKey: 'export', descKey: 'exportDesc', to: '/settings/export' },
+    ],
+  },
+  {
+    key: 'ai',
+    items: [
+      {
+        icon: Server,
+        tint: 'mist',
+        labelKey: 'aiProviders',
+        descKey: 'aiProvidersDesc',
+        valueKey: 'catalog',
+        to: '/settings/ai-providers',
+      },
+      {
+        icon: Bot,
+        tint: 'lavender',
+        labelKey: 'aiModels',
+        descKey: 'aiModelsDesc',
+        valueKey: 'mockCatalog',
+        to: '/settings/ai-models',
+      },
     ],
   },
   {
