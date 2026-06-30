@@ -1,24 +1,7 @@
-import { Camera, Plus, QrCode, ScanLine, Sparkles } from 'lucide-react';
-import { useState, type ComponentType } from 'react';
-import { toast } from 'sonner';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-type ActionItem = {
-  label: 'inputBar.actions.record' | 'inputBar.actions.camera' | 'inputBar.actions.scan' | 'inputBar.actions.ai';
-  icon: ComponentType<{ size?: number; className?: string }>;
-  className: string;
-};
-
-function handleStub(label: string) {
-  toast.info(`${label}功能即将开放`);
-}
-
-const actions: ActionItem[] = [
-  { label: 'inputBar.actions.record', icon: ScanLine, className: 'app-action-dial-item--record' },
-  { label: 'inputBar.actions.camera', icon: Camera, className: 'app-action-dial-item--camera' },
-  { label: 'inputBar.actions.scan', icon: QrCode, className: 'app-action-dial-item--scan' },
-  { label: 'inputBar.actions.ai', icon: Sparkles, className: 'app-action-dial-item--ai' },
-];
+import { actionItems, handleActionStub } from '@/components/actionItems';
 
 /** 右下角浮动录入动作盘 — 默认只露出小白点，hover/focus/click 展开快捷动作。 */
 export function InputBar() {
@@ -60,7 +43,7 @@ export function InputBar() {
       </div>
 
       <div className="app-action-dial-actions">
-        {actions.map((action, index) => {
+        {actionItems.map((action, index) => {
           const Icon = action.icon;
           const label = t(action.label);
 
@@ -69,7 +52,7 @@ export function InputBar() {
               key={label}
               type="button"
               onClick={() => {
-                handleStub(label);
+                handleActionStub(label);
                 setOpen(false);
                 setActiveLabel(null);
               }}

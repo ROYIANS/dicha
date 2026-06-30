@@ -1,5 +1,17 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { BookOpen, LayoutDashboard, Package, Settings, Shirt } from 'lucide-react';
+import {
+  Archive,
+  BookOpen,
+  CalendarDays,
+  ChartNoAxesCombined,
+  LayoutDashboard,
+  Package,
+  Pill,
+  Refrigerator,
+  Settings,
+  Shirt,
+  Tags,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppBrand } from '@/components/AppBrand';
 import { EdgeRuler } from '@/components/EdgeRuler';
@@ -120,6 +132,26 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
       ],
     },
     {
+      title: t('nav.collect'),
+      items: [
+        {
+          label: t('nav.allItems'),
+          icon: <Archive size={15} />,
+          disabled: true,
+        },
+        {
+          label: t('nav.recentItems'),
+          icon: <Package size={15} />,
+          disabled: true,
+        },
+        {
+          label: t('nav.tags'),
+          icon: <Tags size={15} />,
+          disabled: true,
+        },
+      ],
+    },
+    {
       title: t('nav.rooms'),
       items: [
         {
@@ -139,6 +171,31 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
           icon: <Package size={15} />,
           to: '/storage-room',
         },
+        {
+          label: t('nav.kitchenFridge'),
+          icon: <Refrigerator size={15} />,
+          disabled: true,
+        },
+        {
+          label: t('nav.medicineBox'),
+          icon: <Pill size={15} />,
+          disabled: true,
+        },
+      ],
+    },
+    {
+      title: t('nav.insights'),
+      items: [
+        {
+          label: t('nav.calendar'),
+          icon: <CalendarDays size={15} />,
+          disabled: true,
+        },
+        {
+          label: t('nav.monthlyReport'),
+          icon: <ChartNoAxesCombined size={15} />,
+          disabled: true,
+        },
       ],
     },
   ];
@@ -148,7 +205,7 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
       ? 'app-sidebar-section'
       : 'text-[11px] font-semibold uppercase tracking-wider text-ink-faint';
 
-  const settingsActive = location === '/settings';
+  const settingsActive = location === '/settings' || location.startsWith('/settings/');
   const bottomRailClass =
     variant === 'sidebar'
       ? 'bg-sidebar-bg/80 px-3 pb-3 pt-3'

@@ -298,7 +298,7 @@ function LoginPage() {
       <FrameNode pos="top-right" className="hidden lg:block" />
 
       {/* 五段框架：窄rail / 弹性rail / container / 弹性rail / 窄rail（对照 zed sign_up） */}
-      <span className="relative w-4 shrink-0 sm:w-6 md:w-12">
+      <span className="relative hidden w-4 shrink-0 sm:w-6 md:block md:w-12">
         <EdgeRuler side="right" color={RULE} segs={[{ f: 2.6 }, { f: 3.3, dash: true }]} />
       </span>
       <span className="relative hidden flex-1 lg:block">
@@ -309,7 +309,7 @@ function LoginPage() {
         />
       </span>
 
-      <div className="lp-container-max-w relative max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
+      <div className="login-container lp-container-max-w relative max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
         {/* container 内侧节点对：压 container 边线 × 顶线，常显 */}
         <FrameNode pos="top-left" />
         <FrameNode pos="top-right" />
@@ -318,25 +318,21 @@ function LoginPage() {
         <GridPattern />
 
         {/* 居中区 */}
-        <div className="relative z-10 flex min-h-dvh items-center justify-center p-4">
+        <div className="login-stage relative z-10 flex min-h-dvh items-center justify-center p-4">
           <div
-            className="relative isolate w-full max-w-sm border bg-surface p-8"
+            className="login-panel relative isolate w-full max-w-sm border bg-surface p-8"
             style={
               {
-                borderColor: 'var(--hairline)',
-                borderRadius: '0.375rem',
-                boxShadow:
-                  '6px 6px 0 color-mix(in oklab, var(--ink) 6%, transparent)', // zed 邮戳阴影（dicha 暖墨低透明）
                 '--node-vertical-offset': '3.5px',
                 '--node-horizontal-offset': '-3.5px',
               } as CSSProperties
             }
           >
             {/* 卡片四角骑节点 */}
-            <FrameNode pos="top-left" />
-            <FrameNode pos="top-right" />
-            <FrameNode pos="bottom-left" />
-            <FrameNode pos="bottom-right" />
+            <FrameNode pos="top-left" className="login-panel-node" />
+            <FrameNode pos="top-right" className="login-panel-node" />
+            <FrameNode pos="bottom-left" className="login-panel-node" />
+            <FrameNode pos="bottom-right" className="login-panel-node" />
 
             <div className="space-y-6">
               {/* 品牌头 */}
@@ -542,7 +538,7 @@ function LoginPage() {
           segs={[{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.6 }]}
         />
       </span>
-      <span className="relative w-4 shrink-0 sm:w-6 md:w-12">
+      <span className="relative hidden w-4 shrink-0 sm:w-6 md:block md:w-12">
         <EdgeRuler side="left" color={RULE} segs={[{ f: 2.6 }, { f: 3.3, dash: true }]} />
       </span>
     </div>
