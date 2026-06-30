@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppBrand } from '@/components/AppBrand';
-import { EdgeRuler } from '@/components/EdgeRuler';
 
 /** Union of all registered route paths — matches FileRouteTypes['to'] in routeTree.gen.ts */
 type AppRoute = '/home' | '/storage-room' | '/wardrobe' | '/library' | '/world' | '/settings';
@@ -275,20 +274,12 @@ export function SidebarNav({ className = '', onNavigate, variant = 'sidebar' }: 
   );
 }
 
-const SIDEBAR_RAIL = 'color-mix(in oklab, var(--sidebar-ink) 14%, transparent)';
-
 export function Sidebar() {
   const { t } = useTranslation();
 
   return (
     <aside className="app-sidebar app-shell relative hidden h-full w-[var(--app-sidebar-w)] shrink-0 flex-col overflow-hidden bg-sidebar-bg lg:flex">
       <div aria-hidden className="app-sidebar-noise pointer-events-none absolute inset-0" />
-      <EdgeRuler
-        segs={[{ f: 2.4 }, { f: 3.2, dash: true }, { f: 2.1 }, { f: 1.8, dash: true }, { f: 2.6 }]}
-        side="right"
-        color={SIDEBAR_RAIL}
-        className="z-[1]"
-      />
 
       <div className="relative px-4 py-4">
         <AppBrand variant="sidebar" to="/home" />

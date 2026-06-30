@@ -3,7 +3,6 @@ import { Search, Bell, User, Menu } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { Link, useRouteContext } from '@tanstack/react-router';
-import { FrameNode } from '@/components/FrameNode';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { parseGeneratedAvatarMarker } from '@/lib/account-settings';
 
@@ -22,9 +21,6 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
 
   return (
     <header className="app-chrome-header relative z-20 w-full shrink-0 border-b border-hairline [--node-horizontal-offset:-3.5px]">
-      <FrameNode pos="bottom-left" className="hidden lg:block" />
-      <FrameNode pos="bottom-right" className="hidden lg:block" />
-
       <div className="flex h-[57px] w-full min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-5 lg:px-6">
         {onMenuClick ? (
           <button
