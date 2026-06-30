@@ -5,13 +5,17 @@ import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import {
   Check,
+  Clock3,
   Dices,
   KeyRound,
   Link2,
   Loader2,
+  Monitor,
   Pencil,
+  RotateCcw,
   ShieldAlert,
   ShieldCheck,
+  Smartphone,
   Trash2,
   Unlink,
   Upload,
@@ -46,9 +50,13 @@ import {
 import {
   authClient,
   emailOtp,
+  getSession,
   linkSocial,
   listAccounts,
+  listSessions,
   passkey,
+  revokeOtherSessions,
+  revokeSession,
   signOut,
   unlinkAccount,
   updateUser,
@@ -77,6 +85,24 @@ type UpdatePasskeyClient = {
     updatePasskey?: (body: { id: string; name: string }) => Promise<{ error?: { message?: string } | null }>;
   };
 };
+
+type SessionRecord = {
+  id?: string;
+  token: string;
+  userId?: string;
+  expiresAt?: Date | string | null;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+};
+
+type CurrentSessionResponse = {
+  session?: {
+    token?: string;
+  } | null;
+  token?: string;
+} | null;
 
 function AccountPage() {
   return <ProfileSettingsPage />;
@@ -448,6 +474,8 @@ function SecuritySection({ user }: { user: UserDto }) {
   const [newPasskeyName, setNewPasskeyName] = useState(() => suggestPasskeyName(user));
   const [editingPasskeyId, setEditingPasskeyId] = useState<string | null>(null);
   const [editingPasskeyName, setEditingPasskeyName] = useState('');
+  const [revokingToken, setRevokingToken] = useState<string | null>(null);
+  const [revokingOthers, setRevokingOthers] = useState(false);
 
   const { data: passkeys, isPending: passkeysPending, refetch: refetchPasskeys } = useListPasskeys();
   const { data: accounts, refetch: refetchAccounts } = useQuery({
@@ -458,13 +486,66 @@ function SecuritySection({ user }: { user: UserDto }) {
     },
     staleTime: 60_000,
   });
+  const sessionsQuery = useQuery({
+    queryKey: ['auth', 'sessions'],
+    queryFn: async () => {
+      const [sessionsResult, currentResult] = await Promise.all([listSessions(), getSession()]);
+      if (sessionsResult.error) throw new Error(sessionsResult.error.message ?? t('account.sessionLoadFailed'));
+      if (currentResult.error || !currentResult.data) {
+        throw new Error(currentResult.error?.message ?? t('account.sessionLoadFailed'));
+      }
+
+      return {
+        current: extractCurrentSessionIdentity(currentResult.data as CurrentSessionResponse),
+        sessions: ((sessionsResult.data ?? []) as SessionRecord[]).filter((session) => Boolean(session.token)),
+      };
+    },
+    staleTime: 30_000,
+  });
 
   const githubLinked = (accounts ?? []).some((account) => account.providerId === 'github');
   const typedPasskeys = (passkeys ?? []) as PasskeyRecord[];
+  const sessions = sessionsQuery.data?.sessions ?? [];
+  const otherSessionCount = sessions.filter((session) => !isCurrentSession(session, sessionsQuery.data?.current)).length;
 
   const handleLogout = async () => {
     await signOut();
     await router.navigate({ to: '/login' });
+  };
+
+  const handleRefreshSessions = async () => {
+    await sessionsQuery.refetch();
+  };
+
+  const handleRevokeSession = async (record: SessionRecord) => {
+    if (isCurrentSession(record, sessionsQuery.data?.current)) return;
+    const device = describeSessionDevice(record.userAgent, t('account.sessionDeviceUnknown'));
+    if (!window.confirm(t('account.sessionRevokeConfirm', { device }))) return;
+
+    setRevokingToken(record.token);
+    const { error } = await revokeSession({ token: record.token });
+    setRevokingToken(null);
+    if (error) {
+      toast.error(error.message ?? t('account.error'));
+      return;
+    }
+    await sessionsQuery.refetch();
+    toast.success(t('account.sessionRevoked'));
+  };
+
+  const handleRevokeOtherSessions = async () => {
+    if (otherSessionCount === 0) return;
+    if (!window.confirm(t('account.sessionRevokeOthersConfirm', { count: otherSessionCount }))) return;
+
+    setRevokingOthers(true);
+    const { error } = await revokeOtherSessions();
+    setRevokingOthers(false);
+    if (error) {
+      toast.error(error.message ?? t('account.error'));
+      return;
+    }
+    await sessionsQuery.refetch();
+    toast.success(t('account.sessionOthersRevoked'));
   };
 
   const handleResend = async () => {
@@ -727,6 +808,108 @@ function SecuritySection({ user }: { user: UserDto }) {
         )}
       </section>
 
+      <section className="space-y-3 border-t border-hairline pt-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <SectionLabel>{t('account.sessions')}</SectionLabel>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleRefreshSessions()}
+              disabled={sessionsQuery.isFetching}
+              className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md text-ink-soft disabled:opacity-50"
+              aria-label={t('account.sessionRefresh')}
+            >
+              <RotateCcw size={13} className={sessionsQuery.isFetching ? 'animate-spin' : ''} />
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleRevokeOtherSessions()}
+              disabled={revokingOthers || otherSessionCount === 0 || sessionsQuery.isPending}
+              className="lp-btn lp-btn-ghost inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {revokingOthers ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
+              {t('account.sessionRevokeOthers')}
+            </button>
+          </div>
+        </div>
+
+        {sessionsQuery.isPending ? (
+          <div className="flex justify-center py-3">
+            <Loader2 size={16} className="animate-spin text-ink-soft" />
+          </div>
+        ) : sessionsQuery.isError ? (
+          <p className="rounded-md border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ borderColor: LINE }}>
+            {t('account.sessionLoadFailed')}
+          </p>
+        ) : sessions.length === 0 ? (
+          <p className="rounded-md border border-dashed px-3 py-3 text-center text-[12px] text-ink-faint" style={{ borderColor: LINE }}>
+            {t('account.sessionEmpty')}
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {sessions.map((record) => {
+              const current = isCurrentSession(record, sessionsQuery.data?.current);
+              const DeviceIcon = isMobileUserAgent(record.userAgent) ? Smartphone : Monitor;
+              return (
+                <li key={record.id ?? record.token} className="rounded-md border border-hairline bg-canvas px-3 py-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <span className="flex min-w-0 items-center gap-2 text-[13px] text-ink">
+                        <DeviceIcon size={14} className="shrink-0 text-ink-soft" />
+                        <span className="truncate">
+                          {describeSessionDevice(record.userAgent, t('account.sessionDeviceUnknown'))}
+                        </span>
+                        {current ? (
+                          <span className="shrink-0 rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-sage">
+                            {t('account.sessionCurrent')}
+                          </span>
+                        ) : null}
+                      </span>
+                      <div className="mt-2 grid gap-1 text-[11px] text-ink-faint sm:grid-cols-2">
+                        <span className="inline-flex min-w-0 items-center gap-1">
+                          <Clock3 size={12} className="shrink-0" />
+                          <span className="truncate">
+                            {t('account.sessionLastActive', {
+                              time: formatSessionDate(record.updatedAt, t('account.sessionTimeUnknown')),
+                            })}
+                          </span>
+                        </span>
+                        <span className="truncate">
+                          {t('account.sessionIp', { ip: record.ipAddress || t('account.sessionIpUnknown') })}
+                        </span>
+                        <span className="truncate">
+                          {t('account.sessionCreated', {
+                            time: formatSessionDate(record.createdAt, t('account.sessionTimeUnknown')),
+                          })}
+                        </span>
+                        <span className="truncate">
+                          {t('account.sessionExpires', {
+                            time: formatSessionDate(record.expiresAt, t('account.sessionTimeUnknown')),
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    {current ? (
+                      <span className="shrink-0 text-[11px] text-ink-faint">{t('account.sessionUseLogout')}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleRevokeSession(record)}
+                        disabled={revokingToken === record.token}
+                        className="lp-btn lp-btn-ghost inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-md px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {revokingToken === record.token ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                        {t('account.sessionRevoke')}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
       <section className="border-t border-hairline pt-5">
         <button
           type="button"
@@ -897,6 +1080,63 @@ function formatPasskeyMeta(record: PasskeyRecord, fallback: string) {
   ].filter(Boolean);
 
   return parts.length > 0 ? parts.join(' / ') : fallback;
+}
+
+function extractCurrentSessionIdentity(data: CurrentSessionResponse) {
+  return {
+    token: data?.session?.token ?? data?.token ?? null,
+  };
+}
+
+function isCurrentSession(
+  record: SessionRecord,
+  current: ReturnType<typeof extractCurrentSessionIdentity> | undefined,
+) {
+  return Boolean(current?.token && record.token === current.token);
+}
+
+function describeSessionDevice(userAgent: string | null | undefined, fallback: string) {
+  if (!userAgent) return fallback;
+
+  const browser = parseBrowser(userAgent);
+  const os = parseOperatingSystem(userAgent);
+  const parts = [browser, os].filter(Boolean);
+  return parts.length > 0 ? parts.join(' / ') : fallback;
+}
+
+function parseBrowser(userAgent: string) {
+  if (/Edg\//.test(userAgent)) return 'Microsoft Edge';
+  if (/OPR\//.test(userAgent)) return 'Opera';
+  if (/Firefox\//.test(userAgent)) return 'Firefox';
+  if (/Chrome\//.test(userAgent) || /CriOS\//.test(userAgent)) return 'Chrome';
+  if (/Safari\//.test(userAgent) && /Version\//.test(userAgent)) return 'Safari';
+  return null;
+}
+
+function parseOperatingSystem(userAgent: string) {
+  if (/iPhone|iPad|iPod/.test(userAgent)) return 'iOS';
+  if (/Android/.test(userAgent)) return 'Android';
+  if (/Windows NT/.test(userAgent)) return 'Windows';
+  if (/Mac OS X/.test(userAgent)) return 'macOS';
+  if (/Linux/.test(userAgent)) return 'Linux';
+  return null;
+}
+
+function isMobileUserAgent(userAgent: string | null | undefined) {
+  return Boolean(userAgent && /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent));
+}
+
+function formatSessionDate(value: Date | string | null | undefined, fallback: string) {
+  if (!value) return fallback;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function parseCityValue(

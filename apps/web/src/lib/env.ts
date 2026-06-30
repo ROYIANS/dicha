@@ -7,8 +7,6 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   VITE_API_BASE_URL: z.string().default('/api'),
-  /** Set to 'true' in .env.local to bypass real auth during local dev. */
-  VITE_DEV_BYPASS_AUTH: z.enum(['true', 'false']).optional(),
   /** Umami tracker script URL, e.g. https://analytics.example.com/script.js */
   VITE_UMAMI_SCRIPT_URL: z.string().optional(),
   /** Umami website ID (Settings → Websites). Both Umami vars required to enable tracking. */

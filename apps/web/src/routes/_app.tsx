@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useState } from 'react';
-import { DEV_USER, shouldBypassAuth } from '@/lib/auth';
 import { authQueryOptions } from '@/api/auth';
 import { Sidebar } from '@/components/Sidebar';
 import { AppNavDrawer } from '@/components/AppNavDrawer';
@@ -15,15 +14,10 @@ import { MobileTabBar } from '@/components/MobileTabBar';
  * Also provides the full app chrome (Sidebar, Header, InputBar).
  *
  * beforeLoad:
- *   - shouldBypassAuth() → inject DEV_USER into context, allow through.
- *   - Otherwise → ensureQueryData(authQueryOptions()), redirect to /login on 401.
+ *   - ensureQueryData(authQueryOptions()), redirect to /login on 401.
  */
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context }) => {
-    if (shouldBypassAuth()) {
-      return { user: DEV_USER };
-    }
-
     try {
       const user = await context.queryClient.ensureQueryData(authQueryOptions());
       return { user };

@@ -3,11 +3,10 @@ import { type QueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { UmamiAnalytics } from '@/components/UmamiAnalytics';
 import { type UserDto } from '@dicha/shared';
-import { type DevUser } from '@/lib/auth';
 
 export interface RouterContext {
   queryClient: QueryClient;
-  user?: UserDto | DevUser;
+  user?: UserDto;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({

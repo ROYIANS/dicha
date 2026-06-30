@@ -15,7 +15,7 @@ pnpm dev          # 在仓库根：turbo 同时起 web(:5173) + api(:3000)
 
 dev 下 Vite `server.proxy` 把 `/api` 转 `http://localhost:3000`（同源，为 BFF cookie 预留）。
 
-本地 `pnpm dev` 默认跳过 `_app` 鉴权（与 docker-compose `VITE_DEV_BYPASS_AUTH=true` 一致）；若要本地测守卫，在 `apps/web/.env.local` 设 `VITE_DEV_BYPASS_AUTH=false`。
+本地 `pnpm dev` 也使用真实 Better Auth session；未登录访问 `_app` 路由会跳转到 `/login`。
 
 **Umami 统计（可选）**：在 `apps/web/.env.local` 或部署用 `.env` 中同时设置 `VITE_UMAMI_SCRIPT_URL` 与 `VITE_UMAMI_WEBSITE_ID`；缺任一则不加载 tracker。自定义事件可 `import { trackUmamiEvent } from '@/lib/analytics/umami'`。
 

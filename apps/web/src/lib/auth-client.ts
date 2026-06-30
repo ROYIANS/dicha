@@ -56,7 +56,11 @@ export const {
   passkey,
   updateUser,
   listAccounts,
+  listSessions,
   linkSocial,
+  revokeOtherSessions,
+  revokeSession,
+  revokeSessions,
   unlinkAccount,
   useListPasskeys,
 } = authClient;
