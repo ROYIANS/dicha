@@ -13,6 +13,7 @@
 * 新增 provider adapter interface，预留模型列表、探测、调用状态扩展点。
 * 新增 `docker/Dockerfile.ai-gateway`。
 * 更新 `docker-compose.yml`，加入 `ai-gateway` 服务位和 healthcheck。
+* 更新 GitHub Actions 镜像构建矩阵，发布 `dicha-ai-gateway` 镜像。
 * 暂不引入真实供应商 SDK、数据库、密钥、队列和真实调用。
 
 ## Acceptance Criteria
@@ -23,6 +24,7 @@
 * [x] `pnpm --filter @dicha/ai-gateway build` 通过。
 * [ ] Dockerfile 可以构建 ai-gateway 镜像。
 * [x] docker-compose 中存在 ai-gateway 服务，且 web/api 不因它未就绪而被强绑定。
+* [x] GitHub Actions 镜像构建矩阵包含 `ai-gateway`。
 
 ## Implementation Notes
 
@@ -42,3 +44,4 @@
 * `pnpm --filter @dicha/ai-gateway build` passed.
 * `docker compose config --quiet` and `docker build -f docker/Dockerfile.ai-gateway -t dicha-ai-gateway:test .` could not run because Docker CLI is not available in the current environment.
 * `.trellis/spec/backend/directory-structure.md` updated with the AI Gateway scaffold contract.
+* `.github/workflows/build-images.yml` now builds and pushes the `ai-gateway` image.

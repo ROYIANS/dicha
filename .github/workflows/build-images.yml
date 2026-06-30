@@ -21,6 +21,8 @@ jobs:
         include:
           - name: api
             dockerfile: docker/Dockerfile.api
+          - name: ai-gateway
+            dockerfile: docker/Dockerfile.ai-gateway
           - name: web
             dockerfile: docker/Dockerfile.web
 
