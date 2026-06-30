@@ -26,7 +26,10 @@ import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.p
 import { Route as AppSettingsPrivacyRouteImport } from './routes/_app/settings.privacy'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings.notifications'
 import { Route as AppSettingsLanguageRouteImport } from './routes/_app/settings.language'
+import { Route as AppSettingsLabsRouteImport } from './routes/_app/settings.labs'
+import { Route as AppSettingsHelpRouteImport } from './routes/_app/settings.help'
 import { Route as AppSettingsExportRouteImport } from './routes/_app/settings.export'
+import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings.diagnostics'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings.appearance'
 import { Route as AppSettingsAboutRouteImport } from './routes/_app/settings.about'
 
@@ -115,9 +118,24 @@ const AppSettingsLanguageRoute = AppSettingsLanguageRouteImport.update({
   path: '/language',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsLabsRoute = AppSettingsLabsRouteImport.update({
+  id: '/labs',
+  path: '/labs',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsHelpRoute = AppSettingsHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsExportRoute = AppSettingsExportRouteImport.update({
   id: '/export',
   path: '/export',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsDiagnosticsRoute = AppSettingsDiagnosticsRouteImport.update({
+  id: '/diagnostics',
+  path: '/diagnostics',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
@@ -143,7 +161,10 @@ export interface FileRoutesByFullPath {
   '/world': typeof AppWorldRoute
   '/settings/about': typeof AppSettingsAboutRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
+  '/settings/help': typeof AppSettingsHelpRoute
+  '/settings/labs': typeof AppSettingsLabsRoute
   '/settings/language': typeof AppSettingsLanguageRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/privacy': typeof AppSettingsPrivacyRoute
@@ -164,7 +185,10 @@ export interface FileRoutesByTo {
   '/world': typeof AppWorldRoute
   '/settings/about': typeof AppSettingsAboutRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
+  '/settings/help': typeof AppSettingsHelpRoute
+  '/settings/labs': typeof AppSettingsLabsRoute
   '/settings/language': typeof AppSettingsLanguageRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/privacy': typeof AppSettingsPrivacyRoute
@@ -187,7 +211,10 @@ export interface FileRoutesById {
   '/_app/world': typeof AppWorldRoute
   '/_app/settings/about': typeof AppSettingsAboutRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/_app/settings/export': typeof AppSettingsExportRoute
+  '/_app/settings/help': typeof AppSettingsHelpRoute
+  '/_app/settings/labs': typeof AppSettingsLabsRoute
   '/_app/settings/language': typeof AppSettingsLanguageRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/privacy': typeof AppSettingsPrivacyRoute
@@ -210,7 +237,10 @@ export interface FileRouteTypes {
     | '/world'
     | '/settings/about'
     | '/settings/appearance'
+    | '/settings/diagnostics'
     | '/settings/export'
+    | '/settings/help'
+    | '/settings/labs'
     | '/settings/language'
     | '/settings/notifications'
     | '/settings/privacy'
@@ -231,7 +261,10 @@ export interface FileRouteTypes {
     | '/world'
     | '/settings/about'
     | '/settings/appearance'
+    | '/settings/diagnostics'
     | '/settings/export'
+    | '/settings/help'
+    | '/settings/labs'
     | '/settings/language'
     | '/settings/notifications'
     | '/settings/privacy'
@@ -253,7 +286,10 @@ export interface FileRouteTypes {
     | '/_app/world'
     | '/_app/settings/about'
     | '/_app/settings/appearance'
+    | '/_app/settings/diagnostics'
     | '/_app/settings/export'
+    | '/_app/settings/help'
+    | '/_app/settings/labs'
     | '/_app/settings/language'
     | '/_app/settings/notifications'
     | '/_app/settings/privacy'
@@ -390,11 +426,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsLanguageRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/labs': {
+      id: '/_app/settings/labs'
+      path: '/labs'
+      fullPath: '/settings/labs'
+      preLoaderRoute: typeof AppSettingsLabsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/help': {
+      id: '/_app/settings/help'
+      path: '/help'
+      fullPath: '/settings/help'
+      preLoaderRoute: typeof AppSettingsHelpRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/export': {
       id: '/_app/settings/export'
       path: '/export'
       fullPath: '/settings/export'
       preLoaderRoute: typeof AppSettingsExportRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/diagnostics': {
+      id: '/_app/settings/diagnostics'
+      path: '/diagnostics'
+      fullPath: '/settings/diagnostics'
+      preLoaderRoute: typeof AppSettingsDiagnosticsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/appearance': {
@@ -417,7 +474,10 @@ declare module '@tanstack/react-router' {
 interface AppSettingsRouteChildren {
   AppSettingsAboutRoute: typeof AppSettingsAboutRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
+  AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
   AppSettingsExportRoute: typeof AppSettingsExportRoute
+  AppSettingsHelpRoute: typeof AppSettingsHelpRoute
+  AppSettingsLabsRoute: typeof AppSettingsLabsRoute
   AppSettingsLanguageRoute: typeof AppSettingsLanguageRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsPrivacyRoute: typeof AppSettingsPrivacyRoute
@@ -430,7 +490,10 @@ interface AppSettingsRouteChildren {
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAboutRoute: AppSettingsAboutRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
+  AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
   AppSettingsExportRoute: AppSettingsExportRoute,
+  AppSettingsHelpRoute: AppSettingsHelpRoute,
+  AppSettingsLabsRoute: AppSettingsLabsRoute,
   AppSettingsLanguageRoute: AppSettingsLanguageRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsPrivacyRoute: AppSettingsPrivacyRoute,

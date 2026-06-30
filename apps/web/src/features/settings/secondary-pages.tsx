@@ -1,4 +1,5 @@
 import {
+  Activity,
   Bell,
   Brush,
   Check,
@@ -6,8 +7,10 @@ import {
   Database,
   Download,
   EyeOff,
+  FlaskConical,
   Globe2,
   HardDrive,
+  HeartHandshake,
   Info,
   Languages,
   LayoutList,
@@ -45,6 +48,9 @@ const pageTone = {
   language: { icon: Languages, tint: 'sage' },
   storage: { icon: Database, tint: 'peach' },
   export: { icon: Download, tint: 'mist' },
+  help: { icon: HeartHandshake, tint: 'mist' },
+  labs: { icon: FlaskConical, tint: 'lavender' },
+  diagnostics: { icon: Activity, tint: 'peach' },
   about: { icon: Info, tint: 'sage' },
 } satisfies Record<string, PageTone>;
 
@@ -332,6 +338,88 @@ export function ExportSettingsPage() {
           label={t('settings.detail.export.format')}
           description={t('settings.detail.export.formatDesc')}
           value="JSON"
+        />
+      </SettingsPanel>
+    </SettingsPageShell>
+  );
+}
+
+export function HelpSettingsPage() {
+  const { t } = useTranslation();
+
+  return (
+    <SettingsPageShell pageKey="help">
+      <SettingsPanel title={t('settings.detail.help.panelSupport')} footer={t('settings.detail.help.footer')}>
+        <SettingsValueRow
+          icon={HeartHandshake}
+          tint="mist"
+          label={t('settings.detail.help.feedback')}
+          description={t('settings.detail.help.feedbackDesc')}
+          value={t('settings.values.soon')}
+        />
+        <SettingsValueRow
+          icon={Info}
+          tint="sage"
+          label={t('settings.detail.help.guide')}
+          description={t('settings.detail.help.guideDesc')}
+          value={t('settings.detail.help.inApp')}
+        />
+      </SettingsPanel>
+    </SettingsPageShell>
+  );
+}
+
+export function LabsSettingsPage() {
+  const { t } = useTranslation();
+
+  return (
+    <SettingsPageShell pageKey="labs">
+      <SettingsPanel title={t('settings.detail.labs.panelExperiments')} footer={t('settings.detail.labs.footer')}>
+        <SettingsValueRow
+          icon={FlaskConical}
+          tint="lavender"
+          label={t('settings.detail.labs.worldPreview')}
+          description={t('settings.detail.labs.worldPreviewDesc')}
+          value={t('settings.values.soon')}
+        />
+        <SettingsValueRow
+          icon={LayoutList}
+          tint="peach"
+          label={t('settings.detail.labs.smartInput')}
+          description={t('settings.detail.labs.smartInputDesc')}
+          value={t('settings.values.soon')}
+        />
+      </SettingsPanel>
+    </SettingsPageShell>
+  );
+}
+
+export function DiagnosticsSettingsPage() {
+  const { t } = useTranslation();
+
+  return (
+    <SettingsPageShell pageKey="diagnostics">
+      <SettingsPanel title={t('settings.detail.diagnostics.panelRuntime')} footer={t('settings.detail.diagnostics.footer')}>
+        <SettingsValueRow
+          icon={Activity}
+          tint="peach"
+          label={t('settings.detail.diagnostics.appShell')}
+          description={t('settings.detail.diagnostics.appShellDesc')}
+          value={t('settings.detail.diagnostics.loaded')}
+        />
+        <SettingsValueRow
+          icon={Database}
+          tint="sage"
+          label={t('settings.detail.diagnostics.authMode')}
+          description={t('settings.detail.diagnostics.authModeDesc')}
+          value={t('settings.detail.diagnostics.realSession')}
+        />
+        <SettingsValueRow
+          icon={CloudOff}
+          tint="mist"
+          label={t('settings.detail.diagnostics.report')}
+          description={t('settings.detail.diagnostics.reportDesc')}
+          value={t('settings.values.soon')}
         />
       </SettingsPanel>
     </SettingsPageShell>

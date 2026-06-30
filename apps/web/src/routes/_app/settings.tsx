@@ -1,12 +1,16 @@
-import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
 import {
+  Activity,
   Bell,
   ChevronRight,
   CircleHelp,
   Database,
   Download,
+  FlaskConical,
   KeyRound,
   Languages,
+  LifeBuoy,
+  LogOut,
   Moon,
   Palette,
   Search,
@@ -15,8 +19,10 @@ import {
   User,
   type LucideIcon,
 } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { logout } from '@/api/auth';
 import { BrandMark } from '@/components/AppBrand';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
@@ -31,6 +37,9 @@ type SettingsItem = {
   description?: string;
   value?: string;
   to?: SettingsRouteTo;
+  onPress?: () => void;
+  danger?: boolean;
+  loading?: boolean;
 };
 
 type SettingsRouteTo =
@@ -43,6 +52,9 @@ type SettingsRouteTo =
   | '/settings/language'
   | '/settings/storage'
   | '/settings/export'
+  | '/settings/help'
+  | '/settings/labs'
+  | '/settings/diagnostics'
   | '/settings/about';
 
 const sections = [
@@ -73,6 +85,9 @@ const sections = [
   {
     key: 'about',
     items: [
+      { icon: LifeBuoy, tint: 'mist', labelKey: 'help', descKey: 'helpDesc', to: '/settings/help' },
+      { icon: FlaskConical, tint: 'lavender', labelKey: 'labs', descKey: 'labsDesc', valueKey: 'soon', to: '/settings/labs' },
+      { icon: Activity, tint: 'peach', labelKey: 'diagnostics', descKey: 'diagnosticsDesc', valueKey: 'localOnly', to: '/settings/diagnostics' },
       { icon: CircleHelp, tint: 'sage', labelKey: 'about', descKey: 'aboutDesc', valueKey: 'preAlpha', to: '/settings/about' },
     ],
   },
@@ -80,11 +95,27 @@ const sections = [
 
 function SettingsPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [loggingOut, setLoggingOut] = useState(false);
 
   if (pathname !== '/settings') {
     return <Outlet />;
   }
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    if (!window.confirm(t('settings.actions.logoutConfirm'))) return;
+
+    setLoggingOut(true);
+    try {
+      await logout();
+      await router.navigate({ to: '/login' });
+    } catch {
+      toast.error(t('settings.actions.logoutFailed'));
+      setLoggingOut(false);
+    }
+  };
 
   const settingSections = sections.map((section) => ({
     title: t(`settings.sections.${section.key}`),
@@ -97,6 +128,18 @@ function SettingsPage() {
       to: 'to' in item ? item.to : undefined,
     })),
   }));
+  const actionItems: SettingsItem[] = [
+    {
+      icon: LogOut,
+      tint: 'pink',
+      label: t('settings.actions.logout'),
+      description: t('settings.actions.logoutDesc'),
+      value: loggingOut ? t('settings.actions.loggingOut') : undefined,
+      onPress: () => void handleLogout(),
+      danger: true,
+      loading: loggingOut,
+    },
+  ];
 
   return (
     <main className="relative min-h-full overflow-hidden">
@@ -138,6 +181,11 @@ function SettingsPage() {
                     ))}
                   </SettingsGroup>
                 ))}
+                <SettingsGroup title={t('settings.sections.accountAction')}>
+                  {actionItems.map((item) => (
+                    <SettingsRow key={item.label} item={item} />
+                  ))}
+                </SettingsGroup>
                 <SettingsFooterMark />
               </div>
             </div>
@@ -200,18 +248,18 @@ function SettingsRow({ item }: { item: SettingsItem }) {
         <Icon size={16} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-medium text-ink">{item.label}</span>
+        <span className={`block truncate text-[14px] font-medium ${item.danger ? 'text-pink' : 'text-ink'}`}>{item.label}</span>
         {item.description ? (
           <span className="mt-0.5 block truncate text-[11px] text-ink-faint">{item.description}</span>
         ) : null}
       </span>
       {item.value ? <span className="shrink-0 text-[12px] text-ink-faint">{item.value}</span> : null}
-      <ChevronRight size={15} className="shrink-0 text-ink-faint" />
+      {item.to ? <ChevronRight size={15} className="shrink-0 text-ink-faint" /> : null}
     </>
   );
 
   const className =
-    'group flex min-h-[58px] w-full items-center gap-3 border-b border-hairline px-3.5 text-left transition-colors last:border-b-0 hover:bg-surface-alt';
+    'group flex min-h-[58px] w-full items-center gap-3 border-b border-hairline px-3.5 text-left transition-colors last:border-b-0 hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60';
 
   if (item.to) {
     return (
@@ -222,7 +270,7 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   }
 
   return (
-    <button type="button" className={className}>
+    <button type="button" onClick={item.onPress} disabled={item.loading} className={className}>
       {content}
     </button>
   );
