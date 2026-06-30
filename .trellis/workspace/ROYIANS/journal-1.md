@@ -653,3 +653,36 @@ Checked landing page desktop/mobile screenshots, verified footer logo sizing, ad
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: 移动端导航骨架与登录适配
+
+**Date**: 2026-06-30
+**Task**: 移动端导航骨架与登录适配
+**Branch**: `main`
+
+### Summary
+
+完成侧边栏菜单信息架构、移动端底部 tabbar、移动端加号 action sheet，以及登录页移动端全屏白底适配。验证通过 typecheck、lint、build 和 git diff --check。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `655db93` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
