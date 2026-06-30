@@ -11,7 +11,7 @@ function StorageRoomPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="p-6">
+    <div className="px-2 py-6 sm:p-6">
       <h1 className="text-2xl font-bold text-ink mb-6">{t('storagePage.title')}</h1>
       <Surface variant="card" className="p-12 flex flex-col items-center gap-4">
         <Package size={48} className="text-ink-faint" />

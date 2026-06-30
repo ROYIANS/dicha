@@ -168,8 +168,7 @@ function TopBar() {
         className="pointer-events-none absolute inset-y-0 left-0 w-[min(100%,300px)] bg-gradient-to-r from-canvas from-55% via-canvas/88 to-transparent sm:from-45%"
       />
       <div className="relative max-w-xl">
-        <p className="text-[11px] uppercase tracking-wider text-ink-faint">Dashboard</p>
-        <div className="mt-2 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Sun size={18} className="shrink-0 text-peach" />
           <h1 className="text-lg font-bold tracking-tight text-ink sm:text-xl">早安，{DEV_NAME}</h1>
         </div>

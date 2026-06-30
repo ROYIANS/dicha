@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronLeft, type LucideIcon } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BrandMark } from '@/components/AppBrand';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
 export function SettingsDetailShell({
@@ -19,12 +20,12 @@ export function SettingsDetailShell({
 
   return (
     <main className="relative min-h-full overflow-hidden">
-      <div className="mx-auto min-h-full w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto min-h-full w-full max-w-6xl px-2 sm:px-6 lg:px-8">
         <div className="relative min-w-0">
           <SettingsGridPattern />
 
-          <div className="relative z-10 pb-36">
-            <header className="relative border-b border-hairline px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+          <div className="relative z-10 pb-0">
+            <header className="relative border-b border-hairline px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
               <Link
                 to="/settings"
                 className="lp-nav-link mb-5 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-ink-soft"
@@ -47,13 +48,25 @@ export function SettingsDetailShell({
 
             <SettingsSlash />
 
-            <div className="bg-canvas px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
+            <div className="bg-canvas px-2 py-7 sm:px-8 sm:py-9 lg:px-10">
               {children}
+              <SettingsFooterMark />
             </div>
           </div>
         </div>
       </div>
     </main>
+  );
+}
+
+function SettingsFooterMark() {
+  return (
+    <div className="flex min-h-44 items-end justify-center pt-16 pb-0 sm:min-h-56 sm:pt-24">
+      <BrandMark
+        aria-hidden
+        className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56"
+      />
+    </div>
   );
 }
 
