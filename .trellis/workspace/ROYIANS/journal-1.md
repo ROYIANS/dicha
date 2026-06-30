@@ -720,3 +720,42 @@ Added Better Auth session/device management to account security, removed dev aut
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: 归档已完成 Trellis 任务
+
+**Date**: 2026-06-30
+**Task**: 归档已完成 Trellis 任务
+**Branch**: `main`
+
+### Summary
+
+归档设置入口、设置二级页、登录 session 管理与 AI Gateway scaffold 四个已完成任务；保留业务首切片与后续 AI 子任务等待下一步指令。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c337790` | (see git log) |
+| `79ba9b1` | (see git log) |
+| `d163e5c` | (see git log) |
+| `4d822de` | (see git log) |
+| `f830607` | (see git log) |
+| `2cbe221` | (see git log) |
+| `28bfc58` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
