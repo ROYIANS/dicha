@@ -529,10 +529,9 @@ function MetricTile({ label, value }: { label: string; value: string }) {
 }
 
 function ProviderMark({ provider }: { provider: AiProvider }) {
+  const avatar = provider.avatar ?? provider.shortName;
   return (
-    <span className="grid size-11 shrink-0 place-items-center rounded-md border border-hairline bg-chip-peach text-[13px] font-semibold text-peach">
-      {provider.avatar ?? provider.shortName}
-    </span>
+    <ProviderAvatar avatar={avatar} fallback={provider.shortName} className="size-11 text-[13px]" />
   );
 }
 
@@ -600,14 +599,16 @@ function ProviderCredentialPopover({
           </p>
           <div className="mt-3 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-peach text-[11px] font-semibold text-peach">
-                {trimmedAvatar}
-              </span>
+              <ProviderAvatar
+                avatar={trimmedAvatar}
+                fallback={provider.shortName}
+                className="size-9 text-[11px]"
+              />
               <TextField
                 value={avatar}
                 onChange={setAvatar}
                 disabled={pending}
-                maxLength={12}
+                maxLength={2048}
                 placeholder={t('settings.detail.aiProviders.providerAvatarPlaceholder')}
               />
             </div>
@@ -782,6 +783,34 @@ function ModelAvatar({ model }: { model: AiModel }) {
   );
 }
 
+function ProviderAvatar({
+  avatar,
+  fallback,
+  className = '',
+}: {
+  avatar: string;
+  fallback: string;
+  className?: string;
+}) {
+  if (isImageUrl(avatar)) {
+    return (
+      <span
+        className={`grid shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-surface-alt ${className}`}
+      >
+        <img src={avatar} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`grid shrink-0 place-items-center rounded-md border border-hairline bg-chip-peach font-semibold text-peach ${className}`}
+    >
+      {avatar || fallback}
+    </span>
+  );
+}
+
 function ProviderFormModal({
   open,
   pending,
@@ -870,14 +899,12 @@ function ProviderFormModal({
           description={t('settings.detail.aiProviders.providerAvatarDesc')}
         >
           <div className="flex items-center gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-peach text-[11px] font-semibold text-peach">
-              {avatarValue}
-            </span>
+            <ProviderAvatar avatar={avatarValue} fallback={shortName} className="size-9 text-[11px]" />
             <TextField
               value={avatar}
               onChange={setAvatar}
               disabled={pending}
-              maxLength={12}
+              maxLength={2048}
               placeholder={t('settings.detail.aiProviders.providerAvatarPlaceholder')}
             />
           </div>
@@ -1396,6 +1423,15 @@ function providerShortName(value: string) {
     .join('')
     .toUpperCase();
   return (letters || value.slice(0, 2).toUpperCase()).slice(0, 6);
+}
+
+function isImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 function SectionLabel({ children }: { children: string }) {

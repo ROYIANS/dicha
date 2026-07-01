@@ -56,11 +56,20 @@ export const AiAvailabilityStateSchema = z.enum([
 ]);
 export type AiAvailabilityState = z.infer<typeof AiAvailabilityStateSchema>;
 
+const AiProviderAvatarSchema = z.union([
+  z.string().min(1).max(12),
+  z
+    .string()
+    .url()
+    .max(2048)
+    .refine((value) => value.startsWith('https://') || value.startsWith('http://')),
+]);
+
 export const AiProviderSchema = z.object({
   id: z.string(),
   name: z.string(),
   shortName: z.string(),
-  avatar: z.string().min(1).max(12).optional(),
+  avatar: AiProviderAvatarSchema.optional(),
   description: z.string(),
   baseUrl: z.string().url(),
   status: AiProviderStatusSchema,
@@ -121,7 +130,7 @@ const AiProviderIdSchema = z
 const AiProviderPatchSchema = z.object({
   providerId: z.string(),
   enabled: z.boolean().optional(),
-  avatar: z.string().min(1).max(12).optional(),
+  avatar: AiProviderAvatarSchema.optional(),
   baseUrl: z.string().url().optional(),
   credential: z.string().min(1).max(4096).optional(),
   requestFormat: AiProviderRequestFormatSchema.optional(),
@@ -131,7 +140,7 @@ const AiProviderCreateSchema = AiProviderPatchSchema.extend({
   providerId: AiProviderIdSchema,
   name: z.string().min(1).max(120),
   shortName: z.string().min(1).max(12),
-  avatar: z.string().min(1).max(12).optional(),
+  avatar: AiProviderAvatarSchema.optional(),
   description: z.string().min(1).max(240),
   baseUrl: z.string().url(),
   authType: z.enum(['api_key', 'bearer_token']).default('api_key'),

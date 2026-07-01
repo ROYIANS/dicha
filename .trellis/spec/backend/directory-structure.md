@@ -112,7 +112,7 @@ apps/api/
 - AI provider/model settings are user-scoped. Never store API keys or model enablement in a single global catalog file after authentication is available.
 - Secrets are write-only. `PATCH /ai/config` may accept `providers[].credential`, but no API may return plaintext credentials. Catalog responses return only `credentialState`.
 - `PATCH /ai/config` may update provider `baseUrl` and model configuration fields:
-  - `providers[].avatar` (optional short display mark, max 12 characters)
+  - `providers[].avatar` (optional short display mark up to 12 characters, or an http(s) image URL up to 2048 characters)
   - `models[].displayName`
   - `models[].avatar` (optional short display mark, max 12 characters)
   - `models[].contextWindow`
