@@ -81,9 +81,18 @@ function readDrawerTokens() {
   };
 }
 
-/** WebGL 闪烁点阵 + 半透明叠层，用于抽屉遮罩（参考 ChemViz ClerkModalBackdrop）。 */
-export function DotsBackdrop({ visible, className = '' }: { visible: boolean; className?: string }) {
+/** WebGL 闪烁点阵 + 可选半透明叠层，用于抽屉、弹窗等遮罩。 */
+export function DotsBackdrop({
+  visible,
+  className = '',
+  scrim = true,
+}: {
+  visible: boolean;
+  className?: string;
+  scrim?: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scrimEnabled = scrim;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -131,8 +140,8 @@ export function DotsBackdrop({ visible, className = '' }: { visible: boolean; cl
 
     // token 缓存：仅在挂载 / 主题切换时读取，不在渲染循环里调 getComputedStyle。
     const applyTokens = () => {
-      const { scrim, dot } = readDrawerTokens();
-      canvas.style.backgroundColor = scrim;
+      const { scrim: scrimColor, dot } = readDrawerTokens();
+      canvas.style.backgroundColor = scrimEnabled ? scrimColor : 'transparent';
       const [r, g, b] = dot;
       gl.uniform3fv(
         uColors,
@@ -195,7 +204,7 @@ export function DotsBackdrop({ visible, className = '' }: { visible: boolean; cl
       gl.deleteProgram(program);
       gl.deleteBuffer(buf);
     };
-  }, []);
+  }, [scrimEnabled]);
 
   return (
     <canvas

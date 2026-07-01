@@ -77,10 +77,15 @@ apps/api/
   - `GET /ai/health` -> `{ status: "ok", service: "ai-gateway" }`
   - `GET /ai/catalog` -> `AiGatewayCatalog`
   - `PATCH /ai/config` -> `{ catalog: AiGatewayCatalog }`
+  - `POST /ai/providers/sync-models` with `{ providerId }` -> `{ catalog: AiGatewayCatalog, syncedCount: number }`
+  - `POST /ai/providers/check` with `{ providerId }` -> `{ ok: boolean, providerId: string, checkedAt: string, message: string }`
 - API BFF:
   - `GET /api/ai/catalog` -> proxies to `GET {AI_GATEWAY_BASE_URL}/catalog`
   - `PATCH /api/ai/config` -> proxies to `PATCH {AI_GATEWAY_BASE_URL}/config`
+  - `POST /api/ai/providers/sync-models` -> proxies to `POST {AI_GATEWAY_BASE_URL}/providers/sync-models`
+  - `POST /api/ai/providers/check` -> proxies to `POST {AI_GATEWAY_BASE_URL}/providers/check`
   - Protect BFF routes with `AuthGuard`; do not expose AI config writes as anonymous endpoints.
+  - BFF must forward the authenticated Better Auth user id as `x-dicha-user-id`; AI Gateway rejects missing user scope.
 - Shared contract source:
   - `packages/shared/src/contracts/ai.contract.ts`
 - Shared root contract:
@@ -95,7 +100,7 @@ apps/api/
   - `PORT`: optional number, defaults to `3100`.
   - `AI_GATEWAY_INTERNAL_TOKEN`: optional string. When set in `apps/ai-gateway`, `CatalogController` requires the `x-ai-gateway-token` header. `apps/api` sends the same header when proxying.
   - `AI_GATEWAY_SECRET_KEY`: optional string used to encrypt persisted provider credentials. Production/self-hosted deployments should set it; rotating it makes existing encrypted credentials unreadable.
-  - `AI_GATEWAY_DATA_DIR`: optional string, defaults to `./data/ai-gateway`; config is stored as `config.json` in this directory.
+  - `AI_GATEWAY_DATA_DIR`: optional string, defaults to `./data/ai-gateway`; user-scoped config is stored as `users/<sha256(userId).slice(0,32)>.json` under this directory.
   - `AI_GATEWAY_BASE_URL` in `apps/api`: optional string, defaults to `http://localhost:3100/ai`; Docker compose must set it to `http://ai-gateway:3100/ai`.
 - Docker:
   - Dockerfile path: `docker/Dockerfile.ai-gateway`.
@@ -104,7 +109,24 @@ apps/api/
   - Mount a named volume for `AI_GATEWAY_DATA_DIR` so provider/model config and encrypted credentials survive container recreation.
 - Cross-package DTOs must come from `@dicha/shared`; do not duplicate AI provider/model/status enums in web/api/ai-gateway.
 - `GET /ai/catalog` is generated from persisted config. First boot with no config seeds providers/models/assignments from `aiCatalogSeed`; credential state must be `missing` and model availability may be `config_required`.
+- AI provider/model settings are user-scoped. Never store API keys or model enablement in a single global catalog file after authentication is available.
 - Secrets are write-only. `PATCH /ai/config` may accept `providers[].credential`, but no API may return plaintext credentials. Catalog responses return only `credentialState`.
+- `PATCH /ai/config` may update provider `baseUrl` and model configuration fields:
+  - `providers[].avatar` (optional short display mark, max 12 characters)
+  - `models[].displayName`
+  - `models[].avatar` (optional short display mark, max 12 characters)
+  - `models[].contextWindow`
+  - `models[].modelType` (`chat | embedding | rerank | image | audio | video`)
+  - `models[].extensionParameters` (`gpt5_2ReasoningEffort | textVerbosity`)
+  - `models[].capabilities` including `web_search`, `image_generation`, and `video`
+- `PATCH /ai/config` is also the upsert path for user-defined AI catalog entries:
+  - Unknown `providers[].providerId` with `name`, `shortName`, optional `avatar`, `description`, `baseUrl`, and `requestFormat` creates a custom provider.
+  - Unknown `models[].modelId` with `providerId`, `name`, `displayName`, `contextWindow`, `modelType`, and `capabilities` creates a custom model.
+  - Existing provider/model ids always patch the existing entry; do not create a second duplicate entry.
+- Persisted configs created before a new optional model field existed must be normalized in `CatalogStore.readConfig()` before returning a catalog. Do not make the web settings UI defend against missing gateway-owned model fields.
+- `POST /ai/providers/sync-models` uses the configured provider `baseUrl`, appends `/models`, and sends the decrypted credential as a Bearer token. The sync currently targets OpenAI-compatible model listing responses shaped like `{ data: [{ id }] }`.
+- Synced provider models are merged by provider id and model name. New models default to disabled, `availability: "unknown"`, `contextWindow: 4096`, `modelType: "chat"`, `extensionParameters: []`, and `capabilities: ["chat"]`.
+- `POST /ai/providers/check` must use the same configured provider secret and OpenAI-compatible `/models` reachability probe as sync, but it returns `{ ok: false, message }` for provider failures instead of throwing. Missing provider credentials still reject as bad configuration.
 - UI settings pages must consume `api.ai.getCatalog` / `api.ai.updateConfig`; direct fixture reads are only acceptable for seed data inside `apps/ai-gateway`.
 
 ### 4. Validation & Error Matrix
@@ -112,7 +134,11 @@ apps/api/
 - Missing or invalid env -> process startup fails via `class-validator` config validation.
 - Unknown provider/model states -> rejected by zod schemas in shared contract.
 - Invalid config payload -> reject at the gateway boundary with `AiConfigUpdateSchema.parse`.
+- Missing `x-dicha-user-id` on AI Gateway catalog/config/sync/check -> `400 Bad Request`.
 - AI Gateway down or invalid gateway response -> `apps/api` proxy returns `502 Bad Gateway`; web shows a save/load failure instead of using stale mock data.
+- Model sync without a stored provider credential -> gateway returns `400 Bad Request`; the web UI should disable sync for missing credentials and surface sync failure as a toast if the backend rejects it.
+- Provider `/models` endpoint returns non-2xx or malformed data -> gateway rejects the sync instead of silently replacing the catalog.
+- Provider connection check receives non-2xx or malformed data -> gateway returns `ok: false` with a diagnostic message and does not mutate the catalog.
 - Missing `x-ai-gateway-token` when `AI_GATEWAY_INTERNAL_TOKEN` is configured -> gateway returns `401`.
 - AI Gateway down -> must not block `web` or `api` container startup unless a task explicitly wires dependency. Runtime catalog/config calls may fail gracefully.
 - Docker unavailable in the local environment -> record as verification gap, but still run package lint/typecheck/build.
@@ -124,6 +150,9 @@ apps/api/
 - Bad: define `type AiModelStatus = string` separately in `apps/web` and `apps/ai-gateway`, or add OpenAI SDK calls directly inside a settings page.
 - Bad: return `credential` or `apiKey` in `AiGatewayCatalog`; secrets are never readable after write.
 - Bad: copy the mock catalog into a settings page to unblock UI work; provider/model ids will drift from AI Gateway.
+- Bad: let a frontend model settings panel send `NaN`, fractional, or non-positive `contextWindow`; shared zod must reject it and the UI should prevent obvious invalid submissions.
+- Bad: implement custom provider/model creation as frontend-only local state; the catalog must round-trip through `PATCH /ai/config` so gateway persistence remains the source of truth.
+- Bad: route all users to one `AI_GATEWAY_DATA_DIR/config.json`; one user's API key or disabled model state must never leak to another user.
 
 ### 6. Tests Required
 
@@ -141,6 +170,9 @@ apps/api/
   - `pnpm --filter @dicha/web lint`
   - `pnpm --filter @dicha/web typecheck`
   - `pnpm --filter @dicha/web build`
+- For provider model sync, assert manually or via tests that a provider with no credential cannot call `/models`, and a successful sync adds new disabled models without dropping existing model configuration fields.
+- For user-scoped config, assert manually or via tests that two different `x-dicha-user-id` values read and write different files and never see each other's credentials.
+- For provider connection check, assert that bad upstream credentials return `ok: false` instead of replacing the catalog or surfacing plaintext secrets.
 - Required when Docker CLI is available:
   - `docker compose config --quiet`
   - `docker build -f docker/Dockerfile.ai-gateway -t dicha-ai-gateway:test .`

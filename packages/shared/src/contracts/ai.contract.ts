@@ -12,6 +12,9 @@ export const AiProviderStatusSchema = z.enum([
 ]);
 export type AiProviderStatus = z.infer<typeof AiProviderStatusSchema>;
 
+export const AiProviderRequestFormatSchema = z.enum(['openai_compatible']);
+export type AiProviderRequestFormat = z.infer<typeof AiProviderRequestFormatSchema>;
+
 export const AiModelCapabilitySchema = z.enum([
   'chat',
   'vision',
@@ -20,8 +23,20 @@ export const AiModelCapabilitySchema = z.enum([
   'embedding',
   'reasoning',
   'fast',
+  'web_search',
+  'image_generation',
+  'video',
 ]);
 export type AiModelCapability = z.infer<typeof AiModelCapabilitySchema>;
+
+export const AiModelTypeSchema = z.enum(['chat', 'embedding', 'rerank', 'image', 'audio', 'video']);
+export type AiModelType = z.infer<typeof AiModelTypeSchema>;
+
+export const AiModelExtensionParameterSchema = z.enum([
+  'gpt5_2ReasoningEffort',
+  'textVerbosity',
+]);
+export type AiModelExtensionParameter = z.infer<typeof AiModelExtensionParameterSchema>;
 
 export const AiModelUseCaseSchema = z.enum([
   'assistant',
@@ -45,12 +60,15 @@ export const AiProviderSchema = z.object({
   id: z.string(),
   name: z.string(),
   shortName: z.string(),
+  avatar: z.string().min(1).max(12).optional(),
   description: z.string(),
   baseUrl: z.string().url(),
   status: AiProviderStatusSchema,
   authType: z.enum(['api_key', 'bearer_token']),
+  requestFormat: AiProviderRequestFormatSchema.optional(),
   credentialState: z.enum(['configured', 'missing', 'masked']),
   priority: z.number().int().min(1),
+  custom: z.boolean().optional(),
 });
 export type AiProvider = z.infer<typeof AiProviderSchema>;
 
@@ -65,13 +83,17 @@ export const AiModelSchema = z.object({
   providerId: z.string(),
   name: z.string(),
   displayName: z.string(),
+  avatar: z.string().min(1).max(12).optional(),
   contextWindow: z.number().int().positive(),
+  modelType: AiModelTypeSchema.default('chat'),
+  extensionParameters: z.array(AiModelExtensionParameterSchema).default([]),
   capabilities: z.array(AiModelCapabilitySchema),
   enabled: z.boolean(),
   recommended: z.boolean(),
   availability: AiAvailabilityStateSchema,
   lastLatencyMs: z.number().int().positive().nullable(),
   priceHint: z.string(),
+  custom: z.boolean().optional(),
 });
 export type AiModel = z.infer<typeof AiModelSchema>;
 
@@ -90,18 +112,67 @@ export const AiGatewayCatalogSchema = z.object({
 });
 export type AiGatewayCatalog = z.infer<typeof AiGatewayCatalogSchema>;
 
-export const AiProviderUpdateSchema = z.object({
+const AiProviderIdSchema = z
+  .string()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z0-9][a-z0-9_-]*$/);
+
+const AiProviderPatchSchema = z.object({
   providerId: z.string(),
   enabled: z.boolean().optional(),
+  avatar: z.string().min(1).max(12).optional(),
   baseUrl: z.string().url().optional(),
   credential: z.string().min(1).max(4096).optional(),
+  requestFormat: AiProviderRequestFormatSchema.optional(),
 });
+
+const AiProviderCreateSchema = AiProviderPatchSchema.extend({
+  providerId: AiProviderIdSchema,
+  name: z.string().min(1).max(120),
+  shortName: z.string().min(1).max(12),
+  avatar: z.string().min(1).max(12).optional(),
+  description: z.string().min(1).max(240),
+  baseUrl: z.string().url(),
+  authType: z.enum(['api_key', 'bearer_token']).default('api_key'),
+  requestFormat: AiProviderRequestFormatSchema.default('openai_compatible'),
+  custom: z.boolean().optional(),
+});
+
+export const AiProviderUpdateSchema = z.union([
+  AiProviderCreateSchema,
+  AiProviderPatchSchema,
+]);
 export type AiProviderUpdate = z.infer<typeof AiProviderUpdateSchema>;
 
-export const AiModelUpdateSchema = z.object({
+const AiModelPatchSchema = z.object({
   modelId: z.string(),
-  enabled: z.boolean(),
+  enabled: z.boolean().optional(),
+  displayName: z.string().min(1).max(120).optional(),
+  avatar: z.string().min(1).max(12).optional(),
+  contextWindow: z.number().int().positive().optional(),
+  modelType: AiModelTypeSchema.optional(),
+  extensionParameters: z.array(AiModelExtensionParameterSchema).optional(),
+  capabilities: z.array(AiModelCapabilitySchema).optional(),
 });
+
+const AiModelCreateSchema = AiModelPatchSchema.extend({
+  providerId: z.string(),
+  name: z.string().min(1).max(160),
+  displayName: z.string().min(1).max(120),
+  avatar: z.string().min(1).max(12).optional(),
+  contextWindow: z.number().int().positive(),
+  modelType: AiModelTypeSchema,
+  extensionParameters: z.array(AiModelExtensionParameterSchema).default([]),
+  capabilities: z.array(AiModelCapabilitySchema).min(1),
+  enabled: z.boolean().optional(),
+  custom: z.boolean().optional(),
+});
+
+export const AiModelUpdateSchema = z.union([
+  AiModelCreateSchema,
+  AiModelPatchSchema,
+]);
 export type AiModelUpdate = z.infer<typeof AiModelUpdateSchema>;
 
 export const AiAssignmentUpdateSchema = z.object({
@@ -123,6 +194,30 @@ export const AiConfigUpdateResponseSchema = z.object({
 });
 export type AiConfigUpdateResponse = z.infer<typeof AiConfigUpdateResponseSchema>;
 
+export const AiProviderSyncModelsBodySchema = z.object({
+  providerId: z.string(),
+});
+export type AiProviderSyncModelsBody = z.infer<typeof AiProviderSyncModelsBodySchema>;
+
+export const AiProviderCheckBodySchema = z.object({
+  providerId: z.string(),
+});
+export type AiProviderCheckBody = z.infer<typeof AiProviderCheckBodySchema>;
+
+export const AiProviderCheckResponseSchema = z.object({
+  ok: z.boolean(),
+  providerId: z.string(),
+  checkedAt: z.string().datetime(),
+  message: z.string(),
+});
+export type AiProviderCheckResponse = z.infer<typeof AiProviderCheckResponseSchema>;
+
+export const AiProviderSyncModelsResponseSchema = z.object({
+  catalog: AiGatewayCatalogSchema,
+  syncedCount: z.number().int().min(0),
+});
+export type AiProviderSyncModelsResponse = z.infer<typeof AiProviderSyncModelsResponseSchema>;
+
 export const aiContract = c.router({
   getCatalog: {
     method: 'GET',
@@ -140,6 +235,24 @@ export const aiContract = c.router({
       200: AiConfigUpdateResponseSchema,
     },
     summary: 'Persist AI provider/model settings without returning secrets',
+  },
+  syncProviderModels: {
+    method: 'POST',
+    path: '/ai/providers/sync-models',
+    body: AiProviderSyncModelsBodySchema,
+    responses: {
+      200: AiProviderSyncModelsResponseSchema,
+    },
+    summary: 'Sync provider model list into the persisted AI catalog',
+  },
+  checkProviderConnection: {
+    method: 'POST',
+    path: '/ai/providers/check',
+    body: AiProviderCheckBodySchema,
+    responses: {
+      200: AiProviderCheckResponseSchema,
+    },
+    summary: 'Check whether a provider credential and base URL can reach the model endpoint',
   },
 });
 

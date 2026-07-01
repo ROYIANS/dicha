@@ -2,6 +2,8 @@ import { queryOptions } from '@tanstack/react-query';
 import {
   AiConfigUpdateResponseSchema,
   AiGatewayCatalogSchema,
+  AiProviderCheckResponseSchema,
+  AiProviderSyncModelsResponseSchema,
   type AiConfigUpdate,
 } from '@dicha/shared';
 import { api } from './client';
@@ -25,4 +27,20 @@ export async function updateAiConfig(body: AiConfigUpdate) {
     return AiConfigUpdateResponseSchema.parse(res.body).catalog;
   }
   throw new Error(`AI config update failed (${res.status})`);
+}
+
+export async function syncAiProviderModels(providerId: string) {
+  const res = await api.ai.syncProviderModels({ body: { providerId } });
+  if (res.status === 200) {
+    return AiProviderSyncModelsResponseSchema.parse(res.body);
+  }
+  throw new Error(`AI provider model sync failed (${res.status})`);
+}
+
+export async function checkAiProviderConnection(providerId: string) {
+  const res = await api.ai.checkProviderConnection({ body: { providerId } });
+  if (res.status === 200) {
+    return AiProviderCheckResponseSchema.parse(res.body);
+  }
+  throw new Error(`AI provider connection check failed (${res.status})`);
 }
