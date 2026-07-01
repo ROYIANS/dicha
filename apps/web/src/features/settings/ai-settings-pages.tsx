@@ -17,7 +17,8 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -1153,7 +1154,15 @@ function ModalShell({
   footer: ReactNode;
   onClose: () => void;
 }) {
-  return (
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  return createPortal(
     <div className="fixed inset-0 z-[300] flex items-end justify-center overflow-hidden sm:items-center sm:px-4 sm:py-8">
       <DotsBackdrop visible scrim={false} className="absolute inset-0" />
       <div className="absolute inset-0 bg-sidebar-bg/50" aria-hidden />
@@ -1173,7 +1182,8 @@ function ModalShell({
           {footer}
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
