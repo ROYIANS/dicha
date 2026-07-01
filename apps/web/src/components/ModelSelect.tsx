@@ -6,6 +6,7 @@ type ModelSelectProps = {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  allowEmpty?: boolean;
   placeholder: string;
   unavailableLabel: string;
   emptyLabel: string;
@@ -16,13 +17,14 @@ export function ModelSelect({
   value,
   onChange,
   disabled = false,
+  allowEmpty = false,
   placeholder,
   unavailableLabel,
   emptyLabel,
 }: ModelSelectProps) {
   const models = catalog.models;
   const selected = models.find((model) => model.id === value);
-  const selectedUnavailable = selected ? !isModelUsable(selected) : Boolean(value);
+  const selectedUnavailable = Boolean(value) && (selected ? !isModelUsable(selected) : true);
 
   if (models.length === 0) {
     return (
@@ -42,7 +44,7 @@ export function ModelSelect({
           aria-label={placeholder}
           className="h-9 w-full appearance-none truncate rounded-md border border-hairline bg-surface-alt py-0 pl-3 pr-8 text-[12px] font-medium text-ink shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_7%,transparent)] outline-none transition-colors hover:bg-surface focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <option value="" disabled>
+          <option value="" disabled={!allowEmpty}>
             {placeholder}
           </option>
           {models.map((model) => (

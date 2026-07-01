@@ -161,10 +161,12 @@ export function SettingsSwitch({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -172,8 +174,9 @@ export function SettingsSwitch({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full border border-hairline transition-colors ${
+      className={`relative h-7 w-12 shrink-0 rounded-full border border-hairline transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         checked ? 'bg-[var(--sidebar-bg)]' : 'bg-canvas'
       }`}
     >

@@ -6,28 +6,34 @@ import {
   CircleDashed,
   KeyRound,
   Layers3,
+  Save,
   Server,
   Sparkles,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import type {
+  AiAssignmentUpdate,
   AiAvailabilityState,
+  AiConfigUpdate,
   AiGatewayCatalog,
   AiModel,
   AiModelCapability,
   AiModelUseCase,
+  AiProvider,
   AiProviderStatus,
 } from '@dicha/shared';
-import { aiCatalogQueryOptions } from '@/api/ai';
+import { aiCatalogQueryOptions, updateAiConfig } from '@/api/ai';
 import { ModelSelect } from '@/components/ModelSelect';
 import {
   SettingsDetailShell,
   SettingsPanel,
   SettingsSummaryCard,
+  SettingsSwitch,
   SettingsValueRow,
 } from '@/components/SettingsScaffold';
 import { type SettingsTint } from '@/components/settings-ui';
@@ -60,6 +66,7 @@ export function AiProvidersSettingsPage() {
   const { t } = useTranslation();
   const catalogQuery = useQuery(aiCatalogQueryOptions());
   const catalog = catalogQuery.data;
+  const updateConfig = useAiConfigMutation();
 
   return (
     <SettingsDetailShell
@@ -78,7 +85,13 @@ export function AiProvidersSettingsPage() {
         <SettingsPanel title={t('settings.detail.aiProviders.panelProviders')}>
           {catalog ? (
             catalog.providers.map((provider) => (
-              <ProviderCard key={provider.id} catalog={catalog} providerId={provider.id} />
+              <ProviderCard
+                key={provider.id}
+                catalog={catalog}
+                provider={provider}
+                onUpdate={(body) => updateConfig.mutate(body)}
+                pending={updateConfig.isPending}
+              />
             ))
           ) : (
             <SettingsValueRow
@@ -98,7 +111,7 @@ export function AiProvidersSettingsPage() {
             tint="peach"
             label={t('settings.detail.aiProviders.apiKey')}
             description={t('settings.detail.aiProviders.apiKeyDesc')}
-            value={t('settings.values.soon')}
+            value={t('settings.detail.aiProviders.apiKeyValue')}
           />
         </SettingsPanel>
       </div>
@@ -111,14 +124,18 @@ export function AiModelsSettingsPage() {
   const catalogQuery = useQuery(aiCatalogQueryOptions());
   const catalog = catalogQuery.data;
   const [selectedByUseCase, setSelectedByUseCase] = useState<Record<string, string>>({});
+  const [fallbackByUseCase, setFallbackByUseCase] = useState<Record<string, string>>({});
+  const updateConfig = useAiConfigMutation();
 
   const assignmentRows = useMemo(() => {
     if (!catalog) return [];
     return catalog.assignments.map((assignment) => ({
       ...assignment,
       selectedModelId: selectedByUseCase[assignment.useCase] ?? assignment.primaryModelId,
+      selectedFallbackModelId:
+        fallbackByUseCase[assignment.useCase] ?? assignment.fallbackModelIds[0] ?? '',
     }));
-  }, [catalog, selectedByUseCase]);
+  }, [catalog, fallbackByUseCase, selectedByUseCase]);
 
   return (
     <SettingsDetailShell
@@ -151,19 +168,60 @@ export function AiModelsSettingsPage() {
                     count: assignment.fallbackModelIds.length,
                   })}
                   action={
-                    <ModelSelect
-                      catalog={catalog}
-                      value={assignment.selectedModelId}
-                      onChange={(value) =>
-                        setSelectedByUseCase((current) => ({
-                          ...current,
-                          [assignment.useCase]: value,
-                        }))
-                      }
-                      placeholder={t('settings.detail.aiModels.selectPlaceholder')}
-                      unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
-                      emptyLabel={t('settings.detail.aiModels.emptyModels')}
-                    />
+                    <span className="flex shrink-0 flex-col items-end gap-2">
+                      <ModelSelect
+                        catalog={catalog}
+                        value={assignment.selectedModelId}
+                        onChange={(value) => {
+                          setSelectedByUseCase((current) => ({
+                            ...current,
+                            [assignment.useCase]: value,
+                          }));
+                          updateConfig.mutate({
+                            assignments: [
+                              assignmentUpdate({
+                                catalog,
+                                useCase: assignment.useCase,
+                                primaryModelId: value,
+                              }),
+                            ],
+                          });
+                        }}
+                        disabled={updateConfig.isPending}
+                        placeholder={t('settings.detail.aiModels.selectPlaceholder')}
+                        unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
+                        emptyLabel={t('settings.detail.aiModels.emptyModels')}
+                      />
+                      <ModelSelect
+                        catalog={catalog}
+                        value={assignment.selectedFallbackModelId}
+                        onChange={(value) => {
+                          setFallbackByUseCase((current) => ({
+                            ...current,
+                            [assignment.useCase]: value,
+                          }));
+                          updateConfig.mutate({
+                            assignments: [
+                              assignmentUpdate({
+                                catalog,
+                                useCase: assignment.useCase,
+                                primaryModelId: assignment.selectedModelId,
+                                fallbackModelIds: fallbackModelIds({
+                                  current: assignment.fallbackModelIds,
+                                  nextFirst: value,
+                                  primaryModelId: assignment.selectedModelId,
+                                }),
+                              }),
+                            ],
+                          });
+                        }}
+                        disabled={updateConfig.isPending}
+                        placeholder={t('settings.detail.aiModels.fallbackPlaceholder')}
+                        unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
+                        emptyLabel={t('settings.detail.aiModels.emptyModels')}
+                        allowEmpty
+                      />
+                    </span>
                   }
                 />
               );
@@ -181,7 +239,13 @@ export function AiModelsSettingsPage() {
         <SettingsPanel title={t('settings.detail.aiModels.panelModels')}>
           {catalog ? (
             catalog.models.map((model) => (
-              <ModelCard key={model.id} model={model} catalog={catalog} />
+              <ModelCard
+                key={model.id}
+                model={model}
+                catalog={catalog}
+                onUpdate={(body) => updateConfig.mutate(body)}
+                pending={updateConfig.isPending}
+              />
             ))
           ) : (
             <SettingsValueRow
@@ -197,13 +261,23 @@ export function AiModelsSettingsPage() {
   );
 }
 
-function ProviderCard({ catalog, providerId }: { catalog: AiGatewayCatalog; providerId: string }) {
+function ProviderCard({
+  catalog,
+  provider,
+  onUpdate,
+  pending,
+}: {
+  catalog: AiGatewayCatalog;
+  provider: AiProvider;
+  onUpdate: (body: AiConfigUpdate) => void;
+  pending: boolean;
+}) {
   const { t } = useTranslation();
-  const provider = catalog.providers.find((item) => item.id === providerId);
-  if (!provider) return null;
+  const [credential, setCredential] = useState('');
 
   const modelCount = catalog.models.filter((model) => model.providerId === provider.id).length;
   const StatusIcon = provider.status === 'enabled' ? CheckCircle2 : Activity;
+  const isEnabled = provider.status === 'enabled' || provider.status === 'needs_config';
 
   return (
     <SettingsValueRow
@@ -224,14 +298,46 @@ function ProviderCard({ catalog, providerId }: { catalog: AiGatewayCatalog; prov
         </span>
       }
       action={
-        <span className="flex shrink-0 flex-col items-end gap-1 text-right">
-          <StatusPill
-            icon={StatusIcon}
-            tint={providerStatusTone[provider.status]}
-            label={t(`settings.aiProviderStatus.${provider.status}`)}
-          />
-          <span className="text-[11px] text-ink-faint">
-            {t(`settings.aiCredentialState.${provider.credentialState}`)}
+        <span className="flex shrink-0 flex-col items-end gap-2 text-right">
+          <span className="flex items-center gap-2">
+            <StatusPill
+              icon={StatusIcon}
+              tint={providerStatusTone[provider.status]}
+              label={t(`settings.aiProviderStatus.${provider.status}`)}
+            />
+            <SettingsSwitch
+              checked={isEnabled}
+              onChange={(enabled) =>
+                onUpdate({ providers: [{ providerId: provider.id, enabled }] })
+              }
+              label={t('settings.detail.aiProviders.toggleProvider', { name: provider.name })}
+              disabled={pending}
+            />
+          </span>
+          <span className="flex max-w-[min(54vw,300px)] items-center gap-1.5">
+            <input
+              value={credential}
+              onChange={(event) => setCredential(event.target.value)}
+              type="password"
+              autoComplete="off"
+              placeholder={t(`settings.aiCredentialState.${provider.credentialState}`)}
+              className="h-8 min-w-0 rounded-md border border-hairline bg-surface-alt px-2.5 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist"
+            />
+            <button
+              type="button"
+              disabled={pending || credential.trim().length === 0}
+              onClick={() => {
+                onUpdate({
+                  providers: [{ providerId: provider.id, enabled: true, credential }],
+                });
+                setCredential('');
+              }}
+              className="grid size-8 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-ink-soft transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label={t('settings.detail.aiProviders.saveCredential', { name: provider.name })}
+              title={t('settings.detail.aiProviders.saveCredential', { name: provider.name })}
+            >
+              <Save size={14} />
+            </button>
           </span>
         </span>
       }
@@ -239,7 +345,17 @@ function ProviderCard({ catalog, providerId }: { catalog: AiGatewayCatalog; prov
   );
 }
 
-function ModelCard({ model, catalog }: { model: AiModel; catalog: AiGatewayCatalog }) {
+function ModelCard({
+  model,
+  catalog,
+  onUpdate,
+  pending,
+}: {
+  model: AiModel;
+  catalog: AiGatewayCatalog;
+  onUpdate: (body: AiConfigUpdate) => void;
+  pending: boolean;
+}) {
   const { t } = useTranslation();
   const provider = catalog.providers.find((item) => item.id === model.providerId);
   const assignedUseCases = catalog.assignments
@@ -272,21 +388,86 @@ function ModelCard({ model, catalog }: { model: AiModel; catalog: AiGatewayCatal
         </span>
       }
       action={
-        <span className="flex shrink-0 flex-col items-end gap-1 text-right">
-          <StatusPill
-            icon={model.enabled ? CheckCircle2 : CircleDashed}
-            tint={availabilityTone[model.availability]}
-            label={t(`settings.aiAvailability.${model.availability}`)}
-          />
-          <span className="text-[11px] text-ink-faint">
-            {model.lastLatencyMs
-              ? t('settings.detail.aiModels.latency', { value: model.lastLatencyMs })
-              : t('settings.detail.aiModels.noLatency')}
+        <span className="flex shrink-0 items-center gap-3 text-right">
+          <span className="flex flex-col items-end gap-1">
+            <StatusPill
+              icon={model.enabled ? CheckCircle2 : CircleDashed}
+              tint={availabilityTone[model.availability]}
+              label={t(`settings.aiAvailability.${model.availability}`)}
+            />
+            <span className="text-[11px] text-ink-faint">
+              {model.lastLatencyMs
+                ? t('settings.detail.aiModels.latency', { value: model.lastLatencyMs })
+                : t('settings.detail.aiModels.noLatency')}
+            </span>
           </span>
+          <SettingsSwitch
+            checked={model.enabled}
+            onChange={(enabled) => onUpdate({ models: [{ modelId: model.id, enabled }] })}
+            label={t('settings.detail.aiModels.toggleModel', { name: model.displayName })}
+            disabled={pending}
+          />
         </span>
       }
     />
   );
+}
+
+function useAiConfigMutation() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateAiConfig,
+    onSuccess: (catalog) => {
+      queryClient.setQueryData(aiCatalogQueryOptions().queryKey, catalog);
+      toast.success(t('settings.detail.aiCommon.saveSuccess'));
+    },
+    onError: () => {
+      toast.error(t('settings.detail.aiCommon.saveFailed'));
+    },
+  });
+}
+
+function assignmentUpdate({
+  catalog,
+  useCase,
+  primaryModelId,
+  fallbackModelIds,
+}: {
+  catalog: AiGatewayCatalog;
+  useCase: AiModelUseCase;
+  primaryModelId: string;
+  fallbackModelIds?: string[];
+}): AiAssignmentUpdate {
+  const current = catalog.assignments.find((assignment) => assignment.useCase === useCase);
+  return {
+    useCase,
+    primaryModelId,
+    fallbackModelIds:
+      fallbackModelIds ?? current?.fallbackModelIds.filter((modelId) => modelId !== primaryModelId) ?? [],
+  };
+}
+
+function fallbackModelIds({
+  current,
+  nextFirst,
+  primaryModelId,
+}: {
+  current: string[];
+  nextFirst: string;
+  primaryModelId: string;
+}) {
+  if (!nextFirst) {
+    return current.filter((modelId) => modelId !== primaryModelId);
+  }
+  if (nextFirst === primaryModelId) {
+    return current.filter((modelId) => modelId !== primaryModelId);
+  }
+  return [
+    nextFirst,
+    ...current.filter((modelId) => modelId !== nextFirst && modelId !== primaryModelId),
+  ];
 }
 
 function CapabilityChip({ capability }: { capability: AiModelCapability }) {

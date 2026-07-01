@@ -11,6 +11,14 @@ class EnvVars {
   @IsOptional()
   @IsString()
   AI_GATEWAY_INTERNAL_TOKEN?: string;
+
+  @IsOptional()
+  @IsString()
+  AI_GATEWAY_SECRET_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  AI_GATEWAY_DATA_DIR = './data/ai-gateway';
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

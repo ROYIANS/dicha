@@ -1,5 +1,6 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
+import { aiContract } from './ai.contract';
 
 const c = initContract();
 
@@ -29,4 +30,5 @@ export const contract = c.router({
     },
     summary: 'Liveness + DB probe',
   },
+  ai: aiContract,
 });

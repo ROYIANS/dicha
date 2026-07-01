@@ -56,30 +56,35 @@ apps/api/
 - shared module (`auth` / `user` / `storage` / `ai` / `image-worker`) 提供基础设施
 - v2+ 候选房间：`fridge` / `medicine` / `vinyl` / `kitchen` / `tools` / `cosmetics` / `incense`
 
-## Scenario: AI Gateway scaffold
+## Scenario: AI Gateway boundary and config persistence
 
 ### 1. Scope / Trigger
 
-- Trigger: Any change that creates or modifies the independent AI service boundary under `apps/ai-gateway/`.
+- Trigger: Any change that creates or modifies the independent AI service boundary under `apps/ai-gateway/`, its BFF proxy in `apps/api/`, or the shared AI contract.
 - Use this service for AI provider/model catalog, future routing, probes, circuit breaking, call logs, cost accounting, queues, and status dashboards.
 - Do not put long-running third-party AI calls or AI availability probes into `apps/api`; `apps/api` stays the business-domain API.
+- `apps/api` may proxy configuration/catalog endpoints so the browser keeps using same-origin `/api` plus the Better Auth session cookie.
 
 ### 2. Signatures
 
 - Package: `apps/ai-gateway/package.json`
-  - `dev`:
-est start --watch`
-  - `build`:
-est build`
-  - `start:prod`:
-ode dist/main.js`
+  - `dev`: `nest start --watch`
+  - `build`: `nest build`
+  - `start:prod`: `node dist/main.js`
   - `typecheck`: `tsc -p tsconfig.app.json --noEmit`
   - `lint`: `eslint "src/**/*.ts"`
 - HTTP:
   - `GET /ai/health` -> `{ status: "ok", service: "ai-gateway" }`
   - `GET /ai/catalog` -> `AiGatewayCatalog`
+  - `PATCH /ai/config` -> `{ catalog: AiGatewayCatalog }`
+- API BFF:
+  - `GET /api/ai/catalog` -> proxies to `GET {AI_GATEWAY_BASE_URL}/catalog`
+  - `PATCH /api/ai/config` -> proxies to `PATCH {AI_GATEWAY_BASE_URL}/config`
+  - Protect BFF routes with `AuthGuard`; do not expose AI config writes as anonymous endpoints.
 - Shared contract source:
   - `packages/shared/src/contracts/ai.contract.ts`
+- Shared root contract:
+  - `packages/shared/src/contracts/health.contract.ts` exports `contract` with nested `ai: aiContract` so web clients call `api.ai.*`.
 - Mock catalog fixture:
   - `packages/shared/src/fixtures/ai-catalog.ts`
   - `apps/ai-gateway/src/modules/catalog/catalog.seed.ts` must re-export the shared fixture instead of keeping a second copy.
@@ -88,36 +93,51 @@ ode dist/main.js`
 
 - Environment:
   - `PORT`: optional number, defaults to `3100`.
-  - `AI_GATEWAY_INTERNAL_TOKEN`: optional string, reserved for internal service auth.
+  - `AI_GATEWAY_INTERNAL_TOKEN`: optional string. When set in `apps/ai-gateway`, `CatalogController` requires the `x-ai-gateway-token` header. `apps/api` sends the same header when proxying.
+  - `AI_GATEWAY_SECRET_KEY`: optional string used to encrypt persisted provider credentials. Production/self-hosted deployments should set it; rotating it makes existing encrypted credentials unreadable.
+  - `AI_GATEWAY_DATA_DIR`: optional string, defaults to `./data/ai-gateway`; config is stored as `config.json` in this directory.
+  - `AI_GATEWAY_BASE_URL` in `apps/api`: optional string, defaults to `http://localhost:3100/ai`; Docker compose must set it to `http://ai-gateway:3100/ai`.
 - Docker:
   - Dockerfile path: `docker/Dockerfile.ai-gateway`.
   - Compose service name: `ai-gateway`.
   - Healthcheck must call `http://127.0.0.1:3100/ai/health`.
+  - Mount a named volume for `AI_GATEWAY_DATA_DIR` so provider/model config and encrypted credentials survive container recreation.
 - Cross-package DTOs must come from `@dicha/shared`; do not duplicate AI provider/model/status enums in web/api/ai-gateway.
-- UI previews that need the mock provider/model catalog should consume the shared fixture or the gateway catalog response. Do not maintain a web-only mock with duplicate providers, model ids, capabilities, or assignments.
+- `GET /ai/catalog` is generated from persisted config. First boot with no config seeds providers/models/assignments from `aiCatalogSeed`; credential state must be `missing` and model availability may be `config_required`.
+- Secrets are write-only. `PATCH /ai/config` may accept `providers[].credential`, but no API may return plaintext credentials. Catalog responses return only `credentialState`.
+- UI settings pages must consume `api.ai.getCatalog` / `api.ai.updateConfig`; direct fixture reads are only acceptable for seed data inside `apps/ai-gateway`.
 
 ### 4. Validation & Error Matrix
 
 - Missing or invalid env -> process startup fails via `class-validator` config validation.
 - Unknown provider/model states -> rejected by zod schemas in shared contract.
-- AI Gateway down -> must not block `web` or `api` container startup until a task explicitly wires dependency.
+- Invalid config payload -> reject at the gateway boundary with `AiConfigUpdateSchema.parse`.
+- AI Gateway down or invalid gateway response -> `apps/api` proxy returns `502 Bad Gateway`; web shows a save/load failure instead of using stale mock data.
+- Missing `x-ai-gateway-token` when `AI_GATEWAY_INTERNAL_TOKEN` is configured -> gateway returns `401`.
+- AI Gateway down -> must not block `web` or `api` container startup unless a task explicitly wires dependency. Runtime catalog/config calls may fail gracefully.
 - Docker unavailable in the local environment -> record as verification gap, but still run package lint/typecheck/build.
 
 ### 5. Good/Base/Bad Cases
 
-- Good: add a new AI model status in `packages/shared`, consume it from `apps/ai-gateway`, then update web later from the same export.
-- Base: scaffold a mock catalog service with typed seed data and no provider SDKs.
+- Good: add a new provider config field in `packages/shared/src/contracts/ai.contract.ts`, parse it in `apps/ai-gateway`, proxy it in `apps/api`, and consume it from web through `api.ai.*`.
+- Base: seed a missing config file from `aiCatalogSeed`, then persist user changes in `AI_GATEWAY_DATA_DIR/config.json`.
 - Bad: define `type AiModelStatus = string` separately in `apps/web` and `apps/ai-gateway`, or add OpenAI SDK calls directly inside a settings page.
+- Bad: return `credential` or `apiKey` in `AiGatewayCatalog`; secrets are never readable after write.
 - Bad: copy the mock catalog into a settings page to unblock UI work; provider/model ids will drift from AI Gateway.
 
 ### 6. Tests Required
 
-- Required for scaffold changes:
+- Required for AI gateway/config changes:
   - `pnpm --filter @dicha/shared build`
   - `pnpm --filter @dicha/ai-gateway lint`
   - `pnpm --filter @dicha/ai-gateway typecheck`
   - `pnpm --filter @dicha/ai-gateway build`
-- Required when web consumes the AI catalog fixture:
+  - Assert manually or via tests that `GET /ai/catalog` never includes plaintext credentials.
+- Required when `apps/api` proxies AI config:
+  - `pnpm --filter @dicha/api lint`
+  - `pnpm --filter @dicha/api typecheck`
+  - `pnpm --filter @dicha/api build`
+- Required when web consumes AI settings:
   - `pnpm --filter @dicha/web lint`
   - `pnpm --filter @dicha/web typecheck`
   - `pnpm --filter @dicha/web build`
@@ -157,13 +177,33 @@ const providers = [{ id: 'openai', name: 'OpenAI' }];
 
 ```typescript
 // apps/web/src/api/ai.ts
-import { aiCatalogFixture } from '@dicha/shared';
+import { api } from './client';
 
 export const aiCatalogQueryOptions = () =>
   queryOptions({
     queryKey: ['ai', 'catalog'] as const,
-    queryFn: async () => aiCatalogFixture,
+    queryFn: async ({ signal }) => {
+      const res = await api.ai.getCatalog({ fetchOptions: { signal } });
+      if (res.status === 200) return res.body;
+      throw new Error(`AI catalog request failed (${res.status})`);
+    },
   });
+```
+
+#### Wrong
+
+```typescript
+// Any API response shape
+return { providerId: 'openai', apiKey: decryptedSecret };
+```
+
+#### Correct
+
+```typescript
+return {
+  providerId: 'openai',
+  credentialState: credential ? 'masked' : 'missing',
+};
 ```
 
 ---

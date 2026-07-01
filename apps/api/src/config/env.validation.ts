@@ -55,6 +55,15 @@ class EnvVars {
   @IsOptional()
   @IsString()
   UPLOAD_DIR = './uploads';
+
+  // ── AI Gateway（内部服务代理）────────────────────────────
+  @IsOptional()
+  @IsString()
+  AI_GATEWAY_BASE_URL = 'http://localhost:3100/ai';
+
+  @IsOptional()
+  @IsString()
+  AI_GATEWAY_INTERNAL_TOKEN?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

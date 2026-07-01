@@ -54,6 +54,12 @@ export const AiProviderSchema = z.object({
 });
 export type AiProvider = z.infer<typeof AiProviderSchema>;
 
+export const AiProviderCredentialWriteSchema = z.object({
+  providerId: z.string(),
+  secret: z.string().min(1).max(4096),
+});
+export type AiProviderCredentialWrite = z.infer<typeof AiProviderCredentialWriteSchema>;
+
 export const AiModelSchema = z.object({
   id: z.string(),
   providerId: z.string(),
@@ -84,6 +90,39 @@ export const AiGatewayCatalogSchema = z.object({
 });
 export type AiGatewayCatalog = z.infer<typeof AiGatewayCatalogSchema>;
 
+export const AiProviderUpdateSchema = z.object({
+  providerId: z.string(),
+  enabled: z.boolean().optional(),
+  baseUrl: z.string().url().optional(),
+  credential: z.string().min(1).max(4096).optional(),
+});
+export type AiProviderUpdate = z.infer<typeof AiProviderUpdateSchema>;
+
+export const AiModelUpdateSchema = z.object({
+  modelId: z.string(),
+  enabled: z.boolean(),
+});
+export type AiModelUpdate = z.infer<typeof AiModelUpdateSchema>;
+
+export const AiAssignmentUpdateSchema = z.object({
+  useCase: AiModelUseCaseSchema,
+  primaryModelId: z.string(),
+  fallbackModelIds: z.array(z.string()),
+});
+export type AiAssignmentUpdate = z.infer<typeof AiAssignmentUpdateSchema>;
+
+export const AiConfigUpdateSchema = z.object({
+  providers: z.array(AiProviderUpdateSchema).optional(),
+  models: z.array(AiModelUpdateSchema).optional(),
+  assignments: z.array(AiAssignmentUpdateSchema).optional(),
+});
+export type AiConfigUpdate = z.infer<typeof AiConfigUpdateSchema>;
+
+export const AiConfigUpdateResponseSchema = z.object({
+  catalog: AiGatewayCatalogSchema,
+});
+export type AiConfigUpdateResponse = z.infer<typeof AiConfigUpdateResponseSchema>;
+
 export const aiContract = c.router({
   getCatalog: {
     method: 'GET',
@@ -92,6 +131,15 @@ export const aiContract = c.router({
       200: AiGatewayCatalogSchema,
     },
     summary: 'AI provider/model catalog for settings and gateway status',
+  },
+  updateConfig: {
+    method: 'PATCH',
+    path: '/ai/config',
+    body: AiConfigUpdateSchema,
+    responses: {
+      200: AiConfigUpdateResponseSchema,
+    },
+    summary: 'Persist AI provider/model settings without returning secrets',
   },
 });
 

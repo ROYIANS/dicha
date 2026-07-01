@@ -51,6 +51,8 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
       UPLOAD_DIR: /data/uploads
+      AI_GATEWAY_BASE_URL: http://ai-gateway:3100/ai
+      AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
     volumes:
       - dicha-uploads:/data/uploads
     expose:
@@ -76,6 +78,10 @@ services:
     environment:
       PORT: '3100'
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
+      AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
+      AI_GATEWAY_DATA_DIR: /data/ai-gateway
+    volumes:
+      - dicha-ai-gateway-data:/data/ai-gateway
     expose:
       - '3100'
     healthcheck:
@@ -115,3 +121,4 @@ services:
 volumes:
   dicha-pgdata:
   dicha-uploads:
+  dicha-ai-gateway-data:
