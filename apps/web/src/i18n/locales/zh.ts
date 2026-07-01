@@ -14,6 +14,31 @@ export const zh = {
       loading: '检查中…',
       error: '健康检查失败',
     },
+    errors: {
+      actions: {
+        home: '回到首页',
+        back: '返回上一页',
+        reload: '重新点亮',
+      },
+      notFound: {
+        eyebrow: '房间索引缺页',
+        code: '404',
+        title: '这间房还没被建档。',
+        body: '你抵达了一段尚未铺好的路径。也许它只是改了名字，也许它还在纸面上等待被造出来。先回到有灯的地方，继续整理今天的生活。',
+        note: '缺失页正在等待重新编目',
+        signalLabel: '未找到路径',
+        signalValue: '迷路房间图',
+      },
+      error: {
+        eyebrow: '系统灯路短暂停摆',
+        code: '500',
+        title: '房间灯暂时灭了。',
+        body: '滴茶刚刚没能接住这次请求。它没有忘记你的东西，只是有一条内部线路需要重新校准。你可以刷新一次，或先退回上一间房。',
+        note: '核心线路等待恢复',
+        signalLabel: '服务暂时失联',
+        signalValue: '房间灯路图',
+      },
+    },
     nav: {
       dashboard: '仪表盘',
       collect: '收纳',

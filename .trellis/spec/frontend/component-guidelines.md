@@ -28,6 +28,13 @@
 - 新增设置能力如果没有真实后端/API 支撑，页面文案和状态值必须明确标为“稍后/未统计”等当前状态，不要做假下载、假清理或假推送。
 - 设置页弹窗如果需要页面级遮罩，可复用 `components/DotsBackdrop.tsx` 的点阵层；抽屉保留默认 `scrim`，弹窗建议传 `scrim={false}` 后自行叠加符合当前页面的暖暗 overlay。页面级 modal 必须通过 `createPortal(..., document.body)` 挂到 body，避免被 AppShell/Header/移动端 tab bar 的 stacking context 压住。移动端编辑型弹窗应使用全屏工作面板，桌面端使用居中浮层。
 
+## 路由错误页面
+
+- 404 / root error / router default error 统一复用 `components/ErrorStateScene.tsx`，不要在 route 文件里散写居中错误文本。
+- 错误页必须能脱离 `_app` authenticated layout 独立渲染；入口在 `routes/__root.tsx` 的 `errorComponent` / `notFoundComponent` 和 `router.tsx` 的 `defaultErrorComponent` / `defaultNotFoundComponent` 双兜底。
+- 404 使用 `variant="not-found"`，500-style 错误使用 `variant="error"`；技术错误信息只作为次级文本展示，避免暴露堆栈。
+- 错误页视觉仍遵守 warm matte + blueprint aesthetic：中文文案走 i18n，动作按钮提供回首页/返回/刷新等恢复路径，不使用 emoji、玻璃拟态或动态 Tailwind class 拼接。
+
 ---
 
 ## 品牌标识
