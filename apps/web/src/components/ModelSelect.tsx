@@ -28,15 +28,15 @@ export function ModelSelect({
 
   if (models.length === 0) {
     return (
-      <span className="shrink-0 rounded-md border border-hairline bg-surface-alt px-2.5 py-1.5 text-[12px] text-ink-faint">
+      <span className="inline-flex w-full rounded-md border border-hairline bg-surface-alt px-2.5 py-1.5 text-[12px] text-ink-faint">
         {emptyLabel}
       </span>
     );
   }
 
   return (
-    <span className="flex min-w-0 shrink-0 flex-col items-end gap-1">
-      <span className="relative block w-[min(46vw,220px)] sm:w-[220px]">
+    <span className="flex w-full min-w-0 flex-col items-stretch gap-1">
+      <span className="relative block w-full">
         <select
           value={value}
           disabled={disabled}
@@ -59,12 +59,12 @@ export function ModelSelect({
         />
       </span>
       {selectedUnavailable ? (
-        <span className="inline-flex max-w-[min(46vw,220px)] items-center gap-1 text-right text-[11px] leading-tight text-pink">
+        <span className="inline-flex min-w-0 items-center gap-1 text-[11px] leading-tight text-pink">
           <AlertCircle size={12} className="shrink-0" />
           <span className="truncate">{unavailableLabel}</span>
         </span>
       ) : selected ? (
-        <span className="inline-flex max-w-[min(46vw,220px)] items-center gap-1 text-right text-[11px] leading-tight text-ink-faint">
+        <span className="inline-flex min-w-0 items-center gap-1 text-[11px] leading-tight text-ink-faint">
           <Check size={12} className="shrink-0 text-sage" />
           <span className="truncate">{selected.priceHint}</span>
         </span>

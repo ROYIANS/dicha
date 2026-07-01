@@ -23,6 +23,8 @@
 
 - `/settings/*` 二级页面统一使用 `components/SettingsScaffold.tsx` 的 `SettingsDetailShell` 作为页面骨架：返回 `/settings`、标题/说明、右侧 summary、轻斜纹分隔和内容容器由它负责。
 - 设置页内的 iOS 风格分组行优先复用 `SettingsPanel` / `SettingsValueRow` / `SettingsSwitch`；图标色块使用 `components/settings-ui.ts` 的 `SettingsTint` 与 `settingsTintClass`，不要在 route 文件里重复定义 tint map。
+- `SettingsValueRow` 的移动端布局必须把 action/value 放到下一行并占满可用宽度；只有 `sm` 以上才恢复左右两列，避免选择器、状态标签和开关挤压标题说明。复杂 action 内部控件在移动端也应 `w-full` / `min-w-0`，不要写 `46vw` 这类会截断中文的宽度。
+- `/settings/ai-models` 是用途分配页，不重复展示完整模型目录；模型启停、同步、添加和配置归 `/settings/ai-providers` 的供应商卡片/展开列表负责。
 - 新增设置能力如果没有真实后端/API 支撑，页面文案和状态值必须明确标为“稍后/未统计”等当前状态，不要做假下载、假清理或假推送。
 - 设置页弹窗如果需要页面级遮罩，可复用 `components/DotsBackdrop.tsx` 的点阵层；抽屉保留默认 `scrim`，弹窗建议传 `scrim={false}` 后自行叠加符合当前页面的暖暗 overlay。页面级 modal 必须通过 `createPortal(..., document.body)` 挂到 body，避免被 AppShell/Header/移动端 tab bar 的 stacking context 压住。移动端编辑型弹窗应使用全屏工作面板，桌面端使用居中浮层。
 

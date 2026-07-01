@@ -229,94 +229,55 @@ export function AiModelsSettingsPage() {
             assignmentRows.map((assignment) => {
               const Icon = useCaseIcon[assignment.useCase];
               return (
-                <SettingsValueRow
+                <AssignmentRow
                   key={assignment.useCase}
                   icon={Icon}
-                  tint="lavender"
-                  label={t(`settings.aiUseCases.${assignment.useCase}`)}
+                  title={t(`settings.aiUseCases.${assignment.useCase}`)}
                   description={t('settings.detail.aiModels.assignmentDesc', {
                     count: assignment.fallbackModelIds.length,
                   })}
-                  action={
-                    <span className="flex shrink-0 flex-col items-end gap-2">
-                      <ModelSelect
-                        catalog={catalog}
-                        value={assignment.selectedModelId}
-                        onChange={(value) => {
-                          setSelectedByUseCase((current) => ({
-                            ...current,
-                            [assignment.useCase]: value,
-                          }));
-                          updateConfig.mutate({
-                            assignments: [
-                              assignmentUpdate({
-                                catalog,
-                                useCase: assignment.useCase,
-                                primaryModelId: value,
-                              }),
-                            ],
-                          });
-                        }}
-                        disabled={updateConfig.isPending}
-                        placeholder={t('settings.detail.aiModels.selectPlaceholder')}
-                        unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
-                        emptyLabel={t('settings.detail.aiModels.emptyModels')}
-                      />
-                      <ModelSelect
-                        catalog={catalog}
-                        value={assignment.selectedFallbackModelId}
-                        onChange={(value) => {
-                          setFallbackByUseCase((current) => ({
-                            ...current,
-                            [assignment.useCase]: value,
-                          }));
-                          updateConfig.mutate({
-                            assignments: [
-                              assignmentUpdate({
-                                catalog,
-                                useCase: assignment.useCase,
-                                primaryModelId: assignment.selectedModelId,
-                                fallbackModelIds: fallbackModelIds({
-                                  current: assignment.fallbackModelIds,
-                                  nextFirst: value,
-                                  primaryModelId: assignment.selectedModelId,
-                                }),
-                              }),
-                            ],
-                          });
-                        }}
-                        disabled={updateConfig.isPending}
-                        placeholder={t('settings.detail.aiModels.fallbackPlaceholder')}
-                        unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
-                        emptyLabel={t('settings.detail.aiModels.emptyModels')}
-                        allowEmpty
-                      />
-                    </span>
-                  }
+                  catalog={catalog}
+                  primaryModelId={assignment.selectedModelId}
+                  fallbackModelId={assignment.selectedFallbackModelId}
+                  pending={updateConfig.isPending}
+                  onPrimaryChange={(value) => {
+                    setSelectedByUseCase((current) => ({
+                      ...current,
+                      [assignment.useCase]: value,
+                    }));
+                    updateConfig.mutate({
+                      assignments: [
+                        assignmentUpdate({
+                          catalog,
+                          useCase: assignment.useCase,
+                          primaryModelId: value,
+                        }),
+                      ],
+                    });
+                  }}
+                  onFallbackChange={(value) => {
+                    setFallbackByUseCase((current) => ({
+                      ...current,
+                      [assignment.useCase]: value,
+                    }));
+                    updateConfig.mutate({
+                      assignments: [
+                        assignmentUpdate({
+                          catalog,
+                          useCase: assignment.useCase,
+                          primaryModelId: assignment.selectedModelId,
+                          fallbackModelIds: fallbackModelIds({
+                            current: assignment.fallbackModelIds,
+                            nextFirst: value,
+                            primaryModelId: assignment.selectedModelId,
+                          }),
+                        }),
+                      ],
+                    });
+                  }}
                 />
               );
             })
-          ) : (
-            <SettingsValueRow
-              icon={CircleDashed}
-              tint="mist"
-              label={t('settings.detail.aiCommon.loading')}
-              description={t('settings.detail.aiCommon.loadingDesc')}
-            />
-          )}
-        </SettingsPanel>
-
-        <SettingsPanel title={t('settings.detail.aiModels.panelModels')}>
-          {catalog ? (
-            catalog.models.map((model) => (
-              <ModelCard
-                key={model.id}
-                model={model}
-                catalog={catalog}
-                onUpdate={(body) => updateConfig.mutate(body)}
-                pending={updateConfig.isPending}
-              />
-            ))
           ) : (
             <SettingsValueRow
               icon={CircleDashed}
@@ -491,6 +452,80 @@ function ProviderCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function AssignmentRow({
+  icon: Icon,
+  title,
+  description,
+  catalog,
+  primaryModelId,
+  fallbackModelId,
+  pending,
+  onPrimaryChange,
+  onFallbackChange,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  catalog: AiGatewayCatalog;
+  primaryModelId: string;
+  fallbackModelId: string;
+  pending: boolean;
+  onPrimaryChange: (value: string) => void;
+  onFallbackChange: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="grid gap-4 border-b border-hairline/70 px-3.5 py-4 last:border-b-0 sm:px-4 lg:grid-cols-[minmax(220px,1fr)_minmax(420px,520px)] lg:items-start">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-lavender text-lavender shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_7%,transparent)]">
+          <Icon size={17} />
+        </span>
+        <div className="min-w-0 pt-0.5">
+          <p className="text-[15px] font-semibold text-ink">{title}</p>
+          <p className="mt-1 max-w-[46ch] text-[12px] leading-relaxed text-ink-faint">
+            {description}
+          </p>
+        </div>
+      </div>
+      <div className="grid min-w-0 gap-3 rounded-md bg-canvas p-3 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_6%,transparent)] sm:grid-cols-2">
+        <AssignmentField label={t('settings.detail.aiModels.primaryModel')}>
+          <ModelSelect
+            catalog={catalog}
+            value={primaryModelId}
+            onChange={onPrimaryChange}
+            disabled={pending}
+            placeholder={t('settings.detail.aiModels.selectPlaceholder')}
+            unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
+            emptyLabel={t('settings.detail.aiModels.emptyModels')}
+          />
+        </AssignmentField>
+        <AssignmentField label={t('settings.detail.aiModels.fallbackModel')}>
+          <ModelSelect
+            catalog={catalog}
+            value={fallbackModelId}
+            onChange={onFallbackChange}
+            disabled={pending}
+            placeholder={t('settings.detail.aiModels.fallbackPlaceholder')}
+            unavailableLabel={t('settings.detail.aiModels.selectedUnavailable')}
+            emptyLabel={t('settings.detail.aiModels.emptyModels')}
+            allowEmpty
+          />
+        </AssignmentField>
+      </div>
+    </div>
+  );
+}
+
+function AssignmentField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="grid min-w-0 gap-1.5">
+      <span className="text-[11px] font-medium text-ink-faint">{label}</span>
+      {children}
+    </label>
   );
 }
 
@@ -1454,74 +1489,6 @@ function LoadingPanel() {
         </div>
       </div>
     </div>
-  );
-}
-
-function ModelCard({
-  model,
-  catalog,
-  onUpdate,
-  pending,
-}: {
-  model: AiModel;
-  catalog: AiGatewayCatalog;
-  onUpdate: (body: AiConfigUpdate) => void;
-  pending: boolean;
-}) {
-  const { t } = useTranslation();
-  const provider = catalog.providers.find((item) => item.id === model.providerId);
-  const assignedUseCases = catalog.assignments
-    .filter(
-      (assignment) =>
-        assignment.primaryModelId === model.id || assignment.fallbackModelIds.includes(model.id),
-    )
-    .map((assignment) => t(`settings.aiUseCases.${assignment.useCase}`));
-
-  return (
-    <SettingsValueRow
-      icon={Bot}
-      tint={availabilityTone[model.availability]}
-      label={model.displayName}
-      description={
-        <span className="space-y-1">
-          <span className="block">
-            {provider?.name ?? model.providerId} · {model.contextWindow.toLocaleString()} tokens
-          </span>
-          <span className="flex flex-wrap gap-1.5">
-            {model.capabilities.map((capability) => (
-              <CapabilityChip key={capability} capability={capability} />
-            ))}
-          </span>
-          <span className="block text-[11px] text-ink-faint">
-            {assignedUseCases.length > 0
-              ? assignedUseCases.join(' / ')
-              : t('settings.detail.aiModels.noAssignment')}
-          </span>
-        </span>
-      }
-      action={
-        <span className="flex shrink-0 items-center gap-3 text-right">
-          <span className="flex flex-col items-end gap-1">
-            <StatusPill
-              icon={model.enabled ? CheckCircle2 : CircleDashed}
-              tint={availabilityTone[model.availability]}
-              label={t(`settings.aiAvailability.${model.availability}`)}
-            />
-            <span className="text-[11px] text-ink-faint">
-              {model.lastLatencyMs
-                ? t('settings.detail.aiModels.latency', { value: model.lastLatencyMs })
-                : t('settings.detail.aiModels.noLatency')}
-            </span>
-          </span>
-          <SettingsSwitch
-            checked={model.enabled}
-            onChange={(enabled) => onUpdate({ models: [{ modelId: model.id, enabled }] })}
-            label={t('settings.detail.aiModels.toggleModel', { name: model.displayName })}
-            disabled={pending}
-          />
-        </span>
-      }
-    />
   );
 }
 

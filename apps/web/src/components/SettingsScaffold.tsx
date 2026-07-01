@@ -48,7 +48,7 @@ export function SettingsDetailShell({
 
             <SettingsSlash />
 
-            <div className="bg-canvas px-2 py-7 sm:px-8 sm:py-9 lg:px-10">
+            <div className="bg-canvas px-2 pb-32 pt-7 sm:px-8 sm:py-9 lg:px-10">
               {children}
               <SettingsFooterMark />
             </div>
@@ -137,22 +137,31 @@ export function SettingsValueRow({
   value?: ReactNode;
   action?: ReactNode;
 }) {
+  const trailing = action ?? value;
   return (
-    <div className="flex min-h-[58px] w-full items-center gap-3 border-b border-hairline/70 px-3.5 text-left last:border-b-0">
-      {Icon && tint ? (
-        <span
-          className={`grid size-8 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass[tint]}`}
-        >
-          <Icon size={16} />
+    <div className="grid min-h-[58px] w-full grid-cols-[minmax(0,1fr)] items-start gap-x-3 gap-y-3 border-b border-hairline/70 px-3.5 py-3 text-left last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-0">
+      <span className="flex min-w-0 items-center gap-3">
+        {Icon && tint ? (
+          <span
+            className={`grid size-8 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass[tint]}`}
+          >
+            <Icon size={16} />
+          </span>
+        ) : null}
+        <span className="min-w-0">
+          <span className="block text-[14px] font-medium text-ink">{label}</span>
+          {description ? (
+            <span className="mt-0.5 block min-w-0 text-[11px] leading-relaxed text-ink-faint">
+              {description}
+            </span>
+          ) : null}
+        </span>
+      </span>
+      {trailing ? (
+        <span className="min-w-0 justify-self-stretch text-[12px] text-ink-faint sm:shrink-0 sm:justify-self-auto">
+          {trailing}
         </span>
       ) : null}
-      <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-medium text-ink">{label}</span>
-        {description ? (
-          <span className="mt-0.5 block text-[11px] leading-relaxed text-ink-faint">{description}</span>
-        ) : null}
-      </span>
-      {action ?? (value ? <span className="shrink-0 text-[12px] text-ink-faint">{value}</span> : null)}
     </div>
   );
 }
