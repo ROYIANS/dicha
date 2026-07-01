@@ -37,6 +37,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ai-gateway:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-dicha}:${POSTGRES_PASSWORD:-dicha}@postgres:5432/${POSTGRES_DB:-dicha}?schema=public
       PORT: '3000'
@@ -51,7 +53,7 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
       UPLOAD_DIR: /data/uploads
-      AI_GATEWAY_BASE_URL: http://ai-gateway:3100/ai
+      AI_GATEWAY_BASE_URL: ${AI_GATEWAY_BASE_URL:-http://ai-gateway:3100/ai}
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
     volumes:
       - dicha-uploads:/data/uploads

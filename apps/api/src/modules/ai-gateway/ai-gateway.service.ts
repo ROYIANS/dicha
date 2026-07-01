@@ -1,5 +1,6 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ZodError } from 'zod';
 import {
   AiConfigUpdateResponseSchema,
   AiGatewayCatalogSchema,
@@ -16,6 +17,7 @@ import {
 
 @Injectable()
 export class AiGatewayService {
+  private readonly logger = new Logger(AiGatewayService.name);
   private readonly baseUrl: string;
   private readonly internalToken: string | undefined;
 
@@ -99,6 +101,13 @@ export class AiGatewayService {
       return options.schema.parse(await response.json());
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
+      if (error instanceof ZodError) {
+        this.logger.error(`AI Gateway response shape mismatch from ${this.baseUrl}${path}`);
+        throw new BadGatewayException('AI Gateway returned an invalid response');
+      }
+      this.logger.error(
+        `AI Gateway request unavailable at ${this.baseUrl}${path}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw new BadGatewayException('AI Gateway is unavailable');
     }
   }
