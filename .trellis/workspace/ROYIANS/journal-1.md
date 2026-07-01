@@ -759,3 +759,36 @@ Added Better Auth session/device management to account security, removed dev aut
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: 完成 AI 设置控制台与模型选择
+
+**Date**: 2026-07-01
+**Task**: 完成 AI 设置控制台与模型选择
+**Branch**: `main`
+
+### Summary
+
+完成 AI 设置首页入口、供应商/服务模型二级页、ModelSelect 受控组件，并将 mock catalog 收口到 shared fixture 供 web 与 ai-gateway 共用。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c583faf` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

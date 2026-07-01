@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 20
-- **Last Active**: 2026-06-30
+- **Total Sessions**: 21
+- **Last Active**: 2026-07-01
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~761 | Active |
+| `journal-1.md` | ~794 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 21 | 2026-07-01 | 完成 AI 设置控制台与模型选择 | `c583faf` | `main` |
 | 20 | 2026-06-30 | 归档已完成 Trellis 任务 | `c337790`, `79ba9b1`, `d163e5c`, `4d822de`, `f830607`, `2cbe221`, `28bfc58` | `main` |
 | 19 | 2026-06-30 | Settings menu and session management | `4d822de`, `52758b8` | `main` |
 | 18 | 2026-06-30 | 移动端导航骨架与登录适配 | `655db93` | `main` |
