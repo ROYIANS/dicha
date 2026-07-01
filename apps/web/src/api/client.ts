@@ -20,9 +20,14 @@ export const api = initClient(contract, {
       credentials: 'include',
     });
 
+    const contentType = response.headers.get('content-type') ?? '';
+    const body = contentType.includes('application/json')
+      ? await response.json()
+      : await response.text();
+
     return {
       status: response.status,
-      body: await response.text(),
+      body,
       headers: response.headers,
     };
   },
