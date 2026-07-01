@@ -792,3 +792,39 @@ Added Better Auth session/device management to account security, removed dev aut
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: AI provider and model settings
+
+**Date**: 2026-07-01
+**Task**: AI provider and model settings
+**Branch**: `main`
+
+### Summary
+
+Implemented user-scoped AI provider configuration, modal layering fixes, provider avatar URL support, and refined AI model assignment layout with mobile-safe settings rows.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9e29464` | (see git log) |
+| `561cbb5` | (see git log) |
+| `7608af3` | (see git log) |
+| `2dc95a8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
