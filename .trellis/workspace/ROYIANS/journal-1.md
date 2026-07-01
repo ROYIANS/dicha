@@ -828,3 +828,36 @@ Implemented user-scoped AI provider configuration, modal layering fixes, provide
 ### Next Steps
 
 - None - task complete
+
+
+## Session 23: AI 默认供应商按需添加
+
+**Date**: 2026-07-01
+**Task**: AI 默认供应商按需添加
+**Branch**: `main`
+
+### Summary
+
+将 OpenAI、DeepSeek、Anthropic 从默认供应商列表改为添加供应商时可选的内置模板；更新 AI Gateway 空 catalog/legacy seed 处理、设置页入口、测试与 spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bb24b66` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
