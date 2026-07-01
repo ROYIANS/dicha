@@ -108,7 +108,8 @@ apps/api/
   - Healthcheck must call `http://127.0.0.1:3100/ai/health`.
   - Mount a named volume for `AI_GATEWAY_DATA_DIR` so provider/model config and encrypted credentials survive container recreation.
 - Cross-package DTOs must come from `@dicha/shared`; do not duplicate AI provider/model/status enums in web/api/ai-gateway.
-- `GET /ai/catalog` is generated from persisted config. First boot with no config seeds providers/models/assignments from `aiCatalogSeed`; credential state must be `missing` and model availability may be `config_required`.
+- `GET /ai/catalog` is generated from persisted config. First boot with no config creates an empty provider/model/assignment catalog; built-in providers are exposed as user-selectable templates, not automatically inserted into the user's catalog.
+- Legacy auto-seeded built-in providers may be hidden on read only when the provider id is a built-in template id, `custom` is absent, and no encrypted credential exists; preserve user-selected built-in providers (`custom: false`) and any provider that has a credential.
 - AI provider/model settings are user-scoped. Never store API keys or model enablement in a single global catalog file after authentication is available.
 - Secrets are write-only. `PATCH /ai/config` may accept `providers[].credential`, but no API may return plaintext credentials. Catalog responses return only `credentialState`.
 - `PATCH /ai/config` may update provider `baseUrl` and model configuration fields:
@@ -127,7 +128,7 @@ apps/api/
 - `POST /ai/providers/sync-models` uses the configured provider `baseUrl`, appends `/models`, and sends the decrypted credential as a Bearer token. The sync currently targets OpenAI-compatible model listing responses shaped like `{ data: [{ id }] }`.
 - Synced provider models are merged by provider id and model name. New models default to disabled, `availability: "unknown"`, `contextWindow: 4096`, `modelType: "chat"`, `extensionParameters: []`, and `capabilities: ["chat"]`.
 - `POST /ai/providers/check` must use the same configured provider secret and OpenAI-compatible `/models` reachability probe as sync, but it returns `{ ok: false, message }` for provider failures instead of throwing. Missing provider credentials still reject as bad configuration.
-- UI settings pages must consume `api.ai.getCatalog` / `api.ai.updateConfig`; direct fixture reads are only acceptable for seed data inside `apps/ai-gateway`.
+- UI settings pages must consume `api.ai.getCatalog` / `api.ai.updateConfig` for the user's active catalog; direct shared fixture reads are only acceptable for built-in provider templates that create catalog entries through `api.ai.updateConfig`.
 
 ### 4. Validation & Error Matrix
 
@@ -146,7 +147,7 @@ apps/api/
 ### 5. Good/Base/Bad Cases
 
 - Good: add a new provider config field in `packages/shared/src/contracts/ai.contract.ts`, parse it in `apps/ai-gateway`, proxy it in `apps/api`, and consume it from web through `api.ai.*`.
-- Base: seed a missing config file from `aiCatalogSeed`, then persist user changes in `AI_GATEWAY_DATA_DIR/config.json`.
+- Base: create an empty missing config file, then persist user-selected provider templates or custom providers in `AI_GATEWAY_DATA_DIR/users/<owner>.json`.
 - Bad: define `type AiModelStatus = string` separately in `apps/web` and `apps/ai-gateway`, or add OpenAI SDK calls directly inside a settings page.
 - Bad: return `credential` or `apiKey` in `AiGatewayCatalog`; secrets are never readable after write.
 - Bad: copy the mock catalog into a settings page to unblock UI work; provider/model ids will drift from AI Gateway.

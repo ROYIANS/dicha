@@ -23,7 +23,8 @@
     "06-30-ai-config-persistence-secrets",
     "06-30-ai-gateway-scaffold",
     "06-30-ai-routing-degradation",
-    "06-30-ai-availability-dashboard"
+    "06-30-ai-availability-dashboard",
+    "07-01-ai-default-provider-templates"
   ],
   "parent": null,
   "relatedFiles": [],

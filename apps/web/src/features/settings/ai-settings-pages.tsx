@@ -22,18 +22,19 @@ import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type {
-  AiAssignmentUpdate,
-  AiAvailabilityState,
-  AiConfigUpdate,
-  AiGatewayCatalog,
-  AiModel,
-  AiModelCapability,
-  AiModelExtensionParameter,
-  AiModelType,
-  AiModelUseCase,
-  AiProvider,
-  AiProviderStatus,
+import {
+  aiProviderTemplates,
+  type AiAssignmentUpdate,
+  type AiAvailabilityState,
+  type AiConfigUpdate,
+  type AiGatewayCatalog,
+  type AiModel,
+  type AiModelCapability,
+  type AiModelExtensionParameter,
+  type AiModelType,
+  type AiModelUseCase,
+  type AiProvider,
+  type AiProviderStatus,
 } from '@dicha/shared';
 import {
   aiCatalogQueryOptions,
@@ -136,31 +137,35 @@ export function AiProvidersSettingsPage() {
             </button>
           </div>
           {providers && catalog ? (
-            providers.map((provider) => (
-              <ProviderCard
-                key={provider.id}
-                catalog={catalog}
-                provider={provider}
-                onUpdate={(body) => updateConfig.mutate(body)}
-                onAddModel={() => setModelModal({ provider })}
-                onConfigureModel={(model) => setModelModal({ provider, model })}
-                onCheckConnection={(providerId) => {
-                  setCheckingProviderId(providerId);
-                  checkConnection.mutate(providerId, {
-                    onSettled: () => setCheckingProviderId(null),
-                  });
-                }}
-                onSyncModels={(providerId) => {
-                  setSyncingProviderId(providerId);
-                  syncModels.mutate(providerId, {
-                    onSettled: () => setSyncingProviderId(null),
-                  });
-                }}
-                pending={updateConfig.isPending}
-                syncing={syncingProviderId === provider.id && syncModels.isPending}
-                checking={checkingProviderId === provider.id && checkConnection.isPending}
-              />
-            ))
+            providers.length > 0 ? (
+              providers.map((provider) => (
+                <ProviderCard
+                  key={provider.id}
+                  catalog={catalog}
+                  provider={provider}
+                  onUpdate={(body) => updateConfig.mutate(body)}
+                  onAddModel={() => setModelModal({ provider })}
+                  onConfigureModel={(model) => setModelModal({ provider, model })}
+                  onCheckConnection={(providerId) => {
+                    setCheckingProviderId(providerId);
+                    checkConnection.mutate(providerId, {
+                      onSettled: () => setCheckingProviderId(null),
+                    });
+                  }}
+                  onSyncModels={(providerId) => {
+                    setSyncingProviderId(providerId);
+                    syncModels.mutate(providerId, {
+                      onSettled: () => setSyncingProviderId(null),
+                    });
+                  }}
+                  pending={updateConfig.isPending}
+                  syncing={syncingProviderId === provider.id && syncModels.isPending}
+                  checking={checkingProviderId === provider.id && checkConnection.isPending}
+                />
+              ))
+            ) : (
+              <EmptyProvidersPanel onAddProvider={() => setProviderModalOpen(true)} />
+            )
           ) : (
             <LoadingPanel />
           )}
@@ -168,6 +173,7 @@ export function AiProvidersSettingsPage() {
       </div>
       <ProviderFormModal
         open={providerModalOpen}
+        catalog={catalog}
         pending={updateConfig.isPending}
         onClose={() => setProviderModalOpen(false)}
         onSubmit={(body) => {
@@ -848,11 +854,13 @@ function ProviderAvatar({
 
 function ProviderFormModal({
   open,
+  catalog,
   pending,
   onClose,
   onSubmit,
 }: {
   open: boolean;
+  catalog: AiGatewayCatalog | undefined;
   pending: boolean;
   onClose: () => void;
   onSubmit: (body: AiConfigUpdate) => void;
@@ -867,6 +875,10 @@ function ProviderFormModal({
   const normalizedProviderId = providerId.trim().toLowerCase();
   const shortName = providerShortName(name || providerId);
   const avatarValue = avatar.trim() || shortName;
+  const existingProviderIds = new Set(catalog?.providers.map((provider) => provider.id) ?? []);
+  const availableTemplates = aiProviderTemplates.filter(
+    (provider) => !existingProviderIds.has(provider.id),
+  );
   const canSubmit =
     /^[a-z0-9][a-z0-9_-]*$/.test(normalizedProviderId) &&
     name.trim().length > 0 &&
@@ -908,6 +920,60 @@ function ProviderFormModal({
       }
     >
       <div className="space-y-5">
+        <div className="space-y-3">
+          <div>
+            <p className="text-[12px] font-semibold text-ink-faint">
+              {t('settings.detail.aiProviders.builtinProviderTemplates')}
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
+              {t('settings.detail.aiProviders.builtinProviderTemplatesDesc')}
+            </p>
+          </div>
+          {availableTemplates.length > 0 ? (
+            <div className="grid gap-2 sm:grid-cols-3">
+              {availableTemplates.map((provider) => (
+                <button
+                  key={provider.id}
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    onSubmit({
+                      providers: [
+                        {
+                          providerId: provider.id,
+                          name: provider.name,
+                          shortName: provider.shortName,
+                          avatar: provider.avatar,
+                          description: provider.description,
+                          baseUrl: provider.baseUrl,
+                          requestFormat: provider.requestFormat ?? 'openai_compatible',
+                          authType: provider.authType,
+                          enabled: false,
+                          custom: false,
+                        },
+                      ],
+                    })
+                  }
+                  className="flex min-h-28 flex-col items-start rounded-md border border-hairline bg-surface-alt p-3 text-left transition-colors hover:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <ProviderAvatar
+                    avatar={provider.avatar ?? provider.shortName}
+                    fallback={provider.shortName}
+                    className="size-9 text-[11px]"
+                  />
+                  <span className="mt-3 text-[13px] font-semibold text-ink">{provider.name}</span>
+                  <span className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-ink-faint">
+                    {provider.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-md border border-hairline bg-surface-alt px-3 py-2 text-[12px] text-ink-faint">
+              {t('settings.detail.aiProviders.allBuiltinProvidersAdded')}
+            </p>
+          )}
+        </div>
         <FormSectionTitle>{t('settings.detail.aiProviders.basicInfo')}</FormSectionTitle>
         <FormField
           title={t('settings.detail.aiProviders.providerId')}
@@ -1471,6 +1537,37 @@ function isImageUrl(value: string) {
 
 function SectionLabel({ children }: { children: string }) {
   return <h2 className="px-1 text-[11px] font-semibold tracking-wider text-ink-faint">{children}</h2>;
+}
+
+function EmptyProvidersPanel({ onAddProvider }: { onAddProvider: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="rounded-md border border-hairline bg-surface px-4 py-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-md border border-hairline bg-chip-mist text-mist">
+            <Server size={17} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-ink">
+              {t('settings.detail.aiProviders.emptyProvidersTitle')}
+            </p>
+            <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-ink-faint">
+              {t('settings.detail.aiProviders.emptyProvidersDesc')}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onAddProvider}
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink"
+        >
+          <Plus size={14} />
+          {t('settings.detail.aiProviders.addProvider')}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function LoadingPanel() {

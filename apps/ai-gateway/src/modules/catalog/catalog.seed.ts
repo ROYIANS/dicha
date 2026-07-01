@@ -1,2 +1,1 @@
-export { aiCatalogFixture as aiCatalogSeed } from '@dicha/shared';
-
+export { aiCatalogFixture as aiCatalogSeed, aiProviderTemplateIds } from '@dicha/shared';

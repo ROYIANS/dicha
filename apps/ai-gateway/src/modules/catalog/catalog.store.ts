@@ -14,7 +14,7 @@ import type {
   AiProvider,
   AiProviderUpdate,
 } from '@dicha/shared';
-import { aiCatalogSeed } from './catalog.seed';
+import { aiCatalogSeed, aiProviderTemplateIds } from './catalog.seed';
 
 type PersistedCredential = {
   iv: string;
@@ -195,11 +195,42 @@ export class CatalogStore {
   }
 
   private normalizeConfig(config: PersistedConfig): PersistedConfig {
+    const legacySeedProviderIds = new Set(
+      config.providers
+        .filter((provider) => this.isLegacySeedProvider(provider))
+        .map((provider) => provider.id),
+    );
+    const legacySeedModelIds = new Set(
+      config.models
+        .filter((model) => legacySeedProviderIds.has(model.providerId) && !model.custom)
+        .map((model) => model.id),
+    );
+    const models = config.models
+      .filter((model) => !legacySeedModelIds.has(model.id))
+      .map((model) => this.normalizeModel(model));
+    const modelIds = new Set(models.map((model) => model.id));
+
     return {
       ...config,
-      providers: config.providers.map((provider) => this.normalizeProvider(provider)),
-      models: config.models.map((model) => this.normalizeModel(model)),
+      providers: config.providers
+        .filter((provider) => !legacySeedProviderIds.has(provider.id))
+        .map((provider) => this.normalizeProvider(provider)),
+      models,
+      assignments: config.assignments
+        .map((assignment) => ({
+          ...assignment,
+          fallbackModelIds: assignment.fallbackModelIds.filter((modelId) => modelIds.has(modelId)),
+        }))
+        .filter((assignment) => modelIds.has(assignment.primaryModelId)),
     };
+  }
+
+  private isLegacySeedProvider(provider: PersistedConfig['providers'][number]): boolean {
+    return (
+      aiProviderTemplateIds.includes(provider.id) &&
+      provider.custom === undefined &&
+      !provider.credential
+    );
   }
 
   private normalizeProvider(
@@ -244,6 +275,7 @@ export class CatalogStore {
       description: string;
       baseUrl: string;
       authType?: AiProvider['authType'];
+      custom?: boolean;
     },
     priority: number,
   ): PersistedConfig['providers'][number] {
@@ -266,7 +298,7 @@ export class CatalogStore {
       requestFormat: patch.requestFormat ?? 'openai_compatible',
       credentialState: credential ? 'masked' : 'missing',
       priority,
-      custom: true,
+      custom: patch.custom ?? true,
       credential,
     };
   }
