@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, type LucideIcon } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrandMark } from '@/components/AppBrand';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
@@ -8,41 +8,42 @@ import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 export function SettingsDetailShell({
   title,
   subtitle,
-  summary,
   children,
 }: {
   title: string;
   subtitle: string;
-  summary: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
 
+  useEffect(() => {
+    document.querySelector('.app-content-scroll')?.scrollTo({ top: 0, left: 0 });
+    window.scrollTo({ top: 0, left: 0 });
+  }, [title]);
+
   return (
     <main className="relative min-h-full overflow-hidden">
+      <Link
+        to="/settings"
+        aria-label={t('account.backToSettings')}
+        title={t('account.backToSettings')}
+        className="settings-back-button app-icon-btn fixed z-30 inline-flex size-9 items-center justify-center rounded-full border border-hairline bg-surface text-ink-soft shadow-raised"
+      >
+        <ChevronLeft size={20} strokeWidth={1.8} />
+      </Link>
       <div className="mx-auto min-h-full w-full max-w-6xl px-2 sm:px-6 lg:px-8">
         <div className="relative min-w-0">
           <SettingsGridPattern />
 
           <div className="relative z-10 pb-0">
-            <header className="relative border-b border-hairline px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
-              <Link
-                to="/settings"
-                className="lp-nav-link mb-5 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-ink-soft"
-              >
-                <ChevronLeft size={16} />
-                {t('account.backToSettings')}
-              </Link>
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-end">
-                <div className="space-y-2">
-                  <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
-                    {title}
-                  </h1>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
-                    {subtitle}
-                  </p>
-                </div>
-                {summary}
+            <header className="relative border-b border-hairline px-4 pb-6 pt-16 sm:px-8 sm:pt-20 lg:px-10 lg:pb-8 lg:pt-16">
+              <div className="max-w-2xl space-y-2">
+                <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
+                  {title}
+                </h1>
+                <p className="text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
+                  {subtitle}
+                </p>
               </div>
             </header>
 
@@ -66,36 +67,6 @@ function SettingsFooterMark() {
         aria-hidden
         className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56"
       />
-    </div>
-  );
-}
-
-export function SettingsSummaryCard({
-  icon: Icon,
-  tint,
-  title,
-  subtitle,
-}: {
-  icon: LucideIcon;
-  tint: SettingsTint;
-  title: ReactNode;
-  subtitle: ReactNode;
-}) {
-  return (
-    <div className="relative isolate min-w-0 overflow-hidden rounded-md border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
-      <div className="flex min-w-0 items-center gap-3">
-        <span
-          className={`grid size-12 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass[tint]}`}
-        >
-          <Icon size={20} />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">{title}</p>
-          <span className="block max-w-[34ch] text-[11px] leading-relaxed text-ink-faint">
-            {subtitle}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

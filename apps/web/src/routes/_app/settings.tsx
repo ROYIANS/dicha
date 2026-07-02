@@ -16,7 +16,6 @@ import {
   Palette,
   Search,
   Server,
-  Settings,
   ShieldCheck,
   User,
   type LucideIcon,
@@ -174,16 +173,13 @@ function SettingsPage() {
 
           <div className="relative z-10 pb-0">
             <header className="relative border-b border-hairline px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-end">
-                <div className="space-y-2">
-                  <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
-                    {t('settings.pageTitle')}
-                  </h1>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
-                    {t('settings.pageSubtitle')}
-                  </p>
-                </div>
-                <SettingsSummary />
+              <div className="max-w-2xl space-y-2">
+                <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
+                  {t('settings.pageTitle')}
+                </h1>
+                <p className="text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
+                  {t('settings.pageSubtitle')}
+                </p>
               </div>
             </header>
 
@@ -228,26 +224,6 @@ function SettingsFooterMark() {
         aria-hidden
         className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56"
       />
-    </div>
-  );
-}
-
-function SettingsSummary() {
-  const { t } = useTranslation();
-
-  return (
-    <div className="relative isolate min-w-0 overflow-hidden rounded-md border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-12 shrink-0 place-items-center rounded-md border border-hairline bg-chip-peach text-peach">
-          <Settings size={21} />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">{t('settings.summaryTitle')}</p>
-          <span className="block max-w-[34ch] text-[11px] leading-relaxed text-ink-faint">
-            {t('settings.summarySubtitle')}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

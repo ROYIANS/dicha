@@ -701,6 +701,21 @@ body {
   backdrop-filter: saturate(160%) blur(14px);
   -webkit-backdrop-filter: saturate(160%) blur(14px);
 }
+.settings-back-button {
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  left: 0.75rem;
+}
+@media (min-width: 640px) {
+  .settings-back-button {
+    left: 1.25rem;
+  }
+}
+@media (min-width: 1024px) {
+  .settings-back-button {
+    top: calc(57px + 0.75rem);
+    left: calc(var(--app-sidebar-w) + 1rem);
+  }
+}
 @media (max-width: 1023px) {
   .app-content-scroll {
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));

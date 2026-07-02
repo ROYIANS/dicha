@@ -46,7 +46,6 @@ import { ModelSelect } from '@/components/ModelSelect';
 import {
   SettingsDetailShell,
   SettingsPanel,
-  SettingsSummaryCard,
   SettingsSwitch,
   SettingsValueRow,
 } from '@/components/SettingsScaffold';
@@ -113,14 +112,6 @@ export function AiProvidersSettingsPage() {
     <SettingsDetailShell
       title={t('settings.detail.aiProviders.title')}
       subtitle={t('settings.detail.aiProviders.subtitle')}
-      summary={
-        <SettingsSummaryCard
-          icon={Server}
-          tint="mist"
-          title={t('settings.detail.aiProviders.summaryTitle')}
-          subtitle={t('settings.detail.aiProviders.summarySubtitle')}
-        />
-      }
     >
       <div className="mx-auto max-w-5xl space-y-5">
         <ProviderOverview catalog={catalog} />
@@ -217,14 +208,6 @@ export function AiModelsSettingsPage() {
     <SettingsDetailShell
       title={t('settings.detail.aiModels.title')}
       subtitle={t('settings.detail.aiModels.subtitle')}
-      summary={
-        <SettingsSummaryCard
-          icon={Bot}
-          tint="lavender"
-          title={t('settings.detail.aiModels.summaryTitle')}
-          subtitle={t('settings.detail.aiModels.summarySubtitle')}
-        />
-      }
     >
       <div className="mx-auto max-w-4xl space-y-6">
         <SettingsPanel

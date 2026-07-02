@@ -116,7 +116,6 @@ export function ProfileSettingsPage() {
     <SettingsDetailShell
       title={t('account.pageTitle')}
       subtitle={t('account.pageSubtitle')}
-      summary={<AccountSummary user={user as UserDto} />}
     >
       <div className="mx-auto max-w-3xl space-y-7">
         <AvatarSection user={user as UserDto} />
@@ -134,56 +133,11 @@ export function SecuritySettingsPage() {
     <SettingsDetailShell
       title={t('account.securityPageTitle')}
       subtitle={t('account.securityPageSubtitle')}
-      summary={<SecuritySummary user={user as UserDto} />}
     >
       <div className="mx-auto max-w-3xl">
         <SecuritySection user={user as UserDto} />
       </div>
     </SettingsDetailShell>
-  );
-}
-
-function AccountSummary({ user }: { user: UserDto }) {
-  const seed = parseGeneratedAvatarMarker(user.image) ?? user.email;
-  const uploadedImage = user.image && !parseGeneratedAvatarMarker(user.image) ? user.image : null;
-  const displayName = user.displayName || user.name;
-
-  return (
-    <div className="relative isolate min-w-0 overflow-hidden rounded-md border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="size-12 shrink-0 overflow-hidden rounded-md border border-hairline bg-canvas">
-          {uploadedImage ? (
-            <img src={uploadedImage} alt={displayName} className="size-full object-cover" />
-          ) : (
-            <Avatar name={seed} variant="beam" colors={AVATAR_COLORS} size={48} square />
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">{displayName}</p>
-          <span className="block max-w-[32ch] truncate text-[11px] text-ink-faint">{user.email}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SecuritySummary({ user }: { user: UserDto }) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="relative isolate min-w-0 overflow-hidden rounded-md border border-hairline bg-surface px-4 py-4 shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-12 shrink-0 place-items-center rounded-md border border-hairline bg-chip-sage text-sage">
-          <ShieldCheck size={20} />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">{t('account.securitySummaryTitle')}</p>
-          <span className="block max-w-[34ch] text-[11px] leading-relaxed text-ink-faint">
-            {user.email}
-          </span>
-        </div>
-      </div>
-    </div>
   );
 }
 

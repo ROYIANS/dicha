@@ -16,11 +16,9 @@ import {
   LayoutList,
   LockKeyhole,
   Moon,
-  Palette,
   ShieldCheck,
   SlidersHorizontal,
   Sun,
-  type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,54 +26,37 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   SettingsDetailShell,
   SettingsPanel,
-  SettingsSummaryCard,
   SettingsSwitch,
   SettingsValueRow,
 } from '@/components/SettingsScaffold';
-import { type SettingsTint } from '@/components/settings-ui';
 import { useTheme } from '@/lib/hooks/useTheme';
 
-type PageTone = {
-  icon: LucideIcon;
-  tint: SettingsTint;
-};
-
-const pageTone = {
-  privacy: { icon: ShieldCheck, tint: 'sage' },
-  appearance: { icon: Palette, tint: 'mist' },
-  theme: { icon: Moon, tint: 'lavender' },
-  notifications: { icon: Bell, tint: 'pink' },
-  language: { icon: Languages, tint: 'sage' },
-  storage: { icon: Database, tint: 'peach' },
-  export: { icon: Download, tint: 'mist' },
-  help: { icon: HeartHandshake, tint: 'mist' },
-  labs: { icon: FlaskConical, tint: 'lavender' },
-  diagnostics: { icon: Activity, tint: 'peach' },
-  about: { icon: Info, tint: 'sage' },
-} satisfies Record<string, PageTone>;
+type SettingsDetailPageKey =
+  | 'privacy'
+  | 'appearance'
+  | 'theme'
+  | 'notifications'
+  | 'language'
+  | 'storage'
+  | 'export'
+  | 'help'
+  | 'labs'
+  | 'diagnostics'
+  | 'about';
 
 function SettingsPageShell({
   pageKey,
   children,
 }: {
-  pageKey: keyof typeof pageTone;
+  pageKey: SettingsDetailPageKey;
   children: React.ReactNode;
 }) {
   const { t } = useTranslation();
-  const tone = pageTone[pageKey];
 
   return (
     <SettingsDetailShell
       title={t(`settings.detail.${pageKey}.title`)}
       subtitle={t(`settings.detail.${pageKey}.subtitle`)}
-      summary={
-        <SettingsSummaryCard
-          icon={tone.icon}
-          tint={tone.tint}
-          title={t(`settings.detail.${pageKey}.summaryTitle`)}
-          subtitle={t(`settings.detail.${pageKey}.summarySubtitle`)}
-        />
-      }
     >
       <div className="mx-auto max-w-3xl space-y-6">{children}</div>
     </SettingsDetailShell>
