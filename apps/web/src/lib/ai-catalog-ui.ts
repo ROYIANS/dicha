@@ -2,7 +2,8 @@ import type { AiModel, AiProvider } from '@dicha/shared';
 
 const lobeProviderKeyByProviderId: Partial<Record<string, string>> = {
   baidu_wenxin: 'wenxin',
-  cloudflare_workers_ai: 'workersai',
+  cloudflare_workers_ai: 'cloudflare',
+  fireworks: 'fireworksai',
   lm_studio: 'lmstudio',
   siliconflow: 'siliconcloud',
   tencent_hunyuan: 'hunyuan',
