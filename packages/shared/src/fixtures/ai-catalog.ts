@@ -1,4 +1,17 @@
-import type { AiGatewayCatalog, AiModel, AiProvider } from '../contracts/ai.contract';
+import type {
+  AiGatewayCatalog,
+  AiModel,
+  AiModelExtensionParameter,
+  AiProviderCategory,
+  AiProvider,
+} from '../contracts/ai.contract';
+import { lobeModelBankCards } from './lobehub-model-bank-data';
+import { lobeProviderCards } from './lobehub-provider-data';
+import {
+  dichaProviderId,
+  type LobeModelBankCard,
+  type LobeProviderCard,
+} from './lobehub-model-bank';
 
 type ProviderTemplate = AiProvider;
 type ModelTemplateInput = Omit<
@@ -27,7 +40,7 @@ const model = (template: ModelTemplateInput): AiModel => ({
   ...template,
 });
 
-export const aiProviderTemplates: ProviderTemplate[] = [
+const curatedProviderTemplates: ProviderTemplate[] = [
   provider({
     id: 'dicha',
     name: 'Dicha AI',
@@ -478,9 +491,209 @@ export const aiProviderTemplates: ProviderTemplate[] = [
   }),
 ];
 
+const lobeModelBankProviderIds = new Set(lobeModelBankCards.map((card) => card.providerId));
+const curatedProviderTemplateIds = new Set(curatedProviderTemplates.map((item) => item.id));
+
+const chinaProviderIds = new Set([
+  'ai360',
+  'antgroup',
+  'baichuan',
+  'bailiancodingplan',
+  'giteeai',
+  'glmcodingplan',
+  'higress',
+  'infiniai',
+  'internlm',
+  'kimicodingplan',
+  'longcat',
+  'modelscope',
+  'ppio',
+  'qiniu',
+  'sensenova',
+  'spark',
+  'stepfun',
+  'streamlake',
+  'taichu',
+  'tencentcloud',
+  'volcenginecodingplan',
+  'xiaomimimo',
+  'zeroone',
+]);
+const aggregatorProviderIds = new Set([
+  'ai302',
+  'aihubmix',
+  'akashchat',
+  'cerebras',
+  'cometapi',
+  'huggingface',
+  'nebius',
+  'novita',
+  'ollamacloud',
+  'opencodecodingplan',
+  'opencodezen',
+  'search1api',
+  'vercelaigateway',
+  'zenmux',
+]);
+const localProviderIds = new Set(['comfyui']);
+const localNoCredentialProviderIds = new Set(['comfyui']);
+const mediaProviderIds = new Set(['bfl']);
+const openAiLikeSdkTypes = new Set(['openai', 'ollama']);
+
+const generatedProviderTemplates = lobeProviderCards
+  .filter((card) => lobeModelBankProviderIds.has(card.lobeProviderId))
+  .map((card, index) => lobeProviderToTemplate(card, index))
+  .filter((template) => !curatedProviderTemplateIds.has(template.id));
+
+export const aiProviderTemplates: ProviderTemplate[] = [
+  ...curatedProviderTemplates,
+  ...generatedProviderTemplates,
+];
+
+function lobeProviderToTemplate(card: LobeProviderCard, index: number): ProviderTemplate {
+  const providerId = dichaProviderId(card.lobeProviderId, normalizedProviderId(card.id));
+  const noCredential = localNoCredentialProviderIds.has(providerId);
+
+  return provider({
+    id: providerId,
+    name: card.name,
+    shortName: providerShortName(card.name),
+    avatar: providerShortName(card.name),
+    description: providerDescription(card),
+    baseUrl: providerBaseUrl(card),
+    status: 'disabled',
+    category: providerCategory(providerId),
+    authType: noCredential ? 'none' : 'api_key',
+    credentialMode: noCredential ? 'not_required' : 'user_api_key',
+    billingMode: 'user_provider',
+    modelSyncMode: providerModelSyncMode(card),
+    credentialState: noCredential ? 'not_required' : 'missing',
+    priority: 280 + index * 10,
+  });
+}
+
+function normalizedProviderId(value: string): string {
+  return (
+    value
+      .trim()
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'provider'
+  );
+}
+
+function providerShortName(value: string): string {
+  return (
+    value
+      .replace(/&/g, ' ')
+      .trim()
+      .split(/[-_\s:/.()[\]]+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 4) || 'AI'
+  );
+}
+
+function providerDescription(card: LobeProviderCard): string {
+  return (card.description ?? `${card.name} model provider from LobeHub model-bank.`).slice(0, 240);
+}
+
+function providerBaseUrl(card: LobeProviderCard): string {
+  const proxyUrl = card.settings?.proxyUrl || card.proxyUrl;
+  if (proxyUrl && typeof proxyUrl === 'object' && isHttpUrl(proxyUrl.placeholder)) {
+    return proxyUrl.placeholder;
+  }
+  if (isHttpUrl(card.url)) return card.url;
+  return 'https://example.com';
+}
+
+function providerCategory(providerId: string): AiProviderCategory {
+  if (localProviderIds.has(providerId)) return 'local';
+  if (mediaProviderIds.has(providerId)) return 'media';
+  if (aggregatorProviderIds.has(providerId)) return 'aggregator';
+  if (chinaProviderIds.has(providerId)) return 'china';
+  return 'global';
+}
+
+function providerModelSyncMode(card: LobeProviderCard): ProviderTemplate['modelSyncMode'] {
+  const proxyUrl = card.settings?.proxyUrl || card.proxyUrl;
+  const hasProxyBaseUrl = Boolean(proxyUrl && typeof proxyUrl === 'object' && isHttpUrl(proxyUrl.placeholder));
+  const showModelFetcher = card.settings?.showModelFetcher ?? card.modelList?.showModelFetcher ?? false;
+  if (hasProxyBaseUrl && showModelFetcher && openAiLikeSdkTypes.has(card.settings?.sdkType ?? '')) {
+    return 'openai_models_endpoint';
+  }
+  return 'manual';
+}
+
+function isHttpUrl(value: unknown): value is string {
+  return typeof value === 'string' && (value.startsWith('https://') || value.startsWith('http://'));
+}
+
 export const aiProviderTemplateIds = aiProviderTemplates.map((item) => item.id);
 
-export const aiModelBank: AiModel[] = [
+const modelProviderIds = new Set(aiProviderTemplates.map((item) => item.id));
+
+const lobeToDichaProviderId = new Map<string, string>(
+  lobeProviderCards.map((card) => [
+    card.lobeProviderId,
+    dichaProviderId(card.lobeProviderId, normalizedProviderId(card.id)),
+  ]),
+);
+
+const recommendedModelIds = new Set([
+  'openai:gpt-5.2',
+  'openai:gpt-4.1-mini',
+  'anthropic:claude-sonnet-4-5-20250929',
+  'google:gemini-2.5-flash',
+  'deepseek:deepseek-v4-flash',
+  'deepseek:deepseek-v4-pro',
+  'qwen:qwen-max',
+  'moonshot:kimi-k2.6',
+  'groq:llama-3.3-70b-versatile',
+]);
+
+const aiExtensionParameterValues = new Set<AiModelExtensionParameter>([
+  'codexMaxReasoningEffort',
+  'deepseekV4ReasoningEffort',
+  'disableContextCaching',
+  'effort',
+  'enableAdaptiveThinking',
+  'enableReasoning',
+  'glm5_2ReasoningEffort',
+  'gpt5ReasoningEffort',
+  'gpt5_1ReasoningEffort',
+  'gpt5_2ProReasoningEffort',
+  'gpt5_2ReasoningEffort',
+  'grok4_20ReasoningEffort',
+  'grok4_3ReasoningEffort',
+  'hy3ReasoningEffort',
+  'imageAspectRatio',
+  'imageAspectRatio2',
+  'imageResolution',
+  'imageResolution2',
+  'opus47Effort',
+  'preserveThinking',
+  'reasoningBudgetToken',
+  'reasoningBudgetToken32k',
+  'reasoningBudgetToken80k',
+  'reasoningEffort',
+  'ring2_6ReasoningEffort',
+  'step3_5ReasoningEffort',
+  'textVerbosity',
+  'thinking',
+  'thinkingBudget',
+  'thinkingLevel',
+  'thinkingLevel2',
+  'thinkingLevel3',
+  'thinkingLevel4',
+  'urlContext',
+]);
+
+const dichaOfficialModels: AiModel[] = [
   model({
     id: 'dicha:assistant',
     providerId: 'dicha',
@@ -501,371 +714,13 @@ export const aiModelBank: AiModel[] = [
       notes: '正式价格以后端 price book 为准。',
     },
   }),
-  model({
-    id: 'openai:gpt-5.2',
-    providerId: 'openai',
-    name: 'gpt-5.2',
-    displayName: 'GPT-5.2',
-    avatar: 'G5',
-    contextWindow: 400000,
-    modelType: 'chat',
-    extensionParameters: ['gpt5_2ReasoningEffort', 'textVerbosity'],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考官方 token 价格，用户自带 Key 计费',
-    pricing: {
-      currency: 'USD',
-      notes: '以 OpenAI 官方最新价格为准。',
-    },
-  }),
-  model({
-    id: 'openai:gpt-4.1-mini',
-    providerId: 'openai',
-    name: 'gpt-4.1-mini',
-    displayName: 'GPT-4.1 mini',
-    avatar: '41',
-    contextWindow: 1000000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'fast'],
-    recommended: true,
-    priceHint: '轻量多模态模型，用户自带 Key 计费',
-    pricing: {
-      currency: 'USD',
-      notes: '以 OpenAI 官方最新价格为准。',
-    },
-  }),
-  model({
-    id: 'openai:text-embedding-3-large',
-    providerId: 'openai',
-    name: 'text-embedding-3-large',
-    displayName: 'Text Embedding 3 Large',
-    avatar: 'E3',
-    contextWindow: 8191,
-    modelType: 'embedding',
-    extensionParameters: [],
-    capabilities: ['embedding'],
-    priceHint: 'Embedding 模型，用户自带 Key 计费',
-  }),
-  model({
-    id: 'anthropic:claude-opus-4-1',
-    providerId: 'anthropic',
-    name: 'claude-opus-4-1',
-    displayName: 'Claude Opus 4.1',
-    avatar: 'CO',
-    contextWindow: 200000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考 Anthropic 官方价格，用户自带 Key 计费',
-    pricing: {
-      currency: 'USD',
-      notes: '以 Anthropic 官方最新价格为准。',
-    },
-  }),
-  model({
-    id: 'anthropic:claude-sonnet-4-5',
-    providerId: 'anthropic',
-    name: 'claude-sonnet-4-5',
-    displayName: 'Claude Sonnet 4.5',
-    avatar: 'CS',
-    contextWindow: 200000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning', 'fast'],
-    recommended: true,
-    priceHint: '参考 Anthropic 官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'google:gemini-2.5-pro',
-    providerId: 'google',
-    name: 'gemini-2.5-pro',
-    displayName: 'Gemini 2.5 Pro',
-    avatar: 'G',
-    contextWindow: 1000000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考 Google AI 官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'google:gemini-2.5-flash',
-    providerId: 'google',
-    name: 'gemini-2.5-flash',
-    displayName: 'Gemini 2.5 Flash',
-    avatar: 'GF',
-    contextWindow: 1000000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'fast'],
-    recommended: true,
-    priceHint: '快速多模态模型，用户自带 Key 计费',
-  }),
-  model({
-    id: 'deepseek:deepseek-chat',
-    providerId: 'deepseek',
-    name: 'deepseek-chat',
-    displayName: 'DeepSeek Chat',
-    avatar: 'DS',
-    contextWindow: 64000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'fast'],
-    recommended: true,
-    priceHint: '参考 DeepSeek 官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'deepseek:deepseek-reasoner',
-    providerId: 'deepseek',
-    name: 'deepseek-reasoner',
-    displayName: 'DeepSeek Reasoner',
-    avatar: 'DR',
-    contextWindow: 64000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '推理模型，用户自带 Key 计费',
-  }),
-  model({
-    id: 'qwen:qwen-max',
-    providerId: 'qwen',
-    name: 'qwen-max',
-    displayName: 'Qwen Max',
-    avatar: 'QM',
-    contextWindow: 32000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json'],
-    recommended: true,
-    priceHint: '参考阿里云百炼价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'qwen:qwen-vl-plus',
-    providerId: 'qwen',
-    name: 'qwen-vl-plus',
-    displayName: 'Qwen VL Plus',
-    avatar: 'QV',
-    contextWindow: 32000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'json'],
-    priceHint: '视觉模型，用户自带 Key 计费',
-  }),
-  model({
-    id: 'zhipu:glm-4.5',
-    providerId: 'zhipu',
-    name: 'glm-4.5',
-    displayName: 'GLM-4.5',
-    avatar: 'G4',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考智谱官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'moonshot:kimi-k2',
-    providerId: 'moonshot',
-    name: 'kimi-k2',
-    displayName: 'Kimi K2',
-    avatar: 'K2',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考 Moonshot 官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'volcengine:doubao-seed-1-6',
-    providerId: 'volcengine',
-    name: 'doubao-seed-1-6',
-    displayName: 'Doubao Seed 1.6',
-    avatar: 'DB',
-    contextWindow: 256000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考火山方舟价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'openrouter:anthropic/claude-sonnet-4.5',
-    providerId: 'openrouter',
-    name: 'anthropic/claude-sonnet-4.5',
-    displayName: 'Claude Sonnet 4.5 via OpenRouter',
-    avatar: 'OR',
-    contextWindow: 200000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: 'OpenRouter 聚合计费，用户自带 Key 计费',
-  }),
-  model({
-    id: 'groq:llama-3.3-70b-versatile',
-    providerId: 'groq',
-    name: 'llama-3.3-70b-versatile',
-    displayName: 'Llama 3.3 70B Versatile',
-    avatar: 'L3',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'fast'],
-    recommended: true,
-    priceHint: 'Groq 高速推理，用户自带 Key 计费',
-  }),
-  model({
-    id: 'mistral:mistral-large-latest',
-    providerId: 'mistral',
-    name: 'mistral-large-latest',
-    displayName: 'Mistral Large',
-    avatar: 'ML',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: '参考 Mistral 官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'xai:grok-4',
-    providerId: 'xai',
-    name: 'grok-4',
-    displayName: 'Grok 4',
-    avatar: 'G4',
-    contextWindow: 256000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'reasoning', 'web_search'],
-    recommended: true,
-    priceHint: '参考 xAI 官方价格，用户自带 Key 计费',
-  }),
-  model({
-    id: 'perplexity:sonar-pro',
-    providerId: 'perplexity',
-    name: 'sonar-pro',
-    displayName: 'Sonar Pro',
-    avatar: 'SP',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'json', 'web_search'],
-    recommended: true,
-    priceHint: '搜索增强模型，用户自带 Key 计费',
-  }),
-  model({
-    id: 'siliconflow:deepseek-ai/DeepSeek-V3.2',
-    providerId: 'siliconflow',
-    name: 'deepseek-ai/DeepSeek-V3.2',
-    displayName: 'DeepSeek V3.2 via SiliconFlow',
-    avatar: 'SF',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json', 'reasoning'],
-    recommended: true,
-    priceHint: 'SiliconFlow 聚合计费，用户自带 Key 计费',
-  }),
-  model({
-    id: 'together:meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    providerId: 'together',
-    name: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    displayName: 'Llama 3.3 70B Turbo',
-    avatar: 'L3',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json'],
-    recommended: true,
-    priceHint: 'Together 聚合计费，用户自带 Key 计费',
-  }),
-  model({
-    id: 'fireworks:accounts/fireworks/models/llama-v3p3-70b-instruct',
-    providerId: 'fireworks',
-    name: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
-    displayName: 'Llama 3.3 70B Instruct',
-    avatar: 'FW',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json'],
-    recommended: true,
-    priceHint: 'Fireworks 聚合计费，用户自带 Key 计费',
-  }),
-  model({
-    id: 'ollama:llama3.2',
-    providerId: 'ollama',
-    name: 'llama3.2',
-    displayName: 'Llama 3.2',
-    avatar: 'OL',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'tool_use', 'json'],
-    priceHint: '本地运行，不走平台计费',
-  }),
-  model({
-    id: 'lm_studio:local-model',
-    providerId: 'lm_studio',
-    name: 'local-model',
-    displayName: 'Local Model',
-    avatar: 'LM',
-    contextWindow: 8192,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat'],
-    priceHint: '本地运行，不走平台计费',
-  }),
-  model({
-    id: 'fal:fal-ai/flux-pro',
-    providerId: 'fal',
-    name: 'fal-ai/flux-pro',
-    displayName: 'Flux Pro',
-    avatar: 'FL',
-    contextWindow: 4096,
-    modelType: 'image',
-    extensionParameters: [],
-    capabilities: ['image_generation'],
-    priceHint: '图像生成，用户自带 Fal 计费',
-    pricing: {
-      currency: 'USD',
-      imageGeneration: '按 Fal 官方任务价格计费',
-    },
-  }),
-  model({
-    id: 'replicate:stability-ai/sdxl',
-    providerId: 'replicate',
-    name: 'stability-ai/sdxl',
-    displayName: 'SDXL',
-    avatar: 'RP',
-    contextWindow: 4096,
-    modelType: 'image',
-    extensionParameters: [],
-    capabilities: ['image_generation'],
-    priceHint: '图像生成，用户自带 Replicate 计费',
-    pricing: {
-      currency: 'USD',
-      imageGeneration: '按 Replicate 官方任务价格计费',
-    },
-  }),
-  model({
-    id: 'cloudflare_workers_ai:@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-    providerId: 'cloudflare_workers_ai',
-    name: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-    displayName: 'Workers AI Llama 3.3 70B',
-    avatar: 'CF',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: [],
-    capabilities: ['chat', 'fast'],
-    priceHint: 'Cloudflare Workers AI 计费，用户自带账号',
-  }),
 ];
+
+const lobeModelBankModels = lobeModelBankCards
+  .map((card) => lobeModelToAiModel(card))
+  .filter((model): model is AiModel => Boolean(model));
+
+export const aiModelBank: AiModel[] = [...dichaOfficialModels, ...lobeModelBankModels];
 
 export const aiCatalogFixture: AiGatewayCatalog = {
   generatedAt,
@@ -875,27 +730,126 @@ export const aiCatalogFixture: AiGatewayCatalog = {
     {
       useCase: 'assistant',
       primaryModelId: 'dicha:assistant',
-      fallbackModelIds: ['openai:gpt-5.2', 'anthropic:claude-sonnet-4-5'],
+      fallbackModelIds: ['openai:gpt-5.2', 'anthropic:claude-sonnet-4-5-20250929'],
     },
     {
       useCase: 'item_profile',
       primaryModelId: 'openai:gpt-4.1-mini',
-      fallbackModelIds: ['deepseek:deepseek-chat', 'qwen:qwen-max'],
+      fallbackModelIds: ['deepseek:deepseek-v4-flash', 'qwen:qwen-max'],
     },
     {
       useCase: 'image_understanding',
       primaryModelId: 'google:gemini-2.5-flash',
-      fallbackModelIds: ['openai:gpt-4.1-mini', 'qwen:qwen-vl-plus'],
+      fallbackModelIds: ['openai:gpt-4.1-mini', 'qwen:qwen3-vl-plus'],
     },
     {
       useCase: 'tagging',
-      primaryModelId: 'deepseek:deepseek-chat',
+      primaryModelId: 'deepseek:deepseek-v4-flash',
       fallbackModelIds: ['qwen:qwen-max', 'groq:llama-3.3-70b-versatile'],
     },
     {
       useCase: 'summarization',
-      primaryModelId: 'moonshot:kimi-k2',
-      fallbackModelIds: ['anthropic:claude-sonnet-4-5', 'google:gemini-2.5-pro'],
+      primaryModelId: 'moonshot:kimi-k2.6',
+      fallbackModelIds: ['anthropic:claude-sonnet-4-5-20250929', 'google:gemini-2.5-flash'],
     },
   ],
 };
+
+function lobeModelToAiModel(card: LobeModelBankCard): AiModel | null {
+  const providerId = lobeToDichaProviderId.get(card.providerId) ?? card.providerId;
+  if (!modelProviderIds.has(providerId)) return null;
+
+  const contextWindow = card.contextWindowTokens ?? null;
+  const modelType = aiModelType(card.type);
+  const capabilities = aiModelCapabilities(card);
+  const extensionParameters = aiExtensionParameters(card.settings?.extendParams);
+  const id = `${providerId}:${card.id}`;
+
+  return model({
+    id,
+    providerId,
+    name: card.id,
+    displayName: card.displayName ?? card.id,
+    avatar: modelAvatar(card.displayName ?? card.id),
+    contextWindow,
+    modelType,
+    extensionParameters,
+    capabilities,
+    maxOutput: card.maxOutput,
+    enabled: card.enabled ?? false,
+    recommended: recommendedModelIds.has(id),
+    releasedAt: card.releasedAt,
+    priceHint: card.description ?? '对齐 LobeHub model-bank，用户自带供应商计费',
+    pricing: aiModelPricing(card.pricing),
+    lobeMetadata: {
+      abilities: card.abilities,
+      description: card.description,
+      family: card.family,
+      generation: card.generation,
+      knowledgeCutoff: card.knowledgeCutoff,
+      legacy: card.legacy,
+      lobeProviderId: card.providerId,
+      maxDimension: card.maxDimension,
+      organization: card.organization,
+      raw: card,
+      settings: card.settings,
+      visible: card.visible,
+    },
+  });
+}
+
+function aiModelType(type: LobeModelBankCard['type']): AiModel['modelType'] {
+  if (type === 'asr') return 'asr';
+  if (type === 'tts') return 'tts';
+  if (type === 'text2music') return 'text2music';
+  if (type === 'realtime') return 'realtime';
+  return type;
+}
+
+function aiModelCapabilities(card: LobeModelBankCard): AiModel['capabilities'] {
+  const capabilities = new Set<AiModel['capabilities'][number]>();
+  if (card.type === 'chat' || card.type === 'realtime') capabilities.add('chat');
+  if (card.type === 'embedding') capabilities.add('embedding');
+  if (card.type === 'image') capabilities.add('image_generation');
+  if (card.type === 'video') capabilities.add('video');
+  if (card.type === 'tts' || card.type === 'asr' || card.type === 'text2music') capabilities.add('audio');
+
+  const abilities = card.abilities;
+  if (abilities?.audio) capabilities.add('audio');
+  if (abilities?.files) capabilities.add('files');
+  if (abilities?.functionCall) capabilities.add('tool_use');
+  if (abilities?.imageOutput) capabilities.add('image_output');
+  if (abilities?.reasoning) capabilities.add('reasoning');
+  if (abilities?.search) capabilities.add('web_search');
+  if (abilities?.structuredOutput) capabilities.add('json');
+  if (abilities?.video) capabilities.add('video');
+  if (abilities?.vision) capabilities.add('vision');
+
+  return [...capabilities];
+}
+
+function aiExtensionParameters(values: string[] | undefined): AiModel['extensionParameters'] {
+  if (!values) return [];
+  return values.filter((value): value is AiModel['extensionParameters'][number] =>
+    aiExtensionParameterValues.has(value as AiModel['extensionParameters'][number]),
+  );
+}
+
+function aiModelPricing(pricing: LobeModelBankCard['pricing']): AiModel['pricing'] | undefined {
+  if (!pricing) return undefined;
+  return {
+    currency: pricing.currency ?? 'USD',
+    units: pricing.units,
+  };
+}
+
+function modelAvatar(value: string): string {
+  return value
+    .trim()
+    .split(/[-_\s:/.]+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 4) || 'AI';
+}

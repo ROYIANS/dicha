@@ -1,5 +1,5 @@
 import { plainToInstance, Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min, MinLength, validateSync } from 'class-validator';
 
 class EnvVars {
   @Type(() => Number)
@@ -14,6 +14,7 @@ class EnvVars {
 
   @IsOptional()
   @IsString()
+  @MinLength(32)
   AI_GATEWAY_SECRET_KEY?: string;
 
   @IsOptional()
@@ -27,6 +28,8 @@ export function validateEnv(config: Record<string, unknown>): EnvVars {
   if (errors.length > 0) {
     throw new Error(`Invalid ai-gateway environment variables:\n${errors.toString()}`);
   }
+  if (process.env.NODE_ENV === 'production' && !validated.AI_GATEWAY_SECRET_KEY) {
+    throw new Error('Invalid ai-gateway environment variables: AI_GATEWAY_SECRET_KEY is required in production');
+  }
   return validated;
 }
-

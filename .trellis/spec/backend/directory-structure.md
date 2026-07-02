@@ -102,14 +102,14 @@ apps/api/
 - Environment:
   - `PORT`: optional number, defaults to `3100`.
   - `AI_GATEWAY_INTERNAL_TOKEN`: optional string. When set in `apps/ai-gateway`, `CatalogController` requires the `x-ai-gateway-token` header. `apps/api` sends the same header when proxying.
-  - `AI_GATEWAY_SECRET_KEY`: optional string used to encrypt persisted provider credentials. Production/self-hosted deployments should set it; rotating it makes existing encrypted credentials unreadable.
+  - `AI_GATEWAY_SECRET_KEY`: optional only in local development, required when `NODE_ENV=production`, minimum 32 characters, and used to encrypt persisted provider credentials. Rotating it makes existing encrypted credentials unreadable.
   - `AI_GATEWAY_DATA_DIR`: optional string, defaults to `./data/ai-gateway`; user-scoped config is stored as `users/<sha256(userId).slice(0,32)>.json` under this directory.
   - `AI_GATEWAY_BASE_URL` in `apps/api`: optional string, defaults to `http://localhost:3100/ai`; Docker compose must set it to `http://ai-gateway:3100/ai`.
 - Docker:
   - Dockerfile path: `docker/Dockerfile.ai-gateway`.
   - Compose service name: `ai-gateway`.
   - Healthcheck must call `http://127.0.0.1:3100/ai/health`.
-  - Mount a named volume for `AI_GATEWAY_DATA_DIR` so provider/model config and encrypted credentials survive container recreation.
+  - Mount a named volume for `AI_GATEWAY_DATA_DIR` so provider/model config and encrypted credentials survive container recreation. File-backed MVP writes user directories as `0700` and JSON files as `0600`; credentials inside catalog JSON remain AES-256-GCM encrypted.
 - Cross-package DTOs must come from `@dicha/shared`; do not duplicate AI provider/model/status enums in web/api/ai-gateway.
 - `GET /ai/catalog` is generated from persisted config. First boot with no config creates an empty provider/model/assignment catalog; built-in providers are exposed as user-selectable templates, not automatically inserted into the user's catalog.
 - Legacy auto-seeded built-in providers may be hidden on read only when the provider id is a built-in template id, `custom` is absent, and no encrypted credential exists; preserve user-selected built-in providers (`custom: false`) and any provider that has a credential.
@@ -136,9 +136,9 @@ apps/api/
   - Unknown `models[].modelId` with `providerId`, `name`, `displayName`, `contextWindow`, `modelType`, and `capabilities` creates a custom model.
   - Existing provider/model ids always patch the existing entry; do not create a second duplicate entry.
 - Persisted configs created before a new optional model field existed must be normalized in `CatalogStore.readConfig()` before returning a catalog. Do not make the web settings UI defend against missing gateway-owned model fields.
-- `POST /ai/providers/sync-models` uses the configured provider `baseUrl`, appends `/models`, and sends the decrypted credential as a Bearer token. The sync currently targets OpenAI-compatible model listing responses shaped like `{ data: [{ id }] }`.
+- `POST /ai/providers/sync-models` uses the configured provider `baseUrl`, appends `/models`, and sends the decrypted credential as a Bearer token only when one has been saved. Missing credentials must not block model discovery; the sync currently targets OpenAI-compatible model listing responses shaped like `{ data: [{ id }] }`.
 - Synced provider models are merged by provider id and model name. New models default to disabled, `availability: "unknown"`, `contextWindow: 4096`, `modelType: "chat"`, `extensionParameters: []`, and `capabilities: ["chat"]`.
-- `POST /ai/providers/check` must use the same configured provider secret and OpenAI-compatible `/models` reachability probe as sync, but it returns `{ ok: false, message }` for provider failures instead of throwing. Missing provider credentials still reject as bad configuration.
+- `POST /ai/providers/check` must use the same OpenAI-compatible `/models` reachability probe as sync, adding a Bearer token only when a provider secret exists, but it returns `{ ok: false, message }` for provider failures instead of throwing.
 - UI settings pages must consume `api.ai.getCatalog` / `api.ai.updateConfig` for the user's active catalog; direct shared fixture reads are only acceptable for built-in provider templates that create catalog entries through `api.ai.updateConfig`.
 
 ### 4. Validation & Error Matrix
@@ -152,7 +152,7 @@ apps/api/
 - Usage file missing for a user -> return an empty `AiUsageReport`, not 404.
 - Usage events with `kind: "probe"` -> persisted when recorded, but excluded from user-visible consumption aggregates.
 - AI Gateway down or invalid gateway response -> `apps/api` proxy returns `502 Bad Gateway`; web shows a save/load failure instead of using stale mock data.
-- Model sync without a stored provider credential -> gateway returns `400 Bad Request`; the web UI should disable sync for missing credentials and surface sync failure as a toast if the backend rejects it.
+- Model sync without a stored provider credential -> gateway calls `/models` without an Authorization header. If upstream returns 401/403 and the provider has built-in `aiModelBank` rows, gateway falls back to those built-in descriptors; otherwise non-2xx responses surface as sync failures.
 - Provider `/models` endpoint returns non-2xx or malformed data -> gateway rejects the sync instead of silently replacing the catalog.
 - Provider connection check receives non-2xx or malformed data -> gateway returns `ok: false` with a diagnostic message and does not mutate the catalog.
 - Missing `x-ai-gateway-token` when `AI_GATEWAY_INTERNAL_TOKEN` is configured -> gateway returns `401`.
@@ -189,7 +189,7 @@ apps/api/
   - `pnpm --filter @dicha/web lint`
   - `pnpm --filter @dicha/web typecheck`
   - `pnpm --filter @dicha/web build`
-- For provider model sync, assert manually or via tests that a provider with no credential cannot call `/models`, and a successful sync adds new disabled models without dropping existing model configuration fields.
+- For provider model sync, assert manually or via tests that a provider with no credential calls `/models` without Authorization, 401/403 can fall back to `aiModelBank`, and a successful sync adds new disabled models without dropping existing model configuration fields.
 - For user-scoped config, assert manually or via tests that two different `x-dicha-user-id` values read and write different files and never see each other's credentials.
 - For user-scoped usage, assert manually or via tests that two different `x-dicha-user-id` values read different usage reports, missing usage returns an empty report, and `probe` events are excluded from spend aggregates.
 - For provider connection check, assert that bad upstream credentials return `ok: false` instead of replacing the catalog or surfacing plaintext secrets.

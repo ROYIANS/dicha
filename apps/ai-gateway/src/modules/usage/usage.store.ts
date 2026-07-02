@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { Injectable } from '@nestjs/common';
@@ -156,10 +156,12 @@ export class UsageStore {
 
   private async writeUsage(ownerId: string, usage: PersistedUsage): Promise<void> {
     const usagePath = this.usagePath(ownerId);
-    await mkdir(dirname(usagePath), { recursive: true });
+    await mkdir(dirname(usagePath), { recursive: true, mode: 0o700 });
+    await chmod(dirname(usagePath), 0o700);
     const nextPath = `${usagePath}.tmp`;
-    await writeFile(nextPath, `${JSON.stringify(usage, null, 2)}\n`, 'utf8');
+    await writeFile(nextPath, `${JSON.stringify(usage, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
     await rename(nextPath, usagePath);
+    await chmod(usagePath, 0o600);
   }
 
   private usagePath(ownerId: string): string {

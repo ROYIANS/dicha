@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { aiCatalogFixture, aiModelBank, aiProviderTemplateIds, aiProviderTemplates } from '@dicha/shared';
 
-const expectedProviderIds = [
+const curatedProviderIds = [
   'dicha',
   'openai',
   'anthropic',
@@ -34,11 +34,18 @@ const expectedProviderIds = [
 
 describe('AI provider templates', () => {
   test('exposes a LobeHub-style provider bank and model bank as the default catalog', () => {
-    expect(aiProviderTemplates.map((provider) => provider.id)).toEqual(expectedProviderIds);
-    expect(aiProviderTemplateIds).toEqual(expectedProviderIds);
+    const providerIds = aiProviderTemplates.map((provider) => provider.id);
+    const modelProviderIds = new Set(aiModelBank.map((model) => model.providerId));
+
+    expect(providerIds.slice(0, curatedProviderIds.length)).toEqual(curatedProviderIds);
+    expect(aiProviderTemplateIds).toEqual(providerIds);
     expect(aiCatalogFixture.providers).toBe(aiProviderTemplates);
     expect(aiCatalogFixture.models).toBe(aiModelBank);
-    expect(aiCatalogFixture.models.length).toBeGreaterThan(20);
+    expect(aiProviderTemplates).toHaveLength(81);
+    expect(aiCatalogFixture.models).toHaveLength(1915);
+    expect(modelProviderIds.size).toBe(80);
+    expect([...modelProviderIds].filter((providerId) => !providerIds.includes(providerId))).toEqual([]);
+    expect(providerIds).toEqual(expect.arrayContaining(['ai302', 'githubcopilot', 'bailiancodingplan']));
     expect(aiCatalogFixture.assignments.map((assignment) => assignment.useCase)).toEqual([
       'assistant',
       'item_profile',
@@ -73,5 +80,35 @@ describe('AI provider templates', () => {
     const priorities = aiProviderTemplates.map((provider) => provider.priority);
     expect(priorities).toEqual([...priorities].sort((left, right) => left - right));
     expect(new Set(priorities).size).toBe(priorities.length);
+  });
+
+  test('maps built-in provider models from LobeHub model-bank metadata', () => {
+    expect(aiModelBank.filter((model) => model.providerId === 'openai')).toHaveLength(70);
+    expect(aiModelBank.filter((model) => model.providerId === 'qwen')).toHaveLength(181);
+    expect(aiModelBank.filter((model) => model.providerId === 'siliconflow')).toHaveLength(64);
+
+    const deepSeekModels = aiModelBank
+      .filter((model) => model.providerId === 'deepseek')
+      .map((model) => ({
+        contextWindow: model.contextWindow,
+        extensionParameters: model.extensionParameters,
+        maxOutput: model.maxOutput,
+        name: model.name,
+      }));
+
+    expect(deepSeekModels).toEqual([
+      {
+        contextWindow: 1048576,
+        extensionParameters: ['deepseekV4ReasoningEffort'],
+        maxOutput: 393216,
+        name: 'deepseek-v4-flash',
+      },
+      {
+        contextWindow: 1048576,
+        extensionParameters: ['deepseekV4ReasoningEffort'],
+        maxOutput: 393216,
+        name: 'deepseek-v4-pro',
+      },
+    ]);
   });
 });

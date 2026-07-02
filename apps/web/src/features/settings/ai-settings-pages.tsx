@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleDashed,
+  Trash2,
   KeyRound,
   Layers3,
   Plus,
@@ -17,7 +18,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { ModelIcon, ProviderIcon } from '@lobehub/icons';
+import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,16 +89,33 @@ const modelCapabilityOptions = [
   'reasoning',
   'web_search',
   'image_generation',
+  'image_output',
+  'audio',
+  'files',
   'video',
 ] satisfies AiModelCapability[];
 type ConfigurableModelCapability = (typeof modelCapabilityOptions)[number];
 
 const extensionParameterOptions = [
   'gpt5_2ReasoningEffort',
+  'deepseekV4ReasoningEffort',
+  'enableReasoning',
+  'reasoningEffort',
   'textVerbosity',
 ] satisfies AiModelExtensionParameter[];
 
-const modelTypeOptions = ['chat', 'embedding', 'rerank', 'image', 'audio', 'video'] satisfies AiModelType[];
+const modelTypeOptions = [
+  'chat',
+  'embedding',
+  'rerank',
+  'image',
+  'audio',
+  'video',
+  'tts',
+  'asr',
+  'text2music',
+  'realtime',
+] satisfies AiModelType[];
 
 const contextWindowPresets = [0, 4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000];
 
@@ -113,6 +131,15 @@ export function AiProvidersSettingsPage() {
   const [providerModalOpen, setProviderModalOpen] = useState(false);
   const [modelModal, setModelModal] = useState<{ provider: AiProvider; model?: AiModel } | null>(null);
   const providers = catalog?.providers.slice().sort(compareProvidersByEnabled);
+  const autoSyncProvider = (providerId: string, nextCatalog: AiGatewayCatalog) => {
+    const provider = nextCatalog.providers.find((item) => item.id === providerId);
+    if (!provider) return;
+    if (provider.modelSyncMode !== 'openai_models_endpoint') return;
+    setSyncingProviderId(provider.id);
+    syncModels.mutate(provider.id, {
+      onSettled: () => setSyncingProviderId(null),
+    });
+  };
 
   return (
     <SettingsDetailShell
@@ -141,6 +168,11 @@ export function AiProvidersSettingsPage() {
                   catalog={catalog}
                   provider={provider}
                   onUpdate={(body) => updateConfig.mutate(body)}
+                  onConfigured={(providerId, body) => {
+                    updateConfig.mutate(body, {
+                      onSuccess: (nextCatalog) => autoSyncProvider(providerId, nextCatalog),
+                    });
+                  }}
                   onAddModel={() => setModelModal({ provider })}
                   onConfigureModel={(model) => setModelModal({ provider, model })}
                   onCheckConnection={(providerId) => {
@@ -291,6 +323,7 @@ function ProviderCard({
   catalog,
   provider,
   onUpdate,
+  onConfigured,
   onAddModel,
   onConfigureModel,
   onCheckConnection,
@@ -302,6 +335,7 @@ function ProviderCard({
   catalog: AiGatewayCatalog;
   provider: AiProvider;
   onUpdate: (body: AiConfigUpdate) => void;
+  onConfigured: (providerId: string, body: AiConfigUpdate) => void;
   onAddModel: () => void;
   onConfigureModel: (model: AiModel) => void;
   onCheckConnection: (providerId: string) => void;
@@ -321,7 +355,13 @@ function ProviderCard({
   const providerTags = providerTagLabels(providerModels);
   const supportsUpstreamSync = provider.modelSyncMode === 'openai_models_endpoint';
   const hasConnectionCredential = provider.credentialState !== 'missing';
-  const canRunUpstreamProbe = supportsUpstreamSync && hasConnectionCredential;
+  const canRunUpstreamProbe = supportsUpstreamSync;
+  const canDeleteProvider = provider.custom === true;
+  const upstreamActionHint = !supportsUpstreamSync
+    ? t('settings.detail.aiProviders.upstreamUnsupportedHint')
+    : hasConnectionCredential
+      ? t('settings.detail.aiProviders.upstreamReadyHint')
+      : t('settings.detail.aiProviders.upstreamPublicHint');
   const credentialTitle =
     provider.credentialMode === 'platform_managed'
       ? t('settings.detail.aiProviders.credentialPlatformManaged')
@@ -338,14 +378,10 @@ function ProviderCard({
         : t('settings.detail.aiProviders.credentialUsageHint');
   const checkTitle = !supportsUpstreamSync
     ? t('settings.detail.aiProviders.checkUnsupported')
-    : provider.credentialState === 'missing'
-      ? t('settings.detail.aiProviders.checkNeedsCredential')
-      : t('settings.detail.aiProviders.checkConnection');
+    : t('settings.detail.aiProviders.checkConnection');
   const syncTitle = !supportsUpstreamSync
     ? t('settings.detail.aiProviders.syncUnsupported')
-    : provider.credentialState === 'missing'
-      ? t('settings.detail.aiProviders.syncNeedsCredential')
-      : t('settings.detail.aiProviders.syncModels');
+    : t('settings.detail.aiProviders.syncModels');
 
   return (
     <article className="overflow-visible rounded-md border border-hairline bg-surface shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
@@ -399,7 +435,11 @@ function ProviderCard({
               disabled={pending}
             />
           </div>
-          <ProviderCredentialPopover provider={provider} pending={pending} onUpdate={onUpdate} />
+          <ProviderCredentialPopover
+            provider={provider}
+            pending={pending}
+            onConfigured={onConfigured}
+          />
         </div>
       </div>
 
@@ -421,6 +461,22 @@ function ProviderCard({
           </span>
         </button>
         <div className="flex items-center gap-2">
+          {canDeleteProvider ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(t('settings.detail.aiProviders.deleteProviderConfirm', { name: provider.name }))) {
+                  onUpdate({ providers: [{ providerId: provider.id, delete: true }] });
+                }
+              }}
+              disabled={pending}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-pink transition-colors hover:border-pink disabled:cursor-not-allowed disabled:opacity-50"
+              title={t('settings.detail.aiProviders.deleteProvider')}
+            >
+              <Trash2 size={14} />
+              {t('settings.detail.aiProviders.deleteProvider')}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => onCheckConnection(provider.id)}
@@ -451,6 +507,9 @@ function ProviderCard({
             {t('settings.detail.aiProviders.addModel')}
           </button>
         </div>
+        <p className="basis-full text-right text-[11px] leading-relaxed text-ink-faint">
+          {upstreamActionHint}
+        </p>
       </div>
       <div className={`grid transition-[grid-template-rows] duration-200 ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="min-h-0 overflow-hidden">
@@ -590,11 +649,11 @@ function ProviderMark({ provider }: { provider: AiProvider }) {
 function ProviderCredentialPopover({
   provider,
   pending,
-  onUpdate,
+  onConfigured,
 }: {
   provider: AiProvider;
   pending: boolean;
-  onUpdate: (body: AiConfigUpdate) => void;
+  onConfigured: (providerId: string, body: AiConfigUpdate) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -706,7 +765,7 @@ function ProviderCredentialPopover({
               type="button"
               disabled={pending || !canSave}
               onClick={() => {
-                onUpdate({
+                onConfigured(provider.id, {
                   providers: [
                     {
                       providerId: provider.id,
@@ -795,6 +854,8 @@ function ProviderModelRow({
         assignment.primaryModelId === model.id || assignment.fallbackModelIds.includes(model.id),
     )
     .map((assignment) => t(`settings.aiUseCases.${assignment.useCase}`));
+  const hasKnownMetadata = model.contextWindow !== null && model.capabilities.length > 0;
+  const canDeleteModel = model.custom === true || model.catalogSource === 'upstream_sync';
 
   return (
     <div className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
@@ -811,15 +872,27 @@ function ProviderModelRow({
               {t('settings.detail.aiProviders.recommended')}
             </span>
           ) : null}
-          <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
-            {model.contextWindow.toLocaleString()}
-          </span>
+          {model.contextWindow === null ? (
+            <span className="rounded-md border border-hairline bg-chip-peach px-1.5 py-0.5 text-[10px] font-medium text-peach">
+              {t('settings.detail.aiProviders.metadataUnknown')}
+            </span>
+          ) : (
+            <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
+              {model.contextWindow.toLocaleString()}
+            </span>
+          )}
         </div>
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          {model.capabilities.map((capability) => (
-            <CapabilityChip key={capability} capability={capability} />
-          ))}
-        </div>
+        {model.capabilities.length > 0 ? (
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {model.capabilities.map((capability) => (
+              <CapabilityChip key={capability} capability={capability} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1 text-[11px] text-ink-faint">
+            {t('settings.detail.aiProviders.metadataUnknownDesc')}
+          </p>
+        )}
         <p className="mt-1 truncate text-[11px] text-ink-faint">
           {assignedUseCases.length > 0
             ? assignedUseCases.join(' / ')
@@ -828,6 +901,22 @@ function ProviderModelRow({
         </div>
       </div>
       <div className="flex items-center justify-end gap-3">
+        {canDeleteModel ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(t('settings.detail.aiProviders.deleteModelConfirm', { name: model.displayName }))) {
+                onUpdate({ models: [{ modelId: model.id, delete: true }] });
+              }
+            }}
+            disabled={pending}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-pink transition-colors hover:border-pink disabled:cursor-not-allowed disabled:opacity-50"
+            title={t('settings.detail.aiProviders.deleteModel')}
+          >
+            <Trash2 size={14} />
+            {t('settings.detail.aiProviders.deleteModel')}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onConfigure}
@@ -845,7 +934,7 @@ function ProviderModelRow({
           checked={model.enabled}
           onChange={(enabled) => onUpdate({ models: [{ modelId: model.id, enabled }] })}
           label={t('settings.detail.aiModels.toggleModel', { name: model.displayName })}
-          disabled={pending}
+          disabled={pending || !hasKnownMetadata}
         />
       </div>
     </div>
@@ -854,6 +943,8 @@ function ProviderModelRow({
 
 function ModelAvatar({ model }: { model: AiModel }) {
   const avatar = model.avatar ?? providerShortName(model.displayName || model.name);
+  const hasModelIcon = hasLobeModelIcon(model.name);
+
   if (isImageUrl(avatar)) {
     return (
       <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-surface-alt">
@@ -863,10 +954,21 @@ function ModelAvatar({ model }: { model: AiModel }) {
   }
 
   return (
-    <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-[11px] font-semibold text-mist">
-      <ModelIcon model={model.name} size={22} type="color" />
+    <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-mist">
+      {hasModelIcon ? (
+        <ModelIcon model={model.name} size={22} type="color" />
+      ) : (
+        <Brain size={18} strokeWidth={1.8} aria-hidden="true" />
+      )}
       <span className="sr-only">{avatar}</span>
     </span>
+  );
+}
+
+function hasLobeModelIcon(modelName: string) {
+  const normalizedModelName = modelName.toLowerCase();
+  return modelMappings.some((item) =>
+    item.keywords.some((keyword) => new RegExp(keyword, 'i').test(normalizedModelName)),
   );
 }
 
@@ -1156,6 +1258,7 @@ function ModelFormModal({
     Boolean(provider) &&
     modelId.trim().length > 0 &&
     displayName.trim().length > 0 &&
+    capabilities.length > 0 &&
     !contextWindowInvalid;
 
   const toggleCapability = (capability: AiModelCapability) => {

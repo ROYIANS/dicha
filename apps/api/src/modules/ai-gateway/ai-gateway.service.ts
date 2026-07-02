@@ -106,7 +106,9 @@ export class AiGatewayService {
       });
 
       if (!response.ok) {
-        throw new BadGatewayException(`AI Gateway request failed (${response.status})`);
+        throw new BadGatewayException(
+          await this.gatewayErrorMessage(response, `${this.baseUrl}${path}`),
+        );
       }
 
       return options.schema.parse(await response.json());
@@ -121,5 +123,33 @@ export class AiGatewayService {
       );
       throw new BadGatewayException('AI Gateway is unavailable');
     }
+  }
+
+  private async gatewayErrorMessage(response: Response, url: string): Promise<string> {
+    const fallback = `AI Gateway request failed (${response.status})`;
+    const raw = await response.text().catch(() => '');
+    if (!raw) return fallback;
+
+    try {
+      const body = JSON.parse(raw) as unknown;
+      const message = this.extractGatewayMessage(body);
+      if (message) {
+        return `${fallback}: ${message}`;
+      }
+    } catch {
+      return `${fallback}: ${raw.slice(0, 500)}`;
+    }
+
+    this.logger.warn(`AI Gateway error body from ${url}: ${raw.slice(0, 1000)}`);
+    return fallback;
+  }
+
+  private extractGatewayMessage(body: unknown): string | null {
+    if (!body || typeof body !== 'object') return null;
+    const value = body as Record<string, unknown>;
+    if (typeof value.message === 'string') return value.message;
+    if (Array.isArray(value.message)) return value.message.join('; ');
+    if (typeof value.error === 'string') return value.error;
+    return null;
   }
 }

@@ -52,16 +52,62 @@ export const AiModelCapabilitySchema = z.enum([
   'fast',
   'web_search',
   'image_generation',
+  'audio',
+  'files',
+  'image_output',
   'video',
 ]);
 export type AiModelCapability = z.infer<typeof AiModelCapabilitySchema>;
 
-export const AiModelTypeSchema = z.enum(['chat', 'embedding', 'rerank', 'image', 'audio', 'video']);
+export const AiModelTypeSchema = z.enum([
+  'chat',
+  'embedding',
+  'rerank',
+  'image',
+  'audio',
+  'video',
+  'tts',
+  'asr',
+  'text2music',
+  'realtime',
+]);
 export type AiModelType = z.infer<typeof AiModelTypeSchema>;
 
 export const AiModelExtensionParameterSchema = z.enum([
+  'codexMaxReasoningEffort',
+  'deepseekV4ReasoningEffort',
+  'disableContextCaching',
+  'effort',
+  'enableAdaptiveThinking',
+  'enableReasoning',
+  'glm5_2ReasoningEffort',
+  'gpt5ReasoningEffort',
+  'gpt5_1ReasoningEffort',
+  'gpt5_2ProReasoningEffort',
   'gpt5_2ReasoningEffort',
+  'grok4_20ReasoningEffort',
+  'grok4_3ReasoningEffort',
+  'hy3ReasoningEffort',
+  'imageAspectRatio',
+  'imageAspectRatio2',
+  'imageResolution',
+  'imageResolution2',
+  'opus47Effort',
+  'preserveThinking',
+  'reasoningBudgetToken',
+  'reasoningBudgetToken32k',
+  'reasoningBudgetToken80k',
+  'reasoningEffort',
+  'ring2_6ReasoningEffort',
+  'step3_5ReasoningEffort',
   'textVerbosity',
+  'thinking',
+  'thinkingBudget',
+  'thinkingLevel',
+  'thinkingLevel2',
+  'thinkingLevel3',
+  'thinkingLevel4',
+  'urlContext',
 ]);
 export type AiModelExtensionParameter = z.infer<typeof AiModelExtensionParameterSchema>;
 
@@ -95,6 +141,33 @@ export const AiModelPricingSchema = z.object({
   currency: z.enum(['USD', 'CNY', 'DICHA_CREDITS']),
   inputPerMillionTokens: z.number().min(0).optional(),
   outputPerMillionTokens: z.number().min(0).optional(),
+  units: z
+    .array(
+      z.object({
+        lookup: z
+          .object({
+            originalPrices: z.record(z.string(), z.number().min(0)).optional(),
+            prices: z.record(z.string(), z.number().min(0)),
+            pricingParams: z.array(z.string().min(1).max(80)),
+          })
+          .optional(),
+        name: z.string().min(1).max(80),
+        originalRate: z.number().min(0).optional(),
+        rate: z.number().min(0).optional(),
+        strategy: z.enum(['fixed', 'tiered', 'lookup']),
+        tiers: z
+          .array(
+            z.object({
+              originalRate: z.number().min(0).optional(),
+              rate: z.number().min(0),
+              upTo: z.union([z.number().min(0), z.literal('infinity')]),
+            }),
+          )
+          .optional(),
+        unit: z.string().min(1).max(80),
+      }),
+    )
+    .optional(),
   imageGeneration: z.string().min(1).max(160).optional(),
   videoGeneration: z.string().min(1).max(160).optional(),
   notes: z.string().min(1).max(240).optional(),
@@ -146,7 +219,7 @@ export const AiModelSchema = z.object({
   name: z.string(),
   displayName: z.string(),
   avatar: z.string().min(1).max(12).optional(),
-  contextWindow: z.number().int().positive(),
+  contextWindow: z.number().int().positive().nullable(),
   modelType: AiModelTypeSchema.default('chat'),
   extensionParameters: z.array(AiModelExtensionParameterSchema).default([]),
   capabilities: z.array(AiModelCapabilitySchema),
@@ -154,12 +227,44 @@ export const AiModelSchema = z.object({
   recommended: z.boolean(),
   availability: AiAvailabilityStateSchema,
   lastLatencyMs: z.number().int().positive().nullable(),
+  maxOutput: z.number().int().positive().optional(),
   priceHint: z.string(),
   catalogSource: AiModelCatalogSourceSchema.optional(),
   pricing: AiModelPricingSchema.optional(),
+  releasedAt: z.string().min(1).max(32).optional(),
+  lobeMetadata: z
+    .object({
+      abilities: z.record(z.string(), z.boolean()).optional(),
+      description: z.string().optional(),
+      family: z.string().optional(),
+      generation: z.string().optional(),
+      knowledgeCutoff: z.string().optional(),
+      legacy: z.boolean().optional(),
+      lobeProviderId: z.string(),
+      maxDimension: z.number().int().positive().optional(),
+      organization: z.string().optional(),
+      raw: z.record(z.string(), z.unknown()).optional(),
+      settings: z.record(z.string(), z.unknown()).optional(),
+      visible: z.boolean().optional(),
+    })
+    .optional(),
   custom: z.boolean().optional(),
 });
 export type AiModel = z.infer<typeof AiModelSchema>;
+
+export const AiProviderRemoteModelSchema = z.object({
+  id: z.string().min(1),
+  displayName: z.string().min(1).max(120).optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
+  modelType: AiModelTypeSchema.optional(),
+  extensionParameters: z.array(AiModelExtensionParameterSchema).optional(),
+  capabilities: z.array(AiModelCapabilitySchema).optional(),
+  pricing: AiModelPricingSchema.optional(),
+  priceHint: z.string().min(1).max(240).optional(),
+  maxOutput: z.number().int().positive().optional(),
+  releasedAt: z.string().min(1).max(32).optional(),
+});
+export type AiProviderRemoteModel = z.infer<typeof AiProviderRemoteModelSchema>;
 
 export const AiModelAssignmentSchema = z.object({
   useCase: AiModelUseCaseSchema,
@@ -189,6 +294,7 @@ const AiProviderPatchSchema = z.object({
   baseUrl: z.string().url().optional(),
   credential: z.string().min(1).max(4096).optional(),
   requestFormat: AiProviderRequestFormatSchema.optional(),
+  delete: z.literal(true).optional(),
 });
 
 const AiProviderCreateSchema = AiProviderPatchSchema.extend({
@@ -218,10 +324,11 @@ const AiModelPatchSchema = z.object({
   enabled: z.boolean().optional(),
   displayName: z.string().min(1).max(120).optional(),
   avatar: z.string().min(1).max(12).optional(),
-  contextWindow: z.number().int().positive().optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
   modelType: AiModelTypeSchema.optional(),
   extensionParameters: z.array(AiModelExtensionParameterSchema).optional(),
   capabilities: z.array(AiModelCapabilitySchema).optional(),
+  delete: z.literal(true).optional(),
 });
 
 const AiModelCreateSchema = AiModelPatchSchema.extend({
@@ -397,4 +504,3 @@ export const aiContract = c.router({
     summary: 'AI usage and estimated spend for the authenticated user',
   },
 });
-
