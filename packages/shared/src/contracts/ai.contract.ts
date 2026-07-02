@@ -15,6 +15,33 @@ export type AiProviderStatus = z.infer<typeof AiProviderStatusSchema>;
 export const AiProviderRequestFormatSchema = z.enum(['openai_compatible']);
 export type AiProviderRequestFormat = z.infer<typeof AiProviderRequestFormatSchema>;
 
+export const AiProviderCredentialModeSchema = z.enum([
+  'user_api_key',
+  'platform_managed',
+  'not_required',
+]);
+export type AiProviderCredentialMode = z.infer<typeof AiProviderCredentialModeSchema>;
+
+export const AiProviderBillingModeSchema = z.enum(['user_provider', 'platform_credits']);
+export type AiProviderBillingMode = z.infer<typeof AiProviderBillingModeSchema>;
+
+export const AiProviderModelSyncModeSchema = z.enum([
+  'openai_models_endpoint',
+  'manual',
+  'platform_catalog',
+]);
+export type AiProviderModelSyncMode = z.infer<typeof AiProviderModelSyncModeSchema>;
+
+export const AiProviderCategorySchema = z.enum([
+  'official',
+  'global',
+  'china',
+  'aggregator',
+  'local',
+  'media',
+]);
+export type AiProviderCategory = z.infer<typeof AiProviderCategorySchema>;
+
 export const AiModelCapabilitySchema = z.enum([
   'chat',
   'vision',
@@ -56,8 +83,30 @@ export const AiAvailabilityStateSchema = z.enum([
 ]);
 export type AiAvailabilityState = z.infer<typeof AiAvailabilityStateSchema>;
 
+export const AiModelCatalogSourceSchema = z.enum([
+  'static_model_bank',
+  'upstream_sync',
+  'dicha_catalog',
+  'custom',
+]);
+export type AiModelCatalogSource = z.infer<typeof AiModelCatalogSourceSchema>;
+
+export const AiModelPricingSchema = z.object({
+  currency: z.enum(['USD', 'CNY', 'DICHA_CREDITS']),
+  inputPerMillionTokens: z.number().min(0).optional(),
+  outputPerMillionTokens: z.number().min(0).optional(),
+  imageGeneration: z.string().min(1).max(160).optional(),
+  videoGeneration: z.string().min(1).max(160).optional(),
+  notes: z.string().min(1).max(240).optional(),
+});
+export type AiModelPricing = z.infer<typeof AiModelPricingSchema>;
+
 const AiProviderAvatarSchema = z.union([
   z.string().min(1).max(12),
+  z
+    .string()
+    .max(2048)
+    .refine((value) => value.startsWith('/assets/')),
   z
     .string()
     .url()
@@ -73,9 +122,13 @@ export const AiProviderSchema = z.object({
   description: z.string(),
   baseUrl: z.string().url(),
   status: AiProviderStatusSchema,
-  authType: z.enum(['api_key', 'bearer_token']),
+  category: AiProviderCategorySchema,
+  authType: z.enum(['api_key', 'bearer_token', 'none']),
   requestFormat: AiProviderRequestFormatSchema.optional(),
-  credentialState: z.enum(['configured', 'missing', 'masked']),
+  credentialMode: AiProviderCredentialModeSchema,
+  billingMode: AiProviderBillingModeSchema,
+  modelSyncMode: AiProviderModelSyncModeSchema,
+  credentialState: z.enum(['configured', 'missing', 'masked', 'platform_managed', 'not_required']),
   priority: z.number().int().min(1),
   custom: z.boolean().optional(),
 });
@@ -102,6 +155,8 @@ export const AiModelSchema = z.object({
   availability: AiAvailabilityStateSchema,
   lastLatencyMs: z.number().int().positive().nullable(),
   priceHint: z.string(),
+  catalogSource: AiModelCatalogSourceSchema.optional(),
+  pricing: AiModelPricingSchema.optional(),
   custom: z.boolean().optional(),
 });
 export type AiModel = z.infer<typeof AiModelSchema>;
@@ -143,8 +198,12 @@ const AiProviderCreateSchema = AiProviderPatchSchema.extend({
   avatar: AiProviderAvatarSchema.optional(),
   description: z.string().min(1).max(240),
   baseUrl: z.string().url(),
-  authType: z.enum(['api_key', 'bearer_token']).default('api_key'),
+  category: AiProviderCategorySchema.default('global'),
+  authType: z.enum(['api_key', 'bearer_token', 'none']).default('api_key'),
   requestFormat: AiProviderRequestFormatSchema.default('openai_compatible'),
+  credentialMode: AiProviderCredentialModeSchema.default('user_api_key'),
+  billingMode: AiProviderBillingModeSchema.default('user_provider'),
+  modelSyncMode: AiProviderModelSyncModeSchema.default('openai_models_endpoint'),
   custom: z.boolean().optional(),
 });
 

@@ -32,6 +32,14 @@ export class CatalogService {
     ownerId: string,
     body: AiProviderSyncModelsBody,
   ): Promise<AiProviderSyncModelsResponse> {
+    const provider = await this.store.getProvider(ownerId, body.providerId);
+    if (!provider) {
+      throw new BadRequestException('Unknown AI provider');
+    }
+    if (provider.modelSyncMode !== 'openai_models_endpoint') {
+      throw new BadRequestException('Provider does not support upstream model sync');
+    }
+
     const secret = await this.store.getProviderSecret(ownerId, body.providerId);
     if (!secret) {
       throw new BadRequestException('Provider credential is required before syncing models');
@@ -49,8 +57,26 @@ export class CatalogService {
     ownerId: string,
     body: AiProviderCheckBody,
   ): Promise<AiProviderCheckResponse> {
-    const secret = await this.store.getProviderSecret(ownerId, body.providerId);
     const checkedAt = new Date().toISOString();
+    const provider = await this.store.getProvider(ownerId, body.providerId);
+    if (!provider) {
+      return {
+        ok: false,
+        providerId: body.providerId,
+        checkedAt,
+        message: 'Unknown AI provider',
+      };
+    }
+    if (provider.modelSyncMode !== 'openai_models_endpoint') {
+      return {
+        ok: false,
+        providerId: body.providerId,
+        checkedAt,
+        message: 'Provider does not support upstream model checks',
+      };
+    }
+
+    const secret = await this.store.getProviderSecret(ownerId, body.providerId);
     if (!secret) {
       return {
         ok: false,
@@ -82,10 +108,9 @@ export class CatalogService {
   }
 
   private async fetchOpenAiCompatibleModels(baseUrl: string, secret: string): Promise<string[]> {
+    const headers = secret ? { authorization: `Bearer ${secret}` } : undefined;
     const response = await fetch(`${baseUrl.replace(/\/+$/, '')}${OPENAI_MODELS_PATH}`, {
-      headers: {
-        authorization: `Bearer ${secret}`,
-      },
+      headers,
     });
 
     if (!response.ok) {

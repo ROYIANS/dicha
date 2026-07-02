@@ -17,6 +17,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { ModelIcon, ProviderIcon } from '@lobehub/icons';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -50,6 +51,11 @@ import {
   SettingsValueRow,
 } from '@/components/SettingsScaffold';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
+import {
+  compareModelsByEnabled,
+  compareProvidersByEnabled,
+  lobeProviderKey,
+} from '@/lib/ai-catalog-ui';
 import { type SettingsTint } from '@/components/settings-ui';
 
 const providerStatusTone = {
@@ -106,7 +112,7 @@ export function AiProvidersSettingsPage() {
   const [checkingProviderId, setCheckingProviderId] = useState<string | null>(null);
   const [providerModalOpen, setProviderModalOpen] = useState(false);
   const [modelModal, setModelModal] = useState<{ provider: AiProvider; model?: AiModel } | null>(null);
-  const providers = catalog?.providers.slice().sort((left, right) => left.priority - right.priority);
+  const providers = catalog?.providers.slice().sort(compareProvidersByEnabled);
 
   return (
     <SettingsDetailShell
@@ -306,11 +312,40 @@ function ProviderCard({
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
-  const providerModels = catalog.models.filter((model) => model.providerId === provider.id);
+  const providerModels = catalog.models
+    .filter((model) => model.providerId === provider.id)
+    .sort(compareModelsByEnabled);
   const enabledModelCount = providerModels.filter((model) => model.enabled).length;
   const StatusIcon = provider.status === 'enabled' ? CheckCircle2 : Activity;
   const isEnabled = provider.status === 'enabled' || provider.status === 'needs_config';
   const providerTags = providerTagLabels(providerModels);
+  const supportsUpstreamSync = provider.modelSyncMode === 'openai_models_endpoint';
+  const hasConnectionCredential = provider.credentialState !== 'missing';
+  const canRunUpstreamProbe = supportsUpstreamSync && hasConnectionCredential;
+  const credentialTitle =
+    provider.credentialMode === 'platform_managed'
+      ? t('settings.detail.aiProviders.credentialPlatformManaged')
+      : provider.credentialMode === 'not_required'
+        ? t('settings.detail.aiProviders.credentialNotRequired')
+        : provider.credentialState === 'missing'
+          ? t('settings.detail.aiProviders.credentialMissing')
+          : t('settings.detail.aiProviders.credentialReady');
+  const credentialHint =
+    provider.billingMode === 'platform_credits'
+      ? t('settings.detail.aiProviders.platformCreditsHint')
+      : provider.credentialMode === 'not_required'
+        ? t('settings.detail.aiProviders.localCredentialHint')
+        : t('settings.detail.aiProviders.credentialUsageHint');
+  const checkTitle = !supportsUpstreamSync
+    ? t('settings.detail.aiProviders.checkUnsupported')
+    : provider.credentialState === 'missing'
+      ? t('settings.detail.aiProviders.checkNeedsCredential')
+      : t('settings.detail.aiProviders.checkConnection');
+  const syncTitle = !supportsUpstreamSync
+    ? t('settings.detail.aiProviders.syncUnsupported')
+    : provider.credentialState === 'missing'
+      ? t('settings.detail.aiProviders.syncNeedsCredential')
+      : t('settings.detail.aiProviders.syncModels');
 
   return (
     <article className="overflow-visible rounded-md border border-hairline bg-surface shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
@@ -350,13 +385,9 @@ function ProviderCard({
         <div className="relative rounded-md border border-hairline bg-surface-alt p-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[12px] font-semibold text-ink">
-                {provider.credentialState === 'missing'
-                  ? t('settings.detail.aiProviders.credentialMissing')
-                  : t('settings.detail.aiProviders.credentialReady')}
-              </p>
+              <p className="text-[12px] font-semibold text-ink">{credentialTitle}</p>
               <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
-                {t('settings.detail.aiProviders.credentialUsageHint')}
+                {credentialHint}
               </p>
             </div>
             <SettingsSwitch
@@ -393,13 +424,9 @@ function ProviderCard({
           <button
             type="button"
             onClick={() => onCheckConnection(provider.id)}
-            disabled={checking || provider.credentialState === 'missing'}
+            disabled={checking || !canRunUpstreamProbe}
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            title={
-              provider.credentialState === 'missing'
-                ? t('settings.detail.aiProviders.checkNeedsCredential')
-                : t('settings.detail.aiProviders.checkConnection')
-            }
+            title={checkTitle}
           >
             <Activity size={14} className={checking ? 'animate-pulse' : ''} />
             {t('settings.detail.aiProviders.checkConnection')}
@@ -407,13 +434,9 @@ function ProviderCard({
           <button
             type="button"
             onClick={() => onSyncModels(provider.id)}
-            disabled={syncing || provider.credentialState === 'missing'}
+            disabled={syncing || !canRunUpstreamProbe}
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            title={
-              provider.credentialState === 'missing'
-                ? t('settings.detail.aiProviders.syncNeedsCredential')
-                : t('settings.detail.aiProviders.syncModels')
-            }
+            title={syncTitle}
           >
             <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
             {t('settings.detail.aiProviders.syncModels')}
@@ -555,7 +578,12 @@ function MetricTile({ label, value }: { label: string; value: string }) {
 function ProviderMark({ provider }: { provider: AiProvider }) {
   const avatar = provider.avatar ?? provider.shortName;
   return (
-    <ProviderAvatar avatar={avatar} fallback={provider.shortName} className="size-11 text-[13px]" />
+    <ProviderAvatar
+      avatar={avatar}
+      fallback={provider.shortName}
+      provider={provider}
+      className="size-11 text-[13px]"
+    />
   );
 }
 
@@ -576,11 +604,27 @@ function ProviderCredentialPopover({
   const trimmedAvatar = avatar.trim() || provider.shortName;
   const trimmedBaseUrl = baseUrl.trim();
   const trimmedCredential = credential.trim();
+  const requiresUserCredential = provider.credentialMode === 'user_api_key';
+  const isPlatformManaged = provider.credentialMode === 'platform_managed';
+  const configChanged =
+    trimmedBaseUrl !== provider.baseUrl || trimmedAvatar !== (provider.avatar ?? provider.shortName);
   const canSave =
     trimmedBaseUrl.length > 0 &&
-    (trimmedCredential.length > 0 ||
-      trimmedBaseUrl !== provider.baseUrl ||
-      trimmedAvatar !== (provider.avatar ?? provider.shortName));
+    (requiresUserCredential ? trimmedCredential.length > 0 || configChanged : configChanged);
+
+  if (isPlatformManaged) {
+    return (
+      <div className="mt-3 rounded-md border border-mist bg-chip-mist px-3 py-2 text-[12px] leading-relaxed text-mist">
+        <span className="inline-flex items-center gap-1.5 font-semibold">
+          <Sparkles size={14} />
+          {t('settings.detail.aiProviders.platformManagedTitle')}
+        </span>
+        <p className="mt-1 text-[11px] leading-relaxed">
+          {t('settings.detail.aiProviders.platformManagedDesc')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative mt-3">
@@ -590,9 +634,11 @@ function ProviderCredentialPopover({
         className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
       >
         <KeyRound size={14} />
-        {provider.credentialState === 'missing'
-          ? t('settings.detail.aiProviders.addCredential')
-          : t('settings.detail.aiProviders.manageCredential')}
+        {requiresUserCredential
+          ? provider.credentialState === 'missing'
+            ? t('settings.detail.aiProviders.addCredential')
+            : t('settings.detail.aiProviders.manageCredential')
+          : t('settings.detail.aiProviders.configureEndpoint')}
       </button>
       {open ? (
         <div className="absolute right-0 z-20 mt-2 w-[min(360px,calc(100vw-48px))] rounded-md border border-hairline bg-surface p-3 shadow-float">
@@ -613,19 +659,22 @@ function ProviderCredentialPopover({
               {t('settings.detail.aiProviders.creditPriority')}
             </span>
             <span className="rounded-md border border-mist bg-chip-mist px-2 py-1.5 text-center text-[12px] font-medium text-mist">
-              API Key
+              {requiresUserCredential ? 'API Key' : t('settings.detail.aiProviders.noApiKeyRequired')}
             </span>
           </div>
           <p className="mt-3 rounded-md bg-surface-alt px-3 py-2 text-[12px] font-medium text-ink">
-            {provider.credentialState === 'missing'
-              ? t('settings.detail.aiProviders.apiKeyMissingHint')
-              : t('settings.detail.aiProviders.apiKeyMaskedHint')}
+            {requiresUserCredential
+              ? provider.credentialState === 'missing'
+                ? t('settings.detail.aiProviders.apiKeyMissingHint')
+                : t('settings.detail.aiProviders.apiKeyMaskedHint')
+              : t('settings.detail.aiProviders.noApiKeyHint')}
           </p>
           <div className="mt-3 space-y-2">
             <div className="flex items-center gap-2">
               <ProviderAvatar
                 avatar={trimmedAvatar}
                 fallback={provider.shortName}
+                provider={provider}
                 className="size-9 text-[11px]"
               />
               <TextField
@@ -642,15 +691,17 @@ function ProviderCredentialPopover({
               disabled={pending}
               placeholder={t('settings.detail.aiProviders.baseUrlPlaceholder')}
             />
-            <input
-              value={credential}
-              onChange={(event) => setCredential(event.target.value)}
-              type="password"
-              autoComplete="off"
-              placeholder={t('settings.detail.aiProviders.apiKeyPlaceholder')}
-              disabled={pending}
-              className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-            />
+            {requiresUserCredential ? (
+              <input
+                value={credential}
+                onChange={(event) => setCredential(event.target.value)}
+                type="password"
+                autoComplete="off"
+                placeholder={t('settings.detail.aiProviders.apiKeyPlaceholder')}
+                disabled={pending}
+                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            ) : null}
             <button
               type="button"
               disabled={pending || !canSave}
@@ -673,7 +724,9 @@ function ProviderCredentialPopover({
               className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save size={14} />
-              {t('settings.detail.aiProviders.saveCredentialShort')}
+              {requiresUserCredential
+                ? t('settings.detail.aiProviders.saveCredentialShort')
+                : t('settings.detail.aiProviders.saveEndpointConfig')}
             </button>
           </div>
         </div>
@@ -707,7 +760,7 @@ function ProviderModelList({
 
   return (
     <div className="bg-canvas px-4 py-1">
-      {models.map((model) => (
+      {models.slice().sort(compareModelsByEnabled).map((model) => (
         <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
           <ProviderModelRow
             model={model}
@@ -800,9 +853,19 @@ function ProviderModelRow({
 }
 
 function ModelAvatar({ model }: { model: AiModel }) {
+  const avatar = model.avatar ?? providerShortName(model.displayName || model.name);
+  if (isImageUrl(avatar)) {
+    return (
+      <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-surface-alt">
+        <img src={avatar} alt="" className="size-full object-contain p-1.5" referrerPolicy="no-referrer" />
+      </span>
+    );
+  }
+
   return (
-    <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-mist text-[11px] font-semibold text-mist">
-      {model.avatar ?? providerShortName(model.displayName || model.name)}
+    <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-[11px] font-semibold text-mist">
+      <ModelIcon model={model.name} size={22} type="color" />
+      <span className="sr-only">{avatar}</span>
     </span>
   );
 }
@@ -810,10 +873,12 @@ function ModelAvatar({ model }: { model: AiModel }) {
 function ProviderAvatar({
   avatar,
   fallback,
+  provider,
   className = '',
 }: {
   avatar: string;
   fallback: string;
+  provider?: Pick<AiProvider, 'custom' | 'id'>;
   className?: string;
 }) {
   if (isImageUrl(avatar)) {
@@ -821,7 +886,19 @@ function ProviderAvatar({
       <span
         className={`grid shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-surface-alt ${className}`}
       >
-        <img src={avatar} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+        <img src={avatar} alt="" className="size-full object-contain p-1.5" referrerPolicy="no-referrer" />
+      </span>
+    );
+  }
+
+  const providerKey = provider ? lobeProviderKey(provider) : undefined;
+  if (providerKey) {
+    return (
+      <span
+        className={`grid shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-ink ${className}`}
+      >
+        <ProviderIcon provider={providerKey} size={22} type="color" />
+        <span className="sr-only">{avatar || fallback}</span>
       </span>
     );
   }
@@ -892,7 +969,11 @@ function ProviderFormModal({
                   baseUrl: baseUrl.trim(),
                   credential: credential.trim() || undefined,
                   requestFormat: 'openai_compatible',
+                  category: 'global',
                   authType: 'api_key',
+                  credentialMode: 'user_api_key',
+                  billingMode: 'user_provider',
+                  modelSyncMode: 'openai_models_endpoint',
                   enabled: true,
                   custom: true,
                 },
@@ -930,7 +1011,11 @@ function ProviderFormModal({
                           description: provider.description,
                           baseUrl: provider.baseUrl,
                           requestFormat: provider.requestFormat ?? 'openai_compatible',
+                          category: provider.category,
                           authType: provider.authType,
+                          credentialMode: provider.credentialMode,
+                          billingMode: provider.billingMode,
+                          modelSyncMode: provider.modelSyncMode,
                           enabled: false,
                           custom: false,
                         },
@@ -942,6 +1027,7 @@ function ProviderFormModal({
                   <ProviderAvatar
                     avatar={provider.avatar ?? provider.shortName}
                     fallback={provider.shortName}
+                    provider={provider}
                     className="size-9 text-[11px]"
                   />
                   <span className="mt-3 text-[13px] font-semibold text-ink">{provider.name}</span>
@@ -1160,9 +1246,20 @@ function ModelFormModal({
           description={t('settings.detail.aiProviders.modelAvatarDesc')}
         />
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-mist text-[11px] font-semibold text-mist">
-            {avatar.trim() || providerShortName(displayName || modelId || 'AI')}
-          </span>
+          {model ? (
+            <ModelAvatar model={{ ...model, avatar: avatar.trim() || model.avatar }} />
+          ) : provider ? (
+            <ProviderAvatar
+              avatar={provider.avatar ?? provider.shortName}
+              fallback={provider.shortName}
+              provider={provider}
+              className="size-9 text-[11px]"
+            />
+          ) : (
+            <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-mist text-[11px] font-semibold text-mist">
+              {avatar.trim() || providerShortName(displayName || modelId || 'AI')}
+            </span>
+          )}
           <TextField
             value={avatar}
             onChange={setAvatar}
@@ -1510,6 +1607,7 @@ function providerShortName(value: string) {
 }
 
 function isImageUrl(value: string) {
+  if (value.startsWith('/assets/')) return true;
   try {
     const url = new URL(value);
     return url.protocol === 'http:' || url.protocol === 'https:';

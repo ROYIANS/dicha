@@ -1,5 +1,6 @@
 import { AlertCircle, Check, ChevronDown } from 'lucide-react';
 import type { AiGatewayCatalog, AiModel } from '@dicha/shared';
+import { compareModelsByEnabled } from '@/lib/ai-catalog-ui';
 
 type ModelSelectProps = {
   catalog: AiGatewayCatalog;
@@ -22,7 +23,12 @@ export function ModelSelect({
   unavailableLabel,
   emptyLabel,
 }: ModelSelectProps) {
-  const models = catalog.models;
+  const providerPriority = new Map(
+    catalog.providers.map((provider) => [provider.id, provider.priority] as const),
+  );
+  const models = catalog.models
+    .slice()
+    .sort((left, right) => compareModelsByEnabled(left, right, providerPriority));
   const selected = models.find((model) => model.id === value);
   const selectedUnavailable = Boolean(value) && (selected ? !isModelUsable(selected) : true);
 

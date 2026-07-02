@@ -19,6 +19,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
+| [AI Catalog Contract](./ai-catalog.md) | AI provider/model catalog seed, credential, billing, and sync contracts | ✅ |
 | [Third-party Integration](./third-party-integration.md) | npm 库集成约定（legacy 模块解析坑、Better Auth onRequest header 守卫、防滥用回放保护） | ✅ ALTCHA 范例 |
 
 ---

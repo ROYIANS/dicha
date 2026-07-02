@@ -16,6 +16,8 @@ import type {
 } from '@dicha/shared';
 import { aiCatalogSeed, aiProviderTemplateIds } from './catalog.seed';
 
+const deprecatedSeedProviderIds = new Set(['vidorra']);
+
 type PersistedCredential = {
   iv: string;
   tag: string;
@@ -53,7 +55,7 @@ export class CatalogStore {
       generatedAt: new Date().toISOString(),
       providers: persisted.providers.map(({ credential: _credential, ...provider }) => ({
         ...provider,
-        credentialState: this.credentialState(provider.credentialState, _credential),
+        credentialState: this.credentialState(provider.credentialState, _credential, provider),
       })),
       models: persisted.models,
       assignments: persisted.assignments,
@@ -71,11 +73,7 @@ export class CatalogStore {
       const credential = patch.credential ? this.encrypt(patch.credential) : provider.credential;
       const enabled =
         patch.enabled ?? (provider.status === 'enabled' || provider.status === 'needs_config');
-      const status: AiProvider['status'] = enabled
-        ? credential
-          ? 'enabled'
-          : 'needs_config'
-        : 'disabled';
+      const status = this.providerStatus(provider, enabled, credential);
       return {
         ...provider,
         avatar: patch.avatar ?? provider.avatar,
@@ -83,7 +81,7 @@ export class CatalogStore {
         requestFormat: patch.requestFormat ?? provider.requestFormat,
         status,
         credential,
-        credentialState: credential ? 'masked' : 'missing',
+        credentialState: this.credentialState(provider.credentialState, credential, provider),
       } satisfies PersistedConfig['providers'][number];
     });
     const providerAdditions = providerPatches
@@ -127,17 +125,29 @@ export class CatalogStore {
     return this.getCatalog(ownerId);
   }
 
+  async getProvider(ownerId: string, providerId: string): Promise<AiProvider | null> {
+    const current = await this.readConfig(ownerId);
+    const provider = current.providers.find((item) => item.id === providerId);
+    if (!provider) return null;
+    const { credential: _credential, ...publicProvider } = provider;
+    return {
+      ...publicProvider,
+      credentialState: this.credentialState(publicProvider.credentialState, _credential, publicProvider),
+    };
+  }
+
   async getProviderSecret(ownerId: string, providerId: string): Promise<ProviderSecret | null> {
     const current = await this.readConfig(ownerId);
     const provider = current.providers.find((item) => item.id === providerId);
-    if (!provider?.credential) return null;
+    if (!provider) return null;
+    if (!provider.credential && provider.credentialMode !== 'not_required') return null;
     const { credential: _credential, ...publicProvider } = provider;
     return {
       provider: {
         ...publicProvider,
-        credentialState: this.credentialState(publicProvider.credentialState, _credential),
+        credentialState: this.credentialState(publicProvider.credentialState, _credential, publicProvider),
       },
-      secret: this.decrypt(provider.credential),
+      secret: provider.credential ? this.decrypt(provider.credential) : '',
     };
   }
 
@@ -180,16 +190,8 @@ export class CatalogStore {
 
   private seedConfig(): PersistedConfig {
     return {
-      providers: aiCatalogSeed.providers.map((provider) => ({
-        ...provider,
-        credentialState: 'missing',
-        status: provider.status === 'enabled' ? 'needs_config' : provider.status,
-      })),
-      models: aiCatalogSeed.models.map((model) => ({
-        ...model,
-        enabled: model.enabled && model.availability !== 'config_required',
-        availability: model.availability === 'healthy' ? 'config_required' : model.availability,
-      })),
+      providers: aiCatalogSeed.providers.map((provider) => this.seedProvider(provider)),
+      models: aiCatalogSeed.models.map((model) => this.seedModel(model)),
       assignments: aiCatalogSeed.assignments,
     };
   }
@@ -205,29 +207,72 @@ export class CatalogStore {
         .filter((model) => legacySeedProviderIds.has(model.providerId) && !model.custom)
         .map((model) => model.id),
     );
-    const models = config.models
+    const normalizedProviders = config.providers
+      .filter((provider) => !legacySeedProviderIds.has(provider.id))
+      .map((provider) => this.normalizeProvider(provider));
+    const providerIds = new Set(normalizedProviders.map((provider) => provider.id));
+    const seededProviders = aiCatalogSeed.providers
+      .filter((provider) => !providerIds.has(provider.id))
+      .map((provider) => this.seedProvider(provider));
+    const providers = [...normalizedProviders, ...seededProviders].sort(
+      (left, right) => left.priority - right.priority,
+    );
+    const knownProviderIds = new Set(providers.map((provider) => provider.id));
+
+    const normalizedModels = config.models
       .filter((model) => !legacySeedModelIds.has(model.id))
+      .filter((model) => knownProviderIds.has(model.providerId))
       .map((model) => this.normalizeModel(model));
+    const normalizedModelIds = new Set(normalizedModels.map((model) => model.id));
+    const seededModels = aiCatalogSeed.models
+      .filter((model) => !normalizedModelIds.has(model.id))
+      .filter((model) => knownProviderIds.has(model.providerId))
+      .map((model) => this.seedModel(model));
+    const models = [...normalizedModels, ...seededModels];
     const modelIds = new Set(models.map((model) => model.id));
+    const assignmentUseCases = new Set(config.assignments.map((assignment) => assignment.useCase));
+    const seededAssignments = aiCatalogSeed.assignments
+      .filter((assignment) => !assignmentUseCases.has(assignment.useCase))
+      .filter((assignment) => modelIds.has(assignment.primaryModelId))
+      .map((assignment) => ({
+        ...assignment,
+        fallbackModelIds: assignment.fallbackModelIds.filter((modelId) => modelIds.has(modelId)),
+      }));
 
     return {
       ...config,
-      providers: config.providers
-        .filter((provider) => !legacySeedProviderIds.has(provider.id))
-        .map((provider) => this.normalizeProvider(provider)),
+      providers,
       models,
       assignments: config.assignments
         .map((assignment) => ({
           ...assignment,
           fallbackModelIds: assignment.fallbackModelIds.filter((modelId) => modelIds.has(modelId)),
         }))
-        .filter((assignment) => modelIds.has(assignment.primaryModelId)),
+        .filter((assignment) => modelIds.has(assignment.primaryModelId))
+        .concat(seededAssignments),
+    };
+  }
+
+  private seedProvider(provider: AiProvider): PersistedConfig['providers'][number] {
+    return {
+      ...provider,
+      credentialState: this.credentialState(provider.credentialState, undefined, provider),
+      status:
+        provider.status === 'enabled' ? this.providerStatus(provider, true, undefined) : provider.status,
+    };
+  }
+
+  private seedModel(model: AiModel): AiModel {
+    return {
+      ...model,
+      enabled: model.enabled && model.availability !== 'config_required',
+      availability: model.availability === 'healthy' ? 'config_required' : model.availability,
     };
   }
 
   private isLegacySeedProvider(provider: PersistedConfig['providers'][number]): boolean {
     return (
-      aiProviderTemplateIds.includes(provider.id) &&
+      (aiProviderTemplateIds.includes(provider.id) || deprecatedSeedProviderIds.has(provider.id)) &&
       provider.custom === undefined &&
       !provider.credential
     );
@@ -238,22 +283,40 @@ export class CatalogStore {
   ): PersistedConfig['providers'][number] {
     const legacyProvider = provider as PersistedConfig['providers'][number] & {
       avatar?: string;
+      billingMode?: AiProvider['billingMode'];
+      category?: AiProvider['category'];
+      credentialMode?: AiProvider['credentialMode'];
+      modelSyncMode?: AiProvider['modelSyncMode'];
     };
-    return {
+    const normalizedProvider = {
       ...provider,
       avatar: legacyProvider.avatar ?? provider.shortName,
+      billingMode: legacyProvider.billingMode ?? 'user_provider',
+      category: legacyProvider.category ?? 'global',
+      credentialMode: legacyProvider.credentialMode ?? 'user_api_key',
+      modelSyncMode: legacyProvider.modelSyncMode ?? 'openai_models_endpoint',
+    } satisfies PersistedConfig['providers'][number];
+    return {
+      ...normalizedProvider,
+      credentialState: this.credentialState(
+        normalizedProvider.credentialState,
+        normalizedProvider.credential,
+        normalizedProvider,
+      ),
     };
   }
 
   private normalizeModel(model: AiModel): AiModel {
     const legacyModel = model as AiModel & {
       avatar?: string;
+      catalogSource?: AiModel['catalogSource'];
       modelType?: AiModelType;
       extensionParameters?: AiModelExtensionParameter[];
     };
     return {
       ...model,
       avatar: legacyModel.avatar ?? this.modelAvatar(model.displayName || model.name),
+      catalogSource: legacyModel.catalogSource ?? (model.custom ? 'custom' : 'static_model_bank'),
       modelType: legacyModel.modelType ?? 'chat',
       extensionParameters: legacyModel.extensionParameters ?? [],
     };
@@ -275,30 +338,38 @@ export class CatalogStore {
       description: string;
       baseUrl: string;
       authType?: AiProvider['authType'];
+      billingMode?: AiProvider['billingMode'];
+      category?: AiProvider['category'];
+      credentialMode?: AiProvider['credentialMode'];
+      modelSyncMode?: AiProvider['modelSyncMode'];
       custom?: boolean;
     },
     priority: number,
   ): PersistedConfig['providers'][number] {
     const credential = patch.credential ? this.encrypt(patch.credential) : undefined;
     const enabled = patch.enabled ?? true;
-    const status: AiProvider['status'] = enabled
-      ? credential
-        ? 'enabled'
-        : 'needs_config'
-      : 'disabled';
-    return {
+    const providerBase: AiProvider = {
       id: patch.providerId,
       name: patch.name,
       shortName: patch.shortName,
       avatar: patch.avatar ?? patch.shortName,
       description: patch.description,
       baseUrl: patch.baseUrl,
-      status,
+      status: 'disabled',
+      category: patch.category ?? 'global',
       authType: patch.authType ?? 'api_key',
       requestFormat: patch.requestFormat ?? 'openai_compatible',
+      credentialMode: patch.credentialMode ?? 'user_api_key',
+      billingMode: patch.billingMode ?? 'user_provider',
+      modelSyncMode: patch.modelSyncMode ?? 'openai_models_endpoint',
       credentialState: credential ? 'masked' : 'missing',
       priority,
       custom: patch.custom ?? true,
+    };
+    return {
+      ...providerBase,
+      status: this.providerStatus(providerBase, enabled, credential),
+      credentialState: this.credentialState(providerBase.credentialState, credential, providerBase),
       credential,
     };
   }
@@ -349,6 +420,7 @@ export class CatalogStore {
       availability: 'unknown',
       lastLatencyMs: null,
       priceHint: '自定义模型',
+      catalogSource: 'custom',
       custom: true,
     };
   }
@@ -401,10 +473,24 @@ export class CatalogStore {
     ]).toString('utf8');
   }
 
+  private providerStatus(
+    provider: AiProvider,
+    enabled: boolean,
+    credential: PersistedCredential | undefined,
+  ): AiProvider['status'] {
+    if (!enabled) return 'disabled';
+    if (provider.credentialMode === 'platform_managed') return 'enabled';
+    if (provider.credentialMode === 'not_required') return 'enabled';
+    return credential ? 'enabled' : 'needs_config';
+  }
+
   private credentialState(
     current: AiProvider['credentialState'],
     credential: PersistedCredential | undefined,
+    provider: Pick<AiProvider, 'credentialMode'>,
   ): AiProvider['credentialState'] {
+    if (provider.credentialMode === 'platform_managed') return 'platform_managed';
+    if (provider.credentialMode === 'not_required') return 'not_required';
     if (!credential) return 'missing';
     this.decrypt(credential);
     return current === 'configured' ? 'configured' : 'masked';
@@ -426,6 +512,7 @@ export class CatalogStore {
       availability: 'unknown',
       lastLatencyMs: null,
       priceHint: '同步自供应商',
+      catalogSource: 'upstream_sync',
     };
   }
 
