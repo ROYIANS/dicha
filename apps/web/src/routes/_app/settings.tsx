@@ -14,6 +14,7 @@ import {
   LogOut,
   Moon,
   Palette,
+  ReceiptText,
   Search,
   Server,
   ShieldCheck,
@@ -55,6 +56,7 @@ type SettingsRouteTo =
   | '/settings/export'
   | '/settings/ai-providers'
   | '/settings/ai-models'
+  | '/settings/ai-usage'
   | '/settings/help'
   | '/settings/labs'
   | '/settings/diagnostics'
@@ -103,6 +105,14 @@ const sections = [
         descKey: 'aiModelsDesc',
         valueKey: 'mockCatalog',
         to: '/settings/ai-models',
+      },
+      {
+        icon: ReceiptText,
+        tint: 'sage',
+        labelKey: 'aiUsage',
+        descKey: 'aiUsageDesc',
+        valueKey: 'usage',
+        to: '/settings/ai-usage',
       },
     ],
   },

@@ -31,6 +31,7 @@ import { Route as AppSettingsHelpRouteImport } from './routes/_app/settings.help
 import { Route as AppSettingsExportRouteImport } from './routes/_app/settings.export'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings.diagnostics'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings.appearance'
+import { Route as AppSettingsAiUsageRouteImport } from './routes/_app/settings.ai-usage'
 import { Route as AppSettingsAiProvidersRouteImport } from './routes/_app/settings.ai-providers'
 import { Route as AppSettingsAiModelsRouteImport } from './routes/_app/settings.ai-models'
 import { Route as AppSettingsAboutRouteImport } from './routes/_app/settings.about'
@@ -145,6 +146,11 @@ const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
   path: '/appearance',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsAiUsageRoute = AppSettingsAiUsageRouteImport.update({
+  id: '/ai-usage',
+  path: '/ai-usage',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsAiProvidersRoute = AppSettingsAiProvidersRouteImport.update({
   id: '/ai-providers',
   path: '/ai-providers',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/settings/about': typeof AppSettingsAboutRoute
   '/settings/ai-models': typeof AppSettingsAiModelsRoute
   '/settings/ai-providers': typeof AppSettingsAiProvidersRoute
+  '/settings/ai-usage': typeof AppSettingsAiUsageRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/settings/about': typeof AppSettingsAboutRoute
   '/settings/ai-models': typeof AppSettingsAiModelsRoute
   '/settings/ai-providers': typeof AppSettingsAiProvidersRoute
+  '/settings/ai-usage': typeof AppSettingsAiUsageRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/_app/settings/about': typeof AppSettingsAboutRoute
   '/_app/settings/ai-models': typeof AppSettingsAiModelsRoute
   '/_app/settings/ai-providers': typeof AppSettingsAiProvidersRoute
+  '/_app/settings/ai-usage': typeof AppSettingsAiUsageRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/_app/settings/export': typeof AppSettingsExportRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/settings/about'
     | '/settings/ai-models'
     | '/settings/ai-providers'
+    | '/settings/ai-usage'
     | '/settings/appearance'
     | '/settings/diagnostics'
     | '/settings/export'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/settings/about'
     | '/settings/ai-models'
     | '/settings/ai-providers'
+    | '/settings/ai-usage'
     | '/settings/appearance'
     | '/settings/diagnostics'
     | '/settings/export'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/_app/settings/about'
     | '/_app/settings/ai-models'
     | '/_app/settings/ai-providers'
+    | '/_app/settings/ai-usage'
     | '/_app/settings/appearance'
     | '/_app/settings/diagnostics'
     | '/_app/settings/export'
@@ -485,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAppearanceRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/ai-usage': {
+      id: '/_app/settings/ai-usage'
+      path: '/ai-usage'
+      fullPath: '/settings/ai-usage'
+      preLoaderRoute: typeof AppSettingsAiUsageRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/ai-providers': {
       id: '/_app/settings/ai-providers'
       path: '/ai-providers'
@@ -513,6 +532,7 @@ interface AppSettingsRouteChildren {
   AppSettingsAboutRoute: typeof AppSettingsAboutRoute
   AppSettingsAiModelsRoute: typeof AppSettingsAiModelsRoute
   AppSettingsAiProvidersRoute: typeof AppSettingsAiProvidersRoute
+  AppSettingsAiUsageRoute: typeof AppSettingsAiUsageRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
   AppSettingsExportRoute: typeof AppSettingsExportRoute
@@ -531,6 +551,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAboutRoute: AppSettingsAboutRoute,
   AppSettingsAiModelsRoute: AppSettingsAiModelsRoute,
   AppSettingsAiProvidersRoute: AppSettingsAiProvidersRoute,
+  AppSettingsAiUsageRoute: AppSettingsAiUsageRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
   AppSettingsExportRoute: AppSettingsExportRoute,

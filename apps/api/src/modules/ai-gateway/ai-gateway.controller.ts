@@ -53,4 +53,14 @@ export class AiGatewayController {
       body: await this.aiGateway.checkProviderConnection(request.user.id, body),
     }));
   }
+
+  @TsRestHandler(contract.ai.getUsage)
+  getUsage(
+    @Req() request: AuthenticatedRequest,
+  ): ReturnType<typeof tsRestHandler<typeof contract.ai.getUsage>> {
+    return tsRestHandler(contract.ai.getUsage, async ({ query }) => ({
+      status: 200,
+      body: await this.aiGateway.getUsage(request.user.id, query),
+    }));
+  }
 }

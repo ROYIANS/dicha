@@ -4,7 +4,9 @@ import {
   AiGatewayCatalogSchema,
   AiProviderCheckResponseSchema,
   AiProviderSyncModelsResponseSchema,
+  AiUsageReportSchema,
   type AiConfigUpdate,
+  type AiUsageWindow,
 } from '@dicha/shared';
 import { api } from './client';
 
@@ -19,6 +21,19 @@ export const aiCatalogQueryOptions = () =>
       throw new Error(`AI catalog request failed (${res.status})`);
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+export const aiUsageQueryOptions = (window: AiUsageWindow) =>
+  queryOptions({
+    queryKey: ['ai', 'usage', window] as const,
+    queryFn: async ({ signal }) => {
+      const res = await api.ai.getUsage({ query: { window }, fetchOptions: { signal } });
+      if (res.status === 200) {
+        return AiUsageReportSchema.parse(res.body);
+      }
+      throw new Error(`AI usage request failed (${res.status})`);
+    },
+    staleTime: 60 * 1000,
   });
 
 export async function updateAiConfig(body: AiConfigUpdate) {

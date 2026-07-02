@@ -227,6 +227,71 @@ export const AiProviderSyncModelsResponseSchema = z.object({
 });
 export type AiProviderSyncModelsResponse = z.infer<typeof AiProviderSyncModelsResponseSchema>;
 
+export const AiUsageWindowSchema = z.enum(['24h', '7d', '30d', 'all']);
+export type AiUsageWindow = z.infer<typeof AiUsageWindowSchema>;
+
+export const AiUsageKindSchema = z.enum(['invoke', 'probe']);
+export type AiUsageKind = z.infer<typeof AiUsageKindSchema>;
+
+export const AiUsageStatusSchema = z.enum(['success', 'failure', 'degraded']);
+export type AiUsageStatus = z.infer<typeof AiUsageStatusSchema>;
+
+export const AiUsageSummarySchema = z.object({
+  calls: z.number().int().min(0),
+  successfulCalls: z.number().int().min(0),
+  failedCalls: z.number().int().min(0),
+  degradedCalls: z.number().int().min(0),
+  promptTokens: z.number().int().min(0),
+  completionTokens: z.number().int().min(0),
+  totalTokens: z.number().int().min(0),
+  estimatedCostUsd: z.number().min(0),
+  averageLatencyMs: z.number().min(0).nullable(),
+});
+export type AiUsageSummary = z.infer<typeof AiUsageSummarySchema>;
+
+export const AiUsageBreakdownSchema = AiUsageSummarySchema.extend({
+  key: z.string(),
+  label: z.string(),
+});
+export type AiUsageBreakdown = z.infer<typeof AiUsageBreakdownSchema>;
+
+export const AiUsageEventSchema = z.object({
+  id: z.string(),
+  kind: AiUsageKindSchema,
+  status: AiUsageStatusSchema,
+  useCase: AiModelUseCaseSchema,
+  providerId: z.string(),
+  providerName: z.string(),
+  modelId: z.string(),
+  modelName: z.string(),
+  promptTokens: z.number().int().min(0),
+  completionTokens: z.number().int().min(0),
+  totalTokens: z.number().int().min(0),
+  estimatedCostUsd: z.number().min(0),
+  latencyMs: z.number().int().min(0).nullable(),
+  errorCategory: z.string().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type AiUsageEvent = z.infer<typeof AiUsageEventSchema>;
+
+export const AiUsageReportSchema = z.object({
+  generatedAt: z.string().datetime(),
+  window: AiUsageWindowSchema,
+  from: z.string().datetime().nullable(),
+  to: z.string().datetime(),
+  summary: AiUsageSummarySchema,
+  byProvider: z.array(AiUsageBreakdownSchema),
+  byModel: z.array(AiUsageBreakdownSchema),
+  byUseCase: z.array(AiUsageBreakdownSchema),
+  recentEvents: z.array(AiUsageEventSchema),
+});
+export type AiUsageReport = z.infer<typeof AiUsageReportSchema>;
+
+export const AiUsageQuerySchema = z.object({
+  window: AiUsageWindowSchema.default('7d'),
+});
+export type AiUsageQuery = z.infer<typeof AiUsageQuerySchema>;
+
 export const aiContract = c.router({
   getCatalog: {
     method: 'GET',
@@ -262,6 +327,15 @@ export const aiContract = c.router({
       200: AiProviderCheckResponseSchema,
     },
     summary: 'Check whether a provider credential and base URL can reach the model endpoint',
+  },
+  getUsage: {
+    method: 'GET',
+    path: '/ai/usage',
+    query: AiUsageQuerySchema,
+    responses: {
+      200: AiUsageReportSchema,
+    },
+    summary: 'AI usage and estimated spend for the authenticated user',
   },
 });
 

@@ -6,6 +6,7 @@ import {
   AiGatewayCatalogSchema,
   AiProviderCheckResponseSchema,
   AiProviderSyncModelsResponseSchema,
+  AiUsageReportSchema,
   type AiConfigUpdate,
   type AiConfigUpdateResponse,
   type AiGatewayCatalog,
@@ -13,6 +14,8 @@ import {
   type AiProviderCheckResponse,
   type AiProviderSyncModelsBody,
   type AiProviderSyncModelsResponse,
+  type AiUsageQuery,
+  type AiUsageReport,
 } from '@dicha/shared';
 
 @Injectable()
@@ -66,6 +69,14 @@ export class AiGatewayService {
       ownerId,
       body,
       schema: AiProviderCheckResponseSchema,
+    });
+  }
+
+  getUsage(ownerId: string, query: AiUsageQuery): Promise<AiUsageReport> {
+    return this.request(`/usage?window=${encodeURIComponent(query.window)}`, {
+      method: 'GET',
+      ownerId,
+      schema: AiUsageReportSchema,
     });
   }
 
