@@ -894,3 +894,36 @@ Implemented user-scoped AI provider configuration, modal layering fixes, provide
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: 昼夜模式自动切换
+
+**Date**: 2026-07-03
+**Task**: 昼夜模式自动切换
+**Branch**: `main`
+
+### Summary
+
+实现昼夜模式自动切换：新增 manual/auto 模式、本地时间 06:00-18:00 日间规则、自动边界定时更新、设置页开关与状态文案，并补充主题机制单测和设计系统规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e2adc55` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
