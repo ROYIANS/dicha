@@ -191,7 +191,8 @@ function ThemePaletteOption({
 
 export function ThemeSettingsPage() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { mode, theme, setAutoMode } = useTheme();
+  const autoModeEnabled = mode === 'auto';
 
   return (
     <SettingsPageShell pageKey="theme">
@@ -207,9 +208,16 @@ export function ThemeSettingsPage() {
           action={
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-[12px] text-ink-faint">
-                {theme === 'dark'
-                  ? t('settings.detail.theme.dark')
-                  : t('settings.detail.theme.light')}
+                {autoModeEnabled
+                  ? t('settings.detail.theme.autoCurrent', {
+                      mode:
+                        theme === 'dark'
+                          ? t('settings.detail.theme.dark')
+                          : t('settings.detail.theme.light'),
+                    })
+                  : theme === 'dark'
+                    ? t('settings.detail.theme.dark')
+                    : t('settings.detail.theme.light')}
               </span>
               <ThemeToggle
                 className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md border border-hairline"
@@ -223,7 +231,13 @@ export function ThemeSettingsPage() {
           tint="peach"
           label={t('settings.detail.theme.autoMode')}
           description={t('settings.detail.theme.autoModeDesc')}
-          value={t('settings.values.soon')}
+          action={
+            <SettingsSwitch
+              checked={autoModeEnabled}
+              onChange={setAutoMode}
+              label={t('settings.detail.theme.autoMode')}
+            />
+          }
         />
       </SettingsPanel>
     </SettingsPageShell>

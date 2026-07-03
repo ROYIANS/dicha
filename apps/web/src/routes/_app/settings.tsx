@@ -212,7 +212,7 @@ function SettingsPage() {
   const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [loggingOut, setLoggingOut] = useState(false);
-  const { palette } = useTheme();
+  const { mode, palette } = useTheme();
 
   if (pathname !== '/settings') {
     return <Outlet />;
@@ -242,9 +242,11 @@ function SettingsPage() {
       value:
         item.labelKey === 'appearance'
           ? t(`settings.themePalettes.${palette}.name`)
-          : 'valueKey' in item
-            ? t(`settings.values.${item.valueKey}`)
-            : undefined,
+          : item.labelKey === 'theme'
+            ? t(`settings.values.${mode === 'auto' ? 'autoTheme' : 'manualTheme'}`)
+            : 'valueKey' in item
+              ? t(`settings.values.${item.valueKey}`)
+              : undefined,
       to: 'to' in item ? item.to : undefined,
     })),
   }));

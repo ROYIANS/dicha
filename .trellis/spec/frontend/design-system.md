@@ -194,7 +194,12 @@
 ## 9. 昼夜机制
 
 - 日间放 `:root`，夜间放 `:root[data-theme='dark']`；M1 默认日间。
-- **自动切换 / 时段感知 / 切换器 UI 不在本基调任务内**（独立 task），但 `data-theme` seam 已就位，组件零改动即可切。
+- `useTheme()` 是昼夜模式的唯一客户端入口：它维护 `mode: 'manual' | 'auto'`、有效 `theme: 'light' | 'dark'`、手动主题值和 palette。
+- 手动切换按钮（`ThemeToggle` / `useThemeTransition`）调用 `toggle()`，必须退出自动模式并把新的 `light | dark` 保存为手动主题。
+- 自动模式使用设备本地时间，固定规则为 `06:00 <= local time < 18:00` 日间，其余夜间；不请求定位，不读取日出日落。
+- 自动模式只决定 `data-theme`，不得改写 `data-theme-palette`。
+- 自动模式需要在加载时立即解析当前主题，并用定时器排到下一个 06:00 / 18:00 边界；不要用高频轮询。
+- 相关纯函数（如时间解析和下个边界计算）需要单测覆盖，避免跨边界 off-by-one。
 
 ---
 
