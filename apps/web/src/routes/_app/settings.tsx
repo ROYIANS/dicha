@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { logout } from '@/api/auth';
 import { BrandMark } from '@/components/AppBrand';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
+import { useTheme } from '@/lib/hooks/useTheme';
 
 export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
@@ -66,25 +67,83 @@ const sections = [
   {
     key: 'account',
     items: [
-      { icon: User, tint: 'peach', labelKey: 'profile', descKey: 'profileDesc', to: '/settings/profile' },
-      { icon: KeyRound, tint: 'lavender', labelKey: 'security', descKey: 'securityDesc', to: '/settings/security' },
-      { icon: ShieldCheck, tint: 'sage', labelKey: 'privacy', descKey: 'privacyDesc', to: '/settings/privacy' },
+      {
+        icon: User,
+        tint: 'peach',
+        labelKey: 'profile',
+        descKey: 'profileDesc',
+        to: '/settings/profile',
+      },
+      {
+        icon: KeyRound,
+        tint: 'lavender',
+        labelKey: 'security',
+        descKey: 'securityDesc',
+        to: '/settings/security',
+      },
+      {
+        icon: ShieldCheck,
+        tint: 'sage',
+        labelKey: 'privacy',
+        descKey: 'privacyDesc',
+        to: '/settings/privacy',
+      },
     ],
   },
   {
     key: 'app',
     items: [
-      { icon: Palette, tint: 'mist', labelKey: 'appearance', descKey: 'appearanceDesc', valueKey: 'warmMatte', to: '/settings/appearance' },
-      { icon: Moon, tint: 'lavender', labelKey: 'theme', descKey: 'themeDesc', valueKey: 'autoTheme', to: '/settings/theme' },
-      { icon: Bell, tint: 'pink', labelKey: 'notifications', descKey: 'notificationsDesc', to: '/settings/notifications' },
-      { icon: Languages, tint: 'sage', labelKey: 'language', descKey: 'languageDesc', valueKey: 'chinese', to: '/settings/language' },
+      {
+        icon: Palette,
+        tint: 'mist',
+        labelKey: 'appearance',
+        descKey: 'appearanceDesc',
+        valueKey: 'warmMatte',
+        to: '/settings/appearance',
+      },
+      {
+        icon: Moon,
+        tint: 'lavender',
+        labelKey: 'theme',
+        descKey: 'themeDesc',
+        valueKey: 'autoTheme',
+        to: '/settings/theme',
+      },
+      {
+        icon: Bell,
+        tint: 'pink',
+        labelKey: 'notifications',
+        descKey: 'notificationsDesc',
+        to: '/settings/notifications',
+      },
+      {
+        icon: Languages,
+        tint: 'sage',
+        labelKey: 'language',
+        descKey: 'languageDesc',
+        valueKey: 'chinese',
+        to: '/settings/language',
+      },
     ],
   },
   {
     key: 'data',
     items: [
-      { icon: Database, tint: 'peach', labelKey: 'storage', descKey: 'storageDesc', valueKey: 'localFirst', to: '/settings/storage' },
-      { icon: Download, tint: 'mist', labelKey: 'export', descKey: 'exportDesc', to: '/settings/export' },
+      {
+        icon: Database,
+        tint: 'peach',
+        labelKey: 'storage',
+        descKey: 'storageDesc',
+        valueKey: 'localFirst',
+        to: '/settings/storage',
+      },
+      {
+        icon: Download,
+        tint: 'mist',
+        labelKey: 'export',
+        descKey: 'exportDesc',
+        to: '/settings/export',
+      },
     ],
   },
   {
@@ -120,9 +179,30 @@ const sections = [
     key: 'about',
     items: [
       { icon: LifeBuoy, tint: 'mist', labelKey: 'help', descKey: 'helpDesc', to: '/settings/help' },
-      { icon: FlaskConical, tint: 'lavender', labelKey: 'labs', descKey: 'labsDesc', valueKey: 'soon', to: '/settings/labs' },
-      { icon: Activity, tint: 'peach', labelKey: 'diagnostics', descKey: 'diagnosticsDesc', valueKey: 'localOnly', to: '/settings/diagnostics' },
-      { icon: CircleHelp, tint: 'sage', labelKey: 'about', descKey: 'aboutDesc', valueKey: 'preAlpha', to: '/settings/about' },
+      {
+        icon: FlaskConical,
+        tint: 'lavender',
+        labelKey: 'labs',
+        descKey: 'labsDesc',
+        valueKey: 'soon',
+        to: '/settings/labs',
+      },
+      {
+        icon: Activity,
+        tint: 'peach',
+        labelKey: 'diagnostics',
+        descKey: 'diagnosticsDesc',
+        valueKey: 'localOnly',
+        to: '/settings/diagnostics',
+      },
+      {
+        icon: CircleHelp,
+        tint: 'sage',
+        labelKey: 'about',
+        descKey: 'aboutDesc',
+        valueKey: 'preAlpha',
+        to: '/settings/about',
+      },
     ],
   },
 ] as const;
@@ -132,6 +212,7 @@ function SettingsPage() {
   const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [loggingOut, setLoggingOut] = useState(false);
+  const { palette } = useTheme();
 
   if (pathname !== '/settings') {
     return <Outlet />;
@@ -158,7 +239,12 @@ function SettingsPage() {
       tint: item.tint,
       label: t(`settings.items.${item.labelKey}`),
       description: t(`settings.items.${item.descKey}`),
-      value: 'valueKey' in item ? t(`settings.values.${item.valueKey}`) : undefined,
+      value:
+        item.labelKey === 'appearance'
+          ? t(`settings.themePalettes.${palette}.name`)
+          : 'valueKey' in item
+            ? t(`settings.values.${item.valueKey}`)
+            : undefined,
       to: 'to' in item ? item.to : undefined,
     })),
   }));
@@ -230,10 +316,7 @@ function SettingsPage() {
 function SettingsFooterMark() {
   return (
     <div className="flex min-h-44 items-end justify-center pt-16 pb-0 sm:min-h-56 sm:pt-24">
-      <BrandMark
-        aria-hidden
-        className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56"
-      />
+      <BrandMark aria-hidden className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56" />
     </div>
   );
 }
@@ -259,12 +342,20 @@ function SettingsRow({ item }: { item: SettingsItem }) {
         <Icon size={16} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={`block truncate text-[14px] font-medium ${item.danger ? 'text-pink' : 'text-ink'}`}>{item.label}</span>
+        <span
+          className={`block truncate text-[14px] font-medium ${item.danger ? 'text-pink' : 'text-ink'}`}
+        >
+          {item.label}
+        </span>
         {item.description ? (
-          <span className="mt-0.5 block truncate text-[11px] text-ink-faint">{item.description}</span>
+          <span className="mt-0.5 block truncate text-[11px] text-ink-faint">
+            {item.description}
+          </span>
         ) : null}
       </span>
-      {item.value ? <span className="shrink-0 text-[12px] text-ink-faint">{item.value}</span> : null}
+      {item.value ? (
+        <span className="shrink-0 text-[12px] text-ink-faint">{item.value}</span>
+      ) : null}
       {item.to ? <ChevronRight size={15} className="shrink-0 text-ink-faint" /> : null}
     </>
   );
@@ -304,7 +395,13 @@ function GridPattern() {
         </pattern>
         <pattern id="settings-grid" width="32" height="32" patternUnits="userSpaceOnUse">
           <rect width="32" height="32" fill="url(#settings-grid-fine)" />
-          <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.18" />
+          <path
+            d="M32 0H0V32"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.75"
+            opacity="0.18"
+          />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill="url(#settings-grid)" />
@@ -324,7 +421,13 @@ function Hatch() {
   return (
     <svg aria-hidden className="pointer-events-none size-full text-ink-faint">
       <defs>
-        <pattern id="settings-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <pattern
+          id="settings-hatch"
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
           <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
         </pattern>
       </defs>

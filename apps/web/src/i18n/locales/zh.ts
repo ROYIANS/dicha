@@ -117,7 +117,8 @@ export const zh = {
     },
     settings: {
       pageTitle: '设置',
-      pageSubtitle: '管理滴茶的账户、外观、提醒和数据出口。现在先把入口和秩序搭好，后续能力会在这里自然长出来。',
+      pageSubtitle:
+        '管理滴茶的账户、外观、提醒和数据出口。现在先把入口和秩序搭好，后续能力会在这里自然长出来。',
       summaryTitle: '应用设置',
       summarySubtitle: '跟随你的使用节奏，安静地收纳这些开关。',
       searchPlaceholder: '搜索设置',
@@ -137,7 +138,7 @@ export const zh = {
         privacy: '隐私',
         privacyDesc: '分享边界与可见范围',
         appearance: '外观',
-        appearanceDesc: '暖白哑光与界面密度',
+        appearanceDesc: '主题色与界面材质',
         theme: '昼夜模式',
         themeDesc: '跟随真实时间的日夜切换',
         notifications: '通知',
@@ -174,6 +175,32 @@ export const zh = {
         catalog: '目录',
         mockCatalog: '预览',
         usage: '统计',
+      },
+      themePalettes: {
+        'warm-matte': {
+          name: '暖纸默认',
+          desc: '保留当前暖白柔面哑光和纸张感，是滴茶的默认外观。',
+        },
+        'peach-milk': {
+          name: '蜜桃奶油',
+          desc: '偏暖的奶油桃色，适合更柔和、更松弛的日间界面。',
+        },
+        'sage-mint': {
+          name: '鼠尾草薄荷',
+          desc: '轻绿与薄荷调的安静组合，让界面更清爽。',
+        },
+        'lavender-fog': {
+          name: '薰衣草雾',
+          desc: '淡紫与奶油白的低饱和组合，保留一点梦感。',
+        },
+        'berry-mousse': {
+          name: '樱莓慕斯',
+          desc: '柔粉和莓果色的小幅提亮，甜但不过分。',
+        },
+        'sea-salt': {
+          name: '海盐薄荷',
+          desc: '浅蓝绿的清透主题，适合偏冷静的日间观感。',
+        },
       },
       actions: {
         logout: '退出登录',
@@ -217,7 +244,8 @@ export const zh = {
           apiKeyMissingHint: '未配置 API Key，正在使用 AI 额度。',
           apiKeyMaskedHint: '密钥已保存。如需更换，请粘贴新的 API Key。',
           platformManagedTitle: '平台托管凭证',
-          platformManagedDesc: '这个通道由 Dicha 管理凭证和未来积分计费；当前仅作为官方服务入口预留。',
+          platformManagedDesc:
+            '这个通道由 Dicha 管理凭证和未来积分计费；当前仅作为官方服务入口预留。',
           configureEndpoint: '配置端点',
           noApiKeyRequired: '无需密钥',
           noApiKeyHint: '此供应商不需要 API Key；保存 Base URL 后即可用于后续连接检查或模型同步。',
@@ -234,9 +262,11 @@ export const zh = {
           createProvider: '创建供应商',
           createProviderTitle: '创建自定义 AI 供应商',
           emptyProvidersTitle: '还没有配置供应商',
-          emptyProvidersDesc: 'OpenAI、DeepSeek 和 Anthropic 不会默认启用。点击添加供应商后选择模板，再填写 API Key 和代理地址。',
+          emptyProvidersDesc:
+            'OpenAI、DeepSeek 和 Anthropic 不会默认启用。点击添加供应商后选择模板，再填写 API Key 和代理地址。',
           builtinProviderTemplates: '内置供应商',
-          builtinProviderTemplatesDesc: '选择一个模板会先创建为停用状态；配置 API Key 后再手动启用。',
+          builtinProviderTemplatesDesc:
+            '选择一个模板会先创建为停用状态；配置 API Key 后再手动启用。',
           allBuiltinProvidersAdded: '内置供应商都已添加。你仍然可以在下方创建自定义供应商。',
           customProvider: '自定义',
           moreActions: '更多操作',
@@ -245,10 +275,13 @@ export const zh = {
           syncModels: '同步模型',
           syncNeedsCredential: '同步模型列表不强制要求 API Key；如果上游拒绝访问，再补充凭证。',
           syncUnsupported: '这个供应商不支持通过 /models 自动同步',
-          upstreamPublicHint: '可以先无密钥拉取供应商 /models 列表；如果上游要求鉴权，再保存 API Key。',
-          upstreamNeedsCredentialHint: '可以先无密钥拉取供应商 /models 列表；如果上游要求鉴权，再保存 API Key。',
+          upstreamPublicHint:
+            '可以先无密钥拉取供应商 /models 列表；如果上游要求鉴权，再保存 API Key。',
+          upstreamNeedsCredentialHint:
+            '可以先无密钥拉取供应商 /models 列表；如果上游要求鉴权，再保存 API Key。',
           upstreamReadyHint: '同步会优先携带已保存凭证；也可以手动重新拉取供应商 /models 列表。',
-          upstreamUnsupportedHint: '这个供应商当前没有 OpenAI-compatible /models 同步入口，需要手动维护模型。',
+          upstreamUnsupportedHint:
+            '这个供应商当前没有 OpenAI-compatible /models 同步入口，需要手动维护模型。',
           syncSuccess: '已同步 {{count}} 个模型',
           syncFailed: '同步模型失败，请检查 API Key 或 Base URL',
           checkConnection: '检测',
@@ -264,11 +297,13 @@ export const zh = {
           manualModelSoon: '手动添加模型稍后接入',
           noProviderModels: '这个供应商下还没有模型。添加 API Key 后可以先同步模型列表。',
           metadataUnknown: '元数据待补充',
-          metadataUnknownDesc: '供应商只返回了模型 ID，暂未返回上下文窗口或能力信息；补充配置后才能启用。',
+          metadataUnknownDesc:
+            '供应商只返回了模型 ID，暂未返回上下文窗口或能力信息；补充配置后才能启用。',
           basicInfo: '基本信息',
           configInfo: '配置信息',
           providerId: '供应商 ID',
-          providerIdDesc: '作为供应商唯一标识，创建后不可修改。仅支持小写字母、数字、下划线和短横线。',
+          providerIdDesc:
+            '作为供应商唯一标识，创建后不可修改。仅支持小写字母、数字、下划线和短横线。',
           providerIdPlaceholder: '例如 openai_compatible',
           providerName: '供应商名称',
           providerNamePlaceholder: '请输入供应商的展示名称',
@@ -368,16 +403,15 @@ export const zh = {
         },
         appearance: {
           title: '外观',
-          subtitle: '调整界面的表面、密度和细节，让滴茶保持安静但不寡淡。',
+          subtitle: '调整界面的主题色和表面气质，让滴茶保持安静但不寡淡。',
           summaryTitle: '界面观感',
-          summarySubtitle: '暖白柔面哑光是当前默认材质，后续只在这个体系内扩展。',
+          summarySubtitle: '暖白柔面哑光是默认材质，马卡龙主题只改变色温和强调色。',
+          panelPalette: '主题色',
+          footer: '主题色偏好保存在本机，会立即影响所有页面的日间界面。',
+          darkFooter: '当前处于夜间模式。主题色会先保存，切回日间后完整呈现。',
           panelSurface: '界面表面',
-          surface: '视觉材质',
-          surfaceDesc: '使用暖白柔面哑光、低对比 hairline 和轻量结构纹理。',
-          compactRows: '紧凑列表',
-          compactRowsDesc: '减少列表留白，适合更密集地浏览设置与条目。',
-          softTexture: '保留纸面纹理',
-          softTextureDesc: '在页面顶部保留低透明度工程纸纹理。',
+          surface: '当前主题',
+          surfaceDesc: '使用柔面哑光、低对比 hairline 和轻量结构纹理。',
         },
         theme: {
           title: '昼夜模式',
@@ -447,7 +481,8 @@ export const zh = {
         },
         help: {
           title: '帮助与反馈',
-          subtitle: '把问题、建议和使用指引放在同一个安静入口。现在先说明通道，稍后接入真实反馈系统。',
+          subtitle:
+            '把问题、建议和使用指引放在同一个安静入口。现在先说明通道，稍后接入真实反馈系统。',
           summaryTitle: '支持入口',
           summarySubtitle: '先把边界说清楚，避免把还没接上的能力伪装成按钮。',
           panelSupport: '支持',

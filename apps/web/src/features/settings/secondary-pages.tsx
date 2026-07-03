@@ -1,7 +1,6 @@
 import {
   Activity,
   Bell,
-  Brush,
   Check,
   CloudOff,
   Database,
@@ -16,8 +15,8 @@ import {
   LayoutList,
   LockKeyhole,
   Moon,
+  Palette,
   ShieldCheck,
-  SlidersHorizontal,
   Sun,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -30,6 +29,7 @@ import {
   SettingsValueRow,
 } from '@/components/SettingsScaffold';
 import { useTheme } from '@/lib/hooks/useTheme';
+import { THEME_PALETTES, themePaletteById, type ThemePalette } from '@/lib/theme-palettes';
 
 type SettingsDetailPageKey =
   | 'privacy'
@@ -113,47 +113,79 @@ export function PrivacySettingsPage() {
 
 export function AppearanceSettingsPage() {
   const { t } = useTranslation();
-  const [compactRows, setCompactRows] = useState(false);
-  const [softTexture, setSoftTexture] = useState(true);
+  const { theme, palette, setPalette } = useTheme();
+  const selectedPalette = themePaletteById(palette);
 
   return (
     <SettingsPageShell pageKey="appearance">
+      <SettingsPanel
+        title={t('settings.detail.appearance.panelPalette')}
+        footer={
+          theme === 'dark'
+            ? t('settings.detail.appearance.darkFooter')
+            : t('settings.detail.appearance.footer')
+        }
+      >
+        {THEME_PALETTES.map((item) => (
+          <ThemePaletteOption
+            key={item.id}
+            palette={item}
+            selected={item.id === selectedPalette.id}
+            onSelect={() => setPalette(item.id)}
+          />
+        ))}
+      </SettingsPanel>
+
       <SettingsPanel title={t('settings.detail.appearance.panelSurface')}>
         <SettingsValueRow
-          icon={Brush}
-          tint="mist"
+          icon={Palette}
+          tint={selectedPalette.tint}
           label={t('settings.detail.appearance.surface')}
           description={t('settings.detail.appearance.surfaceDesc')}
-          value={t('settings.values.warmMatte')}
-        />
-        <SettingsValueRow
-          icon={LayoutList}
-          tint="peach"
-          label={t('settings.detail.appearance.compactRows')}
-          description={t('settings.detail.appearance.compactRowsDesc')}
-          action={
-            <SettingsSwitch
-              checked={compactRows}
-              onChange={setCompactRows}
-              label={t('settings.detail.appearance.compactRows')}
-            />
-          }
-        />
-        <SettingsValueRow
-          icon={SlidersHorizontal}
-          tint="sage"
-          label={t('settings.detail.appearance.softTexture')}
-          description={t('settings.detail.appearance.softTextureDesc')}
-          action={
-            <SettingsSwitch
-              checked={softTexture}
-              onChange={setSoftTexture}
-              label={t('settings.detail.appearance.softTexture')}
-            />
-          }
+          value={t(`settings.themePalettes.${selectedPalette.id}.name`)}
         />
       </SettingsPanel>
     </SettingsPageShell>
+  );
+}
+
+function ThemePaletteOption({
+  palette,
+  selected,
+  onSelect,
+}: {
+  palette: ThemePalette;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onSelect}
+      className={`grid min-h-[76px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-hairline/70 px-3.5 py-3 text-left transition-colors last:border-b-0 hover:bg-surface-alt ${
+        selected ? 'bg-surface-alt' : ''
+      }`}
+    >
+      <span className="grid size-10 shrink-0 grid-cols-2 overflow-hidden rounded-md border border-hairline bg-surface">
+        {palette.swatches.map((color) => (
+          <span key={color} style={{ backgroundColor: color }} />
+        ))}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[14px] font-medium text-ink">
+          {t(`settings.themePalettes.${palette.id}.name`)}
+        </span>
+        <span className="mt-0.5 block text-[11px] leading-relaxed text-ink-faint">
+          {t(`settings.themePalettes.${palette.id}.desc`)}
+        </span>
+      </span>
+      <span className="grid size-7 shrink-0 place-items-center rounded-md border border-hairline bg-canvas text-ink-soft">
+        {selected ? <Check size={15} strokeWidth={2} /> : null}
+      </span>
+    </button>
   );
 }
 
@@ -163,7 +195,10 @@ export function ThemeSettingsPage() {
 
   return (
     <SettingsPageShell pageKey="theme">
-      <SettingsPanel title={t('settings.detail.theme.panelMode')} footer={t('settings.detail.theme.footer')}>
+      <SettingsPanel
+        title={t('settings.detail.theme.panelMode')}
+        footer={t('settings.detail.theme.footer')}
+      >
         <SettingsValueRow
           icon={theme === 'dark' ? Moon : Sun}
           tint="lavender"
@@ -172,9 +207,14 @@ export function ThemeSettingsPage() {
           action={
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-[12px] text-ink-faint">
-                {theme === 'dark' ? t('settings.detail.theme.dark') : t('settings.detail.theme.light')}
+                {theme === 'dark'
+                  ? t('settings.detail.theme.dark')
+                  : t('settings.detail.theme.light')}
               </span>
-              <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md border border-hairline" iconSize={15} />
+              <ThemeToggle
+                className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md border border-hairline"
+                iconSize={15}
+              />
             </div>
           }
         />
@@ -273,7 +313,10 @@ export function StorageSettingsPage() {
 
   return (
     <SettingsPageShell pageKey="storage">
-      <SettingsPanel title={t('settings.detail.storage.panelUsage')} footer={t('settings.detail.storage.footer')}>
+      <SettingsPanel
+        title={t('settings.detail.storage.panelUsage')}
+        footer={t('settings.detail.storage.footer')}
+      >
         <SettingsValueRow
           icon={HardDrive}
           tint="peach"
@@ -305,7 +348,10 @@ export function ExportSettingsPage() {
 
   return (
     <SettingsPageShell pageKey="export">
-      <SettingsPanel title={t('settings.detail.export.panelData')} footer={t('settings.detail.export.footer')}>
+      <SettingsPanel
+        title={t('settings.detail.export.panelData')}
+        footer={t('settings.detail.export.footer')}
+      >
         <SettingsValueRow
           icon={Download}
           tint="mist"
@@ -330,7 +376,10 @@ export function HelpSettingsPage() {
 
   return (
     <SettingsPageShell pageKey="help">
-      <SettingsPanel title={t('settings.detail.help.panelSupport')} footer={t('settings.detail.help.footer')}>
+      <SettingsPanel
+        title={t('settings.detail.help.panelSupport')}
+        footer={t('settings.detail.help.footer')}
+      >
         <SettingsValueRow
           icon={HeartHandshake}
           tint="mist"
@@ -355,7 +404,10 @@ export function LabsSettingsPage() {
 
   return (
     <SettingsPageShell pageKey="labs">
-      <SettingsPanel title={t('settings.detail.labs.panelExperiments')} footer={t('settings.detail.labs.footer')}>
+      <SettingsPanel
+        title={t('settings.detail.labs.panelExperiments')}
+        footer={t('settings.detail.labs.footer')}
+      >
         <SettingsValueRow
           icon={FlaskConical}
           tint="lavender"
@@ -380,7 +432,10 @@ export function DiagnosticsSettingsPage() {
 
   return (
     <SettingsPageShell pageKey="diagnostics">
-      <SettingsPanel title={t('settings.detail.diagnostics.panelRuntime')} footer={t('settings.detail.diagnostics.footer')}>
+      <SettingsPanel
+        title={t('settings.detail.diagnostics.panelRuntime')}
+        footer={t('settings.detail.diagnostics.footer')}
+      >
         <SettingsValueRow
           icon={Activity}
           tint="peach"

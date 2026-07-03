@@ -22,43 +22,77 @@
 
 ### 1.1 日间（默认）
 
-| 角色 | token | 值 |
-|---|---|---|
-| 窗外底 | `--canvas-outer` | `#E8E2D9` |
-| 应用画布 | `--canvas` | `#F7F4EF` |
-| 卡片表面 | `--surface` | `#FFFFFF` |
-| 表面备用 | `--surface-alt` | `#FCFAF6` |
-| 主文字 | `--ink` | `#2E2A26`（暖炭黑，非纯黑） |
-| 次要文字 | `--ink-soft` | `#8A8178` |
-| 占位/三级 | `--ink-faint` | `#B5AEA4` |
-| 描边/分隔 | `--hairline` | `#ECE7E0` |
+| 角色      | token            | 值                          |
+| --------- | ---------------- | --------------------------- |
+| 窗外底    | `--canvas-outer` | `#E8E2D9`                   |
+| 应用画布  | `--canvas`       | `#F7F4EF`                   |
+| 卡片表面  | `--surface`      | `#FFFFFF`                   |
+| 表面备用  | `--surface-alt`  | `#FCFAF6`                   |
+| 主文字    | `--ink`          | `#2E2A26`（暖炭黑，非纯黑） |
+| 次要文字  | `--ink-soft`     | `#8A8178`                   |
+| 占位/三级 | `--ink-faint`    | `#B5AEA4`                   |
+| 描边/分隔 | `--hairline`     | `#ECE7E0`                   |
 
 ### 1.2 夜间（暖暗，不冷）
 
-| token | 值 |
-|---|---|
+| token            | 值        |
+| ---------------- | --------- |
 | `--canvas-outer` | `#1A1714` |
-| `--canvas` | `#24201C` |
-| `--surface` | `#2C2723` |
-| `--surface-alt` | `#322C27` |
-| `--ink` | `#F0EBE3` |
-| `--ink-soft` | `#A89E92` |
-| `--ink-faint` | `#7C7268` |
-| `--hairline` | `#3A332D` |
+| `--canvas`       | `#24201C` |
+| `--surface`      | `#2C2723` |
+| `--surface-alt`  | `#322C27` |
+| `--ink`          | `#F0EBE3` |
+| `--ink-soft`     | `#A89E92` |
+| `--ink-faint`    | `#7C7268` |
+| `--hairline`     | `#3A332D` |
 
 ### 1.3 功能性柔彩（accents）
 
 日/夜同色相，夜间略提亮去饱和。**禁止**用作大面积背景或唯一品牌主色。
 
-| 名 | `--accent-*` 日 / 夜 | 极浅底 `--chip-*` 日 / 夜 |
-|---|---|---|
-| lavender 薰衣草 | `#B7AEE0` / `#C5BCEC` | `#EFEDF8` / `#322E3C` |
-| peach 蜜桃 | `#F0C3A3` / `#F4CFB2` | `#FBEEE3` / `#3A322B` |
-| sage 鼠尾草 | `#A9C0A0` / `#B6CBAD` | `#EDF2EA` / `#2E342B` |
-| pink 柔粉 | `#E9B7BE` / `#EFC4CA` | `#FAEDEF` / `#3A2F31` |
-| mist 雾蓝 | `#A8C4D6` / `#B7CFDE` | `#EAF1F5` / `#2B343A` |
+| 名              | `--accent-*` 日 / 夜  | 极浅底 `--chip-*` 日 / 夜 |
+| --------------- | --------------------- | ------------------------- |
+| lavender 薰衣草 | `#B7AEE0` / `#C5BCEC` | `#EFEDF8` / `#322E3C`     |
+| peach 蜜桃      | `#F0C3A3` / `#F4CFB2` | `#FBEEE3` / `#3A322B`     |
+| sage 鼠尾草     | `#A9C0A0` / `#B6CBAD` | `#EDF2EA` / `#2E342B`     |
+| pink 柔粉       | `#E9B7BE` / `#EFC4CA` | `#FAEDEF` / `#3A2F31`     |
+| mist 雾蓝       | `#A8C4D6` / `#B7CFDE` | `#EAF1F5` / `#2B343A`     |
 
 **用途**：图标圆片（chip 底 + accent 图标色）、数据数字/进度条、分类点。错误态可借 `pink`。
+
+### 1.4 外观主题色 preset
+
+用户可在 `/settings/appearance` 选择亮色主题色 preset。实现契约如下：
+
+- **默认主题**：`warm-matte` 等于本文 §1.1 的暖白柔面哑光，是默认值。
+- **注册表单一出处**：主题 id、设置页 tint 与 swatch 预览放在 `apps/web/src/lib/theme-palettes.ts`，不要在页面组件里重复定义。
+- **DOM 契约**：`useTheme()` 同时维护 `data-theme="light|dark"` 和 `data-theme-palette="<preset>"`；palette 持久化到本机 `localStorage`。
+- **CSS 契约**：亮色 preset 用 `:root[data-theme-palette='<id>']` 覆盖语义 token（`--canvas`、`--surface`、`--hairline`、`--sidebar-bg`、`--accent-*`、`--chip-*`、`--accent-warm` 等）。组件继续只读语义 token，不直接判断 palette id。
+- **暗色契约**：`:root[data-theme='dark']` 必须在 palette 覆盖之后定义并保持最终覆盖权；MVP 暗色只有一套，不随 palette 变成多套暗色主题。
+- **文案契约**：设置页显示名和说明放在 `settings.themePalettes.<id>`，设置首页当前值也读取同一 palette。
+
+```css
+/* Good: 主题只覆盖 token，组件零改动 */
+:root[data-theme-palette='sage-mint'] {
+  --canvas: #f3f7ec;
+  --surface: #fffffb;
+  --accent-warm: #6d8b63;
+}
+
+/* Good: 暗色仍是最终覆盖 */
+:root[data-theme='dark'] {
+  --canvas: #141414;
+  --surface: #212121;
+  --accent-warm: var(--ink-soft);
+}
+```
+
+新增 preset 时至少同步：
+
+- `apps/web/src/lib/theme-palettes.ts`
+- `apps/web/src/i18n/locales/zh.ts`
+- `apps/web/src/index.css`
+- `apps/web/src/lib/theme-palettes.test.ts`
 
 ---
 
@@ -123,12 +157,12 @@
 
 `apps/web/src/components/Surface.tsx` —— 全站卡片底座，禁止散写 surface 样式。
 
-| variant | 用途 | 阴影 | class |
-|---|---|---|---|
-| `card`（默认） | Dashboard 卡片 / 列表项 | **扁平无阴影**（hairline + 微差制造层次） | `surface surface-card` |
-| `raised` | 仅浮起 chrome：侧栏 / 顶栏 / 浮层 | `--shadow-md` | `surface surface-raised` |
-| `float` | 仅 overlay：弹窗 / 拖拽 | `--shadow-lg` | `surface surface-float` |
-| `flat` | 内嵌 / 占位 | 无 | `surface surface-flat` |
+| variant        | 用途                              | 阴影                                      | class                    |
+| -------------- | --------------------------------- | ----------------------------------------- | ------------------------ |
+| `card`（默认） | Dashboard 卡片 / 列表项           | **扁平无阴影**（hairline + 微差制造层次） | `surface surface-card`   |
+| `raised`       | 仅浮起 chrome：侧栏 / 顶栏 / 浮层 | `--shadow-md`                             | `surface surface-raised` |
+| `float`        | 仅 overlay：弹窗 / 拖拽           | `--shadow-lg`                             | `surface surface-float`  |
+| `flat`         | 内嵌 / 占位                       | 无                                        | `surface surface-flat`   |
 
 `.surface` = `bg-surface` + `1px var(--hairline)` 描边 + `16px` 圆角；variant 仅叠加阴影层级。**内容卡片/列表项一律用 `card`（扁平）**，阴影只出现在 chrome（`raised`）与 overlay（`float`）。
 

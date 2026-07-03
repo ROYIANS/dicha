@@ -58,10 +58,8 @@
 
   /* 阴影 — 极轻、弥散、暖调 */
   --shadow-sm: 0 1px 2px rgba(40, 30, 20, 0.04);
-  --shadow-md:
-    0 1px 2px rgba(40, 30, 20, 0.04), 0 8px 24px rgba(40, 30, 20, 0.06);
-  --shadow-lg:
-    0 4px 8px rgba(40, 30, 20, 0.05), 0 16px 40px rgba(40, 30, 20, 0.1);
+  --shadow-md: 0 1px 2px rgba(40, 30, 20, 0.04), 0 8px 24px rgba(40, 30, 20, 0.06);
+  --shadow-lg: 0 4px 8px rgba(40, 30, 20, 0.05), 0 16px 40px rgba(40, 30, 20, 0.1);
 
   /* 动效 */
   --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -122,6 +120,157 @@
   --field-radius: var(--radius);
   --border-width: 1px;
   --field-border-width: 1px;
+}
+
+/* ─── 日间主题色 preset — 默认暖纸 + 马卡龙柔彩 ───────────────────────── */
+:root[data-theme-palette='peach-milk'] {
+  --canvas-outer: #eadfd8;
+  --canvas: #fff4ed;
+  --surface: #fffdf9;
+  --surface-alt: #fff8f0;
+  --ink: #302824;
+  --ink-soft: #8c756b;
+  --ink-faint: #bca99f;
+  --hairline: #f0ded3;
+
+  --sidebar-bg: #4a3028;
+  --sidebar-ink: #fff4ed;
+  --sidebar-ink-soft: #d6bdb0;
+
+  --accent-lavender: #b7aee0;
+  --accent-peach: #f0b894;
+  --accent-sage: #a9c0a0;
+  --accent-pink: #e9aebb;
+  --accent-mist: #9fc1d2;
+  --chip-lavender: #f0edf8;
+  --chip-peach: #ffe9dc;
+  --chip-sage: #edf3e9;
+  --chip-pink: #fde9ee;
+  --chip-mist: #e8f2f6;
+
+  --accent-warm: #b26f58;
+  --lp-drawer-scrim-rgb: 74, 48, 40;
+  --lp-drawer-dot-rgb: 74, 48, 40;
+}
+
+:root[data-theme-palette='sage-mint'] {
+  --canvas-outer: #dfe9d9;
+  --canvas: #f3f7ec;
+  --surface: #fffffb;
+  --surface-alt: #f8fbf1;
+  --ink: #283028;
+  --ink-soft: #74806d;
+  --ink-faint: #a5b09d;
+  --hairline: #e2ead8;
+
+  --sidebar-bg: #29372c;
+  --sidebar-ink: #f6f8ef;
+  --sidebar-ink-soft: #b9c5b2;
+
+  --accent-lavender: #b8b0df;
+  --accent-peach: #efc0a3;
+  --accent-sage: #99b889;
+  --accent-pink: #e8b4bc;
+  --accent-mist: #9ebfd0;
+  --chip-lavender: #efedf7;
+  --chip-peach: #fbeee3;
+  --chip-sage: #e7f1df;
+  --chip-pink: #faecef;
+  --chip-mist: #e7f1f5;
+
+  --accent-warm: #6d8b63;
+  --lp-drawer-scrim-rgb: 41, 55, 44;
+  --lp-drawer-dot-rgb: 41, 55, 44;
+}
+
+:root[data-theme-palette='lavender-fog'] {
+  --canvas-outer: #e5e0ee;
+  --canvas: #f5f1fb;
+  --surface: #fffdfd;
+  --surface-alt: #faf6ff;
+  --ink: #2d2934;
+  --ink-soft: #7b738a;
+  --ink-faint: #aaa2b8;
+  --hairline: #e9e1f3;
+
+  --sidebar-bg: #342d46;
+  --sidebar-ink: #f6f1fb;
+  --sidebar-ink-soft: #c4bbd8;
+
+  --accent-lavender: #aa9ddb;
+  --accent-peach: #efc1a8;
+  --accent-sage: #a9c0a0;
+  --accent-pink: #e7b4c6;
+  --accent-mist: #a7c4d6;
+  --chip-lavender: #eee9fb;
+  --chip-peach: #fbeee5;
+  --chip-sage: #edf2ea;
+  --chip-pink: #faebf1;
+  --chip-mist: #e9f1f5;
+
+  --accent-warm: #8b75b8;
+  --lp-drawer-scrim-rgb: 52, 45, 70;
+  --lp-drawer-dot-rgb: 52, 45, 70;
+}
+
+:root[data-theme-palette='berry-mousse'] {
+  --canvas-outer: #eadde1;
+  --canvas: #fff1f4;
+  --surface: #fffdfd;
+  --surface-alt: #fff7f8;
+  --ink: #34262b;
+  --ink-soft: #886f78;
+  --ink-faint: #b79fa8;
+  --hairline: #f0dce3;
+
+  --sidebar-bg: #49313a;
+  --sidebar-ink: #fff1f4;
+  --sidebar-ink-soft: #d7b8c3;
+
+  --accent-lavender: #b9adde;
+  --accent-peach: #efc0a1;
+  --accent-sage: #a7bf9c;
+  --accent-pink: #e6a7b7;
+  --accent-mist: #a5c3d5;
+  --chip-lavender: #f0edf8;
+  --chip-peach: #fbeee2;
+  --chip-sage: #edf2e9;
+  --chip-pink: #fde7ee;
+  --chip-mist: #eaf1f5;
+
+  --accent-warm: #b35f76;
+  --lp-drawer-scrim-rgb: 73, 49, 58;
+  --lp-drawer-dot-rgb: 73, 49, 58;
+}
+
+:root[data-theme-palette='sea-salt'] {
+  --canvas-outer: #d9e8e7;
+  --canvas: #eef8f7;
+  --surface: #fbffff;
+  --surface-alt: #f4fbfb;
+  --ink: #243030;
+  --ink-soft: #6a7f7e;
+  --ink-faint: #9cb2b1;
+  --hairline: #dcebea;
+
+  --sidebar-bg: #263c3c;
+  --sidebar-ink: #effafa;
+  --sidebar-ink-soft: #b0c7c6;
+
+  --accent-lavender: #b9b0df;
+  --accent-peach: #efc0a3;
+  --accent-sage: #a6bd9b;
+  --accent-pink: #e7b2bd;
+  --accent-mist: #94bdc5;
+  --chip-lavender: #efedf8;
+  --chip-peach: #fbeee3;
+  --chip-sage: #edf2e9;
+  --chip-pink: #faecef;
+  --chip-mist: #e2f2f4;
+
+  --accent-warm: #548f8b;
+  --lp-drawer-scrim-rgb: 38, 60, 60;
+  --lp-drawer-dot-rgb: 38, 60, 60;
 }
 
 /* ─── 夜间 — 深灰中性 ──────────────────────────────────────────────── */
@@ -230,8 +379,8 @@
 
   /* UI sans-first；装饰 / 叙事标题显式使用 font-serif。 */
   --font-sans:
-    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui,
-    sans-serif;
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,
+    system-ui, sans-serif;
   --font-serif: 'Noto Serif SC', 'Songti SC', ui-serif, serif;
 
   --shadow-card: var(--shadow-sm);
@@ -248,8 +397,8 @@ body {
   color: var(--ink);
   min-height: 100dvh;
   font-family:
-    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui,
-    sans-serif;
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,
+    system-ui, sans-serif;
 }
 
 /* ─── 全局滚动条 — 彻底隐藏（任何情况都不显示，hover 也不），内容仍可滚 ──────── */
@@ -757,15 +906,27 @@ body {
   background-size: 180px 180px;
 }
 .app-sidebar-world {
-  background: linear-gradient(145deg, color-mix(in oklab, var(--sidebar-ink) 8%, #3a2f24), #241c14);
+  border-color: color-mix(in oklab, var(--accent-warm) 34%, var(--sidebar-ink) 12%);
+  background:
+    radial-gradient(
+      circle at top right,
+      color-mix(in oklab, var(--accent-warm) 38%, transparent),
+      transparent 56%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--accent-warm) 46%, var(--sidebar-bg)),
+      color-mix(in oklab, var(--sidebar-bg) 88%, var(--accent-warm))
+    );
+  box-shadow: inset 0 -1px 0 0 color-mix(in oklab, var(--sidebar-ink) 12%, transparent);
 }
 .app-sidebar-world-btn {
-  background-color: color-mix(in oklab, var(--sidebar-ink) 12%, transparent);
-  box-shadow: inset 0 -1px 0 0 color-mix(in oklab, var(--sidebar-ink) 18%, transparent);
+  background-color: color-mix(in oklab, var(--sidebar-ink) 14%, transparent);
+  box-shadow: inset 0 -1px 0 0 color-mix(in oklab, var(--accent-warm) 36%, transparent);
   transition: background-color 150ms ease;
 }
 .app-sidebar-world-btn:hover {
-  background-color: color-mix(in oklab, var(--sidebar-ink) 18%, transparent);
+  background-color: color-mix(in oklab, var(--sidebar-ink) 22%, transparent);
 }
 /* 移动端底部 tabbar — app-native chrome，替代 header + drawer。 */
 .app-mobile-tabbar {
@@ -1036,7 +1197,12 @@ a.dash-card:active {
   aspect-ratio: 4 / 5;
 }
 .dash-card-space-overlay {
-  background: linear-gradient(to top, rgb(0 0 0 / 0.58) 0%, rgb(0 0 0 / 0.08) 55%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / 0.58) 0%,
+    rgb(0 0 0 / 0.08) 55%,
+    transparent 100%
+  );
 }
 .dash-card-chip {
   display: inline-flex;
@@ -1170,8 +1336,18 @@ a.dash-card:active {
   transition:
     opacity var(--dur-base) var(--ease-soft),
     transform var(--dur-base) var(--ease-soft);
-  mask: radial-gradient(farthest-side at bottom right, #000 0 46%, rgb(0 0 0 / 72%) 66%, transparent 84%);
-  -webkit-mask: radial-gradient(farthest-side at bottom right, #000 0 46%, rgb(0 0 0 / 72%) 66%, transparent 84%);
+  mask: radial-gradient(
+    farthest-side at bottom right,
+    #000 0 46%,
+    rgb(0 0 0 / 72%) 66%,
+    transparent 84%
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side at bottom right,
+    #000 0 46%,
+    rgb(0 0 0 / 72%) 66%,
+    transparent 84%
+  );
 }
 .app-action-dial-plate {
   position: absolute;
@@ -1192,8 +1368,18 @@ a.dash-card:active {
   transition:
     opacity 180ms var(--ease-soft),
     transform 260ms var(--ease-soft);
-  mask: radial-gradient(farthest-side at bottom right, #000 0 58%, rgb(0 0 0 / 64%) 70%, transparent 86%);
-  -webkit-mask: radial-gradient(farthest-side at bottom right, #000 0 58%, rgb(0 0 0 / 64%) 70%, transparent 86%);
+  mask: radial-gradient(
+    farthest-side at bottom right,
+    #000 0 58%,
+    rgb(0 0 0 / 64%) 70%,
+    transparent 86%
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side at bottom right,
+    #000 0 58%,
+    rgb(0 0 0 / 64%) 70%,
+    transparent 86%
+  );
 }
 .app-action-dial-anchor,
 .app-action-dial-item,
