@@ -861,3 +861,36 @@ Implemented user-scoped AI provider configuration, modal layering fixes, provide
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: 外观主题色设置
+
+**Date**: 2026-07-03
+**Task**: 外观主题色设置
+**Branch**: `main`
+
+### Summary
+
+实现外观页主题色 preset：默认暖纸加五个马卡龙亮色主题，扩展 useTheme 持久化 palette，更新全局 CSS token、设置页 UI、侧边栏像素世界卡片联动，并补充设计系统规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3386a85` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
