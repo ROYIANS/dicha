@@ -27,6 +27,7 @@
 - `/settings/ai-providers` 的供应商列表必须把官方 `dicha` 供应商固定排在第一位，无论它是否启用；其余供应商继续按启用状态优先，再按 priority 排序。
 - `/settings/ai-models` 是用途分配页，不重复展示完整模型目录；模型启停、同步、添加和配置归 `/settings/ai-providers` 的供应商卡片/展开列表负责。
 - `/settings/ai-models` 的模型选择器必须按供应商分组，只展示 `status === 'enabled'` 的供应商下 `enabled === true` 的模型；旧分配指向停用供应商/模型时只显示不可用提示，不把停用项重新放入可选列表。
+- `/settings/ai-models` 的原生 `<select>` 在保存的 model id 不在可选集合中时必须受控为 `""`，避免浏览器视觉上默认选中第一项却同时显示“当前模型不可用”。首选/备用模型 mutation 必须基于当前 UI 的有效选择集合计算，不能只用落后的 catalog assignment 快照。
 - 新增设置能力如果没有真实后端/API 支撑，页面文案和状态值必须明确标为“稍后/未统计”等当前状态，不要做假下载、假清理或假推送。
 - 设置页弹窗如果需要页面级遮罩，可复用 `components/DotsBackdrop.tsx` 的点阵层；抽屉保留默认 `scrim`，弹窗建议传 `scrim={false}` 后自行叠加符合当前页面的暖暗 overlay。页面级 modal 必须通过 `createPortal(..., document.body)` 挂到 body，避免被 AppShell/Header/移动端 tab bar 的 stacking context 压住。移动端编辑型弹窗应使用全屏工作面板，桌面端使用居中浮层。
 

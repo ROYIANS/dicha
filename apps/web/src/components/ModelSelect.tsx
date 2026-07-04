@@ -43,6 +43,7 @@ export function ModelSelect({
   }, [catalog]);
   const selected = selectableModels.get(value);
   const selectedUnavailable = Boolean(value) && !selected;
+  const selectValue = selected ? value : '';
 
   if (modelGroups.length === 0) {
     return (
@@ -64,7 +65,7 @@ export function ModelSelect({
     <span className="flex w-full min-w-0 flex-col items-stretch gap-1">
       <span className="relative block w-full">
         <select
-          value={value}
+          value={selectValue}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           aria-label={placeholder}

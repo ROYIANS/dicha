@@ -83,6 +83,47 @@ export function getAssignableModelGroups(
     });
 }
 
+export function getAssignableModelMap(
+  catalog: Pick<AiGatewayCatalog, 'models' | 'providers'>,
+) {
+  const models = new Map<string, AiModel>();
+  for (const group of getAssignableModelGroups(catalog)) {
+    for (const model of group.models) {
+      models.set(model.id, model);
+    }
+  }
+  return models;
+}
+
+export function firstAssignableModelId(
+  modelIds: string[],
+  assignableModels: ReadonlyMap<string, AiModel>,
+  excludedModelId?: string,
+) {
+  return modelIds.find((modelId) => modelId !== excludedModelId && assignableModels.has(modelId)) ?? '';
+}
+
+export function fallbackModelIds({
+  current,
+  nextFirst,
+  primaryModelId,
+}: {
+  current: string[];
+  nextFirst: string;
+  primaryModelId: string;
+}) {
+  if (!nextFirst) {
+    return current.filter((modelId) => modelId !== primaryModelId);
+  }
+  if (nextFirst === primaryModelId) {
+    return current.filter((modelId) => modelId !== primaryModelId);
+  }
+  return [
+    nextFirst,
+    ...current.filter((modelId) => modelId !== nextFirst && modelId !== primaryModelId),
+  ];
+}
+
 function isProviderEnabled(provider: AiProvider) {
   return provider.status === 'enabled' || provider.status === 'needs_config';
 }

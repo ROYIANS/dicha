@@ -56,6 +56,9 @@ import { DotsBackdrop } from '@/components/DotsBackdrop';
 import {
   compareModelsByEnabled,
   compareProvidersByEnabled,
+  fallbackModelIds,
+  firstAssignableModelId,
+  getAssignableModelMap,
   lobeProviderKey,
 } from '@/lib/ai-catalog-ui';
 import { type SettingsTint } from '@/components/settings-ui';
@@ -241,12 +244,29 @@ export function AiModelsSettingsPage() {
 
   const assignmentRows = useMemo(() => {
     if (!catalog) return [];
-    return catalog.assignments.map((assignment) => ({
-      ...assignment,
-      selectedModelId: selectedByUseCase[assignment.useCase] ?? assignment.primaryModelId,
-      selectedFallbackModelId:
-        fallbackByUseCase[assignment.useCase] ?? assignment.fallbackModelIds[0] ?? '',
-    }));
+    const assignableModels = getAssignableModelMap(catalog);
+    return catalog.assignments.map((assignment) => {
+      const localPrimaryModelId = selectedByUseCase[assignment.useCase];
+      const rawPrimaryModelId = localPrimaryModelId ?? assignment.primaryModelId;
+      const selectedModelId = assignableModels.has(rawPrimaryModelId) ? rawPrimaryModelId : '';
+      const localFallbackModelId = fallbackByUseCase[assignment.useCase];
+      const selectedFallbackModelId =
+        localFallbackModelId !== undefined
+          ? firstAssignableModelId([localFallbackModelId], assignableModels, selectedModelId)
+          : firstAssignableModelId(assignment.fallbackModelIds, assignableModels, selectedModelId);
+      const selectedFallbackModelIds = fallbackModelIds({
+        current: assignment.fallbackModelIds.filter((modelId) => assignableModels.has(modelId)),
+        nextFirst: selectedFallbackModelId,
+        primaryModelId: selectedModelId,
+      });
+
+      return {
+        ...assignment,
+        selectedModelId,
+        selectedFallbackModelId,
+        selectedFallbackModelIds,
+      };
+    });
   }, [catalog, fallbackByUseCase, selectedByUseCase]);
 
   return (
@@ -285,6 +305,11 @@ export function AiModelsSettingsPage() {
                           catalog,
                           useCase: assignment.useCase,
                           primaryModelId: value,
+                          fallbackModelIds: fallbackModelIds({
+                            current: assignment.selectedFallbackModelIds,
+                            nextFirst: assignment.selectedFallbackModelId,
+                            primaryModelId: value,
+                          }),
                         }),
                       ],
                     });
@@ -301,7 +326,7 @@ export function AiModelsSettingsPage() {
                           useCase: assignment.useCase,
                           primaryModelId: assignment.selectedModelId,
                           fallbackModelIds: fallbackModelIds({
-                            current: assignment.fallbackModelIds,
+                            current: assignment.selectedFallbackModelIds,
                             nextFirst: value,
                             primaryModelId: assignment.selectedModelId,
                           }),
@@ -1859,27 +1884,6 @@ function assignmentUpdate({
     fallbackModelIds:
       fallbackModelIds ?? current?.fallbackModelIds.filter((modelId) => modelId !== primaryModelId) ?? [],
   };
-}
-
-function fallbackModelIds({
-  current,
-  nextFirst,
-  primaryModelId,
-}: {
-  current: string[];
-  nextFirst: string;
-  primaryModelId: string;
-}) {
-  if (!nextFirst) {
-    return current.filter((modelId) => modelId !== primaryModelId);
-  }
-  if (nextFirst === primaryModelId) {
-    return current.filter((modelId) => modelId !== primaryModelId);
-  }
-  return [
-    nextFirst,
-    ...current.filter((modelId) => modelId !== nextFirst && modelId !== primaryModelId),
-  ];
 }
 
 function CapabilityChip({ capability }: { capability: AiModelCapability }) {

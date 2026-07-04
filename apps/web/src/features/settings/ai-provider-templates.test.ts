@@ -76,6 +76,22 @@ describe('AI provider templates', () => {
     ).toBe(true);
   });
 
+  test('marks LobeHub router providers with model fetchers as syncable OpenAI-compatible endpoints', () => {
+    const aiHubMix = aiProviderTemplates.find((provider) => provider.id === 'aihubmix');
+    const zenMux = aiProviderTemplates.find((provider) => provider.id === 'zenmux');
+
+    expect(aiHubMix).toMatchObject({
+      baseUrl: 'https://aihubmix.com/v1',
+      modelSyncMode: 'openai_models_endpoint',
+      requestFormat: 'openai_compatible',
+    });
+    expect(zenMux).toMatchObject({
+      baseUrl: 'https://zenmux.ai/v1',
+      modelSyncMode: 'openai_models_endpoint',
+      requestFormat: 'openai_compatible',
+    });
+  });
+
   test('keeps provider priority stable and unique', () => {
     const priorities = aiProviderTemplates.map((provider) => provider.priority);
     expect(priorities).toEqual([...priorities].sort((left, right) => left - right));

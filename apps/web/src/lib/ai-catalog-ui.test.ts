@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import type { AiModel, AiProvider } from '@dicha/shared';
-import { compareProvidersByEnabled, getAssignableModelGroups, lobeProviderKey } from './ai-catalog-ui';
+import {
+  compareProvidersByEnabled,
+  fallbackModelIds,
+  firstAssignableModelId,
+  getAssignableModelGroups,
+  getAssignableModelMap,
+  lobeProviderKey,
+} from './ai-catalog-ui';
 
 describe('AI catalog UI helpers', () => {
   test('maps Dicha provider ids to LobeHub provider icon keys', () => {
@@ -46,6 +53,50 @@ describe('AI catalog UI helpers', () => {
       ['openai:gpt-4o'],
       ['anthropic:claude'],
     ]);
+  });
+
+  test('finds the first assignable saved fallback without treating unavailable ids as selected', () => {
+    const catalog = {
+      providers: [
+        provider({ id: 'openai', name: 'OpenAI', priority: 1 }),
+        provider({ id: 'disabled-provider', name: 'Disabled Provider', priority: 2, status: 'disabled' }),
+      ],
+      models: [
+        model({ id: 'disabled-provider:gpt-4o', providerId: 'disabled-provider', name: 'gpt-4o' }),
+        model({ id: 'openai:gpt-4o-disabled', providerId: 'openai', name: 'gpt-4o-disabled', enabled: false }),
+        model({ id: 'openai:gpt-4o', providerId: 'openai', name: 'gpt-4o' }),
+        model({ id: 'openai:gpt-4.1', providerId: 'openai', name: 'gpt-4.1' }),
+      ],
+    };
+    const assignableModels = getAssignableModelMap(catalog);
+
+    expect(
+      firstAssignableModelId(
+        ['disabled-provider:gpt-4o', 'openai:gpt-4o-disabled', 'openai:gpt-4o'],
+        assignableModels,
+      ),
+    ).toBe('openai:gpt-4o');
+    expect(
+      firstAssignableModelId(['openai:gpt-4o', 'openai:gpt-4.1'], assignableModels, 'openai:gpt-4o'),
+    ).toBe('openai:gpt-4.1');
+  });
+
+  test('preserves fallback ids when changing primary unless they conflict with the new primary', () => {
+    expect(
+      fallbackModelIds({
+        current: ['openai:gpt-4.1', 'anthropic:claude'],
+        nextFirst: 'openai:gpt-4.1',
+        primaryModelId: 'openai:gpt-4o',
+      }),
+    ).toEqual(['openai:gpt-4.1', 'anthropic:claude']);
+
+    expect(
+      fallbackModelIds({
+        current: ['openai:gpt-4.1', 'anthropic:claude'],
+        nextFirst: 'openai:gpt-4.1',
+        primaryModelId: 'openai:gpt-4.1',
+      }),
+    ).toEqual(['anthropic:claude']);
   });
 });
 

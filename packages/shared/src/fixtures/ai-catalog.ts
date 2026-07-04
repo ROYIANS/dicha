@@ -539,7 +539,7 @@ const aggregatorProviderIds = new Set([
 const localProviderIds = new Set(['comfyui']);
 const localNoCredentialProviderIds = new Set(['comfyui']);
 const mediaProviderIds = new Set(['bfl']);
-const openAiLikeSdkTypes = new Set(['openai', 'ollama']);
+const openAiLikeSdkTypes = new Set(['openai', 'ollama', 'router']);
 
 const generatedProviderTemplates = lobeProviderCards
   .filter((card) => lobeModelBankProviderIds.has(card.lobeProviderId))
@@ -611,10 +611,17 @@ function providerDescription(card: LobeProviderCard): string {
 function providerBaseUrl(card: LobeProviderCard): string {
   const proxyUrl = card.settings?.proxyUrl || card.proxyUrl;
   if (proxyUrl && typeof proxyUrl === 'object' && isHttpUrl(proxyUrl.placeholder)) {
-    return proxyUrl.placeholder;
+    return normalizeProviderBaseUrl(card, proxyUrl.placeholder);
   }
-  if (isHttpUrl(card.url)) return card.url;
+  if (isHttpUrl(card.url)) return normalizeProviderBaseUrl(card, card.url);
   return 'https://example.com';
+}
+
+function normalizeProviderBaseUrl(card: LobeProviderCard, baseUrl: string): string {
+  if (card.settings?.sdkType !== 'router') return baseUrl;
+  const normalized = baseUrl.replace(/\/+$/, '');
+  if (/\/(api\/)?v\d+(\/openai)?$/i.test(normalized)) return normalized;
+  return `${normalized}/v1`;
 }
 
 function providerCategory(providerId: string): AiProviderCategory {

@@ -309,6 +309,7 @@ export class CatalogStore {
   private normalizeProvider(
     provider: PersistedConfig['providers'][number],
   ): PersistedConfig['providers'][number] {
+    const seed = provider.custom ? undefined : aiCatalogSeed.providers.find((item) => item.id === provider.id);
     const legacyProvider = provider as PersistedConfig['providers'][number] & {
       avatar?: string;
       billingMode?: AiProvider['billingMode'];
@@ -316,7 +317,7 @@ export class CatalogStore {
       credentialMode?: AiProvider['credentialMode'];
       modelSyncMode?: AiProvider['modelSyncMode'];
     };
-    const normalizedProvider = {
+    const normalizedProviderBase = {
       ...provider,
       avatar: legacyProvider.avatar ?? provider.shortName,
       billingMode: legacyProvider.billingMode ?? 'user_provider',
@@ -324,6 +325,23 @@ export class CatalogStore {
       credentialMode: legacyProvider.credentialMode ?? 'user_api_key',
       modelSyncMode: legacyProvider.modelSyncMode ?? 'openai_models_endpoint',
     } satisfies PersistedConfig['providers'][number];
+    const normalizedProvider = seed
+      ? ({
+          ...normalizedProviderBase,
+          name: seed.name,
+          shortName: seed.shortName,
+          description: seed.description,
+          baseUrl: this.refreshSeedBaseUrl(normalizedProviderBase.baseUrl, seed.baseUrl),
+          category: seed.category,
+          authType: seed.authType,
+          requestFormat: seed.requestFormat,
+          credentialMode: seed.credentialMode,
+          billingMode: seed.billingMode,
+          modelSyncMode: seed.modelSyncMode,
+          priority: seed.priority,
+          custom: seed.custom,
+        } satisfies PersistedConfig['providers'][number])
+      : normalizedProviderBase;
     return {
       ...normalizedProvider,
       credentialState: this.credentialState(
@@ -332,6 +350,14 @@ export class CatalogStore {
         normalizedProvider,
       ),
     };
+  }
+
+  private refreshSeedBaseUrl(currentBaseUrl: string, seedBaseUrl: string): string {
+    const current = currentBaseUrl.replace(/\/+$/, '');
+    const seed = seedBaseUrl.replace(/\/+$/, '');
+    if (current === seed) return current;
+    if (seed.startsWith(`${current}/`)) return seed;
+    return currentBaseUrl;
   }
 
   private normalizeModel(model: AiModel): AiModel {
