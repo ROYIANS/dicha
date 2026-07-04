@@ -927,3 +927,36 @@ Implemented user-scoped AI provider configuration, modal layering fixes, provide
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: AI invoke routing and admin demo
+
+**Date**: 2026-07-04
+**Task**: AI invoke routing and admin demo
+**Branch**: `main`
+
+### Summary
+
+Implemented real non-streaming AI invoke routing with provider adapters and fallback handling, added super-admin gated AI invoke demo page, tightened AI settings model/provider selection behavior, and archived the AI routing degradation task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d8e2cdf` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
