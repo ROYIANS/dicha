@@ -1231,3 +1231,36 @@ Implemented real CNY/USD AI usage cost recording and admin DicHA analytics impro
 ### Next Steps
 
 - None - task complete
+
+
+## Session 35: Fix official DicHA provider settings
+
+**Date**: 2026-07-04
+**Task**: Fix official DicHA provider settings
+**Branch**: `main`
+
+### Summary
+
+Removed frontend maintenance actions from the official Dicha AI provider, deleted the unusable Dicha Assistant placeholder model, and documented the official provider catalog boundary.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f5ff90d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
