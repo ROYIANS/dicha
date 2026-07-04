@@ -993,3 +993,37 @@ Fixed AI provider model sync capability detection for LobeHub router providers s
 ### Next Steps
 
 - None - task complete
+
+
+## Session 28: UI patterns and themed gradients
+
+**Date**: 2026-07-04
+**Task**: UI patterns and themed gradients
+**Branch**: `main`
+
+### Summary
+
+Added theme-aware landing banner and hero gradients, introduced reusable settings woven-pattern ornaments, updated frontend aesthetic spec, and recorded the Trellis task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3d1488f` | (see git log) |
+| `7dddbeb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

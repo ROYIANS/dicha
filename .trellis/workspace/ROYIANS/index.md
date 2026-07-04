@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 27
+- **Total Sessions**: 28
 - **Last Active**: 2026-07-04
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~995 | Active |
+| `journal-1.md` | ~1029 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 28 | 2026-07-04 | UI patterns and themed gradients | `3d1488f`, `7dddbeb` | `main` |
 | 27 | 2026-07-04 | AI provider sync and model assignment fixes | `065828b` | `main` |
 | 26 | 2026-07-04 | AI invoke routing and admin demo | `d8e2cdf` | `main` |
 | 25 | 2026-07-03 | 昼夜模式自动切换 | `e2adc55` | `main` |
