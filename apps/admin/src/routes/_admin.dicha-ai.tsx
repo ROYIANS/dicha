@@ -93,8 +93,8 @@ function DichaAiServicePage() {
   return (
     <div>
       <PageHeader
-        eyebrow="DicHA AI Service"
-        title="DicHA AI 服务"
+        eyebrow="Dicha AI Service"
+        title="Dicha AI 服务"
         description="连接多个内部上游供应商，同步模型，并把启用模型映射成用户前台看到的 DX 模型。"
       />
 
@@ -117,7 +117,7 @@ function DichaAiServicePage() {
           {service.isPending ? (
             <EmptyState text="正在加载内部供应商" />
           ) : service.isError ? (
-            <EmptyState tone="error" text="DicHA AI 服务加载失败" />
+            <EmptyState tone="error" text="Dicha AI 服务加载失败" />
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="divide-y divide-hairline">
@@ -150,7 +150,7 @@ function DichaAiServicePage() {
                 {selectedProvider ? `${selectedProvider.name} 上游模型` : '上游模型'}
               </p>
               <p className="mt-1 text-xs leading-5 text-ink-soft">
-                从内部供应商同步出来的模型，启用后会聚合到用户端 DicHA AI 下。
+                从内部供应商同步出来的模型，启用后会聚合到用户端 Dicha AI 下。
               </p>
             </div>
             <button
@@ -528,7 +528,7 @@ function DichaModelForm({
       </Field>
       <div className="rounded-md border border-hairline bg-surface-alt p-3">
         <div>
-          <p className="text-xs font-semibold text-ink">DicHA 计费价</p>
+          <p className="text-xs font-semibold text-ink">Dicha 计费价</p>
           <p className="mt-1 text-xs leading-5 text-ink-soft">
             记录真实结算价格；后续积分制按这里的价格做折算。
           </p>
@@ -559,7 +559,7 @@ function DichaModelForm({
                 setForm((current) => ({ ...current, dxPriceHint: event.target.value }))
               }
               className="admin-input"
-              placeholder="例如 DicHA AI 按量计费"
+              placeholder="例如 Dicha AI 按量计费"
             />
           </Field>
         </div>

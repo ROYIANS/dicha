@@ -36,7 +36,7 @@ export const Route = createFileRoute('/_admin/ai-invoke-test')({
 function AiInvokeTestPage() {
   const [useCase, setUseCase] = useState<AiModelUseCase>('assistant');
   const [modelId, setModelId] = useState('');
-  const [prompt, setPrompt] = useState('请用一句话确认 DicHA AI 官方流式调用是否正常。');
+  const [prompt, setPrompt] = useState('请用一句话确认 Dicha AI 官方流式调用是否正常。');
   const [isRunning, setIsRunning] = useState(false);
   const [streamText, setStreamText] = useState('');
   const [attempts, setAttempts] = useState<AiInvokeAttempt[]>([]);
@@ -95,7 +95,7 @@ function AiInvokeTestPage() {
       <PageHeader
         eyebrow="AI Stream Test"
         title="AI 调用测试"
-        description="通过当前超级管理员身份调用官方 DicHA AI 路径，验证流式输出、降级 attempts、token 与积分结算摘要。"
+        description="通过当前超级管理员身份调用官方 Dicha AI 路径，验证流式输出、降级 attempts、token 与积分结算摘要。"
       />
       <div className="grid gap-4 p-5 lg:grid-cols-[360px_minmax(0,1fr)] lg:p-8">
         <section className="rounded-md border border-hairline bg-surface">

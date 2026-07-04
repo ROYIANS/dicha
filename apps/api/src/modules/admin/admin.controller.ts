@@ -134,6 +134,16 @@ export class AdminController {
     }));
   }
 
+  @TsRestHandler(contract.admin.getDichaAiDiagnostics)
+  getDichaAiDiagnostics(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.getDichaAiDiagnostics>
+  > {
+    return tsRestHandler(contract.admin.getDichaAiDiagnostics, async ({ query }) => ({
+      status: 200,
+      body: await this.admin.getDichaAiDiagnostics(query),
+    }));
+  }
+
   @TsRestHandler(contract.admin.getCreditRules)
   getCreditRules(): ReturnType<typeof tsRestHandler<typeof contract.admin.getCreditRules>> {
     return tsRestHandler(contract.admin.getCreditRules, async () => ({

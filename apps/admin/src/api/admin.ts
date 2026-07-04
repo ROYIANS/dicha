@@ -13,6 +13,7 @@ import {
   AdminCreditRuleSchema,
   AdminCreditRulesOverviewSchema,
   AdminDichaAiServiceOverviewSchema,
+  AdminDichaAiDiagnosticsReportSchema,
   AdminDichaAiUsageReportSchema,
   AdminDichaInternalProviderSyncResponseSchema,
   AdminOverviewSchema,
@@ -39,6 +40,8 @@ import {
   type AdminCreditRulesOverview,
   type AdminCreditRuleUpsert,
   type AdminDichaAiServiceOverview,
+  type AdminDichaAiDiagnosticsQuery,
+  type AdminDichaAiDiagnosticsReport,
   type AdminDichaAiUsageReport,
   type AdminDichaInternalProviderSyncResponse,
   type AdminDichaModelUpdate,
@@ -62,6 +65,7 @@ export type AdminDichaAiUsageQueryInput = {
   window?: AiUsageWindow;
   logLimit?: number;
 };
+export type AdminDichaAiDiagnosticsQueryInput = Partial<AdminDichaAiDiagnosticsQuery>;
 
 export type AdminCreditBalancesQueryInput = Partial<AdminCreditBalancesQuery>;
 export type AdminCreditLedgerQueryInput = Partial<AdminCreditLedgerQuery>;
@@ -178,7 +182,7 @@ export function adminDichaAiServiceQueryOptions() {
     queryFn: async () => {
       const res = await api.admin.getDichaAiService();
       if (res.status !== 200) {
-        throw new Error(`Admin DicHA AI service request failed (${res.status})`);
+        throw new Error(`Admin Dicha AI service request failed (${res.status})`);
       }
       return AdminDichaAiServiceOverviewSchema.parse(res.body);
     },
@@ -192,7 +196,7 @@ export async function upsertAdminDichaInternalProvider(
 ): Promise<AdminAiInternalProvider> {
   const res = await api.admin.upsertDichaInternalProvider({ body });
   if (res.status !== 200) {
-    throw new Error(`Admin DicHA internal provider save failed (${res.status})`);
+    throw new Error(`Admin Dicha internal provider save failed (${res.status})`);
   }
   return AdminAiInternalProviderSchema.parse(res.body);
 }
@@ -202,7 +206,7 @@ export async function syncAdminDichaInternalProviderModels(
 ): Promise<AdminDichaInternalProviderSyncResponse> {
   const res = await api.admin.syncDichaInternalProviderModels({ body: { providerId } });
   if (res.status !== 200) {
-    throw new Error(`Admin DicHA internal provider sync failed (${res.status})`);
+    throw new Error(`Admin Dicha internal provider sync failed (${res.status})`);
   }
   return AdminDichaInternalProviderSyncResponseSchema.parse(res.body);
 }
@@ -212,7 +216,7 @@ export async function updateAdminDichaModel(
 ): Promise<AdminDichaAiServiceOverview> {
   const res = await api.admin.updateDichaModel({ body });
   if (res.status !== 200) {
-    throw new Error(`Admin DicHA model update failed (${res.status})`);
+    throw new Error(`Admin Dicha model update failed (${res.status})`);
   }
   return AdminDichaAiServiceOverviewSchema.parse(res.body);
 }
@@ -227,11 +231,39 @@ export function adminDichaAiUsageQueryOptions(query: AdminDichaAiUsageQueryInput
     queryFn: async () => {
       const res = await api.admin.getDichaAiUsage({ query: normalizedQuery });
       if (res.status !== 200) {
-        throw new Error(`Admin DicHA AI usage request failed (${res.status})`);
+        throw new Error(`Admin Dicha AI usage request failed (${res.status})`);
       }
       return AdminDichaAiUsageReportSchema.parse(res.body);
     },
     staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export function adminDichaAiDiagnosticsQueryOptions(
+  query: AdminDichaAiDiagnosticsQueryInput = {},
+) {
+  const normalizedQuery = {
+    window: query.window ?? '7d',
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 50,
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.errorCategory ? { errorCategory: query.errorCategory } : {}),
+    ...(query.requestId ? { requestId: query.requestId } : {}),
+    ...(query.userSearch ? { userSearch: query.userSearch } : {}),
+    ...(query.modelSearch ? { modelSearch: query.modelSearch } : {}),
+    ...(query.internalChannelId ? { internalChannelId: query.internalChannelId } : {}),
+  };
+  return queryOptions<AdminDichaAiDiagnosticsReport>({
+    queryKey: ['admin', 'ai', 'dicha-diagnostics', normalizedQuery] as const,
+    queryFn: async () => {
+      const res = await api.admin.getDichaAiDiagnostics({ query: normalizedQuery });
+      if (res.status !== 200) {
+        throw new Error(`Admin Dicha AI diagnostics request failed (${res.status})`);
+      }
+      return AdminDichaAiDiagnosticsReportSchema.parse(res.body);
+    },
+    staleTime: 15 * 1000,
     retry: false,
   });
 }

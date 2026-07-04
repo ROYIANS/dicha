@@ -44,7 +44,7 @@ export class CreditStore {
       create: { ownerId },
     });
     if (account.balance < charge.amount) {
-      throw new Error(`Insufficient DicHA credits: need ${charge.amount}, current ${account.balance}`);
+      throw new Error(`Insufficient Dicha credits: need ${charge.amount}, current ${account.balance}`);
     }
   }
 
@@ -54,7 +54,7 @@ export class CreditStore {
     completionTokens: number,
   ): Promise<CreditCharge> {
     if (!model.pricing) {
-      throw new Error('Official DicHA model pricing is not configured');
+      throw new Error('Official Dicha model pricing is not configured');
     }
     const rule = await this.activeRule();
     const costCurrency = model.pricing.currency;

@@ -365,7 +365,7 @@ export const zh = {
         aiUsage: {
           title: 'AI 消费统计',
           subtitle: '查看经过网关的 AI 调用、Token 和积分消耗。',
-          scopeNote: '统计按当前登录用户隔离；官方 DicHA AI 显示积分消耗，自定义供应商只记录 token、延迟和状态。',
+          scopeNote: '统计按当前登录用户隔离；官方 Dicha AI 显示积分消耗，自定义供应商只记录 token、延迟和状态。',
           windows: {
             '24h': '24 小时',
             '7d': '7 天',
@@ -431,13 +431,13 @@ export const zh = {
         },
         credits: {
           title: '积分',
-          subtitle: '查看你的 DicHA AI 积分余额、兑换码入口和近期积分流水。',
+          subtitle: '查看你的 Dicha AI 积分余额、兑换码入口和近期积分流水。',
           balance: '当前余额',
           balanceDesc: '后续充值会进入这里',
           lifetimeGranted: '累计获得',
           lifetimeGrantedDesc: '管理员发放与兑换码',
           lifetimeSpent: '累计消耗',
-          lifetimeSpentDesc: '官方 DicHA AI 调用',
+          lifetimeSpentDesc: '官方 Dicha AI 调用',
           redeemTitle: '兑换码',
           redeemDesc: '用于后续充值、活动赠送或内部测试发放。',
           codePlaceholder: '输入兑换码',

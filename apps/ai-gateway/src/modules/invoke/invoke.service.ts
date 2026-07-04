@@ -726,7 +726,7 @@ export class InvokeService {
       await this.creditStore.assertSufficientReserve(ownerId, target.model, request);
       return null;
     } catch {
-      return this.invokeError('quota', 'DicHA credits are insufficient for this AI request', false);
+      return this.invokeError('quota', 'Dicha credits are insufficient for this AI request', false);
     }
   }
 

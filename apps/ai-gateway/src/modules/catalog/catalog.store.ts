@@ -512,7 +512,7 @@ export class CatalogStore {
       recommended: record.dxRecommended,
       availability: record.availability as AiModel['availability'],
       lastLatencyMs: null,
-      priceHint: record.dxPriceHint ?? 'DicHA AI 模型',
+      priceHint: record.dxPriceHint ?? 'Dicha AI 模型',
       catalogSource: 'dicha_catalog',
       pricing: this.optionalJson<AiModel['pricing']>(record.dxPricing),
       releasedAt: record.releasedAt ?? undefined,

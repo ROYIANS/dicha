@@ -4,6 +4,7 @@ import {
   AiUsageBreakdownSchema,
   AiUsageDistributionsSchema,
   AiUsageEventSchema,
+  AiUsageStatusSchema,
   AiUsagePerformanceSchema,
   AiUsageQuerySchema,
   AiUsageSummarySchema,
@@ -11,6 +12,7 @@ import {
   AiModelCapabilitySchema,
   AiModelPricingSchema,
   AiModelTypeSchema,
+  AiInvokeErrorCategorySchema,
   AiProviderRequestFormatSchema,
   AiUsageWindowSchema,
 } from './ai.contract';
@@ -369,6 +371,55 @@ export const AdminDichaAiUsageReportSchema = z.object({
 
 export type AdminDichaAiUsageReport = z.infer<typeof AdminDichaAiUsageReportSchema>;
 
+export const AdminDichaAiDiagnosticsQuerySchema = z.object({
+  window: AiUsageWindowSchema.default('7d'),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(10).max(100).default(50),
+  status: AiUsageStatusSchema.optional(),
+  errorCategory: AiInvokeErrorCategorySchema.optional(),
+  requestId: z.string().trim().max(120).optional(),
+  userSearch: z.string().trim().max(120).optional(),
+  modelSearch: z.string().trim().max(160).optional(),
+  internalChannelId: z.string().trim().max(160).optional(),
+});
+
+export type AdminDichaAiDiagnosticsQuery = z.infer<
+  typeof AdminDichaAiDiagnosticsQuerySchema
+>;
+
+export const AdminDichaAiDiagnosticsFilterOptionSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  count: z.number().int().min(0),
+});
+
+export type AdminDichaAiDiagnosticsFilterOption = z.infer<
+  typeof AdminDichaAiDiagnosticsFilterOptionSchema
+>;
+
+export const AdminDichaAiDiagnosticsReportSchema = z.object({
+  generatedAt: z.string().datetime(),
+  window: AiUsageWindowSchema,
+  from: z.string().datetime().nullable(),
+  to: z.string().datetime(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(10).max(100),
+  total: z.number().int().min(0),
+  totalPages: z.number().int().min(0),
+  summary: AiUsageSummarySchema,
+  events: z.array(AdminDichaAiUsageEventSchema),
+  filters: z.object({
+    statuses: z.array(AdminDichaAiDiagnosticsFilterOptionSchema),
+    errorCategories: z.array(AdminDichaAiDiagnosticsFilterOptionSchema),
+    models: z.array(AdminDichaAiDiagnosticsFilterOptionSchema),
+    internalChannels: z.array(AdminDichaAiDiagnosticsFilterOptionSchema),
+  }),
+});
+
+export type AdminDichaAiDiagnosticsReport = z.infer<
+  typeof AdminDichaAiDiagnosticsReportSchema
+>;
+
 export const AdminCreditRuleSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -572,7 +623,7 @@ export const adminContract = c.router({
     responses: {
       200: AdminDichaAiServiceOverviewSchema,
     },
-    summary: 'Super admin DicHA AI internal service overview',
+    summary: 'Super admin Dicha AI internal service overview',
   },
   upsertDichaInternalProvider: {
     method: 'POST',
@@ -581,7 +632,7 @@ export const adminContract = c.router({
     responses: {
       200: AdminAiInternalProviderSchema,
     },
-    summary: 'Create or update a DicHA AI internal upstream provider',
+    summary: 'Create or update a Dicha AI internal upstream provider',
   },
   syncDichaInternalProviderModels: {
     method: 'POST',
@@ -590,7 +641,7 @@ export const adminContract = c.router({
     responses: {
       200: AdminDichaInternalProviderSyncResponseSchema,
     },
-    summary: 'Sync models for a DicHA AI internal upstream provider',
+    summary: 'Sync models for a Dicha AI internal upstream provider',
   },
   updateDichaModel: {
     method: 'POST',
@@ -599,7 +650,7 @@ export const adminContract = c.router({
     responses: {
       200: AdminDichaAiServiceOverviewSchema,
     },
-    summary: 'Update a DicHA AI model mapping and display settings',
+    summary: 'Update a Dicha AI model mapping and display settings',
   },
   getDichaAiUsage: {
     method: 'GET',
@@ -608,7 +659,16 @@ export const adminContract = c.router({
     responses: {
       200: AdminDichaAiUsageReportSchema,
     },
-    summary: 'Super admin DicHA AI official usage analytics',
+    summary: 'Super admin Dicha AI official usage analytics',
+  },
+  getDichaAiDiagnostics: {
+    method: 'GET',
+    path: '/admin/ai/dicha-diagnostics',
+    query: AdminDichaAiDiagnosticsQuerySchema,
+    responses: {
+      200: AdminDichaAiDiagnosticsReportSchema,
+    },
+    summary: 'Super admin Dicha AI request diagnostics',
   },
   getCreditRules: {
     method: 'GET',

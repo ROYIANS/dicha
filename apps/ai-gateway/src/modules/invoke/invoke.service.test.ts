@@ -12,7 +12,7 @@ vi.mock('../credits/credit.store', () => ({ CreditStore: class CreditStore {} })
 vi.mock('../usage/usage.store', () => ({ UsageStore: class UsageStore {} }));
 
 describe('InvokeService official channel degradation', () => {
-  test('retries another DicHA channel and settles credits only for the successful attempt', async () => {
+  test('retries another Dicha channel and settles credits only for the successful attempt', async () => {
     const catalogStore = {
       getCatalog: vi.fn(async () => catalog),
       getSystemProviderChannels: vi.fn(async () => channels),
@@ -94,7 +94,7 @@ describe('InvokeService official channel degradation', () => {
     );
   });
 
-  test('streams through a fallback DicHA channel and settles credits after final output', async () => {
+  test('streams through a fallback Dicha channel and settles credits after final output', async () => {
     const catalogStore = {
       getCatalog: vi.fn(async () => catalog),
       getSystemProviderChannels: vi.fn(async () => channels),
@@ -182,9 +182,9 @@ describe('InvokeService official channel degradation', () => {
 
 const provider: AiProvider = {
   id: 'dicha',
-  name: 'DicHA AI',
-  shortName: 'DicHA',
-  description: 'Official DicHA AI service',
+  name: 'Dicha AI',
+  shortName: 'Dicha',
+  description: 'Official Dicha AI service',
   baseUrl: 'https://gateway.dicha.local',
   status: 'enabled',
   category: 'official',
@@ -201,7 +201,7 @@ const model: AiModel = {
   id: 'dicha:assistant-pro',
   providerId: 'dicha',
   name: 'assistant-pro',
-  displayName: 'DicHA Assistant Pro',
+  displayName: 'Dicha Assistant Pro',
   contextWindow: 128_000,
   modelType: 'chat',
   extensionParameters: [],

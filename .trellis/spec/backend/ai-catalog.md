@@ -75,14 +75,14 @@
 - Good: allow model sync before API Key entry, so providers with public model-list endpoints can populate their catalog immediately.
 - Good: allow deleting a custom provider or custom/upstream model from settings, and prune assignments that point at removed models.
 - Bad: make official `Dicha AI` look like a normal missing API key provider, or enable sync/check for `manual` and `platform_catalog` providers.
-- Bad: seed an official Dicha placeholder model before that model can be configured and invoked through the admin/system-managed DicHA AI service.
+- Bad: seed an official Dicha placeholder model before that model can be configured and invoked through the admin/system-managed Dicha AI service.
 - Bad: reintroduce file-backed JSON persistence for catalog or usage data; AI gateway runtime state belongs in PostgreSQL.
 - Bad: map upstream `/models` to `string[]` and create every new synced model as `4096` context / `chat` only when the response or model bank contains richer metadata.
 
 ### 6. Tests Required
 
 - Provider/model bank test asserts curated provider prefix, stable unique priorities, full LobeHub provider coverage, no model provider missing a template, key provider model counts from LobeHub, DeepSeek V4 model ids/metadata, and official Dicha AI credential/billing semantics.
-- Provider/model bank test asserts the generated model bank and default assignments do not contain a placeholder Dicha model until the admin-managed DicHA catalog exists.
+- Provider/model bank test asserts the generated model bank and default assignments do not contain a placeholder Dicha model until the admin-managed Dicha catalog exists.
 - Web helper tests cover the official Dicha provider branch used by settings UI to hide frontend check/sync/add-model actions.
 - Gateway typecheck must cover persisted config normalization and no-credential local providers.
 - Gateway sync checks must cover known-model metadata enrichment, current enabled-state preservation, and unknown-model metadata-pending behavior when neither upstream nor model bank provides required metadata.
@@ -181,10 +181,10 @@ const model = {
   - Anthropic: strip trailing `/v1` or `/v1/messages`, then append `/v1/messages`.
 - Gateway must never return decrypted secrets, Authorization headers, raw upstream stack traces, or full upstream error objects to API/web callers.
 - `kind: 'invoke'` usage events represent real user AI calls. Probe/check/model sync logs must not be counted as user consumption.
-- Usage estimates must use real settlement currencies only: `CNY` or `USD`. DicHA credits are a future pricing abstraction and must not be accepted as `AiModelPricing.currency`.
+- Usage estimates must use real settlement currencies only: `CNY` or `USD`. Dicha credits are a future pricing abstraction and must not be accepted as `AiModelPricing.currency`.
 - Usage records must write both the real estimate pair (`estimatedCostAmount`, `estimatedCostCurrency`) and the legacy USD total (`estimatedCostUsd`). For `USD` pricing, all three fields are populated with USD values. For `CNY` pricing, `estimatedCostAmount` is the CNY amount, `estimatedCostCurrency: 'CNY'`, and `estimatedCostUsd: 0` unless a formal FX conversion policy is introduced.
 - Missing pricing records `estimatedCostAmount: 0`, `estimatedCostCurrency: null`, and `estimatedCostUsd: 0` rather than blocking the call.
-- Admin DicHA usage analytics must aggregate `summary.costByCurrency` instead of treating `estimatedCostUsd` as total spend. Super-admin pages may display CNY and USD side by side, but must not invent exchange-rate conversion.
+- Admin Dicha usage analytics must aggregate `summary.costByCurrency` instead of treating `estimatedCostUsd` as total spend. Super-admin pages may display CNY and USD side by side, but must not invent exchange-rate conversion.
 - `status: 'degraded'` means the final response succeeded on a fallback after at least one earlier attempt failed.
 - `status: 'failure'` means every attempted model failed or routing could not produce an attempt.
 
@@ -339,7 +339,7 @@ summary.costByCurrency = groupByCurrency(events, (event) => ({
   - `AiUsageEvent` — append-only user-scoped invoke/probe usage events.
   - `AiProviderDirectorySetting` — super-admin managed visibility and default request configuration for built-in user-owned provider templates.
   - `AiProviderDirectoryModel` — super-admin managed default model pool for a built-in user-owned provider template.
-  - `AiInternalProvider` — super-admin managed upstream provider/channel behind the official DicHA AI service.
+  - `AiInternalProvider` — super-admin managed upstream provider/channel behind the official Dicha AI service.
   - `AiInternalProviderModel` — upstream model synced from an internal provider, plus its DX-facing model id/name/parameter mapping.
   - `AiSystemProviderChannel` — legacy/simple internal upstream channel for `platform_managed` providers such as `dicha`; new admin UI should prefer `AiInternalProvider` + `AiInternalProviderModel`.
 - Gateway DB client: `apps/ai-gateway/src/prisma/prisma.service.ts`, generated from the shared Prisma schema into `apps/ai-gateway/src/generated/prisma`.
@@ -377,20 +377,26 @@ summary.costByCurrency = groupByCurrency(events, (event) => ({
   - `(ownerId, status, createdAt)`
   - `(providerId, createdAt)` for super-admin official-provider global analytics
   - `(providerId, status, createdAt)` for super-admin official-provider status analytics
+  - `(providerId, errorCategory, createdAt)` for official-provider diagnostic filtering
+  - `(providerId, modelId, createdAt)` for model-scoped official diagnostics
+  - `(providerId, internalProviderId, createdAt)` and `(providerId, internalProviderModelId, createdAt)` for internal channel investigation
 - `platform_managed` invoke attempts must resolve an enabled `AiSystemProviderChannel` by `(providerId, modelId)` and use that channel's upstream base URL, upstream model name, request format, auth type, and encrypted secret.
-- `AiInternalProvider` and `AiInternalProviderModel` are the DicHA/internal service layer: admin pages may connect multiple internal upstream providers, sync their models, and enable selected models as DX-facing DicHA models. They must not present the official `dicha` provider itself as a normal user-facing enable/disable toggle.
+- `AiInternalProvider` and `AiInternalProviderModel` are the Dicha/internal service layer: admin pages may connect multiple internal upstream providers, sync their models, and enable selected models as DX-facing Dicha models. They must not present the official `dicha` provider itself as a normal user-facing enable/disable toggle.
 - Enabled `AiInternalProviderModel` rows are aggregated into the user catalog under the single `dicha` provider using their `dxModelId`, `dxDisplayName`, recommendation flag, sort order, and parameter config metadata.
-- `AiInternalProviderModel.pricing` is upstream/model-bank reference pricing only. It may be missing because most OpenAI-compatible `/models` responses only expose model ids. `AiInternalProviderModel.dxPricing` is the DicHA-owned user billing price and must be the pricing propagated into the user-facing `dicha` catalog model for usage cost estimation.
-- Admin DicHA model configuration should expose both upstream reference pricing and editable DicHA billing pricing. Store initial `dxPricing` from upstream/model-bank metadata when available, but treat later admin edits as the authoritative billing standard.
-- DicHA model pricing configuration stores **cost price** (`成本价`): the real CNY or USD cost paid to the upstream supplier for input/output usage. These fields are not user-facing sale prices and are not credits.
-- DicHA billing price configuration must support both simple fixed token rates (`inputPerMillionTokens` / `outputPerMillionTokens`) and structured `units` pricing with `fixed`, `tiered`, or `lookup` strategies. Tiered prices should be stored as `units[].tiers[]` rather than flattened into a single average rate.
+- `AiInternalProviderModel.pricing` is upstream/model-bank reference pricing only. It may be missing because most OpenAI-compatible `/models` responses only expose model ids. `AiInternalProviderModel.dxPricing` is the Dicha-owned user billing price and must be the pricing propagated into the user-facing `dicha` catalog model for usage cost estimation.
+- Admin Dicha model configuration should expose both upstream reference pricing and editable Dicha billing pricing. Store initial `dxPricing` from upstream/model-bank metadata when available, but treat later admin edits as the authoritative billing standard.
+- Dicha model pricing configuration stores **cost price** (`成本价`): the real CNY or USD cost paid to the upstream supplier for input/output usage. These fields are not user-facing sale prices and are not credits.
+- Dicha billing price configuration must support both simple fixed token rates (`inputPerMillionTokens` / `outputPerMillionTokens`) and structured `units` pricing with `fixed`, `tiered`, or `lookup` strategies. Tiered prices should be stored as `units[].tiers[]` rather than flattened into a single average rate.
 - Credits are a separate internal consumption unit, not a model settlement currency. The billing chain is: **cost price (`CNY`/`USD`) -> credits -> user paid price**.
 - The cost-price-to-credit mapping is the platform's cost allocation rule. It may start as a simple multiplier and later become a richer policy that accounts for currency, model class, risk buffer, minimum charge, or promotional adjustments.
 - The credit-to-user-payment mapping is the product pricing rule. It defines how many credits a user receives for a recharge/payment amount and may differ by package, promotion, region, tax treatment, or subscription tier.
 - Usage records must preserve real estimated cost as `estimatedCostAmount + estimatedCostCurrency`. They may also record derived credit consumption in a future ledger, but derived credits must not overwrite the real CNY/USD cost fields.
 - The existing usage analytics field `estimatedCostUsd` is an estimate for USD-denominated model pricing only. Do not silently convert CNY pricing into USD without an explicit exchange-rate/settlement policy; official-channel dashboards should aggregate `costByCurrency` and future credit ledgers separately.
-- Super-admin DicHA AI usage analytics must query `AiUsageEvent` globally with `kind = 'invoke'` and `providerId = 'dicha'`. It must not include user-owned BYOK providers in official-channel dashboards.
-- Super-admin DicHA AI usage logs may include safe user identity fields (`id`, `email`, `name`) to trace call origin, but must not include prompt content, responses, credentials, or user-owned private content records.
+- Super-admin Dicha AI usage analytics must query `AiUsageEvent` globally with `kind = 'invoke'` and `providerId = 'dicha'`. It must not include user-owned BYOK providers in official-channel dashboards.
+- Super-admin Dicha AI usage logs may include safe user identity fields (`id`, `email`, `name`) to trace call origin, but must not include prompt content, responses, credentials, or user-owned private content records.
+- Super-admin Dicha AI diagnostics is a request-investigation API, separate from analytics. Its first filter set is: `window`, `status`, `errorCategory`, `requestId` (matches request or upstream request id), `userSearch` (email/name), `modelSearch` (id/name), and `internalChannelId` (internal provider or provider-model id).
+- Diagnostic filters must compose with `AND`, with each text field using its own internal `OR` group. Do not build a where object by spreading multiple top-level `OR` clauses, because later spreads overwrite earlier conditions.
+- Diagnostic responses may expose request ids, upstream request ids, internal provider/model ids, safe user identity, tokens, credits, cost summary, status, latency, and error category. They must not expose prompt text, response text, decrypted credentials, Authorization headers, or raw upstream error objects.
 - Admin AI provider APIs must be protected by `AuthGuard + SuperAdminGuard` and must never return channel credentials.
 - The API service may encrypt system channel credentials only with the same `AI_GATEWAY_SECRET_KEY` that the gateway uses to decrypt them; this key must not be exposed to any Vite app.
 
@@ -404,26 +410,29 @@ summary.costByCurrency = groupByCurrency(events, (event) => ({
 | Super-admin disables a built-in user provider | Gateway normalization removes that built-in provider, its seeded models, and assignments that reference unavailable models from user catalogs. |
 | Super-admin enables a built-in user provider | Gateway normalization can seed that provider and its model-bank models into user catalogs on the next catalog read. |
 | Super-admin syncs provider-directory models | Synced rows populate `AiProviderDirectoryModel`; future user catalogs use enabled rows from this DB pool instead of the static model bank for that provider. |
-| Super-admin syncs DicHA internal provider models | Synced rows populate `AiInternalProviderModel`; only enabled rows with an enabled internal provider become user-visible DicHA models. |
+| Super-admin syncs Dicha internal provider models | Synced rows populate `AiInternalProviderModel`; only enabled rows with an enabled internal provider become user-visible Dicha models. |
 | User updates provider/model/assignment config | Gateway transaction rewrites that user's catalog rows atomically. |
 | User invokes `platform_managed` model without an enabled system channel | Attempt fails with sanitized `config` category and can fall back. |
 | Admin saves a channel credential | API writes encrypted `{ iv, tag, value }`; subsequent admin reads return `credentialState: configured`. |
 | Admin reads AI provider overview | Response includes provider/model counts and channel metadata, never raw credentials. |
 | Usage report for `24h` / `7d` / `30d` | Query filters by `ownerId` and `createdAt` so the composite indexes are usable. |
-| Super-admin reads DicHA AI usage report | Query filters by `providerId = 'dicha'`, `kind = 'invoke'`, and bounded `createdAt` when the selected window is not `all`. |
-| Super-admin reads DicHA AI recent logs | Response includes safe user identity and event metadata only; prompt/response body and secrets are never returned. |
+| Super-admin reads Dicha AI usage report | Query filters by `providerId = 'dicha'`, `kind = 'invoke'`, and bounded `createdAt` when the selected window is not `all`. |
+| Super-admin reads Dicha AI recent logs | Response includes safe user identity and event metadata only; prompt/response body and secrets are never returned. |
+| Super-admin searches Dicha diagnostics by request id | Response matches either `requestId` or `upstreamRequestId`, still constrained to `providerId = 'dicha'` and `kind = 'invoke'`. |
+| Super-admin combines status + model + internal channel filters | Query applies all selected dimensions together (`AND`) rather than letting one top-level `OR` replace another. |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: keep shared AI DTOs stable and replace only the store implementation underneath.
 - Good: add a second Prisma generator for ai-gateway instead of importing API-generated client files across app boundaries.
 - Good: use DB indexes that match user-scoped time-window analytics before adding heavier materialized summaries.
-- Good: keep frontend user usage reports owner-scoped, and keep admin DicHA usage reports provider-scoped with `providerId = 'dicha'`.
+- Good: keep frontend user usage reports owner-scoped, and keep admin Dicha usage reports provider-scoped with `providerId = 'dicha'`.
+- Good: keep Dicha analytics and diagnostics separate: analytics pages optimize for trends, diagnostics pages optimize for request search/filter/detail.
 - Base: no historical JSON migration during MVP; dev data can be dropped.
 - Bad: query usage reports without `ownerId` or without a time-window predicate for bounded windows.
-- Bad: aggregate admin official-channel stats across every provider; this mixes DicHA platform cost with user BYOK traffic.
+- Bad: aggregate admin official-channel stats across every provider; this mixes Dicha platform cost with user BYOK traffic.
 - Bad: return `credential`, access tokens, or upstream Authorization headers in admin/provider responses.
-- Bad: configure official DicHA as `user_api_key`; it must remain `platform_managed`.
+- Bad: configure official Dicha as `user_api_key`; it must remain `platform_managed`.
 
 ### 6. Tests Required
 
@@ -432,7 +441,8 @@ summary.costByCurrency = groupByCurrency(events, (event) => ({
 - `pnpm --filter @dicha/api typecheck && pnpm --filter @dicha/api lint && pnpm --filter @dicha/api build`
 - `pnpm --filter @dicha/ai-gateway typecheck && pnpm --filter @dicha/ai-gateway lint && pnpm --filter @dicha/ai-gateway test && pnpm --filter @dicha/ai-gateway build`
 - `pnpm --filter @dicha/admin typecheck && pnpm --filter @dicha/admin lint && pnpm --filter @dicha/admin build`
-- Admin DicHA usage API verification should assert that `providerId` is always `dicha`, BYOK provider events are excluded, and recent logs include only safe user identity fields plus usage metadata.
+- Admin Dicha usage API verification should assert that `providerId` is always `dicha`, BYOK provider events are excluded, and recent logs include only safe user identity fields plus usage metadata.
+- Admin Dicha diagnostics API verification should assert request/upstream id search, status/error/model/internal-channel filters, `AND` composition across filters, and absence of prompt/response/secrets in the response schema.
 - `docker compose config --quiet` when env or compose wiring changes.
 
 ### 7. Wrong vs Correct
@@ -477,7 +487,7 @@ await prisma.aiUsageEvent.findMany({
 });
 ```
 
-This mixes official DicHA traffic with user-owned provider traffic in the admin billing dashboard.
+This mixes official Dicha traffic with user-owned provider traffic in the admin billing dashboard.
 
 #### Correct
 
@@ -488,11 +498,32 @@ await prisma.aiUsageEvent.findMany({
 });
 ```
 
+#### Wrong
+
+```typescript
+const where = {
+  ...baseWhere,
+  ...(requestId ? { OR: [{ requestId: { contains: requestId } }] } : {}),
+  ...(modelSearch ? { OR: [{ modelId: { contains: modelSearch } }] } : {}),
+};
+```
+
+This silently drops the request id filter when the model filter is also present.
+
+#### Correct
+
+```typescript
+const andWhere: Prisma.AiUsageEventWhereInput[] = [baseWhere];
+if (requestId) andWhere.push({ OR: [{ requestId: { contains: requestId, mode } }] });
+if (modelSearch) andWhere.push({ OR: [{ modelId: { contains: modelSearch, mode } }] });
+const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
+```
+
 ## Scenario: AI Credit Accounting And User-Facing Cost Masking
 
 ### 1. Scope / Trigger
 
-- Trigger: changing DicHA official AI billing, user credit balance, credit ledger, redemption codes, admin credit management, or AI usage reports.
+- Trigger: changing Dicha official AI billing, user credit balance, credit ledger, redemption codes, admin credit management, or AI usage reports.
 - This is a cross-layer contract: Prisma stores real cost and immutable billing snapshots; `packages/shared` defines credit and usage DTOs; `apps/ai-gateway` prechecks/settles official calls; `apps/api` exposes user/admin credit endpoints; `apps/web` shows user-facing credits, not upstream cost; `apps/admin` shows operational cost and credits.
 
 ### 2. Signatures
@@ -518,14 +549,14 @@ await prisma.aiUsageEvent.findMany({
 - Credits are integer account units. Do not store credit balances as floats.
 - Credits are derived from model cost and the active credit rule; do not define `1 credit = N tokens` globally because model prices differ.
 - Model settlement pricing remains real `CNY` or `USD`; never add `DSCHA`, `credits`, or other credit labels to `AiModelPricing.currency`.
-- Official DicHA AI uses `billingMode: platform_credits` and must:
+- Official Dicha AI uses `billingMode: platform_credits` and must:
   - precheck balance before calling upstream;
   - settle credits from actual or estimated token usage after a successful upstream response;
   - create one debit `CreditLedgerEntry` and link it to the `AiUsageEvent`;
   - store `billingSnapshot` with rule, pricing, token, request, public model, and internal channel context.
-- User-owned/custom providers use `billingMode: user_provider` and must not debit credits or calculate DicHA cost. They may still record tokens, latency, model, provider, status, and errors.
+- User-owned/custom providers use `billingMode: user_provider` and must not debit credits or calculate Dicha cost. They may still record tokens, latency, model, provider, status, and errors.
 - User-facing AI usage and invoke responses must expose credits and usage diagnostics only. They must not expose official upstream `estimatedCostAmount`, `estimatedCostCurrency`, or `costByCurrency`.
-- Admin DicHA AI analytics may show real CNY/USD cost and credits side by side for the official provider.
+- Admin Dicha AI analytics may show real CNY/USD cost and credits side by side for the official provider.
 - Balance updates and ledger writes must be atomic. Debit must use a conditional balance update (`balance >= amount`) rather than decrement-then-check.
 
 ### 4. Validation & Error Matrix
@@ -538,9 +569,9 @@ await prisma.aiUsageEvent.findMany({
 | Upstream succeeds and usage is reported | Gateway computes credits from reported tokens and writes usage plus debit ledger in one transaction. |
 | Upstream succeeds without usage tokens | Gateway estimates tokens, sets `usageEstimated: true`, and stores the estimate in the billing snapshot. |
 | Debit race drains balance | Conditional update fails, the transaction aborts, and no negative balance is persisted. |
-| BYOK/custom provider call | Records usage diagnostics with `creditAmount: 0`, no ledger debit, no DicHA cost. |
+| BYOK/custom provider call | Records usage diagnostics with `creditAmount: 0`, no ledger debit, no Dicha cost. |
 | Normal user opens `/ai/usage` | Cost fields are masked to zero/null and `costByCurrency` is empty. |
-| Super admin opens DicHA usage | Admin report may aggregate real `estimatedCostAmount` by `CNY`/`USD`. |
+| Super admin opens Dicha usage | Admin report may aggregate real `estimatedCostAmount` by `CNY`/`USD`. |
 
 ### 5. Good/Base/Bad Cases
 
@@ -548,8 +579,8 @@ await prisma.aiUsageEvent.findMany({
 - Good: store `creditAmount` on both usage events and debit ledger entries so usage pages and balance ledgers can cross-check.
 - Good: append-only ledger rows with stored `balanceAfter`; account balance is a fast read model updated transactionally.
 - Base: redemption codes and admin grants are enough to fund accounts before payment integration exists.
-- Bad: exposing `estimatedCostAmount` for official DicHA calls to `apps/web`.
-- Bad: charging user-owned providers through DicHA credits.
+- Bad: exposing `estimatedCostAmount` for official Dicha calls to `apps/web`.
+- Bad: charging user-owned providers through Dicha credits.
 - Bad: using credits as a model pricing currency.
 - Bad: changing an active rule and recomputing old usage rows instead of preserving billing snapshots.
 
@@ -565,7 +596,7 @@ await prisma.aiUsageEvent.findMany({
   - successful official invoke creates a debit ledger entry and linked usage event;
   - concurrent debit cannot create negative balance;
   - BYOK/custom invoke records zero credits and no cost;
-  - user usage report masks CNY/USD cost while admin DicHA report retains it.
+  - user usage report masks CNY/USD cost while admin Dicha report retains it.
 
 ### 7. Wrong vs Correct
 
@@ -592,7 +623,7 @@ const debit = await tx.creditAccount.updateMany({
     lifetimeSpent: { increment: charge.amount },
   },
 });
-if (debit.count !== 1) throw new Error('Insufficient DicHA credits');
+if (debit.count !== 1) throw new Error('Insufficient Dicha credits');
 ```
 
 #### Wrong
@@ -622,7 +653,7 @@ return {
 ### 1. Scope / Trigger
 
 - Trigger: adding or modifying streaming AI invoke, SSE event payloads, stream settlement, frontend/admin stream test surfaces, or upstream adapter streaming support.
-- This is a cross-layer contract: `packages/shared` owns event schemas; `apps/ai-gateway` owns upstream stream parsing, fallback and settlement; `apps/api` is a BFF stream proxy; browser apps consume DicHA-owned SSE events.
+- This is a cross-layer contract: `packages/shared` owns event schemas; `apps/ai-gateway` owns upstream stream parsing, fallback and settlement; `apps/api` is a BFF stream proxy; browser apps consume Dicha-owned SSE events.
 
 ### 2. Signatures
 
@@ -639,14 +670,14 @@ return {
   - `Cache-Control: no-cache, no-transform`
   - `Connection: keep-alive`
   - `X-Accel-Buffering: no`
-- Public stream events are DicHA-owned and must validate against the shared discriminated union:
+- Public stream events are Dicha-owned and must validate against the shared discriminated union:
   - `start`: request id, selected provider/model, request format, generated timestamp.
   - `attempt`: one sanitized `AiInvokeAttempt`.
   - `delta`: text chunk only.
   - `final`: an `AiInvokeResponse`-compatible response summary.
   - `error`: sanitized category/message plus attempts.
 - Gateway adapters may parse provider-native OpenAI Chat Completions, OpenAI Responses, or Anthropic Messages SSE, but raw upstream event shapes must not leak past the adapter layer.
-- Successful official DicHA streams debit credits and write one usage event only after final upstream success. User-owned provider streams write diagnostics/usage without DicHA credit debit.
+- Successful official Dicha streams debit credits and write one usage event only after final upstream success. User-owned provider streams write diagnostics/usage without Dicha credit debit.
 - Persistent usage/admin logs must not store raw prompt or response bodies.
 
 ### 4. Validation & Error Matrix
@@ -663,7 +694,7 @@ return {
 ### 5. Good/Base/Bad Cases
 
 - Good: keep `apps/api` as a thin byte-stream proxy after authentication and body validation.
-- Good: frontend/admin parse only DicHA stream events and validate them with `AiInvokeStreamEventSchema`.
+- Good: frontend/admin parse only Dicha stream events and validate them with `AiInvokeStreamEventSchema`.
 - Good: emit `final` only after settlement and usage recording succeed.
 - Base: no visible non-streaming toggle in product UI; the non-streaming endpoint remains for compatibility/regression.
 - Bad: put fetch-based browser stream helpers in `packages/shared` while its tsconfig has no DOM lib.

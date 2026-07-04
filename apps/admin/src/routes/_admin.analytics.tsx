@@ -81,9 +81,9 @@ function AnalyticsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="DicHA AI Analytics"
-        title="DicHA AI 统计"
-        description="只统计官方 DicHA AI 渠道的全局调用、消费、性能与日志，不包含用户自有 API 渠道。"
+        eyebrow="Dicha AI Analytics"
+        title="Dicha AI 统计"
+        description="只统计官方 Dicha AI 渠道的全局调用、消费、性能与日志，不包含用户自有 API 渠道。"
       />
       <div className="space-y-4 p-5 lg:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-3">
@@ -124,8 +124,8 @@ function AnalyticsPage() {
           </div>
         </div>
 
-        {usage.isPending ? <StatusPanel text="正在加载 DicHA AI 统计" /> : null}
-        {usage.isError ? <StatusPanel text="DicHA AI 统计加载失败" tone="error" /> : null}
+        {usage.isPending ? <StatusPanel text="正在加载 Dicha AI 统计" /> : null}
+        {usage.isError ? <StatusPanel text="Dicha AI 统计加载失败" tone="error" /> : null}
         {report ? <UsageDashboard report={report} /> : null}
       </div>
     </div>
@@ -593,7 +593,7 @@ function UsageLogTable({
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-ink-soft">
-                  还没有 DicHA AI 调用日志
+                  还没有 Dicha AI 调用日志
                 </td>
               </tr>
             )}

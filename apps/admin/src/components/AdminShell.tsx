@@ -48,8 +48,9 @@ const navSections = [
     title: 'AI 与服务',
     items: [
       { to: '/ai-providers', label: '供应商渠道', icon: Bot },
-      { to: '/dicha-ai', label: 'DicHA AI 服务', icon: Database },
+      { to: '/dicha-ai', label: 'Dicha AI 服务', icon: Database },
       { to: '/ai-invoke-test', label: 'AI 调用测试', icon: Activity },
+      { to: '/ai-diagnostics', label: 'AI 诊断', icon: FileClock },
       { label: '模型与用途', icon: Database, planned: true },
     ],
   },
@@ -83,6 +84,7 @@ type AdminNavItem = {
     | '/ai-providers'
     | '/dicha-ai'
     | '/ai-invoke-test'
+    | '/ai-diagnostics'
     | '/credits/rules'
     | '/credits/grants'
     | '/credits/balances'
@@ -200,7 +202,7 @@ function AdminSidebarContent({
         </div>
       </div>
 
-      <nav className="mt-7 space-y-5">
+      <nav className="-mx-1 mt-7 min-h-0 flex-1 space-y-5 overflow-y-auto px-1 pb-4 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.24)_transparent]">
         {navSections.map((section) => (
           <div key={section.title}>
             <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-ink-soft/70">
@@ -220,7 +222,7 @@ function AdminSidebarContent({
         ))}
       </nav>
 
-      <div className="mt-auto rounded-md border border-white/10 bg-white/[0.04] p-3">
+      <div className="mt-4 shrink-0 rounded-md border border-white/10 bg-white/[0.04] p-3">
         <p className="truncate text-xs font-medium">{user.name}</p>
         <p className="mt-1 truncate text-[11px] text-sidebar-ink-soft">{user.email}</p>
         <button

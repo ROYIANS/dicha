@@ -23,6 +23,8 @@ import type {
   AdminAiProviderDirectorySyncResponse,
   AdminAiProviderDirectoryUpdate,
   AdminDichaAiServiceOverview,
+  AdminDichaAiDiagnosticsQuery,
+  AdminDichaAiDiagnosticsReport,
   AdminDichaAiUsageEvent,
   AdminDichaAiUsageReport,
   AdminDichaInternalProviderSync,
@@ -33,6 +35,7 @@ import type {
   AdminUserDetail,
   AdminUsersList,
   AdminUsersQuery,
+  AiInvokeErrorCategory,
   AiModel,
   AiModelCapability,
   AiModelExtensionParameter,
@@ -45,6 +48,7 @@ import type {
   AiUsageDistributionGroupBy,
   AiUsagePerformance,
   AiUsageSummary,
+  AiUsageStatus,
   AiUsageTimeBucket,
   AiUsageWindow,
 } from '@dicha/shared';
@@ -60,16 +64,18 @@ type AdminSessionUser = {
 };
 
 type AdminDichaUsageRecord = Prisma.AiUsageEventGetPayload<{
-  include: {
-    owner: {
-      select: {
-        id: true;
-        email: true;
-        name: true;
-      };
-    };
-  };
+  include: typeof adminUsageOwnerInclude;
 }>;
+
+const adminUsageOwnerInclude = {
+  owner: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+    },
+  },
+} satisfies Prisma.AiUsageEventInclude;
 
 const DICHA_PROVIDER_ID = 'dicha';
 const HOUR_MS = 60 * 60 * 1000;
@@ -117,7 +123,7 @@ export class AdminService {
         {
           id: 'aiProviders',
           title: 'AI 服务',
-          description: '用户侧供应商目录与 DicHA 官方内部通道分开维护。',
+          description: '用户侧供应商目录与 Dicha 官方内部通道分开维护。',
           status: 'ready',
         },
         {
@@ -310,7 +316,7 @@ export class AdminService {
   async getDichaAiService(): Promise<AdminDichaAiServiceOverview> {
     const provider = aiProviderTemplates.find((item) => item.id === DICHA_PROVIDER_ID);
     if (!provider) {
-      throw new BadRequestException('DicHA AI provider is missing');
+      throw new BadRequestException('Dicha AI provider is missing');
     }
     const [internalProviders, internalModels] = await Promise.all([
       this.prisma.aiInternalProvider.findMany({
@@ -417,7 +423,7 @@ export class AdminService {
       where: { id: body.providerId },
     });
     if (!provider) {
-      throw new BadRequestException('Unknown DicHA AI internal provider');
+      throw new BadRequestException('Unknown Dicha AI internal provider');
     }
     if (provider.requestFormat !== 'openai_compatible') {
       throw new BadRequestException('Only OpenAI-compatible model sync is supported for now');
@@ -434,7 +440,7 @@ export class AdminService {
       where: { id: body.modelRecordId },
     });
     if (!existing) {
-      throw new BadRequestException('Unknown DicHA AI model');
+      throw new BadRequestException('Unknown Dicha AI model');
     }
 
     await this.prisma.aiInternalProviderModel.update({
@@ -473,15 +479,7 @@ export class AdminService {
         providerId: DICHA_PROVIDER_ID,
         ...(from ? { createdAt: { gte: from } } : {}),
       },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
-      },
+      include: adminUsageOwnerInclude,
       orderBy: { createdAt: 'desc' },
     });
     const events = records.map(toAdminDichaUsageEvent);
@@ -495,7 +493,7 @@ export class AdminService {
       from: from?.toISOString() ?? null,
       to: now.toISOString(),
       providerId: DICHA_PROVIDER_ID,
-      providerName: records[0]?.providerName ?? 'DicHA AI',
+      providerName: records[0]?.providerName ?? 'Dicha AI',
       activeUsers: new Set(events.map((event) => event.user.id)).size,
       totalEvents: events.length,
       logLimit,
@@ -531,6 +529,99 @@ export class AdminService {
         label: event.status,
       })),
       recentEvents: events.slice(0, logLimit),
+    };
+  }
+
+  async getDichaAiDiagnostics(
+    query: AdminDichaAiDiagnosticsQuery,
+  ): Promise<AdminDichaAiDiagnosticsReport> {
+    const now = new Date();
+    const from = usageWindowStart(now, query.window);
+    const baseWhere: Prisma.AiUsageEventWhereInput = {
+      kind: 'invoke',
+      providerId: DICHA_PROVIDER_ID,
+      ...(from ? { createdAt: { gte: from } } : {}),
+    };
+    const mode = Prisma.QueryMode.insensitive;
+    const andWhere: Prisma.AiUsageEventWhereInput[] = [baseWhere];
+    if (query.status) andWhere.push({ status: query.status });
+    if (query.errorCategory) andWhere.push({ errorCategory: query.errorCategory });
+    if (query.requestId) {
+      andWhere.push({
+        OR: [
+          { requestId: { contains: query.requestId, mode } },
+          { upstreamRequestId: { contains: query.requestId, mode } },
+        ],
+      });
+    }
+    if (query.userSearch) {
+      andWhere.push({
+        owner: {
+          OR: [
+            { email: { contains: query.userSearch, mode } },
+            { name: { contains: query.userSearch, mode } },
+          ],
+        },
+      });
+    }
+    if (query.modelSearch) {
+      andWhere.push({
+        OR: [
+          { modelId: { contains: query.modelSearch, mode } },
+          { modelName: { contains: query.modelSearch, mode } },
+        ],
+      });
+    }
+    if (query.internalChannelId) {
+      andWhere.push({
+        OR: [
+          { internalProviderId: { contains: query.internalChannelId, mode } },
+          { internalProviderModelId: { contains: query.internalChannelId, mode } },
+        ],
+      });
+    }
+    const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
+    const [records, total, filteredRecords, optionRecords] = await Promise.all([
+      this.prisma.aiUsageEvent.findMany({
+        where,
+        include: adminUsageOwnerInclude,
+        orderBy: { createdAt: 'desc' },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      }),
+      this.prisma.aiUsageEvent.count({ where }),
+      this.prisma.aiUsageEvent.findMany({
+        where,
+        include: adminUsageOwnerInclude,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.aiUsageEvent.findMany({
+        where: baseWhere,
+        select: {
+          status: true,
+          errorCategory: true,
+          modelId: true,
+          modelName: true,
+          internalProviderId: true,
+          internalProviderModelId: true,
+        },
+      }),
+    ]);
+    const events = records.map(toAdminDichaUsageEvent);
+    const filteredEvents = filteredRecords.map(toAdminDichaUsageEvent);
+
+    return {
+      generatedAt: now.toISOString(),
+      window: query.window,
+      from: from?.toISOString() ?? null,
+      to: now.toISOString(),
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: Math.ceil(total / query.pageSize),
+      summary: summarizeAdminUsage(filteredEvents),
+      events,
+      filters: diagnosticFilterOptions(optionRecords),
     };
   }
 
@@ -863,7 +954,7 @@ export class AdminService {
           dxModelId: `dicha:${remoteModel.id}`,
           dxDisplayName: remoteModel.displayName ?? metadata?.displayName ?? remoteModel.id,
           dxDescription: metadata?.lobeMetadata?.description ?? null,
-          dxPriceHint: metadata?.priceHint ?? remoteModel.priceHint ?? 'DicHA AI 模型',
+          dxPriceHint: metadata?.priceHint ?? remoteModel.priceHint ?? 'Dicha AI 模型',
           dxPricing: this.jsonOrUndefined(remoteModel.pricing ?? metadata?.pricing),
           parameterConfig: {},
         },
@@ -1235,6 +1326,76 @@ function emptyAdminUsageSummary(): AiUsageSummary {
     costByCurrency: [],
     averageLatencyMs: null,
   };
+}
+
+function diagnosticFilterOptions(
+  records: Array<{
+    status: string;
+    errorCategory: string | null;
+    modelId: string;
+    modelName: string;
+    internalProviderId: string | null;
+    internalProviderModelId: string | null;
+  }>,
+): AdminDichaAiDiagnosticsReport['filters'] {
+  const statuses = new Map<AiUsageStatus, { label: string; count: number }>();
+  const errorCategories = new Map<AiInvokeErrorCategory, { label: string; count: number }>();
+  const models = new Map<string, { label: string; count: number }>();
+  const internalChannels = new Map<string, { label: string; count: number }>();
+
+  for (const record of records) {
+    incrementOption(statuses, record.status as AiUsageStatus, statusLabel(record.status));
+    if (record.errorCategory) {
+      incrementOption(
+        errorCategories,
+        record.errorCategory as AiInvokeErrorCategory,
+        record.errorCategory,
+      );
+    }
+    incrementOption(models, record.modelId, `${record.modelName} · ${record.modelId}`);
+    const channelKey = record.internalProviderModelId ?? record.internalProviderId;
+    if (channelKey) {
+      const label = record.internalProviderModelId
+        ? `${record.internalProviderModelId}${record.internalProviderId ? ` · ${record.internalProviderId}` : ''}`
+        : record.internalProviderId ?? channelKey;
+      incrementOption(internalChannels, channelKey, label);
+    }
+  }
+
+  return {
+    statuses: optionsFromMap(statuses),
+    errorCategories: optionsFromMap(errorCategories),
+    models: optionsFromMap(models),
+    internalChannels: optionsFromMap(internalChannels),
+  };
+}
+
+function incrementOption<T extends string>(
+  map: Map<T, { label: string; count: number }>,
+  key: T,
+  label: string,
+): void {
+  const current = map.get(key);
+  if (current) {
+    current.count += 1;
+  } else {
+    map.set(key, { label, count: 1 });
+  }
+}
+
+function optionsFromMap<T extends string>(
+  map: Map<T, { label: string; count: number }>,
+): Array<{ key: string; label: string; count: number }> {
+  return Array.from(map.entries())
+    .map(([key, value]) => ({ key, label: value.label, count: value.count }))
+    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+}
+
+function statusLabel(status: string): string {
+  if (status === 'success') return '成功';
+  if (status === 'degraded') return '降级';
+  if (status === 'failure') return '失败';
+  return status;
 }
 
 function summarizeAdminUsage(events: AdminDichaAiUsageEvent[]): AiUsageSummary {

@@ -68,7 +68,7 @@ export class UsageStore {
           },
         });
         if (debit.count !== 1) {
-          throw new Error('Insufficient DicHA credits');
+          throw new Error('Insufficient Dicha credits');
         }
         const updated = await tx.creditAccount.findUniqueOrThrow({ where: { id: account.id } });
         const ledger = await tx.creditLedgerEntry.create({
@@ -81,7 +81,7 @@ export class UsageStore {
             source: 'ai_invoke',
             sourceId: event.requestId,
             aiUsageEventId: event.id,
-            description: `DicHA AI 调用：${event.modelName}`,
+            description: `Dicha AI 调用：${event.modelName}`,
             metadata: record.billingSnapshot
               ? (record.billingSnapshot as Prisma.InputJsonValue)
               : Prisma.JsonNull,
