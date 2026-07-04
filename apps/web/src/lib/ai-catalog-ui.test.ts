@@ -6,6 +6,7 @@ import {
   firstAssignableModelId,
   getAssignableModelGroups,
   getAssignableModelMap,
+  isOfficialDichaProvider,
   lobeProviderKey,
 } from './ai-catalog-ui';
 
@@ -29,6 +30,11 @@ describe('AI catalog UI helpers', () => {
       'deepseek',
       'anthropic',
     ]);
+  });
+
+  test('identifies the official Dicha provider for platform-managed UI branches', () => {
+    expect(isOfficialDichaProvider({ id: 'dicha' })).toBe(true);
+    expect(isOfficialDichaProvider({ id: 'openai' })).toBe(false);
   });
 
   test('groups assignment model options by enabled providers and enabled models', () => {

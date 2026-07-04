@@ -58,6 +58,7 @@ import {
   fallbackModelIds,
   firstAssignableModelId,
   getAssignableModelMap,
+  isOfficialDichaProvider,
   lobeProviderKey,
 } from '@/lib/ai-catalog-ui';
 import { type SettingsTint } from '@/components/settings-ui';
@@ -387,7 +388,11 @@ function ProviderCard({
   const hasConnectionCredential = provider.credentialState !== 'missing';
   const canRunUpstreamProbe = supportsUpstreamSync;
   const canDeleteProvider = provider.custom === true;
-  const upstreamActionHint = !supportsUpstreamSync
+  const isOfficialDicha = isOfficialDichaProvider(provider);
+  const showUserMaintenanceActions = !isOfficialDicha;
+  const upstreamActionHint = !showUserMaintenanceActions
+    ? ''
+    : !supportsUpstreamSync
     ? t('settings.detail.aiProviders.upstreamUnsupportedHint')
     : hasConnectionCredential
       ? t('settings.detail.aiProviders.upstreamReadyHint')
@@ -507,39 +512,45 @@ function ProviderCard({
               {t('settings.detail.aiProviders.deleteProvider')}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={() => onCheckConnection(provider.id)}
-            disabled={checking || !canRunUpstreamProbe}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            title={checkTitle}
-          >
-            <Activity size={14} className={checking ? 'animate-pulse' : ''} />
-            {t('settings.detail.aiProviders.checkConnection')}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSyncModels(provider.id)}
-            disabled={syncing || !canRunUpstreamProbe}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            title={syncTitle}
-          >
-            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
-            {t('settings.detail.aiProviders.syncModels')}
-          </button>
-          <button
-            type="button"
-            onClick={onAddModel}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
-            title={t('settings.detail.aiProviders.addModel')}
-          >
-            <Plus size={14} />
-            {t('settings.detail.aiProviders.addModel')}
-          </button>
+          {showUserMaintenanceActions ? (
+            <>
+              <button
+                type="button"
+                onClick={() => onCheckConnection(provider.id)}
+                disabled={checking || !canRunUpstreamProbe}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                title={checkTitle}
+              >
+                <Activity size={14} className={checking ? 'animate-pulse' : ''} />
+                {t('settings.detail.aiProviders.checkConnection')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onSyncModels(provider.id)}
+                disabled={syncing || !canRunUpstreamProbe}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                title={syncTitle}
+              >
+                <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+                {t('settings.detail.aiProviders.syncModels')}
+              </button>
+              <button
+                type="button"
+                onClick={onAddModel}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
+                title={t('settings.detail.aiProviders.addModel')}
+              >
+                <Plus size={14} />
+                {t('settings.detail.aiProviders.addModel')}
+              </button>
+            </>
+          ) : null}
         </div>
-        <p className="basis-full text-right text-[11px] leading-relaxed text-ink-faint">
-          {upstreamActionHint}
-        </p>
+        {upstreamActionHint ? (
+          <p className="basis-full text-right text-[11px] leading-relaxed text-ink-faint">
+            {upstreamActionHint}
+          </p>
+        ) : null}
       </div>
       <div className={`grid transition-[grid-template-rows] duration-200 ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="min-h-0 overflow-hidden">

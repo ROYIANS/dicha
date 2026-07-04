@@ -13,9 +13,13 @@ const lobeProviderKeyByProviderId: Partial<Record<string, string>> = {
 const providerIdsWithoutLobeIcon = new Set(['dicha']);
 const officialDichaProviderId = 'dicha';
 
+export function isOfficialDichaProvider(provider: Pick<AiProvider, 'id'>) {
+  return provider.id === officialDichaProviderId;
+}
+
 export function compareProvidersByEnabled(left: AiProvider, right: AiProvider) {
   const officialDelta =
-    Number(right.id === officialDichaProviderId) - Number(left.id === officialDichaProviderId);
+    Number(isOfficialDichaProvider(right)) - Number(isOfficialDichaProvider(left));
   if (officialDelta !== 0) return officialDelta;
 
   const enabledDelta = Number(isProviderEnabled(right)) - Number(isProviderEnabled(left));

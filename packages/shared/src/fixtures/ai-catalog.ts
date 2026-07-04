@@ -706,30 +706,11 @@ const aiExtensionParameterValues = new Set<AiModelExtensionParameter>([
   'urlContext',
 ]);
 
-const dichaOfficialModels: AiModel[] = [
-  model({
-    id: 'dicha:assistant',
-    providerId: 'dicha',
-    name: 'dicha-assistant',
-    displayName: 'Dicha Assistant',
-    avatar: 'DC',
-    contextWindow: 128000,
-    modelType: 'chat',
-    extensionParameters: ['textVerbosity'],
-    capabilities: ['chat', 'vision', 'tool_use', 'json', 'reasoning'],
-    enabled: true,
-    recommended: true,
-    availability: 'healthy',
-    priceHint: '未来按 Dicha AI 积分计费',
-    catalogSource: 'dicha_catalog',
-  }),
-];
-
 const lobeModelBankModels = lobeModelBankCards
   .map((card) => lobeModelToAiModel(card))
   .filter((model): model is AiModel => Boolean(model));
 
-export const aiModelBank: AiModel[] = [...dichaOfficialModels, ...lobeModelBankModels];
+export const aiModelBank: AiModel[] = lobeModelBankModels;
 
 export const aiCatalogFixture: AiGatewayCatalog = {
   generatedAt,
@@ -738,8 +719,8 @@ export const aiCatalogFixture: AiGatewayCatalog = {
   assignments: [
     {
       useCase: 'assistant',
-      primaryModelId: 'dicha:assistant',
-      fallbackModelIds: ['openai:gpt-5.2', 'anthropic:claude-sonnet-4-5-20250929'],
+      primaryModelId: 'openai:gpt-5.2',
+      fallbackModelIds: ['anthropic:claude-sonnet-4-5-20250929'],
     },
     {
       useCase: 'item_profile',

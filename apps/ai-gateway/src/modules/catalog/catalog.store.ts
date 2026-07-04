@@ -19,6 +19,7 @@ import { aiCatalogSeed, aiModelBank, aiProviderTemplateIds } from './catalog.see
 
 const deprecatedSeedProviderIds = new Set(['vidorra']);
 const deprecatedSeedModelIds = new Set([
+  'dicha:assistant',
   'deepseek:deepseek-chat',
   'deepseek:deepseek-reasoner',
 ]);

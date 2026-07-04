@@ -28,6 +28,7 @@
   - `billingMode`: `user_provider | platform_credits`
   - `modelSyncMode`: `openai_models_endpoint | manual | platform_catalog`
 - Official `Dicha AI` uses `credentialMode: platform_managed`, `billingMode: platform_credits`, `modelSyncMode: platform_catalog`, and `authType: none`.
+- Official `Dicha AI` may ship as an enabled provider preset before its admin-managed internal model catalog is implemented, but it must not seed placeholder models such as `dicha:assistant` into `aiModelBank` or default assignments. Dicha models should appear only when backed by a real admin/system-managed catalog entry.
 - User-owned external providers use `billingMode: user_provider` and start disabled/missing until the user configures credentials.
 - Local providers that do not require an API key use `credentialMode: not_required` and may save endpoint config without a credential.
 - Static model bank entries use `catalogSource: static_model_bank`; upstream-discovered models use `upstream_sync`; official future catalog entries use `dicha_catalog`; user-created models use `custom`.
@@ -54,6 +55,7 @@
 - Missing user credential on an `openai_models_endpoint` provider -> gateway still attempts `/models` without an Authorization header; if that upstream requires auth, the normal non-2xx error is surfaced.
 - Missing user credential and upstream `/models` returns 401/403 with provider model-bank entries -> gateway syncs from `aiModelBank` instead of failing the model list request.
 - `credentialMode === platform_managed` -> web must not show an API key input and gateway must not treat missing user credential as misconfiguration.
+- Official `Dicha AI` / `modelSyncMode: platform_catalog` -> web must not show user-maintenance actions such as connection check, upstream model sync, or add-model buttons on the frontend provider settings page.
 - `credentialMode === not_required` -> gateway may return an empty provider secret and web may save endpoint-only config.
 - New model references unknown provider -> gateway rejects with `Unknown AI provider`.
 - Upstream `/models` returns non-2xx -> gateway rejects sync with `Provider model sync failed (<status>)`.
@@ -73,12 +75,15 @@
 - Good: allow model sync before API Key entry, so providers with public model-list endpoints can populate their catalog immediately.
 - Good: allow deleting a custom provider or custom/upstream model from settings, and prune assignments that point at removed models.
 - Bad: make official `Dicha AI` look like a normal missing API key provider, or enable sync/check for `manual` and `platform_catalog` providers.
+- Bad: seed an official Dicha placeholder model before that model can be configured and invoked through the admin/system-managed DicHA AI service.
 - Bad: reintroduce file-backed JSON persistence for catalog or usage data; AI gateway runtime state belongs in PostgreSQL.
 - Bad: map upstream `/models` to `string[]` and create every new synced model as `4096` context / `chat` only when the response or model bank contains richer metadata.
 
 ### 6. Tests Required
 
 - Provider/model bank test asserts curated provider prefix, stable unique priorities, full LobeHub provider coverage, no model provider missing a template, key provider model counts from LobeHub, DeepSeek V4 model ids/metadata, and official Dicha AI credential/billing semantics.
+- Provider/model bank test asserts the generated model bank and default assignments do not contain a placeholder Dicha model until the admin-managed DicHA catalog exists.
+- Web helper tests cover the official Dicha provider branch used by settings UI to hide frontend check/sync/add-model actions.
 - Gateway typecheck must cover persisted config normalization and no-credential local providers.
 - Gateway sync checks must cover known-model metadata enrichment, current enabled-state preservation, and unknown-model metadata-pending behavior when neither upstream nor model bank provides required metadata.
 - Gateway delete checks must cover provider deletion removing child models and model deletion pruning assignments.

@@ -42,8 +42,9 @@ describe('AI provider templates', () => {
     expect(aiCatalogFixture.providers).toBe(aiProviderTemplates);
     expect(aiCatalogFixture.models).toBe(aiModelBank);
     expect(aiProviderTemplates).toHaveLength(81);
-    expect(aiCatalogFixture.models).toHaveLength(1915);
-    expect(modelProviderIds.size).toBe(80);
+    expect(aiCatalogFixture.models).toHaveLength(1914);
+    expect(modelProviderIds.size).toBe(79);
+    expect(modelProviderIds.has('dicha')).toBe(false);
     expect([...modelProviderIds].filter((providerId) => !providerIds.includes(providerId))).toEqual([]);
     expect(providerIds).toEqual(expect.arrayContaining(['ai302', 'githubcopilot', 'bailiancodingplan']));
     expect(aiCatalogFixture.assignments.map((assignment) => assignment.useCase)).toEqual([
@@ -53,6 +54,12 @@ describe('AI provider templates', () => {
       'tagging',
       'summarization',
     ]);
+    expect(
+      aiCatalogFixture.assignments.flatMap((assignment) => [
+        assignment.primaryModelId,
+        ...assignment.fallbackModelIds,
+      ]),
+    ).not.toContain('dicha:assistant');
   });
 
   test('keeps official Dicha AI separate from user-owned provider billing', () => {
@@ -65,6 +72,7 @@ describe('AI provider templates', () => {
       credentialState: 'platform_managed',
       authType: 'none',
     });
+    expect(aiModelBank.some((model) => model.providerId === 'dicha')).toBe(false);
 
     const userProviders = aiProviderTemplates.filter((provider) => provider.id !== 'dicha');
     expect(userProviders.every((provider) => provider.billingMode === 'user_provider')).toBe(true);
