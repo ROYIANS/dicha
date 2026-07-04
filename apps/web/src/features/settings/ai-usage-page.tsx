@@ -5,14 +5,35 @@ import {
   Bot,
   Clock3,
   Coins,
+  Gauge,
   Layers3,
+  LineChart as LineChartIcon,
   PieChart,
   ReceiptText,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AiUsageBreakdown, AiUsageEvent, AiUsageReport, AiUsageWindow } from '@dicha/shared';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart as RechartsBarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import type {
+  AiUsageBreakdown,
+  AiUsageDistribution,
+  AiUsageEvent,
+  AiUsageReport,
+  AiUsageTimeBucket,
+  AiUsageWindow,
+} from '@dicha/shared';
 import { aiUsageQueryOptions } from '@/api/ai';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
@@ -30,6 +51,22 @@ const statusTone = {
   degraded: 'peach',
 } satisfies Record<AiUsageEvent['status'], SettingsTint>;
 
+const chartColors = [
+  'var(--accent-sage)',
+  'var(--accent-peach)',
+  'var(--accent-lavender)',
+  'var(--accent-mist)',
+  'var(--accent-pink)',
+  'var(--accent-warm)',
+];
+
+type DistributionChartType = 'area' | 'bar';
+type DistributionGroupBy = 'provider' | 'model';
+type DistributionGranularity = 'hour' | 'day';
+type DistributionMetric = 'estimatedCostUsd' | 'totalTokens' | 'calls';
+
+type ChartDatum = Record<string, number | string>;
+
 export function AiUsageSettingsPage() {
   const { t } = useTranslation();
   const [window, setWindow] = useState<AiUsageWindow>('7d');
@@ -41,7 +78,7 @@ export function AiUsageSettingsPage() {
       title={t('settings.detail.aiUsage.title')}
       subtitle={t('settings.detail.aiUsage.subtitle')}
     >
-      <div className="mx-auto max-w-5xl space-y-5">
+      <div className="mx-auto max-w-6xl space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-[12px] leading-relaxed text-ink-faint">
             {t('settings.detail.aiUsage.scopeNote')}
@@ -73,64 +110,129 @@ export function AiUsageSettingsPage() {
 function UsageDashboard({ report }: { report: AiUsageReport }) {
   const { t } = useTranslation();
   const hasUsage = report.summary.calls > 0;
+  const historyBuckets = selectHistoryBuckets(report);
 
   return (
     <div className="space-y-5">
-      <section className="grid gap-3 md:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <MetricTile
           icon={ReceiptText}
           tint="peach"
           label={t('settings.detail.aiUsage.metrics.calls')}
           value={formatInteger(report.summary.calls)}
+          detail={t('settings.detail.aiUsage.metrics.callStatus', {
+            success: formatInteger(report.summary.successfulCalls),
+            degraded: formatInteger(report.summary.degradedCalls),
+            failed: formatInteger(report.summary.failedCalls),
+          })}
         />
         <MetricTile
           icon={Coins}
           tint="sage"
           label={t('settings.detail.aiUsage.metrics.cost')}
           value={formatUsd(report.summary.estimatedCostUsd)}
+          detail={t('settings.detail.aiUsage.metrics.successRate', {
+            value: formatPercent(report.performance.successRate),
+          })}
         />
         <MetricTile
           icon={BarChart3}
           tint="lavender"
           label={t('settings.detail.aiUsage.metrics.tokens')}
           value={formatInteger(report.summary.totalTokens)}
+          detail={t('settings.detail.aiUsage.metrics.tokenSplit', {
+            prompt: formatInteger(report.summary.promptTokens),
+            completion: formatInteger(report.summary.completionTokens),
+          })}
         />
         <MetricTile
           icon={Clock3}
           tint="mist"
           label={t('settings.detail.aiUsage.metrics.latency')}
-          value={
-            report.summary.averageLatencyMs === null
-              ? t('settings.detail.aiUsage.notMeasured')
-              : `${formatInteger(report.summary.averageLatencyMs)} ms`
-          }
+          value={formatLatency(report.summary.averageLatencyMs, t('settings.detail.aiUsage.notMeasured'))}
+          detail={t('settings.detail.aiUsage.metrics.p95Latency', {
+            value: formatLatency(report.performance.p95LatencyMs, t('settings.detail.aiUsage.notMeasured')),
+          })}
+        />
+        <MetricTile
+          icon={Gauge}
+          tint="pink"
+          label={t('settings.detail.aiUsage.metrics.rpm')}
+          value={formatRate(report.performance.averageRpm)}
+          detail={t('settings.detail.aiUsage.metrics.peakRpm', {
+            value: formatRate(report.performance.peakRpm),
+          })}
+        />
+        <MetricTile
+          icon={LineChartIcon}
+          tint="sage"
+          label={t('settings.detail.aiUsage.metrics.tpm')}
+          value={formatRate(report.performance.averageTpm)}
+          detail={t('settings.detail.aiUsage.metrics.peakTpm', {
+            value: formatRate(report.performance.peakTpm),
+          })}
         />
       </section>
 
       {hasUsage ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <section className="space-y-4">
-            <BreakdownPanel
-              title={t('settings.detail.aiUsage.providerBreakdown')}
-              icon={PieChart}
-              rows={report.byProvider}
+        <>
+          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <TrendCard
+              title={t('settings.detail.aiUsage.trends.recent24h')}
+              value={formatInteger(sumBuckets(report.timeSeries.recent24h, 'totalTokens'))}
+              metric="totalTokens"
+              data={report.timeSeries.recent24h}
+              tint="sage"
             />
-            <BreakdownPanel
-              title={t('settings.detail.aiUsage.modelBreakdown')}
-              icon={Layers3}
-              rows={report.byModel}
+            <TrendCard
+              title={t('settings.detail.aiUsage.trends.history')}
+              value={formatInteger(sumBuckets(historyBuckets, 'totalTokens'))}
+              metric="totalTokens"
+              data={historyBuckets}
+              tint="lavender"
+            />
+            <TrendCard
+              title={t('settings.detail.aiUsage.trends.cost')}
+              value={formatUsd(sumBuckets(historyBuckets, 'estimatedCostUsd'))}
+              metric="estimatedCostUsd"
+              data={historyBuckets}
+              tint="peach"
+            />
+            <TrendCard
+              title={t('settings.detail.aiUsage.trends.requests')}
+              value={formatInteger(sumBuckets(historyBuckets, 'calls'))}
+              metric="calls"
+              data={historyBuckets}
+              tint="mist"
             />
           </section>
-          <section className="space-y-4">
-            <BreakdownPanel
-              title={t('settings.detail.aiUsage.useCaseBreakdown')}
-              icon={Bot}
-              rows={report.byUseCase}
-              compact
-            />
-            <RecentEvents events={report.recentEvents} />
-          </section>
-        </div>
+
+          <DistributionPanel report={report} />
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <section className="space-y-4">
+              <BreakdownPanel
+                title={t('settings.detail.aiUsage.providerBreakdown')}
+                icon={PieChart}
+                rows={report.byProvider}
+              />
+              <BreakdownPanel
+                title={t('settings.detail.aiUsage.modelBreakdown')}
+                icon={Layers3}
+                rows={report.byModel}
+              />
+            </section>
+            <section className="space-y-4">
+              <BreakdownPanel
+                title={t('settings.detail.aiUsage.useCaseBreakdown')}
+                icon={Bot}
+                rows={report.byUseCase}
+                compact
+              />
+              <RecentEvents events={report.recentEvents} />
+            </section>
+          </div>
+        </>
       ) : (
         <EmptyUsage />
       )}
@@ -143,11 +245,13 @@ function MetricTile({
   tint,
   label,
   value,
+  detail,
 }: {
   icon: LucideIcon;
   tint: SettingsTint;
   label: string;
   value: string;
+  detail: string;
 }) {
   return (
     <article className="rounded-md border border-hairline bg-surface px-4 py-3 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_6%,transparent)]">
@@ -157,8 +261,226 @@ function MetricTile({
         </span>
         <span className="text-[11px] font-medium text-ink-faint">{label}</span>
       </div>
-      <p className="mt-3 text-[22px] font-semibold leading-none text-ink tabular-nums">{value}</p>
+      <p className="mt-3 truncate text-[20px] font-semibold leading-none text-ink tabular-nums">{value}</p>
+      <p className="mt-2 truncate text-[11px] text-ink-faint">{detail}</p>
     </article>
+  );
+}
+
+function TrendCard({
+  title,
+  value,
+  metric,
+  data,
+  tint,
+}: {
+  title: string;
+  value: string;
+  metric: DistributionMetric;
+  data: AiUsageTimeBucket[];
+  tint: SettingsTint;
+}) {
+  const chartData = useMemo(
+    () =>
+      data.map((bucket) => ({
+        label: bucket.label,
+        value: bucket[metric],
+      })),
+    [data, metric],
+  );
+  const color = chartColors[tintIndex(tint)];
+
+  return (
+    <article className="overflow-hidden rounded-md border border-hairline bg-surface">
+      <div className="flex items-center justify-between gap-3 px-4 pt-3">
+        <div className="min-w-0">
+          <p className="truncate text-[11px] font-medium text-ink-faint">{title}</p>
+          <p className="mt-1 truncate text-[20px] font-semibold leading-none text-ink tabular-nums">{value}</p>
+        </div>
+        <span className={`grid size-8 place-items-center rounded-md border border-hairline ${settingsTintClass[tint]}`}>
+          <LineChartIcon size={15} />
+        </span>
+      </div>
+      <div className="h-24 px-1 pb-1 pt-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 6, right: 6, bottom: 0, left: 6 }}>
+            <Tooltip
+              cursor={{ stroke: 'var(--hairline)' }}
+              formatter={(nextValue) => formatChartValue(Number(nextValue), metric)}
+              contentStyle={tooltipStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
+              wrapperStyle={tooltipWrapperStyle}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              fill={color}
+              fillOpacity={0.18}
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </article>
+  );
+}
+
+function DistributionPanel({ report }: { report: AiUsageReport }) {
+  const { t } = useTranslation();
+  const [chartType, setChartType] = useState<DistributionChartType>('area');
+  const [groupBy, setGroupBy] = useState<DistributionGroupBy>('model');
+  const [granularity, setGranularity] = useState<DistributionGranularity>('day');
+  const [metric, setMetric] = useState<DistributionMetric>('estimatedCostUsd');
+  const distribution = selectDistribution(report, groupBy, granularity);
+  const { data, series } = useMemo(
+    () => buildDistributionChartData(distribution, metric),
+    [distribution, metric],
+  );
+
+  return (
+    <section className="overflow-hidden rounded-md border border-hairline bg-surface">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-surface-alt px-4 py-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 size={15} className="text-ink-faint" />
+          <h2 className="text-[13px] font-semibold text-ink">
+            {t('settings.detail.aiUsage.distribution.title')}
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <SegmentedControl
+            value={chartType}
+            onChange={setChartType}
+            options={[
+              { value: 'area', label: t('settings.detail.aiUsage.distribution.chartTypes.area') },
+              { value: 'bar', label: t('settings.detail.aiUsage.distribution.chartTypes.bar') },
+            ]}
+          />
+          <SegmentedControl
+            value={groupBy}
+            onChange={setGroupBy}
+            options={[
+              { value: 'model', label: t('settings.detail.aiUsage.distribution.groupBy.model') },
+              { value: 'provider', label: t('settings.detail.aiUsage.distribution.groupBy.provider') },
+            ]}
+          />
+          <SegmentedControl
+            value={granularity}
+            onChange={setGranularity}
+            options={[
+              { value: 'hour', label: t('settings.detail.aiUsage.distribution.granularity.hour') },
+              { value: 'day', label: t('settings.detail.aiUsage.distribution.granularity.day') },
+            ]}
+          />
+          <SegmentedControl
+            value={metric}
+            onChange={setMetric}
+            options={[
+              { value: 'estimatedCostUsd', label: t('settings.detail.aiUsage.distribution.metrics.cost') },
+              { value: 'totalTokens', label: t('settings.detail.aiUsage.distribution.metrics.tokens') },
+              { value: 'calls', label: t('settings.detail.aiUsage.distribution.metrics.calls') },
+            ]}
+          />
+        </div>
+      </div>
+      <div className="h-[320px] px-3 py-4">
+        {series.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            {chartType === 'area' ? (
+              <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
+                <CartesianGrid stroke="var(--hairline)" strokeDasharray="3 5" vertical={false} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} tick={axisTick} />
+                <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={(value) => compactChartValue(Number(value), metric)} />
+                <Tooltip
+                  formatter={(nextValue) => formatChartValue(Number(nextValue), metric)}
+                  contentStyle={tooltipStyle}
+                  itemStyle={tooltipItemStyle}
+                  labelStyle={tooltipLabelStyle}
+                  wrapperStyle={tooltipWrapperStyle}
+                />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--ink-faint)' }} />
+                {series.map((item) => (
+                  <Area
+                    key={item.dataKey}
+                    type="monotone"
+                    dataKey={item.dataKey}
+                    name={item.label}
+                    stackId="usage"
+                    stroke={item.color}
+                    fill={item.color}
+                    fillOpacity={0.2}
+                    strokeWidth={1.8}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                ))}
+              </AreaChart>
+            ) : (
+              <RechartsBarChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
+                <CartesianGrid stroke="var(--hairline)" strokeDasharray="3 5" vertical={false} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} tick={axisTick} />
+                <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={(value) => compactChartValue(Number(value), metric)} />
+                <Tooltip
+                  formatter={(nextValue) => formatChartValue(Number(nextValue), metric)}
+                  contentStyle={tooltipStyle}
+                  itemStyle={tooltipItemStyle}
+                  labelStyle={tooltipLabelStyle}
+                  wrapperStyle={tooltipWrapperStyle}
+                />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--ink-faint)' }} />
+                {series.map((item) => (
+                  <Bar
+                    key={item.dataKey}
+                    dataKey={item.dataKey}
+                    name={item.label}
+                    stackId="usage"
+                    fill={item.color}
+                    radius={[3, 3, 0, 0]}
+                    isAnimationActive={false}
+                  />
+                ))}
+              </RechartsBarChart>
+            )}
+          </ResponsiveContainer>
+        ) : (
+          <div className="grid h-full place-items-center text-[12px] text-ink-faint">
+            {t('settings.detail.aiUsage.distribution.empty')}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SegmentedControl<TValue extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: TValue;
+  onChange: (value: TValue) => void;
+  options: Array<{ value: TValue; label: string }>;
+}) {
+  return (
+    <div className="flex rounded-md border border-hairline bg-surface p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={`h-7 rounded-md px-2.5 text-[11px] font-medium transition-colors ${
+            value === option.value
+              ? 'bg-[var(--sidebar-bg)] text-sidebar-ink'
+              : 'text-ink-faint hover:bg-surface-alt hover:text-ink'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -286,14 +608,123 @@ function LoadingUsage() {
   );
 }
 
+function selectHistoryBuckets(report: AiUsageReport): AiUsageTimeBucket[] {
+  if (report.window === '24h') return report.timeSeries.recent24h;
+  if (report.timeSeries.daily.length > 0) return report.timeSeries.daily;
+  return report.timeSeries.hourly;
+}
+
+function selectDistribution(
+  report: AiUsageReport,
+  groupBy: DistributionGroupBy,
+  granularity: DistributionGranularity,
+): AiUsageDistribution {
+  if (groupBy === 'provider' && granularity === 'hour') return report.distributions.providerHourly;
+  if (groupBy === 'provider' && granularity === 'day') return report.distributions.providerDaily;
+  if (groupBy === 'model' && granularity === 'hour') return report.distributions.modelHourly;
+  return report.distributions.modelDaily;
+}
+
+function buildDistributionChartData(distribution: AiUsageDistribution, metric: DistributionMetric) {
+  const topGroups = distribution.groups.slice(0, 6);
+  const series = topGroups.map((group, index) => ({
+    dataKey: `series${index}`,
+    label: group.label,
+    color: chartColors[index % chartColors.length],
+  }));
+  const data = distribution.buckets.map((bucket, bucketIndex) => {
+    const row: ChartDatum = { label: bucket.label };
+    topGroups.forEach((group, groupIndex) => {
+      row[`series${groupIndex}`] = group.buckets[bucketIndex]?.[metric] ?? 0;
+    });
+    return row;
+  });
+
+  return { data, series };
+}
+
+function sumBuckets(buckets: AiUsageTimeBucket[], metric: DistributionMetric): number {
+  const total = buckets.reduce((sum, bucket) => sum + bucket[metric], 0);
+  return metric === 'estimatedCostUsd' ? Number(total.toFixed(6)) : total;
+}
+
+function tintIndex(tint: SettingsTint): number {
+  const order: SettingsTint[] = ['sage', 'peach', 'lavender', 'mist', 'pink'];
+  return order.indexOf(tint);
+}
+
 function formatInteger(value: number) {
   return new Intl.NumberFormat('zh-CN').format(value);
+}
+
+function formatRate(value: number) {
+  return new Intl.NumberFormat('zh-CN', {
+    maximumFractionDigits: value < 10 ? 3 : 1,
+  }).format(value);
+}
+
+function formatPercent(value: number) {
+  return new Intl.NumberFormat('zh-CN', {
+    style: 'percent',
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function formatLatency(value: number | null, fallback: string) {
+  return value === null ? fallback : `${formatInteger(value)} ms`;
 }
 
 function formatUsd(value: number) {
   return new Intl.NumberFormat('zh-CN', {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: value < 0.01 ? 6 : 2,
+    maximumFractionDigits: value < 1 ? 4 : 2,
   }).format(value);
 }
+
+function formatChartValue(value: number, metric: DistributionMetric) {
+  if (metric === 'estimatedCostUsd') return formatUsd(value);
+  return formatInteger(value);
+}
+
+function compactChartValue(value: number, metric: DistributionMetric) {
+  if (metric === 'estimatedCostUsd') return value < 1 ? `$${value.toFixed(3)}` : `$${value.toFixed(1)}`;
+  return new Intl.NumberFormat('zh-CN', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+const axisTick = {
+  fill: 'var(--ink-faint)',
+  fontSize: 11,
+};
+
+const tooltipStyle = {
+  border: '1px solid var(--hairline)',
+  borderRadius: 6,
+  background: 'var(--surface)',
+  color: 'var(--ink)',
+  fontSize: 11,
+  lineHeight: 1.35,
+  padding: '7px 9px',
+  boxShadow: '0 8px 24px color-mix(in oklab, var(--ink) 12%, transparent)',
+};
+
+const tooltipItemStyle = {
+  color: 'var(--ink-soft)',
+  fontSize: 11,
+  lineHeight: 1.35,
+  paddingBlock: 2,
+};
+
+const tooltipLabelStyle = {
+  color: 'var(--ink-faint)',
+  fontSize: 10,
+  lineHeight: 1.3,
+  marginBottom: 4,
+};
+
+const tooltipWrapperStyle = {
+  outline: 'none',
+};

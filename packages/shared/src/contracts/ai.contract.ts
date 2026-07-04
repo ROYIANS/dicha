@@ -406,6 +406,12 @@ export type AiUsageKind = z.infer<typeof AiUsageKindSchema>;
 export const AiUsageStatusSchema = z.enum(['success', 'failure', 'degraded']);
 export type AiUsageStatus = z.infer<typeof AiUsageStatusSchema>;
 
+export const AiUsageBucketGranularitySchema = z.enum(['hour', 'day']);
+export type AiUsageBucketGranularity = z.infer<typeof AiUsageBucketGranularitySchema>;
+
+export const AiUsageDistributionGroupBySchema = z.enum(['provider', 'model']);
+export type AiUsageDistributionGroupBy = z.infer<typeof AiUsageDistributionGroupBySchema>;
+
 export const AiUsageSummarySchema = z.object({
   calls: z.number().int().min(0),
   successfulCalls: z.number().int().min(0),
@@ -418,6 +424,56 @@ export const AiUsageSummarySchema = z.object({
   averageLatencyMs: z.number().min(0).nullable(),
 });
 export type AiUsageSummary = z.infer<typeof AiUsageSummarySchema>;
+
+export const AiUsagePerformanceSchema = z.object({
+  averageRpm: z.number().min(0),
+  averageTpm: z.number().min(0),
+  peakRpm: z.number().min(0),
+  peakTpm: z.number().min(0),
+  successRate: z.number().min(0).max(1),
+  p95LatencyMs: z.number().int().min(0).nullable(),
+});
+export type AiUsagePerformance = z.infer<typeof AiUsagePerformanceSchema>;
+
+export const AiUsageTimeBucketSchema = AiUsageSummarySchema.extend({
+  key: z.string(),
+  label: z.string(),
+  granularity: AiUsageBucketGranularitySchema,
+  start: z.string().datetime(),
+  end: z.string().datetime(),
+});
+export type AiUsageTimeBucket = z.infer<typeof AiUsageTimeBucketSchema>;
+
+export const AiUsageTimeSeriesSchema = z.object({
+  recent24h: z.array(AiUsageTimeBucketSchema),
+  hourly: z.array(AiUsageTimeBucketSchema),
+  daily: z.array(AiUsageTimeBucketSchema),
+});
+export type AiUsageTimeSeries = z.infer<typeof AiUsageTimeSeriesSchema>;
+
+export const AiUsageDistributionGroupSchema = AiUsageSummarySchema.extend({
+  key: z.string(),
+  label: z.string(),
+  groupBy: AiUsageDistributionGroupBySchema,
+  buckets: z.array(AiUsageTimeBucketSchema),
+});
+export type AiUsageDistributionGroup = z.infer<typeof AiUsageDistributionGroupSchema>;
+
+export const AiUsageDistributionSchema = z.object({
+  groupBy: AiUsageDistributionGroupBySchema,
+  granularity: AiUsageBucketGranularitySchema,
+  buckets: z.array(AiUsageTimeBucketSchema),
+  groups: z.array(AiUsageDistributionGroupSchema),
+});
+export type AiUsageDistribution = z.infer<typeof AiUsageDistributionSchema>;
+
+export const AiUsageDistributionsSchema = z.object({
+  providerHourly: AiUsageDistributionSchema,
+  providerDaily: AiUsageDistributionSchema,
+  modelHourly: AiUsageDistributionSchema,
+  modelDaily: AiUsageDistributionSchema,
+});
+export type AiUsageDistributions = z.infer<typeof AiUsageDistributionsSchema>;
 
 export const AiUsageBreakdownSchema = AiUsageSummarySchema.extend({
   key: z.string(),
@@ -450,6 +506,9 @@ export const AiUsageReportSchema = z.object({
   from: z.string().datetime().nullable(),
   to: z.string().datetime(),
   summary: AiUsageSummarySchema,
+  performance: AiUsagePerformanceSchema,
+  timeSeries: AiUsageTimeSeriesSchema,
+  distributions: AiUsageDistributionsSchema,
   byProvider: z.array(AiUsageBreakdownSchema),
   byModel: z.array(AiUsageBreakdownSchema),
   byUseCase: z.array(AiUsageBreakdownSchema),
