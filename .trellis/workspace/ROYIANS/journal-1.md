@@ -1330,3 +1330,36 @@ Extracted AI invoke adapters, added official DicHA multi-channel degradation, pr
 ### Next Steps
 
 - None - task complete
+
+
+## Session 38: AI Gateway streaming invoke
+
+**Date**: 2026-07-04
+**Task**: AI Gateway streaming invoke
+**Branch**: `main`
+
+### Summary
+
+Implemented end-to-end AI streaming invoke across shared contracts, AI Gateway adapters/orchestration, API BFF proxy, web demo, and admin test surface; archived the streaming task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `45cdc2e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
