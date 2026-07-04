@@ -538,36 +538,36 @@ body {
 .lp-nav-link:active {
   transform: translateY(1px) scale(0.99);
 }
-/* intro banner：暖桃色横向渐变 + hover 整行高亮（dicha 配色） */
+/* intro banner：主题色横向渐变 + hover 整行高亮（随 palette 切换） */
 .lp-intro-banner {
   background: linear-gradient(
     to right,
     transparent,
-    color-mix(in oklab, var(--chip-peach) 75%, transparent),
+    color-mix(in oklab, var(--lp-brand) 18%, transparent),
     transparent
   );
   transition: background 150ms ease;
 }
 .lp-intro-banner:hover {
-  background: color-mix(in oklab, var(--chip-peach) 52%, var(--canvas));
+  background: color-mix(in oklab, var(--lp-brand) 14%, var(--canvas));
 }
 :root[data-theme='dark'] .lp-intro-banner {
   background: linear-gradient(
     to right,
     transparent,
-    color-mix(in oklab, var(--surface-alt) 55%, transparent),
+    color-mix(in oklab, var(--lp-brand) 18%, transparent),
     transparent
   );
 }
 :root[data-theme='dark'] .lp-intro-banner:hover {
-  background: color-mix(in oklab, var(--surface-alt) 72%, var(--canvas));
+  background: color-mix(in oklab, var(--lp-brand) 14%, var(--canvas));
 }
 /* hero 底景渐变（加强暖色层次，网格叠上时应为主视觉） */
 .lp-hero-gradient {
   background: linear-gradient(
     to top,
-    color-mix(in oklab, var(--chip-peach) 28%, transparent),
-    color-mix(in oklab, var(--canvas) 72%, transparent) 38%,
+    color-mix(in oklab, var(--accent-warm) 18%, transparent),
+    color-mix(in oklab, var(--accent-warm) 7%, var(--canvas) 65%) 38%,
     color-mix(in oklab, var(--canvas) 28%, transparent) 68%,
     transparent
   );
@@ -575,8 +575,8 @@ body {
 :root[data-theme='dark'] .lp-hero-gradient {
   background: linear-gradient(
     to top,
-    color-mix(in oklab, var(--surface-alt) 35%, transparent),
-    color-mix(in oklab, var(--canvas) 55%, transparent) 38%,
+    color-mix(in oklab, var(--accent-warm) 14%, transparent),
+    color-mix(in oklab, var(--accent-warm) 6%, var(--canvas) 55%) 38%,
     transparent 68%,
     transparent
   );

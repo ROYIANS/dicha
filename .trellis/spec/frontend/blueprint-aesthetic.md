@@ -126,17 +126,27 @@
 - **渐隐遮罩**：`mask-image: linear-gradient(to bottom, #000, transparent)`（或 hero 的 `to top, rgb(0 0 0 /68%), transparent`）——网格**不铺满**，从一侧渐隐消失，避免背景太「满」抢内容。
 - hero 底景：网格 + 慢旋嵌套方块水印（9 个 `rect`，`460 * 0.9^i`，每个 `rotate(i*7)`，`opacity:0.035`，`lp-spin 120s`）——**极淡的几何呼吸**，不是装饰图。
 
-### 3.5 圆点纹理（DotPattern）
+### 3.5 编织线纹（SettingsPatternField）
+> 设置页 / 工具页 header 底景的密集平铺纹：大格纸 + 低透明交错曲线。用于给非落地页增加“高级纹样”层次，不能压过内容。
+
+- 组件：`apps/web/src/components/SettingsOrnaments.tsx` 的 `SettingsPatternField`；设置首页和设置二级页共用，不在 route 文件里散写重复 SVG。
+- 结构：`32×32` 大格纸叠 `48×48` 交错曲线 pattern；线条全部 `stroke: currentColor`，外层 `color: var(--lp-deco)`，随 `data-theme-palette` 切换。
+- 遮罩：`mask-image: linear-gradient(to bottom, #000 0%, transparent 82%)`，纹样只服务 header 背景，不铺满内容区。
+- SVG `pattern id` 必须用 `useId()` 派生，避免首页 + 二级页同时渲染时出现全局 id 冲突。
+- 禁止把编织纹做成彩色插画、图片素材、装饰文字或高对比大面积背景；它仍然属于线性几何原子。
+
+### 3.6 圆点纹理（DotPattern）
 > 选中态 tab 的底纹。SVG `pattern 8×8`，`circle r:0.75 fill:currentColor`，`opacity:0.22`。
 
-### 3.6 公告光带（Announce banner）
+### 3.7 公告光带（Announce banner）
 > zed "Introducing:" 行。**唯一允许的横向渐变**——因为它是结构（引导带）不是装饰背景。
 
 ```css
-background: linear-gradient(to right, transparent, color-mix(in oklab, var(--chip-peach) 75%, transparent), transparent);
+background: linear-gradient(to right, transparent, color-mix(in oklab, var(--lp-brand) 18%, transparent), transparent);
 ```
 - `:hover` 整行高亮（渐变换成实色低透明），整行可点。
-- 深底（footer）上 zed 用 `from-transparent via-blue-100/40 to-transparent`；dicha 用暖桃 chip。
+- 颜色必须从 `--lp-brand` / `--accent-warm` 派生，跟随主题 palette 切换；不要固定到某个功能 chip（例如 `--chip-peach`）。
+- 深底（footer）上 zed 用 `from-transparent via-blue-100/40 to-transparent`；dicha 用主题强调色的低透明混色。
 
 ---
 

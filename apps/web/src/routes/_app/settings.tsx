@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { logout } from '@/api/auth';
 import { BrandMark } from '@/components/AppBrand';
+import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 import { useTheme } from '@/lib/hooks/useTheme';
 
@@ -288,7 +289,7 @@ function SettingsPage() {
     <main className="relative min-h-full overflow-hidden">
       <div className="mx-auto min-h-full w-full max-w-6xl px-2 sm:px-6 lg:px-8">
         <div className="relative min-w-0">
-          <GridPattern />
+          <SettingsPatternField />
 
           <div className="relative z-10 pb-0">
             <header className="relative border-b border-hairline px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
@@ -302,7 +303,7 @@ function SettingsPage() {
               </div>
             </header>
 
-            <Slash />
+            <SettingsSlash />
 
             <div className="bg-canvas px-2 py-7 sm:px-8 sm:py-9 lg:px-10">
               <div className="mx-auto max-w-3xl space-y-6">
@@ -398,63 +399,5 @@ function SettingsRow({ item }: { item: SettingsItem }) {
     <button type="button" onClick={item.onPress} disabled={item.loading} className={className}>
       {content}
     </button>
-  );
-}
-
-function GridPattern() {
-  return (
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute inset-0 size-full"
-      style={{
-        color: 'var(--lp-deco)',
-        maskImage: 'linear-gradient(to bottom, #000 0%, transparent 78%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, transparent 78%)',
-      }}
-    >
-      <defs>
-        <pattern id="settings-grid-fine" width="8" height="8" patternUnits="userSpaceOnUse">
-          <path d="M8 0H0V8" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1" />
-        </pattern>
-        <pattern id="settings-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-          <rect width="32" height="32" fill="url(#settings-grid-fine)" />
-          <path
-            d="M32 0H0V32"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="0.75"
-            opacity="0.18"
-          />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#settings-grid)" />
-    </svg>
-  );
-}
-
-function Slash() {
-  return (
-    <div className="relative h-3.5 border-b border-hairline bg-canvas">
-      <Hatch />
-    </div>
-  );
-}
-
-function Hatch() {
-  return (
-    <svg aria-hidden className="pointer-events-none size-full text-ink-faint">
-      <defs>
-        <pattern
-          id="settings-hatch"
-          width="6"
-          height="6"
-          patternUnits="userSpaceOnUse"
-          patternTransform="rotate(45)"
-        >
-          <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#settings-hatch)" opacity="0.28" />
-    </svg>
   );
 }
