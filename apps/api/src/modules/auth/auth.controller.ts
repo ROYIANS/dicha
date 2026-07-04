@@ -4,6 +4,7 @@ import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import { contract, UserDto, type UserDto as UserDtoType } from '@dicha/shared';
 import type { Request } from 'express';
 import { AuthGuard } from './auth.guard';
+import { isSuperAdminEmail, parseSuperAdminEmails } from './super-admin';
 
 type SessionUser = {
   id: string;
@@ -28,7 +29,9 @@ export class AuthController {
   private readonly superAdminEmails: Set<string>;
 
   constructor(config: ConfigService) {
-    this.superAdminEmails = parseEmailSet(config.get<string>('DICHA_SUPER_ADMIN_EMAILS'));
+    this.superAdminEmails = parseSuperAdminEmails(
+      config.get<string>('DICHA_SUPER_ADMIN_EMAILS'),
+    );
   }
 
   @TsRestHandler(contract.account.getMe)
@@ -55,20 +58,7 @@ export class AuthController {
       personalityArchetype: user.personalityArchetype ?? null,
       homeName: user.homeName ?? null,
       coins: user.coins ?? 0,
-      isSuperAdmin: this.superAdminEmails.has(normalizeEmail(user.email)),
+      isSuperAdmin: isSuperAdminEmail(user.email, this.superAdminEmails),
     });
   }
-}
-
-function parseEmailSet(value: string | undefined): Set<string> {
-  return new Set(
-    (value ?? '')
-      .split(',')
-      .map((item) => normalizeEmail(item))
-      .filter(Boolean),
-  );
-}
-
-function normalizeEmail(value: string): string {
-  return value.trim().toLowerCase();
 }

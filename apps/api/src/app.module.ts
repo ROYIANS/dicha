@@ -6,6 +6,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MediaModule } from './modules/media/media.module';
 import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
     PrismaModule,
     HealthModule,
     AuthModule,
+    AdminModule,
     MediaModule,
     AiGatewayModule,
   ],

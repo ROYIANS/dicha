@@ -82,6 +82,7 @@ foreach ($line in $envLines) {
 }
 
 $webPort = if ($env:WEB_PORT) { $env:WEB_PORT } else { '8080' }
+$adminPort = if ($env:ADMIN_PORT) { $env:ADMIN_PORT } else { '8081' }
 
 if ($Fresh) {
     Write-WarnStep "Fresh deploy: removing containers and volumes (database will be wiped)…"
@@ -95,14 +96,14 @@ Write-Step "Removing dangling images from previous builds…"
 docker image prune -f | Out-Null
 
 if ($Build) {
-    Write-Step "Building api + ai-gateway + web images locally (no cache)…"
+    Write-Step "Building api + ai-gateway + web + admin images locally (no cache)…"
     docker compose build --no-cache
     if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed" }
 } else {
     $prefix = if ($env:IMAGE_PREFIX) { $env:IMAGE_PREFIX } else { 'ghcr.io/royians/dicha' }
     $tag = if ($env:IMAGE_TAG) { $env:IMAGE_TAG } else { 'latest' }
     Write-Step "Pulling prebuilt images from $prefix (tag: $tag)…"
-    docker compose pull api ai-gateway web
+    docker compose pull api ai-gateway web admin
     if ($LASTEXITCODE -ne 0) { Fail "docker compose pull failed" }
 }
 
@@ -124,8 +125,9 @@ while ((Get-Date) -lt $deadline) {
 
 Write-Host ""
 Write-Step "dicha is up."
-Write-Host "  App:  http://localhost:${webPort}/"
-Write-Host "  API:  http://localhost:${webPort}/api/health"
+Write-Host "  App:    http://localhost:${webPort}/"
+Write-Host "  Admin:  http://localhost:${adminPort}/"
+Write-Host "  API:    http://localhost:${webPort}/api/health"
 Write-Host ""
 Write-Host "Useful commands:"
 Write-Host "  .\deploy.ps1            # pull latest images + redeploy (keeps DB)"

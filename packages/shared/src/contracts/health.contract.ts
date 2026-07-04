@@ -1,5 +1,6 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
+import { adminContract } from './admin.contract';
 import { aiContract } from './ai.contract';
 import { accountContract } from './auth.contract';
 
@@ -34,4 +35,5 @@ export const contract = c.router({
   },
   account: accountContract,
   ai: aiContract,
+  admin: adminContract,
 });

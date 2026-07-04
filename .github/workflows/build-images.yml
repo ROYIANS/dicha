@@ -25,6 +25,8 @@ jobs:
             dockerfile: docker/Dockerfile.ai-gateway
           - name: web
             dockerfile: docker/Dockerfile.web
+          - name: admin
+            dockerfile: docker/Dockerfile.admin
 
     steps:
       - name: Checkout

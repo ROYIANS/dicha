@@ -82,6 +82,7 @@ fi
 set -a && source .env && set +a
 
 WEB_PORT="${WEB_PORT:-8080}"
+ADMIN_PORT="${ADMIN_PORT:-8081}"
 
 if [[ "$FRESH" -eq 1 ]]; then
   warn "Fresh deploy: removing containers and volumes (database will be wiped)…"
@@ -94,11 +95,11 @@ fi
 if [[ "$BUILD" -eq 1 ]]; then
   info "Removing dangling images from previous builds…"
   docker image prune -f >/dev/null
-  info "Building api + ai-gateway + web images locally (no cache)…"
+  info "Building api + ai-gateway + web + admin images locally (no cache)…"
   docker compose build --no-cache
 else
   info "Pulling prebuilt images from ${IMAGE_PREFIX:-ghcr.io/royians/dicha} (tag: ${IMAGE_TAG:-latest})…"
-  docker compose pull api ai-gateway web
+  docker compose pull api ai-gateway web admin
 fi
 
 info "Starting stack with recreated containers…"
@@ -121,8 +122,9 @@ done
 
 echo ""
 info "dicha is up."
-echo "  App:  http://localhost:${WEB_PORT}/"
-echo "  API:  http://localhost:${WEB_PORT}/api/health"
+echo "  App:    http://localhost:${WEB_PORT}/"
+echo "  Admin:  http://localhost:${ADMIN_PORT}/"
+echo "  API:    http://localhost:${WEB_PORT}/api/health"
 echo ""
 echo "Useful commands:"
 echo "  ./deploy.sh              # pull latest images + redeploy (keeps DB)"

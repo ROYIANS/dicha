@@ -77,3 +77,70 @@ if (user.isSuperAdmin) {
   // show internal tools
 }
 ```
+
+## Scenario: Super Admin Management API Boundary
+
+### 1. Scope / Trigger
+
+- Trigger: adding or modifying `/api/admin/*` endpoints for the independent `apps/admin` management frontend.
+- This is a server-side authorization boundary, not just a frontend navigation gate.
+
+### 2. Signatures
+
+- Shared contract: `packages/shared/src/contracts/admin.contract.ts`.
+- Root contract namespace: `contract.admin.*`.
+- Initial endpoint: `GET /admin/overview` via Nest global prefix -> `GET /api/admin/overview`.
+- API module: `apps/api/src/modules/admin/admin.module.ts`.
+- Controller guard order: `@UseGuards(AuthGuard, SuperAdminGuard)`.
+- Guard source: `apps/api/src/modules/auth/super-admin.guard.ts`.
+- Email parser source: `apps/api/src/modules/auth/super-admin.ts`.
+
+### 3. Contracts
+
+- `SuperAdminGuard` must run after `AuthGuard` so it checks the authenticated Better Auth session user.
+- Super-admin matching uses only server env `DICHA_SUPER_ADMIN_EMAILS`; browser bundles must never receive that list.
+- Shared responses may include safe user identity fields and operational summaries, but must not include secrets, raw env values, API keys, or the configured admin email list.
+- Frontend calls admin data through `api.admin.*`; do not add ad-hoc `fetch('/api/admin/...')` calls in React components.
+
+### 4. Validation & Error Matrix
+
+| Condition | Expected Behavior |
+|---|---|
+| Missing session | `AuthGuard` returns unauthorized before admin logic runs. |
+| Authenticated non-admin user | `SuperAdminGuard` throws `403 Forbidden`. |
+| Empty `DICHA_SUPER_ADMIN_EMAILS` | All users fail admin API authorization. |
+| Matching email with case/space differences | Authorization succeeds after normalization. |
+| Frontend hides admin UI only | Insufficient; backend endpoint must still reject non-admin calls. |
+
+### 5. Good/Base/Bad Cases
+
+- Good: define a new admin route in `admin.contract.ts`, implement it in `apps/api/src/modules/admin`, and guard it with both auth guards.
+- Base: `GET /api/admin/overview` returns a non-secret skeleton payload for the admin shell.
+- Bad: relying on `UserDto.isSuperAdmin` in the browser while leaving `/api/admin/*` protected only by `AuthGuard`.
+- Bad: returning raw environment/config values to support a future "system settings" page.
+
+### 6. Tests Required
+
+- `pnpm --filter @dicha/shared build`
+- `pnpm --filter @dicha/api typecheck`
+- `pnpm --filter @dicha/api lint`
+- `pnpm --filter @dicha/api build`
+- Manual/API verification when possible: anonymous request -> unauthorized, ordinary session -> 403, configured admin session -> 200.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+@UseGuards(AuthGuard)
+export class AdminController {}
+```
+
+This authenticates the user but does not enforce the super-admin boundary.
+
+#### Correct
+
+```typescript
+@UseGuards(AuthGuard, SuperAdminGuard)
+export class AdminController {}
+```
