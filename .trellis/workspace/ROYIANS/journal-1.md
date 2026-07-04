@@ -1363,3 +1363,36 @@ Implemented end-to-end AI streaming invoke across shared contracts, AI Gateway a
 ### Next Steps
 
 - None - task complete
+
+
+## Session 39: Dicha AI diagnostics console
+
+**Date**: 2026-07-04
+**Task**: Dicha AI diagnostics console
+**Branch**: `main`
+
+### Summary
+
+Added a DB-backed super-admin Dicha AI diagnostics page with request filters, detail inspection, internal channel visibility, diagnostic indexes, Dicha capitalization cleanup, and fixed admin sidebar scrolling.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4715cb1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
