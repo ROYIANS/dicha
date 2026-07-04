@@ -14,8 +14,12 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS build
 COPY packages/shared packages/shared
 COPY apps/ai-gateway apps/ai-gateway
+COPY apps/api/prisma apps/api/prisma
+COPY apps/api/prisma.config.ts apps/api/prisma.config.ts
 
 RUN pnpm --filter @dicha/shared build
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
+RUN pnpm --filter @dicha/ai-gateway run prisma:generate
 RUN pnpm --filter @dicha/ai-gateway build
 
 FROM base AS runner

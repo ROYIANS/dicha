@@ -10,7 +10,8 @@
     "start:prod": "node dist/main.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "prisma:generate": "cd ../api && prisma generate"
   },
   "dependencies": {
     "@dicha/shared": "workspace:*",
@@ -18,6 +19,8 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.24",
     "@nestjs/platform-express": "^11.1.24",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "express": "^5.2.1",
@@ -29,6 +32,7 @@
     "@nestjs/cli": "^11.0.21",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
+    "prisma": "^7.8.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
   }

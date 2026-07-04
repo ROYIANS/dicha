@@ -16,6 +16,7 @@ import { Route as AdminIndexRouteImport } from './routes/_admin.index'
 import { Route as AdminSystemRouteImport } from './routes/_admin.system'
 import { Route as AdminBasicRouteImport } from './routes/_admin.basic'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
+import { Route as AdminAiProvidersRouteImport } from './routes/_admin.ai-providers'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -51,11 +52,17 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAiProvidersRoute = AdminAiProvidersRouteImport.update({
+  id: '/ai-providers',
+  path: '/ai-providers',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AdminIndexRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/basic': typeof AdminBasicRoute
   '/system': typeof AdminSystemRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/basic': typeof AdminBasicRoute
   '/system': typeof AdminSystemRoute
@@ -73,6 +81,7 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/_admin/ai-providers': typeof AdminAiProvidersRoute
   '/_admin/analytics': typeof AdminAnalyticsRoute
   '/_admin/basic': typeof AdminBasicRoute
   '/_admin/system': typeof AdminSystemRoute
@@ -81,14 +90,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/unauthorized' | '/analytics' | '/basic' | '/system'
+    | '/'
+    | '/login'
+    | '/unauthorized'
+    | '/ai-providers'
+    | '/analytics'
+    | '/basic'
+    | '/system'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/unauthorized' | '/analytics' | '/basic' | '/system' | '/'
+  to:
+    | '/login'
+    | '/unauthorized'
+    | '/ai-providers'
+    | '/analytics'
+    | '/basic'
+    | '/system'
+    | '/'
   id:
     | '__root__'
     | '/_admin'
     | '/login'
     | '/unauthorized'
+    | '/_admin/ai-providers'
     | '/_admin/analytics'
     | '/_admin/basic'
     | '/_admin/system'
@@ -152,10 +175,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/ai-providers': {
+      id: '/_admin/ai-providers'
+      path: '/ai-providers'
+      fullPath: '/ai-providers'
+      preLoaderRoute: typeof AdminAiProvidersRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminAiProvidersRoute: typeof AdminAiProvidersRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminBasicRoute: typeof AdminBasicRoute
   AdminSystemRoute: typeof AdminSystemRoute
@@ -163,6 +194,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAiProvidersRoute: AdminAiProvidersRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminBasicRoute: AdminBasicRoute,
   AdminSystemRoute: AdminSystemRoute,

@@ -47,4 +47,22 @@ export class AdminController {
       return { status: 200, body: user };
     });
   }
+
+  @TsRestHandler(contract.admin.getAiProviders)
+  getAiProviders(): ReturnType<typeof tsRestHandler<typeof contract.admin.getAiProviders>> {
+    return tsRestHandler(contract.admin.getAiProviders, async () => ({
+      status: 200,
+      body: await this.admin.getAiProviders(),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.upsertAiSystemChannel)
+  upsertAiSystemChannel(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.upsertAiSystemChannel>
+  > {
+    return tsRestHandler(contract.admin.upsertAiSystemChannel, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.upsertAiSystemChannel(body),
+    }));
+  }
 }

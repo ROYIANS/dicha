@@ -43,7 +43,7 @@ const navSections = [
   {
     title: 'AI 与服务',
     items: [
-      { label: 'AI 供应商', icon: Bot, planned: true },
+      { to: '/ai-providers', label: 'AI 供应商', icon: Bot },
       { label: '模型与用途', icon: Database, planned: true },
     ],
   },
@@ -61,7 +61,7 @@ type AdminNavItem = {
   label: string;
   icon: LucideIcon;
   planned?: boolean;
-  to?: '/' | '/basic' | '/system' | '/analytics';
+  to?: '/' | '/basic' | '/ai-providers' | '/system' | '/analytics';
 };
 
 export function AdminShell() {

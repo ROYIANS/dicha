@@ -1,5 +1,5 @@
 import { plainToInstance, Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min, MinLength, validateSync } from 'class-validator';
 
 class EnvVars {
   @IsString()
@@ -84,6 +84,11 @@ class EnvVars {
   @IsOptional()
   @IsString()
   AI_GATEWAY_INTERNAL_TOKEN?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(32)
+  AI_GATEWAY_SECRET_KEY?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

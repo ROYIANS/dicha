@@ -2,6 +2,10 @@ import { plainToInstance, Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min, MinLength, validateSync } from 'class-validator';
 
 class EnvVars {
+  @IsString()
+  @MinLength(1)
+  DATABASE_URL!: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -17,9 +21,6 @@ class EnvVars {
   @MinLength(32)
   AI_GATEWAY_SECRET_KEY?: string;
 
-  @IsOptional()
-  @IsString()
-  AI_GATEWAY_DATA_DIR = './data/ai-gateway';
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

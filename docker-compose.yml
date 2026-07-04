@@ -59,6 +59,7 @@ services:
       UPLOAD_DIR: /data/uploads
       AI_GATEWAY_BASE_URL: ${AI_GATEWAY_BASE_URL:-http://ai-gateway:3100/ai}
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
+      AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
     volumes:
       - dicha-uploads:/data/uploads
     expose:
@@ -81,13 +82,14 @@ services:
       dockerfile: docker/Dockerfile.ai-gateway
     container_name: dicha-ai-gateway
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-dicha}:${POSTGRES_PASSWORD:-dicha}@postgres:5432/${POSTGRES_DB:-dicha}?schema=public
       PORT: '3100'
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
       AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
-      AI_GATEWAY_DATA_DIR: /data/ai-gateway
-    volumes:
-      - dicha-ai-gateway-data:/data/ai-gateway
     expose:
       - '3100'
     healthcheck:
@@ -148,4 +150,3 @@ services:
 volumes:
   dicha-pgdata:
   dicha-uploads:
-  dicha-ai-gateway-data:

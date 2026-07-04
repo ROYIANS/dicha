@@ -1,8 +1,13 @@
 import { queryOptions } from '@tanstack/react-query';
 import {
+  AdminAiProvidersOverviewSchema,
+  AdminAiSystemChannelSchema,
   AdminOverviewSchema,
   AdminUserDetailSchema,
   AdminUsersListSchema,
+  type AdminAiProvidersOverview,
+  type AdminAiSystemChannel,
+  type AdminAiSystemChannelUpsert,
   type AdminOverview,
   type AdminUserDetail,
   type AdminUsersList,
@@ -58,4 +63,29 @@ export function adminUserDetailQueryOptions(id: string) {
     staleTime: 30 * 1000,
     retry: false,
   });
+}
+
+export function adminAiProvidersQueryOptions() {
+  return queryOptions<AdminAiProvidersOverview>({
+    queryKey: ['admin', 'ai', 'providers'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getAiProviders();
+      if (res.status !== 200) {
+        throw new Error(`Admin AI providers request failed (${res.status})`);
+      }
+      return AdminAiProvidersOverviewSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export async function upsertAdminAiSystemChannel(
+  body: AdminAiSystemChannelUpsert,
+): Promise<AdminAiSystemChannel> {
+  const res = await api.admin.upsertAiSystemChannel({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin AI system channel save failed (${res.status})`);
+  }
+  return AdminAiSystemChannelSchema.parse(res.body);
 }

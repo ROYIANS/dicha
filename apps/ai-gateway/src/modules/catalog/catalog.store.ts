@@ -1,6 +1,4 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
@@ -15,6 +13,8 @@ import type {
   AiProvider,
   AiProviderUpdate,
 } from '@dicha/shared';
+import { Prisma } from '../../generated/prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { aiCatalogSeed, aiModelBank, aiProviderTemplateIds } from './catalog.seed';
 
 const deprecatedSeedProviderIds = new Set(['vidorra']);
@@ -35,18 +35,35 @@ type PersistedConfig = {
   assignments: AiAssignmentUpdate[];
 };
 
+type AiProviderConfigRecord = Prisma.AiProviderConfigGetPayload<Record<string, never>>;
+type AiModelConfigRecord = Prisma.AiModelConfigGetPayload<Record<string, never>>;
+type AiModelAssignmentConfigRecord = Prisma.AiModelAssignmentConfigGetPayload<Record<string, never>>;
+
 export type ProviderSecret = {
   provider: AiProvider;
   secret: string;
 };
 
+export type SystemProviderChannel = {
+  id: string;
+  providerId: string;
+  modelId: string;
+  name: string;
+  upstreamBaseUrl: string;
+  upstreamModelName: string;
+  requestFormat: AiProvider['requestFormat'];
+  authType: AiProvider['authType'];
+  secret: string;
+};
+
 @Injectable()
 export class CatalogStore {
-  private readonly dataDir: string;
   private readonly encryptionKey: Buffer;
 
-  constructor(config: ConfigService) {
-    this.dataDir = config.get<string>('AI_GATEWAY_DATA_DIR', './data/ai-gateway');
+  constructor(
+    config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     const secret = config.get<string>('AI_GATEWAY_SECRET_KEY') ?? this.developmentSecret(config);
     this.encryptionKey = createHash('sha256').update(secret).digest();
   }
@@ -176,6 +193,29 @@ export class CatalogStore {
     };
   }
 
+  async getSystemProviderChannel(
+    providerId: string,
+    modelId: string,
+  ): Promise<SystemProviderChannel | null> {
+    const channel = await this.prisma.aiSystemProviderChannel.findFirst({
+      where: { providerId, modelId, enabled: true },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+    });
+    if (!channel) return null;
+
+    return {
+      id: channel.id,
+      providerId: channel.providerId,
+      modelId: channel.modelId,
+      name: channel.name,
+      upstreamBaseUrl: channel.upstreamBaseUrl,
+      upstreamModelName: channel.upstreamModelName,
+      requestFormat: channel.requestFormat as AiProvider['requestFormat'],
+      authType: channel.authType as AiProvider['authType'],
+      secret: channel.credential ? this.decrypt(channel.credential as PersistedCredential) : '',
+    };
+  }
+
   async mergeSyncedModels(
     ownerId: string,
     providerId: string,
@@ -202,15 +242,33 @@ export class CatalogStore {
   }
 
   private async readConfig(ownerId: string): Promise<PersistedConfig> {
-    try {
-      const raw = await readFile(this.configPath(ownerId), 'utf8');
-      return this.normalizeConfig(JSON.parse(raw) as PersistedConfig);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    const [providers, models, assignments] = await Promise.all([
+      this.prisma.aiProviderConfig.findMany({
+        where: { ownerId },
+        orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+      }),
+      this.prisma.aiModelConfig.findMany({
+        where: { ownerId },
+        orderBy: [{ providerId: 'asc' }, { createdAt: 'asc' }],
+      }),
+      this.prisma.aiModelAssignmentConfig.findMany({
+        where: { ownerId },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    if (providers.length === 0) {
       const seeded = this.seedConfig();
       await this.writeConfig(ownerId, seeded);
       return seeded;
     }
+
+    const current = this.normalizeConfig({
+      providers: providers.map((provider) => this.providerFromRecord(provider)),
+      models: models.map((model) => this.modelFromRecord(model)),
+      assignments: assignments.map((assignment) => this.assignmentFromRecord(assignment)),
+    });
+    return current;
   }
 
   private seedConfig(): PersistedConfig {
@@ -291,6 +349,9 @@ export class CatalogStore {
   }
 
   private seedModel(model: AiModel): AiModel {
+    if (model.catalogSource === 'dicha_catalog') {
+      return model;
+    }
     return {
       ...model,
       enabled: model.enabled && model.availability !== 'config_required',
@@ -490,18 +551,170 @@ export class CatalogStore {
   }
 
   private async writeConfig(ownerId: string, config: PersistedConfig): Promise<void> {
-    const configPath = this.configPath(ownerId);
-    await mkdir(dirname(configPath), { recursive: true, mode: 0o700 });
-    await chmod(dirname(configPath), 0o700);
-    const nextPath = `${configPath}.tmp`;
-    await writeFile(nextPath, `${JSON.stringify(config, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
-    await rename(nextPath, configPath);
-    await chmod(configPath, 0o600);
+    await this.prisma.$transaction([
+      this.prisma.aiModelAssignmentConfig.deleteMany({ where: { ownerId } }),
+      this.prisma.aiModelConfig.deleteMany({ where: { ownerId } }),
+      this.prisma.aiProviderConfig.deleteMany({ where: { ownerId } }),
+      this.prisma.aiProviderConfig.createMany({
+        data: config.providers.map((provider) => this.providerCreateInput(ownerId, provider)),
+      }),
+      this.prisma.aiModelConfig.createMany({
+        data: config.models.map((model) => this.modelCreateInput(ownerId, model)),
+      }),
+      this.prisma.aiModelAssignmentConfig.createMany({
+        data: config.assignments.map((assignment) =>
+          this.assignmentCreateInput(ownerId, assignment),
+        ),
+      }),
+    ]);
   }
 
-  private configPath(ownerId: string): string {
-    const ownerKey = createHash('sha256').update(ownerId).digest('hex').slice(0, 32);
-    return join(this.dataDir, 'users', `${ownerKey}.json`);
+  private providerFromRecord(record: AiProviderConfigRecord): PersistedConfig['providers'][number] {
+    return {
+      id: record.providerId,
+      name: record.name,
+      shortName: record.shortName,
+      avatar: record.avatar ?? undefined,
+      description: record.description,
+      baseUrl: record.baseUrl,
+      status: record.status as AiProvider['status'],
+      category: record.category as AiProvider['category'],
+      authType: record.authType as AiProvider['authType'],
+      requestFormat: (record.requestFormat ?? undefined) as AiProvider['requestFormat'],
+      credentialMode: record.credentialMode as AiProvider['credentialMode'],
+      billingMode: record.billingMode as AiProvider['billingMode'],
+      modelSyncMode: record.modelSyncMode as AiProvider['modelSyncMode'],
+      credentialState: record.credentialState as AiProvider['credentialState'],
+      priority: record.priority,
+      custom: record.custom ?? undefined,
+      credential: this.credentialFromJson(record.credential),
+    };
+  }
+
+  private modelFromRecord(record: AiModelConfigRecord): AiModel {
+    return {
+      id: record.modelId,
+      providerId: record.providerId,
+      name: record.name,
+      displayName: record.displayName,
+      avatar: record.avatar ?? undefined,
+      contextWindow: record.contextWindow,
+      modelType: record.modelType as AiModelType,
+      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(record.extensionParameters),
+      capabilities: this.arrayFromJson<AiModel['capabilities'][number]>(record.capabilities),
+      maxOutput: record.maxOutput ?? undefined,
+      enabled: record.enabled,
+      recommended: record.recommended,
+      availability: record.availability as AiModel['availability'],
+      lastLatencyMs: record.lastLatencyMs,
+      priceHint: record.priceHint,
+      catalogSource: (record.catalogSource ?? undefined) as AiModel['catalogSource'],
+      pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
+      releasedAt: record.releasedAt ?? undefined,
+      lobeMetadata: this.optionalJson<AiModel['lobeMetadata']>(record.lobeMetadata),
+      custom: record.custom ?? undefined,
+    };
+  }
+
+  private assignmentFromRecord(record: AiModelAssignmentConfigRecord): AiAssignmentUpdate {
+    return {
+      useCase: record.useCase as AiAssignmentUpdate['useCase'],
+      primaryModelId: record.primaryModelId,
+      fallbackModelIds: this.arrayFromJson<string>(record.fallbackModelIds),
+    };
+  }
+
+  private providerCreateInput(
+    ownerId: string,
+    provider: PersistedConfig['providers'][number],
+  ): Prisma.AiProviderConfigCreateManyInput {
+    return {
+      ownerId,
+      providerId: provider.id,
+      name: provider.name,
+      shortName: provider.shortName,
+      avatar: provider.avatar,
+      description: provider.description,
+      baseUrl: provider.baseUrl,
+      status: provider.status,
+      category: provider.category,
+      authType: provider.authType,
+      requestFormat: provider.requestFormat,
+      credentialMode: provider.credentialMode,
+      billingMode: provider.billingMode,
+      modelSyncMode: provider.modelSyncMode,
+      credentialState: provider.credentialState,
+      priority: provider.priority,
+      custom: provider.custom,
+      credential: this.jsonOrUndefined(provider.credential),
+    };
+  }
+
+  private modelCreateInput(ownerId: string, model: AiModel): Prisma.AiModelConfigCreateManyInput {
+    return {
+      ownerId,
+      modelId: model.id,
+      providerId: model.providerId,
+      name: model.name,
+      displayName: model.displayName,
+      avatar: model.avatar,
+      contextWindow: model.contextWindow,
+      modelType: model.modelType,
+      extensionParameters: model.extensionParameters,
+      capabilities: model.capabilities,
+      maxOutput: model.maxOutput,
+      enabled: model.enabled,
+      recommended: model.recommended,
+      availability: model.availability,
+      lastLatencyMs: model.lastLatencyMs,
+      priceHint: model.priceHint,
+      catalogSource: model.catalogSource,
+      pricing: this.jsonOrUndefined(model.pricing),
+      releasedAt: model.releasedAt,
+      lobeMetadata: this.jsonOrUndefined(model.lobeMetadata),
+      custom: model.custom,
+    };
+  }
+
+  private assignmentCreateInput(
+    ownerId: string,
+    assignment: AiAssignmentUpdate,
+  ): Prisma.AiModelAssignmentConfigCreateManyInput {
+    return {
+      ownerId,
+      useCase: assignment.useCase,
+      primaryModelId: assignment.primaryModelId,
+      fallbackModelIds: assignment.fallbackModelIds,
+    };
+  }
+
+  private credentialFromJson(value: Prisma.JsonValue | null): PersistedCredential | undefined {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const credential = value as Record<string, unknown>;
+    if (
+      typeof credential.iv === 'string' &&
+      typeof credential.tag === 'string' &&
+      typeof credential.value === 'string'
+    ) {
+      return {
+        iv: credential.iv,
+        tag: credential.tag,
+        value: credential.value,
+      };
+    }
+    return undefined;
+  }
+
+  private arrayFromJson<T extends string>(value: Prisma.JsonValue): T[] {
+    return Array.isArray(value) ? value.filter((item): item is T => typeof item === 'string') : [];
+  }
+
+  private optionalJson<T>(value: Prisma.JsonValue | null): T | undefined {
+    return value === null ? undefined : (value as T);
+  }
+
+  private jsonOrUndefined(value: unknown): Prisma.InputJsonValue | undefined {
+    return value === undefined ? undefined : (value as Prisma.InputJsonValue);
   }
 
   private developmentSecret(config: ConfigService): string {

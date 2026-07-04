@@ -12,6 +12,7 @@ import type {
   AiUsageStatus,
 } from '@dicha/shared';
 import { CatalogStore } from '../catalog/catalog.store';
+import type { SystemProviderChannel } from '../catalog/catalog.store';
 import { UsageStore } from '../usage/usage.store';
 
 type InvokeSuccess = {
@@ -34,6 +35,7 @@ type AttemptTarget = {
 
 type ProviderSecret = {
   secret: string;
+  channel?: SystemProviderChannel;
 };
 
 const DEFAULT_TIMEOUT_MS = 45_000;
@@ -52,22 +54,32 @@ export class InvokeService {
     const attempts: AiInvokeAttempt[] = [];
 
     for (const target of targets) {
-      const requestFormat = request.requestFormat ?? target.provider.requestFormat ?? 'openai_compatible';
       const validationFailure = await this.validateTarget(ownerId, target);
+      const requestFormat = request.requestFormat ?? target.provider.requestFormat ?? 'openai_compatible';
       if (validationFailure) {
         attempts.push(this.failedAttempt(target, requestFormat, null, validationFailure));
         if (!validationFailure.retryable) break;
         continue;
       }
 
-      const secret = await this.providerSecret(ownerId, target.provider);
+      const secret = await this.providerSecret(ownerId, target);
+      const resolvedRequestFormat = secret.channel?.requestFormat ?? requestFormat;
+      if (target.provider.credentialMode === 'platform_managed' && !secret.channel) {
+        const failure = this.invokeError(
+          'config',
+          'Platform-managed AI provider channel is not configured',
+          true,
+        );
+        attempts.push(this.failedAttempt(target, resolvedRequestFormat, null, failure));
+        continue;
+      }
       const startedAt = Date.now();
       try {
         const result = await this.invokeUpstream({
           model: target.model,
           provider: target.provider,
           request,
-          requestFormat,
+          requestFormat: resolvedRequestFormat,
           secret,
         });
         const status: AiUsageStatus = attempts.some((attempt) => attempt.status === 'failure')
@@ -79,7 +91,7 @@ export class InvokeService {
           providerName: target.provider.name,
           modelId: target.model.id,
           modelName: target.model.displayName,
-          requestFormat,
+          requestFormat: resolvedRequestFormat,
           status,
           latencyMs: result.latencyMs,
           errorCategory: null,
@@ -90,7 +102,7 @@ export class InvokeService {
           error: null,
           generatedAt: new Date().toISOString(),
           request,
-          requestFormat,
+          requestFormat: resolvedRequestFormat,
           status,
           target,
           text: result.text,
@@ -98,7 +110,7 @@ export class InvokeService {
         });
       } catch (error) {
         const failure = this.classifyError(error);
-        attempts.push(this.failedAttempt(target, requestFormat, Date.now() - startedAt, failure));
+        attempts.push(this.failedAttempt(target, resolvedRequestFormat, Date.now() - startedAt, failure));
         if (!failure.retryable) break;
       }
     }
@@ -175,13 +187,6 @@ export class InvokeService {
         retryable: true,
       };
     }
-    if (target.provider.credentialMode === 'platform_managed') {
-      return {
-        category: 'config',
-        message: 'Platform-managed AI provider is not connected yet',
-        retryable: true,
-      };
-    }
     if (target.provider.credentialMode === 'user_api_key') {
       const secret = await this.catalogStore.getProviderSecret(ownerId, target.provider.id);
       if (!secret?.secret) {
@@ -195,15 +200,25 @@ export class InvokeService {
     return null;
   }
 
-  private async providerSecret(ownerId: string, provider: AiProvider): Promise<ProviderSecret> {
-    if (provider.credentialMode === 'not_required') return { secret: '' };
-    const value = await this.catalogStore.getProviderSecret(ownerId, provider.id);
+  private async providerSecret(ownerId: string, target: AttemptTarget): Promise<ProviderSecret> {
+    if (target.provider.credentialMode === 'not_required') return { secret: '' };
+    if (target.provider.credentialMode === 'platform_managed') {
+      const channel = await this.catalogStore.getSystemProviderChannel(
+        target.provider.id,
+        target.model.id,
+      );
+      return {
+        secret: channel?.secret ?? '',
+        ...(channel ? { channel } : {}),
+      };
+    }
+    const value = await this.catalogStore.getProviderSecret(ownerId, target.provider.id);
     return { secret: value?.secret ?? '' };
   }
 
   private async invokeUpstream({
-    model,
-    provider,
+    model: requestedModel,
+    provider: requestedProvider,
     request,
     requestFormat,
     secret,
@@ -214,6 +229,20 @@ export class InvokeService {
     requestFormat: AiProviderRequestFormat;
     secret: ProviderSecret;
   }): Promise<InvokeSuccess> {
+    const provider = secret.channel
+      ? {
+          ...requestedProvider,
+          baseUrl: secret.channel.upstreamBaseUrl,
+          authType: secret.channel.authType,
+          requestFormat: secret.channel.requestFormat,
+        }
+      : requestedProvider;
+    const model = secret.channel
+      ? {
+          ...requestedModel,
+          name: secret.channel.upstreamModelName,
+        }
+      : requestedModel;
     const startedAt = Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), request.timeoutMs ?? DEFAULT_TIMEOUT_MS);

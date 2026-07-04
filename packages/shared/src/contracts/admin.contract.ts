@@ -8,7 +8,7 @@ const AdminErrorSchema = z.object({
 });
 
 export const AdminModuleSummarySchema = z.object({
-  id: z.enum(['dashboard', 'basic', 'system', 'analytics']),
+  id: z.enum(['dashboard', 'basic', 'aiProviders', 'system', 'analytics']),
   title: z.string(),
   description: z.string(),
   status: z.enum(['ready', 'planned']),
@@ -115,6 +115,65 @@ export const AdminUserDetailSchema = AdminUserSummarySchema.extend({
 
 export type AdminUserDetail = z.infer<typeof AdminUserDetailSchema>;
 
+export const AdminAiProviderSummarySchema = z.object({
+  providerId: z.string(),
+  name: z.string(),
+  shortName: z.string(),
+  category: z.string(),
+  credentialMode: z.string(),
+  billingMode: z.string(),
+  modelSyncMode: z.string(),
+  status: z.string(),
+  modelCount: z.number().int().min(0),
+  enabledModelCount: z.number().int().min(0),
+});
+
+export type AdminAiProviderSummary = z.infer<typeof AdminAiProviderSummarySchema>;
+
+export const AdminAiSystemChannelSchema = z.object({
+  id: z.string(),
+  providerId: z.string(),
+  modelId: z.string(),
+  name: z.string(),
+  upstreamBaseUrl: z.string(),
+  upstreamModelName: z.string(),
+  requestFormat: z.enum(['openai_compatible', 'openai_responses', 'anthropic_messages']),
+  authType: z.enum(['api_key', 'bearer_token', 'none']),
+  enabled: z.boolean(),
+  priority: z.number().int(),
+  credentialState: z.enum(['configured', 'missing', 'not_required']),
+  notes: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type AdminAiSystemChannel = z.infer<typeof AdminAiSystemChannelSchema>;
+
+export const AdminAiProvidersOverviewSchema = z.object({
+  generatedAt: z.string(),
+  providers: z.array(AdminAiProviderSummarySchema),
+  systemChannels: z.array(AdminAiSystemChannelSchema),
+});
+
+export type AdminAiProvidersOverview = z.infer<typeof AdminAiProvidersOverviewSchema>;
+
+export const AdminAiSystemChannelUpsertSchema = z.object({
+  channelId: z.string().optional(),
+  providerId: z.string().min(1),
+  modelId: z.string().min(1),
+  name: z.string().min(1).max(120),
+  upstreamBaseUrl: z.string().url(),
+  upstreamModelName: z.string().min(1).max(160),
+  requestFormat: z.enum(['openai_compatible', 'openai_responses', 'anthropic_messages']),
+  authType: z.enum(['api_key', 'bearer_token', 'none']),
+  credential: z.string().min(1).max(4096).optional(),
+  enabled: z.boolean(),
+  priority: z.number().int().min(1).max(10000),
+  notes: z.string().trim().max(240).nullable().optional(),
+});
+
+export type AdminAiSystemChannelUpsert = z.infer<typeof AdminAiSystemChannelUpsertSchema>;
+
 export const adminContract = c.router({
   getOverview: {
     method: 'GET',
@@ -144,5 +203,22 @@ export const adminContract = c.router({
       404: AdminErrorSchema,
     },
     summary: 'Super admin user detail',
+  },
+  getAiProviders: {
+    method: 'GET',
+    path: '/admin/ai/providers',
+    responses: {
+      200: AdminAiProvidersOverviewSchema,
+    },
+    summary: 'Super admin AI provider and system channel overview',
+  },
+  upsertAiSystemChannel: {
+    method: 'POST',
+    path: '/admin/ai/system-channels',
+    body: AdminAiSystemChannelUpsertSchema,
+    responses: {
+      200: AdminAiSystemChannelSchema,
+    },
+    summary: 'Create or update a platform-managed AI provider channel',
   },
 });

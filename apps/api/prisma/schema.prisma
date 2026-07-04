@@ -10,6 +10,14 @@ generator client {
   importFileExtension = "js"
 }
 
+generator aiGatewayClient {
+  provider            = "prisma-client"
+  output              = "../../ai-gateway/src/generated/prisma"
+  moduleFormat        = "cjs"
+  runtime             = "nodejs"
+  importFileExtension = "js"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -81,6 +89,12 @@ model User {
   // ── 领域关系 ───────────────────────────────────────────
   items  Item[]
   events Event[]
+
+  // ── AI Gateway 关系 ───────────────────────────────────
+  aiProviders   AiProviderConfig[]
+  aiModels      AiModelConfig[]
+  aiAssignments AiModelAssignmentConfig[]
+  aiUsageEvents AiUsageEvent[]
 }
 
 // ─── Better Auth 表（session / account / verification）───
@@ -137,7 +151,7 @@ model Verification {
 
 // passkey 插件表（WebAuthn 凭证）。字段对齐 @better-auth/passkey adapter 期望。
 model Passkey {
-  id           String    @id @default(cuid())
+  id           String  @id @default(cuid())
   name         String?
   publicKey    String
   credentialID String
@@ -248,4 +262,144 @@ model Event {
   @@index([ownerId])
   @@index([itemId])
   @@index([type])
+}
+
+// ─── AI Gateway 持久化（用户维度 + 系统托管渠道）──────────
+
+model AiProviderConfig {
+  id         String @id @default(cuid())
+  providerId String
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  name            String
+  shortName       String
+  avatar          String?
+  description     String
+  baseUrl         String
+  status          String
+  category        String
+  authType        String
+  requestFormat   String?
+  credentialMode  String
+  billingMode     String
+  modelSyncMode   String
+  credentialState String
+  priority        Int
+  custom          Boolean?
+  credential      Json?
+
+  models AiModelConfig[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, providerId])
+  @@index([ownerId])
+  @@index([ownerId, status, priority])
+}
+
+model AiModelConfig {
+  id      String @id @default(cuid())
+  modelId String
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  provider   AiProviderConfig @relation(fields: [ownerId, providerId], references: [ownerId, providerId], onDelete: Cascade)
+  providerId String
+
+  name                String
+  displayName         String
+  avatar              String?
+  contextWindow       Int?
+  modelType           String
+  extensionParameters Json
+  capabilities        Json
+  maxOutput           Int?
+  enabled             Boolean
+  recommended         Boolean
+  availability        String
+  lastLatencyMs       Int?
+  priceHint           String
+  catalogSource       String?
+  pricing             Json?
+  releasedAt          String?
+  lobeMetadata        Json?
+  custom              Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, modelId])
+  @@index([ownerId])
+  @@index([ownerId, providerId, enabled])
+  @@index([ownerId, availability])
+}
+
+model AiModelAssignmentConfig {
+  id      String @id @default(cuid())
+  useCase String
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  primaryModelId   String
+  fallbackModelIds Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, useCase])
+  @@index([ownerId])
+}
+
+model AiUsageEvent {
+  id String @id
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  kind             String
+  status           String
+  useCase          String
+  providerId       String
+  providerName     String
+  modelId          String
+  modelName        String
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  estimatedCostUsd Float
+  latencyMs        Int?
+  errorCategory    String?
+  createdAt        DateTime @default(now())
+
+  @@index([ownerId, createdAt])
+  @@index([ownerId, providerId, createdAt])
+  @@index([ownerId, modelId, createdAt])
+  @@index([ownerId, useCase, createdAt])
+  @@index([ownerId, status, createdAt])
+}
+
+model AiSystemProviderChannel {
+  id String @id @default(cuid())
+
+  providerId        String
+  modelId           String
+  name              String
+  upstreamBaseUrl   String
+  upstreamModelName String
+  requestFormat     String
+  authType          String
+  credential        Json?
+  enabled           Boolean @default(false)
+  priority          Int     @default(100)
+  notes             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([providerId, modelId, enabled, priority])
 }
