@@ -286,11 +286,21 @@ catch (error) {
   - `AiModelConfig` — per-user model rows, unique by `(ownerId, modelId)`, related to provider by `(ownerId, providerId)`.
   - `AiModelAssignmentConfig` — per-user use-case assignment rows, unique by `(ownerId, useCase)`.
   - `AiUsageEvent` — append-only user-scoped invoke/probe usage events.
-  - `AiSystemProviderChannel` — super-admin managed upstream channels for `platform_managed` providers such as `dicha`.
+  - `AiProviderDirectorySetting` — super-admin managed visibility and default request configuration for built-in user-owned provider templates.
+  - `AiProviderDirectoryModel` — super-admin managed default model pool for a built-in user-owned provider template.
+  - `AiInternalProvider` — super-admin managed upstream provider/channel behind the official DicHA AI service.
+  - `AiInternalProviderModel` — upstream model synced from an internal provider, plus its DX-facing model id/name/parameter mapping.
+  - `AiSystemProviderChannel` — legacy/simple internal upstream channel for `platform_managed` providers such as `dicha`; new admin UI should prefer `AiInternalProvider` + `AiInternalProviderModel`.
 - Gateway DB client: `apps/ai-gateway/src/prisma/prisma.service.ts`, generated from the shared Prisma schema into `apps/ai-gateway/src/generated/prisma`.
 - Admin contract:
-  - `contract.admin.getAiProviders` -> `GET /api/admin/ai/providers`.
-  - `contract.admin.upsertAiSystemChannel` -> `POST /api/admin/ai/system-channels`.
+  - `contract.admin.getAiProviderDirectory` -> `GET /api/admin/ai/provider-directory`.
+  - `contract.admin.updateAiProviderDirectory` -> `POST /api/admin/ai/provider-directory`.
+  - `contract.admin.syncAiProviderDirectoryModels` -> `POST /api/admin/ai/provider-directory/sync-models`.
+  - `contract.admin.updateAiProviderDirectoryModel` -> `POST /api/admin/ai/provider-directory/models`.
+  - `contract.admin.getDichaAiService` -> `GET /api/admin/ai/dicha-service`.
+  - `contract.admin.upsertDichaInternalProvider` -> `POST /api/admin/ai/dicha-service/providers`.
+  - `contract.admin.syncDichaInternalProviderModels` -> `POST /api/admin/ai/dicha-service/providers/sync-models`.
+  - `contract.admin.updateDichaModel` -> `POST /api/admin/ai/dicha-service/models`.
 - Gateway env:
   - `DATABASE_URL` required.
   - `AI_GATEWAY_SECRET_KEY` required in production.
@@ -301,6 +311,10 @@ catch (error) {
 - AI gateway must not persist catalog or usage state to local JSON files. The old `AI_GATEWAY_DATA_DIR` style is retired.
 - `CatalogStore` keeps the existing shared DTO surface (`AiGatewayCatalog`, `AiConfigUpdate`) and maps it to Prisma records internally.
 - New users are seeded into `AiProviderConfig`, `AiModelConfig`, and `AiModelAssignmentConfig` on first catalog read.
+- Built-in user-owned provider templates are seeded only when `AiProviderDirectorySetting.enabled` is true. `dicha` is always visible as the official provider, and user-created custom providers remain visible because they are owned by that user.
+- `AiProviderDirectorySetting` controls only user-facing BYOK/provider-template visibility and default request metadata such as base URL, auth type, and request format. It must not store user API keys, internal upstream routing, or platform billing state.
+- `AiProviderDirectoryModel` is the platform default model pool for a user-owned provider. Users can still override/enable/disable models in their own catalog after the platform has seeded defaults.
+- Super-admin model sync for provider directory entries may use the configured default base URL without credentials. If the upstream rejects anonymous model listing and model-bank metadata exists, the admin sync can fall back to model-bank defaults.
 - Provider credentials are stored only as encrypted JSON payloads. Public catalog responses expose only `credentialState`.
 - Usage events are inserted as one row per gateway usage event; `kind: 'invoke'` is the only kind counted as user AI consumption.
 - `AiUsageEvent` must include indexes for the statistics page's hot paths:
@@ -310,6 +324,8 @@ catch (error) {
   - `(ownerId, useCase, createdAt)`
   - `(ownerId, status, createdAt)`
 - `platform_managed` invoke attempts must resolve an enabled `AiSystemProviderChannel` by `(providerId, modelId)` and use that channel's upstream base URL, upstream model name, request format, auth type, and encrypted secret.
+- `AiInternalProvider` and `AiInternalProviderModel` are the DicHA/internal service layer: admin pages may connect multiple internal upstream providers, sync their models, and enable selected models as DX-facing DicHA models. They must not present the official `dicha` provider itself as a normal user-facing enable/disable toggle.
+- Enabled `AiInternalProviderModel` rows are aggregated into the user catalog under the single `dicha` provider using their `dxModelId`, `dxDisplayName`, recommendation flag, sort order, and parameter config metadata.
 - Admin AI provider APIs must be protected by `AuthGuard + SuperAdminGuard` and must never return channel credentials.
 - The API service may encrypt system channel credentials only with the same `AI_GATEWAY_SECRET_KEY` that the gateway uses to decrypt them; this key must not be exposed to any Vite app.
 
@@ -320,6 +336,10 @@ catch (error) {
 | `DATABASE_URL` missing in ai-gateway | Env validation fails at startup. |
 | `AI_GATEWAY_SECRET_KEY` missing in production | Gateway startup fails; API admin channel management also fails fast. |
 | User has no catalog rows | Gateway writes seeded providers/models/assignments into PostgreSQL and returns the catalog. |
+| Super-admin disables a built-in user provider | Gateway normalization removes that built-in provider, its seeded models, and assignments that reference unavailable models from user catalogs. |
+| Super-admin enables a built-in user provider | Gateway normalization can seed that provider and its model-bank models into user catalogs on the next catalog read. |
+| Super-admin syncs provider-directory models | Synced rows populate `AiProviderDirectoryModel`; future user catalogs use enabled rows from this DB pool instead of the static model bank for that provider. |
+| Super-admin syncs DicHA internal provider models | Synced rows populate `AiInternalProviderModel`; only enabled rows with an enabled internal provider become user-visible DicHA models. |
 | User updates provider/model/assignment config | Gateway transaction rewrites that user's catalog rows atomically. |
 | User invokes `platform_managed` model without an enabled system channel | Attempt fails with sanitized `config` category and can fall back. |
 | Admin saves a channel credential | API writes encrypted `{ iv, tag, value }`; subsequent admin reads return `credentialState: configured`. |

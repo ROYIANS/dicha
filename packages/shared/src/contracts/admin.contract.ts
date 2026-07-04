@@ -1,5 +1,10 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
+import {
+  AiModelCapabilitySchema,
+  AiModelTypeSchema,
+  AiProviderRequestFormatSchema,
+} from './ai.contract';
 
 const c = initContract();
 
@@ -130,14 +135,87 @@ export const AdminAiProviderSummarySchema = z.object({
 
 export type AdminAiProviderSummary = z.infer<typeof AdminAiProviderSummarySchema>;
 
-export const AdminAiSystemChannelSchema = z.object({
-  id: z.string(),
+export const AdminAiProviderDirectoryItemSchema = AdminAiProviderSummarySchema.extend({
+  enabled: z.boolean(),
+  baseUrl: z.string().url(),
+  requestFormat: AiProviderRequestFormatSchema.optional(),
+  authType: z.enum(['api_key', 'bearer_token', 'none']),
+  notes: z.string().nullable(),
+});
+
+export type AdminAiProviderDirectoryItem = z.infer<typeof AdminAiProviderDirectoryItemSchema>;
+
+export const AdminAiProviderDirectoryOverviewSchema = z.object({
+  generatedAt: z.string(),
+  providers: z.array(AdminAiProviderDirectoryItemSchema),
+  models: z.array(
+    z.object({
+      providerId: z.string(),
+      modelId: z.string(),
+      name: z.string(),
+      displayName: z.string(),
+      modelType: AiModelTypeSchema,
+      capabilities: z.array(AiModelCapabilitySchema),
+      contextWindow: z.number().int().positive().nullable(),
+      enabled: z.boolean(),
+      recommended: z.boolean(),
+      availability: z.string(),
+      priceHint: z.string(),
+    }),
+  ),
+});
+
+export type AdminAiProviderDirectoryOverview = z.infer<
+  typeof AdminAiProviderDirectoryOverviewSchema
+>;
+
+export const AdminAiProviderDirectoryUpdateSchema = z.object({
+  providerId: z.string().min(1),
+  enabled: z.boolean().optional(),
+  baseUrl: z.string().url().optional(),
+  requestFormat: AiProviderRequestFormatSchema.optional(),
+  authType: z.enum(['api_key', 'bearer_token', 'none']).optional(),
+  notes: z.string().trim().max(240).nullable().optional(),
+});
+
+export type AdminAiProviderDirectoryUpdate = z.infer<
+  typeof AdminAiProviderDirectoryUpdateSchema
+>;
+
+export const AdminAiProviderDirectoryModelUpdateSchema = z.object({
+  providerId: z.string().min(1),
+  modelId: z.string().min(1),
+  enabled: z.boolean().optional(),
+  recommended: z.boolean().optional(),
+  displayName: z.string().min(1).max(160).optional(),
+});
+
+export type AdminAiProviderDirectoryModelUpdate = z.infer<
+  typeof AdminAiProviderDirectoryModelUpdateSchema
+>;
+
+export const AdminAiProviderDirectorySyncSchema = z.object({
+  providerId: z.string().min(1),
+});
+
+export type AdminAiProviderDirectorySync = z.infer<
+  typeof AdminAiProviderDirectorySyncSchema
+>;
+
+export const AdminAiProviderDirectorySyncResponseSchema = z.object({
   providerId: z.string(),
-  modelId: z.string(),
+  syncedCount: z.number().int().min(0),
+});
+
+export type AdminAiProviderDirectorySyncResponse = z.infer<
+  typeof AdminAiProviderDirectorySyncResponseSchema
+>;
+
+export const AdminAiInternalProviderSchema = z.object({
+  id: z.string(),
   name: z.string(),
-  upstreamBaseUrl: z.string(),
-  upstreamModelName: z.string(),
-  requestFormat: z.enum(['openai_compatible', 'openai_responses', 'anthropic_messages']),
+  baseUrl: z.string(),
+  requestFormat: AiProviderRequestFormatSchema,
   authType: z.enum(['api_key', 'bearer_token', 'none']),
   enabled: z.boolean(),
   priority: z.number().int(),
@@ -147,24 +225,43 @@ export const AdminAiSystemChannelSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type AdminAiSystemChannel = z.infer<typeof AdminAiSystemChannelSchema>;
+export type AdminAiInternalProvider = z.infer<typeof AdminAiInternalProviderSchema>;
 
-export const AdminAiProvidersOverviewSchema = z.object({
-  generatedAt: z.string(),
-  providers: z.array(AdminAiProviderSummarySchema),
-  systemChannels: z.array(AdminAiSystemChannelSchema),
+export const AdminDichaAiModelSchema = z.object({
+  modelRecordId: z.string(),
+  modelId: z.string(),
+  internalProviderId: z.string(),
+  internalProviderName: z.string(),
+  upstreamModelName: z.string(),
+  name: z.string(),
+  displayName: z.string(),
+  description: z.string().nullable(),
+  modelType: AiModelTypeSchema,
+  capabilities: z.array(AiModelCapabilitySchema),
+  contextWindow: z.number().int().positive().nullable(),
+  enabled: z.boolean(),
+  availability: z.string(),
+  recommended: z.boolean(),
+  sortOrder: z.number().int(),
+  parameterConfig: z.record(z.string(), z.unknown()).nullable(),
 });
 
-export type AdminAiProvidersOverview = z.infer<typeof AdminAiProvidersOverviewSchema>;
+export type AdminDichaAiModel = z.infer<typeof AdminDichaAiModelSchema>;
 
-export const AdminAiSystemChannelUpsertSchema = z.object({
-  channelId: z.string().optional(),
-  providerId: z.string().min(1),
-  modelId: z.string().min(1),
+export const AdminDichaAiServiceOverviewSchema = z.object({
+  generatedAt: z.string(),
+  provider: AdminAiProviderSummarySchema,
+  internalProviders: z.array(AdminAiInternalProviderSchema),
+  models: z.array(AdminDichaAiModelSchema),
+});
+
+export type AdminDichaAiServiceOverview = z.infer<typeof AdminDichaAiServiceOverviewSchema>;
+
+export const AdminAiInternalProviderUpsertSchema = z.object({
+  providerId: z.string().optional(),
   name: z.string().min(1).max(120),
-  upstreamBaseUrl: z.string().url(),
-  upstreamModelName: z.string().min(1).max(160),
-  requestFormat: z.enum(['openai_compatible', 'openai_responses', 'anthropic_messages']),
+  baseUrl: z.string().url(),
+  requestFormat: AiProviderRequestFormatSchema,
   authType: z.enum(['api_key', 'bearer_token', 'none']),
   credential: z.string().min(1).max(4096).optional(),
   enabled: z.boolean(),
@@ -172,7 +269,37 @@ export const AdminAiSystemChannelUpsertSchema = z.object({
   notes: z.string().trim().max(240).nullable().optional(),
 });
 
-export type AdminAiSystemChannelUpsert = z.infer<typeof AdminAiSystemChannelUpsertSchema>;
+export type AdminAiInternalProviderUpsert = z.infer<typeof AdminAiInternalProviderUpsertSchema>;
+
+export const AdminDichaInternalProviderSyncSchema = z.object({
+  providerId: z.string().min(1),
+});
+
+export type AdminDichaInternalProviderSync = z.infer<
+  typeof AdminDichaInternalProviderSyncSchema
+>;
+
+export const AdminDichaInternalProviderSyncResponseSchema = z.object({
+  providerId: z.string(),
+  syncedCount: z.number().int().min(0),
+});
+
+export type AdminDichaInternalProviderSyncResponse = z.infer<
+  typeof AdminDichaInternalProviderSyncResponseSchema
+>;
+
+export const AdminDichaModelUpdateSchema = z.object({
+  modelRecordId: z.string().min(1),
+  enabled: z.boolean().optional(),
+  dxModelId: z.string().min(1).max(180).optional(),
+  dxDisplayName: z.string().min(1).max(160).optional(),
+  dxDescription: z.string().trim().max(500).nullable().optional(),
+  dxRecommended: z.boolean().optional(),
+  dxSortOrder: z.number().int().min(1).max(10000).optional(),
+  parameterConfig: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type AdminDichaModelUpdate = z.infer<typeof AdminDichaModelUpdateSchema>;
 
 export const adminContract = c.router({
   getOverview: {
@@ -204,21 +331,74 @@ export const adminContract = c.router({
     },
     summary: 'Super admin user detail',
   },
-  getAiProviders: {
+  getAiProviderDirectory: {
     method: 'GET',
-    path: '/admin/ai/providers',
+    path: '/admin/ai/provider-directory',
     responses: {
-      200: AdminAiProvidersOverviewSchema,
+      200: AdminAiProviderDirectoryOverviewSchema,
     },
-    summary: 'Super admin AI provider and system channel overview',
+    summary: 'Super admin user-facing AI provider directory',
   },
-  upsertAiSystemChannel: {
+  updateAiProviderDirectory: {
     method: 'POST',
-    path: '/admin/ai/system-channels',
-    body: AdminAiSystemChannelUpsertSchema,
+    path: '/admin/ai/provider-directory',
+    body: AdminAiProviderDirectoryUpdateSchema,
     responses: {
-      200: AdminAiSystemChannelSchema,
+      200: AdminAiProviderDirectoryItemSchema,
     },
-    summary: 'Create or update a platform-managed AI provider channel',
+    summary: 'Enable or disable a user-facing AI provider template',
+  },
+  syncAiProviderDirectoryModels: {
+    method: 'POST',
+    path: '/admin/ai/provider-directory/sync-models',
+    body: AdminAiProviderDirectorySyncSchema,
+    responses: {
+      200: AdminAiProviderDirectorySyncResponseSchema,
+    },
+    summary: 'Sync default models for a user-facing AI provider template',
+  },
+  updateAiProviderDirectoryModel: {
+    method: 'POST',
+    path: '/admin/ai/provider-directory/models',
+    body: AdminAiProviderDirectoryModelUpdateSchema,
+    responses: {
+      200: AdminAiProviderDirectoryOverviewSchema,
+    },
+    summary: 'Enable or disable a default user-facing AI provider model',
+  },
+  getDichaAiService: {
+    method: 'GET',
+    path: '/admin/ai/dicha-service',
+    responses: {
+      200: AdminDichaAiServiceOverviewSchema,
+    },
+    summary: 'Super admin DicHA AI internal service overview',
+  },
+  upsertDichaInternalProvider: {
+    method: 'POST',
+    path: '/admin/ai/dicha-service/providers',
+    body: AdminAiInternalProviderUpsertSchema,
+    responses: {
+      200: AdminAiInternalProviderSchema,
+    },
+    summary: 'Create or update a DicHA AI internal upstream provider',
+  },
+  syncDichaInternalProviderModels: {
+    method: 'POST',
+    path: '/admin/ai/dicha-service/providers/sync-models',
+    body: AdminDichaInternalProviderSyncSchema,
+    responses: {
+      200: AdminDichaInternalProviderSyncResponseSchema,
+    },
+    summary: 'Sync models for a DicHA AI internal upstream provider',
+  },
+  updateDichaModel: {
+    method: 'POST',
+    path: '/admin/ai/dicha-service/models',
+    body: AdminDichaModelUpdateSchema,
+    responses: {
+      200: AdminDichaAiServiceOverviewSchema,
+    },
+    summary: 'Update a DicHA AI model mapping and display settings',
   },
 });

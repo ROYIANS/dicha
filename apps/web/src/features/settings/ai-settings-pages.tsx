@@ -25,7 +25,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  aiProviderTemplates,
   type AiAssignmentUpdate,
   type AiAvailabilityState,
   type AiConfigUpdate,
@@ -212,7 +211,6 @@ export function AiProvidersSettingsPage() {
       </div>
       <ProviderFormModal
         open={providerModalOpen}
-        catalog={catalog}
         pending={updateConfig.isPending}
         onClose={() => setProviderModalOpen(false)}
         onSubmit={(body) => {
@@ -1048,13 +1046,11 @@ function ProviderAvatar({
 
 function ProviderFormModal({
   open,
-  catalog,
   pending,
   onClose,
   onSubmit,
 }: {
   open: boolean;
-  catalog: AiGatewayCatalog | undefined;
   pending: boolean;
   onClose: () => void;
   onSubmit: (body: AiConfigUpdate) => void;
@@ -1070,10 +1066,6 @@ function ProviderFormModal({
   const normalizedProviderId = providerId.trim().toLowerCase();
   const shortName = providerShortName(name || providerId);
   const avatarValue = avatar.trim() || shortName;
-  const existingProviderIds = new Set(catalog?.providers.map((provider) => provider.id) ?? []);
-  const availableTemplates = aiProviderTemplates.filter(
-    (provider) => !existingProviderIds.has(provider.id),
-  );
   const canSubmit =
     /^[a-z0-9][a-z0-9_-]*$/.test(normalizedProviderId) &&
     name.trim().length > 0 &&
@@ -1119,65 +1111,6 @@ function ProviderFormModal({
       }
     >
       <div className="space-y-5">
-        <div className="space-y-3">
-          <div>
-            <p className="text-[12px] font-semibold text-ink-faint">
-              {t('settings.detail.aiProviders.builtinProviderTemplates')}
-            </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
-              {t('settings.detail.aiProviders.builtinProviderTemplatesDesc')}
-            </p>
-          </div>
-          {availableTemplates.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-3">
-              {availableTemplates.map((provider) => (
-                <button
-                  key={provider.id}
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    onSubmit({
-                      providers: [
-                        {
-                          providerId: provider.id,
-                          name: provider.name,
-                          shortName: provider.shortName,
-                          avatar: provider.avatar,
-                          description: provider.description,
-                          baseUrl: provider.baseUrl,
-                          requestFormat: provider.requestFormat ?? 'openai_compatible',
-                          category: provider.category,
-                          authType: provider.authType,
-                          credentialMode: provider.credentialMode,
-                          billingMode: provider.billingMode,
-                          modelSyncMode: provider.modelSyncMode,
-                          enabled: false,
-                          custom: false,
-                        },
-                      ],
-                    })
-                  }
-                  className="flex min-h-28 flex-col items-start rounded-md border border-hairline bg-surface-alt p-3 text-left transition-colors hover:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ProviderAvatar
-                    avatar={provider.avatar ?? provider.shortName}
-                    fallback={provider.shortName}
-                    provider={provider}
-                    className="size-9 text-[11px]"
-                  />
-                  <span className="mt-3 text-[13px] font-semibold text-ink">{provider.name}</span>
-                  <span className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-ink-faint">
-                    {provider.description}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-md border border-hairline bg-surface-alt px-3 py-2 text-[12px] text-ink-faint">
-              {t('settings.detail.aiProviders.allBuiltinProvidersAdded')}
-            </p>
-          )}
-        </div>
         <FormSectionTitle>{t('settings.detail.aiProviders.basicInfo')}</FormSectionTitle>
         <FormField
           title={t('settings.detail.aiProviders.providerId')}

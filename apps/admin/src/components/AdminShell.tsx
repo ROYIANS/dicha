@@ -43,7 +43,8 @@ const navSections = [
   {
     title: 'AI 与服务',
     items: [
-      { to: '/ai-providers', label: 'AI 供应商', icon: Bot },
+      { to: '/ai-providers', label: '供应商渠道', icon: Bot },
+      { to: '/dicha-ai', label: 'DicHA AI 服务', icon: Database },
       { label: '模型与用途', icon: Database, planned: true },
     ],
   },
@@ -61,7 +62,7 @@ type AdminNavItem = {
   label: string;
   icon: LucideIcon;
   planned?: boolean;
-  to?: '/' | '/basic' | '/ai-providers' | '/system' | '/analytics';
+  to?: '/' | '/basic' | '/ai-providers' | '/dicha-ai' | '/system' | '/analytics';
 };
 
 export function AdminShell() {

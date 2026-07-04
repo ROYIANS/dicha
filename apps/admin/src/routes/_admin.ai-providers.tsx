@@ -1,85 +1,97 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Bot,
   CheckCircle2,
-  KeyRound,
-  PlugZap,
+  CircleDashed,
+  RefreshCw,
   Save,
   Server,
-  type LucideIcon,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
-  adminAiProvidersQueryOptions,
-  upsertAdminAiSystemChannel,
+  adminAiProviderDirectoryQueryOptions,
+  syncAdminAiProviderDirectoryModels,
+  updateAdminAiProviderDirectory,
+  updateAdminAiProviderDirectoryModel,
 } from '@/api/admin';
 import { PageHeader } from '@/components/PageHeader';
 import type {
-  AdminAiProviderSummary,
-  AdminAiSystemChannel,
-  AdminAiSystemChannelUpsert,
+  AdminAiProviderDirectoryItem,
+  AdminAiProviderDirectoryOverview,
+  AdminAiProviderDirectoryUpdate,
 } from '@dicha/shared';
 
-const DICHA_PROVIDER_ID = 'dicha';
-const DICHA_MODEL_ID = 'dicha:assistant';
+type DirectoryModel = AdminAiProviderDirectoryOverview['models'][number];
 
 export const Route = createFileRoute('/_admin/ai-providers')({
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(adminAiProvidersQueryOptions()),
-  component: AiProvidersPage,
+    context.queryClient.ensureQueryData(adminAiProviderDirectoryQueryOptions()),
+  component: AiProviderDirectoryPage,
 });
 
-function AiProvidersPage() {
+function AiProviderDirectoryPage() {
   const queryClient = useQueryClient();
-  const overview = useQuery(adminAiProvidersQueryOptions());
-  const dichaProvider = overview.data?.providers.find(
-    (provider) => provider.providerId === DICHA_PROVIDER_ID,
+  const directory = useQuery(adminAiProviderDirectoryQueryOptions());
+  const providers = directory.data?.providers ?? [];
+  const [selectedProviderId, setSelectedProviderId] = useState('');
+  const selectedProvider =
+    providers.find((provider) => provider.providerId === selectedProviderId) ?? providers[0];
+  const models = useMemo(
+    () =>
+      (directory.data?.models ?? []).filter(
+        (model) => model.providerId === selectedProvider?.providerId,
+      ),
+    [directory.data?.models, selectedProvider?.providerId],
   );
-  const dichaChannel = overview.data?.systemChannels.find(
-    (channel) => channel.providerId === DICHA_PROVIDER_ID && channel.modelId === DICHA_MODEL_ID,
-  );
-  const saveChannel = useMutation({
-    mutationFn: upsertAdminAiSystemChannel,
+
+  const updateDirectory = useMutation({
+    mutationFn: updateAdminAiProviderDirectory,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'providers'] });
-      toast.success('AI 系统通道已保存');
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'provider-directory'] });
+      toast.success('供应商渠道已保存');
     },
-    onError: () => toast.error('AI 系统通道保存失败'),
+    onError: () => toast.error('供应商渠道保存失败'),
+  });
+  const syncModels = useMutation({
+    mutationFn: syncAdminAiProviderDirectoryModels,
+    onSuccess: async ({ syncedCount }) => {
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'provider-directory'] });
+      toast.success(`已同步 ${syncedCount} 个模型`);
+    },
+    onError: () => toast.error('模型同步失败'),
+  });
+  const updateModel = useMutation({
+    mutationFn: updateAdminAiProviderDirectoryModel,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'provider-directory'] });
+    },
+    onError: () => toast.error('模型状态更新失败'),
   });
 
   return (
     <div>
       <PageHeader
-        eyebrow="AI Services"
-        title="AI 供应商"
-        description="管理系统托管 AI 渠道。用户自己的供应商配置仍在前台维护，后台只处理官方 DicHA 通道和后续平台级路由。"
+        eyebrow="AI Provider Directory"
+        title="供应商渠道"
+        description="维护开放给用户自行配置 API Key 的内置供应商、默认请求配置和默认模型池。"
       />
 
-      <div className="grid gap-4 p-5 xl:grid-cols-[minmax(0,1fr)_420px] lg:p-8">
-        <section className="min-w-0 rounded-md border border-hairline bg-surface">
-          <div className="border-b border-hairline p-4">
-            <p className="text-sm font-semibold text-ink">供应商概览</p>
-            <p className="mt-1 text-xs text-ink-soft">
-              内置供应商来自共享模型目录；系统托管 channel 由后台维护。
-            </p>
-          </div>
-          {overview.isPending ? (
-            <div className="p-6 text-sm text-ink-soft">正在加载 AI 供应商</div>
-          ) : overview.isError ? (
-            <div className="p-6 text-sm text-pink">AI 供应商加载失败</div>
+      <div className="grid min-h-[calc(100dvh-9rem)] gap-4 p-5 xl:grid-cols-[280px_minmax(0,1fr)_360px] lg:p-8">
+        <section className="rounded-md border border-hairline bg-surface">
+          <PanelHeader title="内部目录" description={`${providers.length} 个供应商模板`} />
+          {directory.isPending ? (
+            <EmptyState text="正在加载供应商目录" />
+          ) : directory.isError ? (
+            <EmptyState tone="error" text="供应商目录加载失败" />
           ) : (
             <div className="divide-y divide-hairline">
-              {overview.data.providers.slice(0, 12).map((provider) => (
-                <ProviderRow
+              {providers.map((provider) => (
+                <ProviderButton
                   key={provider.providerId}
                   provider={provider}
-                  channelCount={
-                    overview.data.systemChannels.filter(
-                      (channel) => channel.providerId === provider.providerId,
-                    ).length
-                  }
+                  selected={provider.providerId === selectedProvider?.providerId}
+                  onClick={() => setSelectedProviderId(provider.providerId)}
                 />
               ))}
             </div>
@@ -87,29 +99,56 @@ function AiProvidersPage() {
         </section>
 
         <section className="min-w-0 rounded-md border border-hairline bg-surface">
-          <div className="border-b border-hairline p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-ink">DicHA 官方通道</p>
-                <p className="mt-1 text-xs leading-5 text-ink-soft">
-                  配置 `dicha:assistant` 的系统托管上游。密钥只写入后端，保存后不会回显。
-                </p>
-              </div>
-              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-chip-sage text-sage">
-                <PlugZap className="size-4" strokeWidth={1.8} />
-              </span>
+          <PanelHeader
+            title={selectedProvider ? `${selectedProvider.name} 默认模型` : '默认模型'}
+            description="平台同步/维护的默认模型，用户进入前台后仍可按自己的 API Key 覆盖配置。"
+          />
+          {selectedProvider ? (
+            <div className="divide-y divide-hairline">
+              {models.length > 0 ? (
+                models.map((model) => (
+                  <ModelRow
+                    key={model.modelId}
+                    model={model}
+                    pending={updateModel.isPending}
+                    onToggle={(enabled) =>
+                      updateModel.mutate({
+                        providerId: model.providerId,
+                        modelId: model.modelId,
+                        enabled,
+                      })
+                    }
+                    onRecommend={(recommended) =>
+                      updateModel.mutate({
+                        providerId: model.providerId,
+                        modelId: model.modelId,
+                        recommended,
+                      })
+                    }
+                  />
+                ))
+              ) : (
+                <EmptyState text="还没有同步模型" />
+              )}
             </div>
-          </div>
-          {overview.data && dichaProvider ? (
-            <SystemChannelForm
-              key={dichaChannel?.id ?? 'new'}
-              provider={dichaProvider}
-              channel={dichaChannel}
-              pending={saveChannel.isPending}
-              onSubmit={(body) => saveChannel.mutate(body)}
+          ) : (
+            <EmptyState text="请选择供应商" />
+          )}
+        </section>
+
+        <section className="rounded-md border border-hairline bg-surface">
+          <PanelHeader title="渠道配置" description="平台默认值，不保存用户 API Key。" />
+          {selectedProvider ? (
+            <ProviderConfigForm
+              key={selectedProvider.providerId}
+              provider={selectedProvider}
+              pending={updateDirectory.isPending}
+              syncing={syncModels.isPending}
+              onSave={(body) => updateDirectory.mutate(body)}
+              onSync={() => syncModels.mutate(selectedProvider.providerId)}
             />
           ) : (
-            <div className="p-5 text-sm text-ink-soft">正在准备 DicHA 通道配置</div>
+            <EmptyState text="请选择供应商" />
           )}
         </section>
       </div>
@@ -117,212 +156,212 @@ function AiProvidersPage() {
   );
 }
 
-function ProviderRow({
+function ProviderButton({
   provider,
-  channelCount,
+  selected,
+  onClick,
 }: {
-  provider: AdminAiProviderSummary;
-  channelCount: number;
+  provider: AdminAiProviderDirectoryItem;
+  selected: boolean;
+  onClick: () => void;
 }) {
-  const official = provider.providerId === DICHA_PROVIDER_ID;
-
   return (
-    <div className="flex items-center gap-3 p-4">
-      <span
-        className={
-          official
-            ? 'grid size-9 place-items-center rounded-md bg-chip-sage text-sage'
-            : 'grid size-9 place-items-center rounded-md bg-surface-alt text-ink-soft'
-        }
-      >
-        {official ? (
-          <Bot className="size-4" strokeWidth={1.8} />
-        ) : (
-          <Server className="size-4" strokeWidth={1.8} />
-        )}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-start gap-3 p-3 text-left transition-colors ${
+        selected ? 'bg-surface-alt' : 'hover:bg-surface-alt'
+      }`}
+    >
+      <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-alt text-ink-soft">
+        <Server className="size-4" strokeWidth={1.8} />
       </span>
-      <div className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-ink">{provider.name}</span>
+        <span className="mt-1 block text-xs text-ink-soft">
+          {provider.modelCount} 模型 / {provider.enabledModelCount} 启用
+        </span>
+      </span>
+      {provider.enabled ? (
+        <CheckCircle2 className="mt-1 size-4 shrink-0 text-sage" strokeWidth={1.8} />
+      ) : (
+        <CircleDashed className="mt-1 size-4 shrink-0 text-ink-faint" strokeWidth={1.8} />
+      )}
+    </button>
+  );
+}
+
+function ModelRow({
+  model,
+  pending,
+  onToggle,
+  onRecommend,
+}: {
+  model: DirectoryModel;
+  pending: boolean;
+  onToggle: (enabled: boolean) => void;
+  onRecommend: (recommended: boolean) => void;
+}) {
+  return (
+    <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_180px] md:items-center">
+      <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-sm font-semibold text-ink">{provider.name}</p>
-          <span className="rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-soft">
-            {provider.billingMode}
-          </span>
+          <p className="truncate text-sm font-semibold text-ink">{model.displayName}</p>
+          <Badge>{model.modelType}</Badge>
+          {model.contextWindow ? <Badge>{model.contextWindow.toLocaleString()}</Badge> : null}
         </div>
-        <p className="mt-1 text-xs text-ink-soft">
-          {provider.modelCount} 个模型 / {provider.enabledModelCount} 个默认启用 / {channelCount} 个系统通道
-        </p>
+        <p className="mt-1 truncate text-xs text-ink-soft">{model.name}</p>
+        <p className="mt-1 text-xs text-ink-faint">{model.priceHint}</p>
       </div>
-      <span className="hidden text-xs text-ink-soft sm:block">{provider.status}</span>
+      <div className="flex items-center justify-end gap-3">
+        <label className="flex items-center gap-2 text-xs text-ink-soft">
+          <input
+            type="checkbox"
+            checked={model.recommended}
+            disabled={pending}
+            onChange={(event) => onRecommend(event.target.checked)}
+            className="size-4"
+          />
+          推荐
+        </label>
+        <label className="flex items-center gap-2 text-xs text-ink-soft">
+          <input
+            type="checkbox"
+            checked={model.enabled}
+            disabled={pending}
+            onChange={(event) => onToggle(event.target.checked)}
+            className="size-4"
+          />
+          启用
+        </label>
+      </div>
     </div>
   );
 }
 
-function SystemChannelForm({
+function ProviderConfigForm({
   provider,
-  channel,
   pending,
-  onSubmit,
+  syncing,
+  onSave,
+  onSync,
 }: {
-  provider: AdminAiProviderSummary;
-  channel?: AdminAiSystemChannel;
+  provider: AdminAiProviderDirectoryItem;
   pending: boolean;
-  onSubmit: (body: AdminAiSystemChannelUpsert) => void;
+  syncing: boolean;
+  onSave: (body: AdminAiProviderDirectoryUpdate) => void;
+  onSync: () => void;
 }) {
-  const initial = useMemo(
-    () => ({
-      name: channel?.name ?? 'DicHA Assistant Primary',
-      upstreamBaseUrl: channel?.upstreamBaseUrl ?? 'https://api.openai.com/v1',
-      upstreamModelName: channel?.upstreamModelName ?? '',
-      requestFormat: channel?.requestFormat ?? 'openai_compatible',
-      authType: channel?.authType ?? 'bearer_token',
-      credential: '',
-      enabled: channel?.enabled ?? false,
-      priority: String(channel?.priority ?? 100),
-      notes: channel?.notes ?? '',
-    }),
-    [channel],
-  );
-  const [form, setForm] = useState(initial);
+  const [form, setForm] = useState({
+    enabled: provider.enabled,
+    baseUrl: provider.baseUrl,
+    requestFormat: provider.requestFormat ?? 'openai_compatible',
+    authType: provider.authType,
+    notes: provider.notes ?? '',
+  });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onSubmit({
-      channelId: channel?.id,
+    onSave({
       providerId: provider.providerId,
-      modelId: DICHA_MODEL_ID,
-      name: form.name.trim(),
-      upstreamBaseUrl: form.upstreamBaseUrl.trim(),
-      upstreamModelName: form.upstreamModelName.trim(),
+      enabled: form.enabled,
+      baseUrl: form.baseUrl.trim(),
       requestFormat: form.requestFormat,
       authType: form.authType,
-      credential: form.credential.trim() || undefined,
-      enabled: form.enabled,
-      priority: Number(form.priority) || 100,
       notes: form.notes.trim() || null,
     });
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 p-5">
-      <div className="grid grid-cols-2 gap-3">
-        <InfoTile icon={CheckCircle2} label="供应商" value={provider.name} />
-        <InfoTile
-          icon={KeyRound}
-          label="密钥状态"
-          value={channel?.credentialState === 'configured' ? '已配置' : '未配置'}
-        />
-      </div>
-
-      <Field label="通道名称">
-        <input
-          value={form.name}
-          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-          className="admin-input"
-        />
-      </Field>
-      <Field label="上游 Base URL">
-        <input
-          value={form.upstreamBaseUrl}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, upstreamBaseUrl: event.target.value }))
-          }
-          className="admin-input"
-        />
-      </Field>
-      <Field label="上游模型名">
-        <input
-          value={form.upstreamModelName}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, upstreamModelName: event.target.value }))
-          }
-          placeholder="例如 gpt-4.1-mini"
-          className="admin-input"
-        />
-      </Field>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="请求格式">
-          <select
-            value={form.requestFormat}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                requestFormat: event.target.value as AdminAiSystemChannelUpsert['requestFormat'],
-              }))
-            }
-            className="admin-input"
-          >
-            <option value="openai_compatible">OpenAI Chat</option>
-            <option value="openai_responses">OpenAI Responses</option>
-            <option value="anthropic_messages">Anthropic Messages</option>
-          </select>
-        </Field>
-        <Field label="认证方式">
-          <select
-            value={form.authType}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                authType: event.target.value as AdminAiSystemChannelUpsert['authType'],
-              }))
-            }
-            className="admin-input"
-          >
-            <option value="bearer_token">Bearer Token</option>
-            <option value="api_key">API Key</option>
-            <option value="none">None</option>
-          </select>
-        </Field>
-      </div>
-      <Field label="API Key / Token">
-        <input
-          value={form.credential}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, credential: event.target.value }))
-          }
-          placeholder={channel?.credentialState === 'configured' ? '留空表示保持原密钥' : '输入上游密钥'}
-          type="password"
-          className="admin-input"
-        />
-      </Field>
-      <div className="grid gap-3 sm:grid-cols-[1fr_110px]">
-        <Field label="备注">
-          <input
-            value={form.notes}
-            onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-            className="admin-input"
-          />
-        </Field>
-        <Field label="优先级">
-          <input
-            value={form.priority}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, priority: event.target.value }))
-            }
-            inputMode="numeric"
-            className="admin-input"
-          />
-        </Field>
-      </div>
-      <label className="flex items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
+    <form onSubmit={submit} className="space-y-4 p-4">
+      <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
+        <span>前台开放</span>
         <input
           type="checkbox"
           checked={form.enabled}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, enabled: event.target.checked }))
-          }
+          onChange={(event) => setForm((current) => ({ ...current, enabled: event.target.checked }))}
           className="size-4"
         />
-        启用这个系统通道
       </label>
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Save className="size-4" strokeWidth={1.8} />
-        {pending ? '保存中' : '保存通道'}
-      </button>
+      <Field label="默认 Base URL">
+        <input
+          value={form.baseUrl}
+          onChange={(event) => setForm((current) => ({ ...current, baseUrl: event.target.value }))}
+          className="admin-input"
+        />
+      </Field>
+      <Field label="请求格式">
+        <select
+          value={form.requestFormat}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              requestFormat: event.target.value as NonNullable<
+                AdminAiProviderDirectoryUpdate['requestFormat']
+              >,
+            }))
+          }
+          className="admin-input"
+        >
+          <option value="openai_compatible">OpenAI Chat</option>
+          <option value="openai_responses">OpenAI Responses</option>
+          <option value="anthropic_messages">Anthropic Messages</option>
+        </select>
+      </Field>
+      <Field label="认证方式">
+        <select
+          value={form.authType}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              authType: event.target.value as NonNullable<
+                AdminAiProviderDirectoryUpdate['authType']
+              >,
+            }))
+          }
+          className="admin-input"
+        >
+          <option value="bearer_token">Bearer Token</option>
+          <option value="api_key">API Key</option>
+          <option value="none">None</option>
+        </select>
+      </Field>
+      <Field label="备注">
+        <textarea
+          value={form.notes}
+          onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+          className="admin-input min-h-20 resize-none py-2"
+        />
+      </Field>
+      <div className="grid gap-2">
+        <button
+          type="button"
+          onClick={onSync}
+          disabled={syncing}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface-alt px-4 text-sm text-ink transition-colors hover:bg-canvas disabled:opacity-50"
+        >
+          <RefreshCw className="size-4" strokeWidth={1.8} />
+          {syncing ? '同步中' : '同步默认模型'}
+        </button>
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          <Save className="size-4" strokeWidth={1.8} />
+          {pending ? '保存中' : '保存渠道配置'}
+        </button>
+      </div>
     </form>
+  );
+}
+
+function PanelHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="border-b border-hairline p-4">
+      <p className="text-sm font-semibold text-ink">{title}</p>
+      <p className="mt-1 text-xs leading-5 text-ink-soft">{description}</p>
+    </div>
   );
 }
 
@@ -335,22 +374,14 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function InfoTile({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
+function Badge({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-md border border-hairline bg-surface-alt p-3">
-      <div className="flex items-center gap-2 text-xs text-ink-soft">
-        <Icon className="size-3.5" strokeWidth={1.8} />
-        {label}
-      </div>
-      <p className="mt-2 truncate text-sm font-semibold text-ink">{value}</p>
-    </div>
+    <span className="rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-soft">
+      {children}
+    </span>
   );
+}
+
+function EmptyState({ text, tone = 'muted' }: { text: string; tone?: 'muted' | 'error' }) {
+  return <div className={`p-6 text-sm ${tone === 'error' ? 'text-pink' : 'text-ink-soft'}`}>{text}</div>;
 }

@@ -266,6 +266,51 @@ model Event {
 
 // ─── AI Gateway 持久化（用户维度 + 系统托管渠道）──────────
 
+model AiProviderDirectorySetting {
+  providerId    String @id
+  enabled       Boolean @default(false)
+  baseUrl       String?
+  requestFormat String?
+  authType      String?
+  modelSyncMode String?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, providerId])
+}
+
+model AiProviderDirectoryModel {
+  id      String @id @default(cuid())
+  modelId String
+
+  providerId String
+
+  name                String
+  displayName         String
+  avatar              String?
+  contextWindow       Int?
+  modelType           String
+  extensionParameters Json
+  capabilities        Json
+  maxOutput           Int?
+  enabled             Boolean @default(false)
+  recommended         Boolean @default(false)
+  availability        String  @default("unknown")
+  priceHint           String
+  catalogSource       String?
+  pricing             Json?
+  releasedAt          String?
+  lobeMetadata        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, modelId])
+  @@index([providerId, enabled])
+}
+
 model AiProviderConfig {
   id         String @id @default(cuid())
   providerId String
@@ -402,4 +447,57 @@ model AiSystemProviderChannel {
   updatedAt DateTime @updatedAt
 
   @@index([providerId, modelId, enabled, priority])
+}
+
+model AiInternalProvider {
+  id String @id @default(cuid())
+
+  name          String
+  baseUrl       String
+  requestFormat String
+  authType      String
+  credential    Json?
+  enabled       Boolean @default(false)
+  priority      Int     @default(100)
+  notes         String?
+
+  models AiInternalProviderModel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, priority])
+}
+
+model AiInternalProviderModel {
+  id String @id @default(cuid())
+
+  internalProvider   AiInternalProvider @relation(fields: [internalProviderId], references: [id], onDelete: Cascade)
+  internalProviderId String
+
+  upstreamModelName   String
+  upstreamDisplayName String
+  modelType           String
+  capabilities        Json
+  contextWindow       Int?
+  maxOutput           Int?
+  pricing             Json?
+  releasedAt          String?
+  enabled             Boolean @default(false)
+  availability         String  @default("unknown")
+
+  dxModelId       String?
+  dxDisplayName   String?
+  dxDescription   String?
+  dxPriceHint     String?
+  dxRecommended   Boolean @default(false)
+  dxSortOrder     Int     @default(100)
+  parameterConfig Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([internalProviderId, upstreamModelName])
+  @@index([internalProviderId, enabled])
+  @@index([dxModelId, enabled])
 }

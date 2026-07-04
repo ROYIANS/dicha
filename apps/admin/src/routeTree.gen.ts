@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as AdminIndexRouteImport } from './routes/_admin.index'
 import { Route as AdminSystemRouteImport } from './routes/_admin.system'
+import { Route as AdminDichaAiRouteImport } from './routes/_admin.dicha-ai'
 import { Route as AdminBasicRouteImport } from './routes/_admin.basic'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
 import { Route as AdminAiProvidersRouteImport } from './routes/_admin.ai-providers'
@@ -42,6 +43,11 @@ const AdminSystemRoute = AdminSystemRouteImport.update({
   path: '/system',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDichaAiRoute = AdminDichaAiRouteImport.update({
+  id: '/dicha-ai',
+  path: '/dicha-ai',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBasicRoute = AdminBasicRouteImport.update({
   id: '/basic',
   path: '/basic',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/basic': typeof AdminBasicRoute
+  '/dicha-ai': typeof AdminDichaAiRoute
   '/system': typeof AdminSystemRoute
 }
 export interface FileRoutesByTo {
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/basic': typeof AdminBasicRoute
+  '/dicha-ai': typeof AdminDichaAiRoute
   '/system': typeof AdminSystemRoute
   '/': typeof AdminIndexRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/_admin/ai-providers': typeof AdminAiProvidersRoute
   '/_admin/analytics': typeof AdminAnalyticsRoute
   '/_admin/basic': typeof AdminBasicRoute
+  '/_admin/dicha-ai': typeof AdminDichaAiRoute
   '/_admin/system': typeof AdminSystemRoute
   '/_admin/': typeof AdminIndexRoute
 }
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/ai-providers'
     | '/analytics'
     | '/basic'
+    | '/dicha-ai'
     | '/system'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/ai-providers'
     | '/analytics'
     | '/basic'
+    | '/dicha-ai'
     | '/system'
     | '/'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/_admin/ai-providers'
     | '/_admin/analytics'
     | '/_admin/basic'
+    | '/_admin/dicha-ai'
     | '/_admin/system'
     | '/_admin/'
   fileRoutesById: FileRoutesById
@@ -161,6 +173,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSystemRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/dicha-ai': {
+      id: '/_admin/dicha-ai'
+      path: '/dicha-ai'
+      fullPath: '/dicha-ai'
+      preLoaderRoute: typeof AdminDichaAiRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/basic': {
       id: '/_admin/basic'
       path: '/basic'
@@ -189,6 +208,7 @@ interface AdminRouteChildren {
   AdminAiProvidersRoute: typeof AdminAiProvidersRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminBasicRoute: typeof AdminBasicRoute
+  AdminDichaAiRoute: typeof AdminDichaAiRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -197,6 +217,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAiProvidersRoute: AdminAiProvidersRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminBasicRoute: AdminBasicRoute,
+  AdminDichaAiRoute: AdminDichaAiRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

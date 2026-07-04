@@ -274,9 +274,11 @@ export class InvokeService {
     secret: ProviderSecret,
     signal: AbortSignal,
   ): Promise<Omit<InvokeSuccess, 'latencyMs'>> {
+    const defaults = this.channelParameters(secret);
     const body = await this.postJson(
       `${this.openAiBaseUrl(provider.baseUrl)}/chat/completions`,
       {
+        ...defaults,
         model: model.name,
         messages: request.messages,
         stream: false,
@@ -307,6 +309,7 @@ export class InvokeService {
     secret: ProviderSecret,
     signal: AbortSignal,
   ): Promise<Omit<InvokeSuccess, 'latencyMs'>> {
+    const defaults = this.channelParameters(secret);
     const system = request.messages
       .filter((message) => message.role === 'system')
       .map((message) => message.content)
@@ -317,6 +320,7 @@ export class InvokeService {
     const body = await this.postJson(
       `${this.openAiBaseUrl(provider.baseUrl)}/responses`,
       {
+        ...defaults,
         model: model.name,
         input,
         stream: false,
@@ -345,6 +349,7 @@ export class InvokeService {
     secret: ProviderSecret,
     signal: AbortSignal,
   ): Promise<Omit<InvokeSuccess, 'latencyMs'>> {
+    const defaults = this.channelParameters(secret);
     const system = request.messages
       .filter((message) => message.role === 'system')
       .map((message) => message.content)
@@ -358,6 +363,7 @@ export class InvokeService {
     const body = await this.postJson(
       `${this.anthropicBaseUrl(provider.baseUrl)}/v1/messages`,
       {
+        ...defaults,
         model: model.name,
         messages,
         max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
@@ -406,6 +412,10 @@ export class InvokeService {
       throw this.upstreamError(response.status, parsed, raw);
     }
     return parsed;
+  }
+
+  private channelParameters(secret: ProviderSecret): Record<string, unknown> {
+    return secret.channel?.parameterConfig ?? {};
   }
 
   private openAiHeaders(provider: AiProvider, secret: ProviderSecret): Record<string, string> {

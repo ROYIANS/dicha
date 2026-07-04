@@ -22,6 +22,7 @@ const deprecatedSeedModelIds = new Set([
   'deepseek:deepseek-chat',
   'deepseek:deepseek-reasoner',
 ]);
+const DICHA_PROVIDER_ID = 'dicha';
 
 type PersistedCredential = {
   iv: string;
@@ -38,6 +39,11 @@ type PersistedConfig = {
 type AiProviderConfigRecord = Prisma.AiProviderConfigGetPayload<Record<string, never>>;
 type AiModelConfigRecord = Prisma.AiModelConfigGetPayload<Record<string, never>>;
 type AiModelAssignmentConfigRecord = Prisma.AiModelAssignmentConfigGetPayload<Record<string, never>>;
+type AiProviderDirectorySettingRecord = Prisma.AiProviderDirectorySettingGetPayload<Record<string, never>>;
+type AiProviderDirectoryModelRecord = Prisma.AiProviderDirectoryModelGetPayload<Record<string, never>>;
+type AiInternalProviderModelRecord = Prisma.AiInternalProviderModelGetPayload<{
+  include: { internalProvider: true };
+}>;
 
 export type ProviderSecret = {
   provider: AiProvider;
@@ -54,6 +60,7 @@ export type SystemProviderChannel = {
   requestFormat: AiProvider['requestFormat'];
   authType: AiProvider['authType'];
   secret: string;
+  parameterConfig?: Record<string, unknown>;
 };
 
 @Injectable()
@@ -197,6 +204,38 @@ export class CatalogStore {
     providerId: string,
     modelId: string,
   ): Promise<SystemProviderChannel | null> {
+    if (providerId === DICHA_PROVIDER_ID) {
+      const internalModel = await this.prisma.aiInternalProviderModel.findFirst({
+        where: {
+          enabled: true,
+          dxModelId: modelId,
+          internalProvider: { enabled: true },
+        },
+        include: { internalProvider: true },
+        orderBy: [
+          { dxSortOrder: 'asc' },
+          { internalProvider: { priority: 'asc' } },
+          { updatedAt: 'desc' },
+        ],
+      });
+      if (internalModel) {
+        return {
+          id: internalModel.id,
+          providerId,
+          modelId,
+          name: internalModel.dxDisplayName ?? internalModel.upstreamDisplayName,
+          upstreamBaseUrl: internalModel.internalProvider.baseUrl,
+          upstreamModelName: internalModel.upstreamModelName,
+          requestFormat: internalModel.internalProvider.requestFormat as AiProvider['requestFormat'],
+          authType: internalModel.internalProvider.authType as AiProvider['authType'],
+          secret: internalModel.internalProvider.credential
+            ? this.decrypt(internalModel.internalProvider.credential as PersistedCredential)
+            : '',
+          parameterConfig: this.recordFromJson(internalModel.parameterConfig),
+        };
+      }
+    }
+
     const channel = await this.prisma.aiSystemProviderChannel.findFirst({
       where: { providerId, modelId, enabled: true },
       orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
@@ -242,7 +281,14 @@ export class CatalogStore {
   }
 
   private async readConfig(ownerId: string): Promise<PersistedConfig> {
-    const [providers, models, assignments] = await Promise.all([
+    const [
+      providers,
+      models,
+      assignments,
+      directorySettings,
+      directoryModels,
+      internalDichaModels,
+    ] = await Promise.all([
       this.prisma.aiProviderConfig.findMany({
         where: { ownerId },
         orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
@@ -255,31 +301,80 @@ export class CatalogStore {
         where: { ownerId },
         orderBy: { createdAt: 'asc' },
       }),
+      this.prisma.aiProviderDirectorySetting.findMany(),
+      this.prisma.aiProviderDirectoryModel.findMany({
+        where: { enabled: true },
+        orderBy: [{ providerId: 'asc' }, { displayName: 'asc' }],
+      }),
+      this.prisma.aiInternalProviderModel.findMany({
+        where: { enabled: true, internalProvider: { enabled: true } },
+        include: { internalProvider: true },
+        orderBy: [{ dxSortOrder: 'asc' }, { updatedAt: 'desc' }],
+      }),
     ]);
 
+    const settingsByProvider = new Map(
+      directorySettings.map((setting) => [setting.providerId, setting]),
+    );
+    const enabledDirectoryProviderIds = new Set(
+      directorySettings.filter((setting) => setting.enabled).map((setting) => setting.providerId),
+    );
+    const modelSeed = this.visibleModelSeed(
+      enabledDirectoryProviderIds,
+      directoryModels,
+      internalDichaModels,
+    );
     if (providers.length === 0) {
-      const seeded = this.seedConfig();
+      const seeded = this.seedConfig(enabledDirectoryProviderIds, settingsByProvider, modelSeed);
       await this.writeConfig(ownerId, seeded);
       return seeded;
     }
 
-    const current = this.normalizeConfig({
-      providers: providers.map((provider) => this.providerFromRecord(provider)),
-      models: models.map((model) => this.modelFromRecord(model)),
-      assignments: assignments.map((assignment) => this.assignmentFromRecord(assignment)),
-    });
+    const current = this.normalizeConfig(
+      {
+        providers: providers.map((provider) => this.providerFromRecord(provider)),
+        models: models.map((model) => this.modelFromRecord(model)),
+        assignments: assignments.map((assignment) => this.assignmentFromRecord(assignment)),
+      },
+      enabledDirectoryProviderIds,
+      settingsByProvider,
+      modelSeed,
+    );
     return current;
   }
 
-  private seedConfig(): PersistedConfig {
+  private seedConfig(
+    enabledDirectoryProviderIds: Set<string>,
+    settingsByProvider: Map<string, AiProviderDirectorySettingRecord>,
+    modelSeed: AiModel[],
+  ): PersistedConfig {
+    const providers = aiCatalogSeed.providers.filter((provider) =>
+      this.isProviderDirectoryVisible(provider, enabledDirectoryProviderIds),
+    );
+    const providerIds = new Set(providers.map((provider) => provider.id));
+    const models = modelSeed.filter((model) => providerIds.has(model.providerId));
+    const modelIds = new Set(models.map((model) => model.id));
+
     return {
-      providers: aiCatalogSeed.providers.map((provider) => this.seedProvider(provider)),
-      models: aiCatalogSeed.models.map((model) => this.seedModel(model)),
-      assignments: aiCatalogSeed.assignments,
+      providers: providers.map((provider) =>
+        this.seedProvider(provider, settingsByProvider.get(provider.id)),
+      ),
+      models: models.map((model) => this.seedModel(model)),
+      assignments: aiCatalogSeed.assignments
+        .filter((assignment) => modelIds.has(assignment.primaryModelId))
+        .map((assignment) => ({
+          ...assignment,
+          fallbackModelIds: assignment.fallbackModelIds.filter((modelId) => modelIds.has(modelId)),
+        })),
     };
   }
 
-  private normalizeConfig(config: PersistedConfig): PersistedConfig {
+  private normalizeConfig(
+    config: PersistedConfig,
+    enabledDirectoryProviderIds: Set<string>,
+    settingsByProvider: Map<string, AiProviderDirectorySettingRecord>,
+    modelSeed: AiModel[],
+  ): PersistedConfig {
     const legacySeedProviderIds = new Set(
       config.providers
         .filter((provider) => this.isLegacySeedProvider(provider))
@@ -292,11 +387,15 @@ export class CatalogStore {
     );
     const normalizedProviders = config.providers
       .filter((provider) => !legacySeedProviderIds.has(provider.id))
-      .map((provider) => this.normalizeProvider(provider));
+      .filter((provider) =>
+        this.isProviderDirectoryVisible(provider, enabledDirectoryProviderIds),
+      )
+      .map((provider) => this.normalizeProvider(provider, settingsByProvider.get(provider.id)));
     const providerIds = new Set(normalizedProviders.map((provider) => provider.id));
     const seededProviders = aiCatalogSeed.providers
       .filter((provider) => !providerIds.has(provider.id))
-      .map((provider) => this.seedProvider(provider));
+      .filter((provider) => this.isProviderDirectoryVisible(provider, enabledDirectoryProviderIds))
+      .map((provider) => this.seedProvider(provider, settingsByProvider.get(provider.id)));
     const providers = [...normalizedProviders, ...seededProviders].sort(
       (left, right) => left.priority - right.priority,
     );
@@ -308,7 +407,7 @@ export class CatalogStore {
       .filter((model) => knownProviderIds.has(model.providerId))
       .map((model) => this.normalizeModel(model));
     const normalizedModelIds = new Set(normalizedModels.map((model) => model.id));
-    const seededModels = aiCatalogSeed.models
+    const seededModels = modelSeed
       .filter((model) => !normalizedModelIds.has(model.id))
       .filter((model) => knownProviderIds.has(model.providerId))
       .map((model) => this.seedModel(model));
@@ -339,12 +438,104 @@ export class CatalogStore {
     };
   }
 
-  private seedProvider(provider: AiProvider): PersistedConfig['providers'][number] {
+  private visibleModelSeed(
+    enabledDirectoryProviderIds: Set<string>,
+    directoryModels: AiProviderDirectoryModelRecord[],
+    internalDichaModels: AiInternalProviderModelRecord[],
+  ): AiModel[] {
+    const directoryProvidersWithModels = new Set(directoryModels.map((model) => model.providerId));
+    const builtInModels = aiCatalogSeed.models.filter((model) => {
+      if (model.providerId === DICHA_PROVIDER_ID) return true;
+      if (!enabledDirectoryProviderIds.has(model.providerId)) return false;
+      return !directoryProvidersWithModels.has(model.providerId);
+    });
+    const syncedDirectoryModels = directoryModels.map((model) =>
+      this.modelFromDirectoryModelRecord(model),
+    );
+    const dichaModels = internalDichaModels.map((model) => this.modelFromInternalModelRecord(model));
+    const byId = new Map<string, AiModel>();
+    for (const model of [...builtInModels, ...syncedDirectoryModels, ...dichaModels]) {
+      byId.set(model.id, model);
+    }
+    return [...byId.values()];
+  }
+
+  private modelFromDirectoryModelRecord(record: AiProviderDirectoryModelRecord): AiModel {
     return {
-      ...provider,
-      credentialState: this.credentialState(provider.credentialState, undefined, provider),
+      id: record.modelId,
+      providerId: record.providerId,
+      name: record.name,
+      displayName: record.displayName,
+      avatar: record.avatar ?? undefined,
+      contextWindow: record.contextWindow,
+      modelType: record.modelType as AiModelType,
+      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(record.extensionParameters),
+      capabilities: this.arrayFromJson<AiModel['capabilities'][number]>(record.capabilities),
+      maxOutput: record.maxOutput ?? undefined,
+      enabled: record.enabled,
+      recommended: record.recommended,
+      availability: record.availability as AiModel['availability'],
+      lastLatencyMs: null,
+      priceHint: record.priceHint,
+      catalogSource: (record.catalogSource ?? 'upstream_sync') as AiModel['catalogSource'],
+      pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
+      releasedAt: record.releasedAt ?? undefined,
+      lobeMetadata: this.optionalJson<AiModel['lobeMetadata']>(record.lobeMetadata),
+    };
+  }
+
+  private modelFromInternalModelRecord(record: AiInternalProviderModelRecord): AiModel {
+    const displayName = record.dxDisplayName ?? record.upstreamDisplayName;
+    const modelId = record.dxModelId ?? `dicha:${record.upstreamModelName}`;
+    return {
+      id: modelId,
+      providerId: DICHA_PROVIDER_ID,
+      name: modelId.replace(/^dicha:/, ''),
+      displayName,
+      avatar: this.modelAvatar(displayName),
+      contextWindow: record.contextWindow,
+      modelType: record.modelType as AiModelType,
+      extensionParameters: [],
+      capabilities: this.arrayFromJson<AiModel['capabilities'][number]>(record.capabilities),
+      maxOutput: record.maxOutput ?? undefined,
+      enabled: record.enabled,
+      recommended: record.dxRecommended,
+      availability: record.availability as AiModel['availability'],
+      lastLatencyMs: null,
+      priceHint: record.dxPriceHint ?? 'DicHA AI 模型',
+      catalogSource: 'dicha_catalog',
+      pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
+      releasedAt: record.releasedAt ?? undefined,
+    };
+  }
+
+  private isProviderDirectoryVisible(
+    provider: Pick<AiProvider, 'id' | 'custom'>,
+    enabledDirectoryProviderIds: Set<string>,
+  ): boolean {
+    return (
+      provider.custom === true ||
+      provider.id === DICHA_PROVIDER_ID ||
+      enabledDirectoryProviderIds.has(provider.id)
+    );
+  }
+
+  private seedProvider(
+    provider: AiProvider,
+    setting?: AiProviderDirectorySettingRecord,
+  ): PersistedConfig['providers'][number] {
+    const providerWithSetting = this.applyDirectorySetting(provider, setting);
+    return {
+      ...providerWithSetting,
+      credentialState: this.credentialState(
+        providerWithSetting.credentialState,
+        undefined,
+        providerWithSetting,
+      ),
       status:
-        provider.status === 'enabled' ? this.providerStatus(provider, true, undefined) : provider.status,
+        providerWithSetting.status === 'enabled'
+          ? this.providerStatus(providerWithSetting, true, undefined)
+          : providerWithSetting.status,
     };
   }
 
@@ -369,6 +560,7 @@ export class CatalogStore {
 
   private normalizeProvider(
     provider: PersistedConfig['providers'][number],
+    setting?: AiProviderDirectorySettingRecord,
   ): PersistedConfig['providers'][number] {
     const seed = provider.custom ? undefined : aiCatalogSeed.providers.find((item) => item.id === provider.id);
     const legacyProvider = provider as PersistedConfig['providers'][number] & {
@@ -403,13 +595,30 @@ export class CatalogStore {
           custom: seed.custom,
         } satisfies PersistedConfig['providers'][number])
       : normalizedProviderBase;
+    const withSetting = this.applyDirectorySetting(normalizedProvider, setting);
     return {
       ...normalizedProvider,
+      ...withSetting,
+      credential: normalizedProvider.credential,
       credentialState: this.credentialState(
         normalizedProvider.credentialState,
         normalizedProvider.credential,
-        normalizedProvider,
+        withSetting,
       ),
+    };
+  }
+
+  private applyDirectorySetting<T extends AiProvider>(
+    provider: T,
+    setting?: AiProviderDirectorySettingRecord,
+  ): T {
+    if (!setting || provider.custom || provider.id === DICHA_PROVIDER_ID) return provider;
+    return {
+      ...provider,
+      baseUrl: setting.baseUrl ?? provider.baseUrl,
+      requestFormat: (setting.requestFormat ?? provider.requestFormat) as T['requestFormat'],
+      authType: (setting.authType ?? provider.authType) as T['authType'],
+      modelSyncMode: (setting.modelSyncMode ?? provider.modelSyncMode) as T['modelSyncMode'],
     };
   }
 
@@ -711,6 +920,12 @@ export class CatalogStore {
 
   private optionalJson<T>(value: Prisma.JsonValue | null): T | undefined {
     return value === null ? undefined : (value as T);
+  }
+
+  private recordFromJson(value: Prisma.JsonValue | null): Record<string, unknown> | undefined {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : undefined;
   }
 
   private jsonOrUndefined(value: unknown): Prisma.InputJsonValue | undefined {

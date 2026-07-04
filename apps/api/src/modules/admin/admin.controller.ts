@@ -48,21 +48,81 @@ export class AdminController {
     });
   }
 
-  @TsRestHandler(contract.admin.getAiProviders)
-  getAiProviders(): ReturnType<typeof tsRestHandler<typeof contract.admin.getAiProviders>> {
-    return tsRestHandler(contract.admin.getAiProviders, async () => ({
+  @TsRestHandler(contract.admin.getAiProviderDirectory)
+  getAiProviderDirectory(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.getAiProviderDirectory>
+  > {
+    return tsRestHandler(contract.admin.getAiProviderDirectory, async () => ({
       status: 200,
-      body: await this.admin.getAiProviders(),
+      body: await this.admin.getAiProviderDirectory(),
     }));
   }
 
-  @TsRestHandler(contract.admin.upsertAiSystemChannel)
-  upsertAiSystemChannel(): ReturnType<
-    typeof tsRestHandler<typeof contract.admin.upsertAiSystemChannel>
+  @TsRestHandler(contract.admin.updateAiProviderDirectory)
+  updateAiProviderDirectory(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.updateAiProviderDirectory>
   > {
-    return tsRestHandler(contract.admin.upsertAiSystemChannel, async ({ body }) => ({
+    return tsRestHandler(contract.admin.updateAiProviderDirectory, async ({ body }) => ({
       status: 200,
-      body: await this.admin.upsertAiSystemChannel(body),
+      body: await this.admin.updateAiProviderDirectory(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.syncAiProviderDirectoryModels)
+  syncAiProviderDirectoryModels(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.syncAiProviderDirectoryModels>
+  > {
+    return tsRestHandler(contract.admin.syncAiProviderDirectoryModels, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.syncAiProviderDirectoryModels(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.updateAiProviderDirectoryModel)
+  updateAiProviderDirectoryModel(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.updateAiProviderDirectoryModel>
+  > {
+    return tsRestHandler(contract.admin.updateAiProviderDirectoryModel, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.updateAiProviderDirectoryModel(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.getDichaAiService)
+  getDichaAiService(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.getDichaAiService>
+  > {
+    return tsRestHandler(contract.admin.getDichaAiService, async () => ({
+      status: 200,
+      body: await this.admin.getDichaAiService(),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.upsertDichaInternalProvider)
+  upsertDichaInternalProvider(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.upsertDichaInternalProvider>
+  > {
+    return tsRestHandler(contract.admin.upsertDichaInternalProvider, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.upsertDichaInternalProvider(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.syncDichaInternalProviderModels)
+  syncDichaInternalProviderModels(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.syncDichaInternalProviderModels>
+  > {
+    return tsRestHandler(contract.admin.syncDichaInternalProviderModels, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.syncDichaInternalProviderModels(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.updateDichaModel)
+  updateDichaModel(): ReturnType<typeof tsRestHandler<typeof contract.admin.updateDichaModel>> {
+    return tsRestHandler(contract.admin.updateDichaModel, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.updateDichaModel(body),
     }));
   }
 }

@@ -1,13 +1,24 @@
 import { queryOptions } from '@tanstack/react-query';
 import {
-  AdminAiProvidersOverviewSchema,
-  AdminAiSystemChannelSchema,
+  AdminAiProviderDirectoryItemSchema,
+  AdminAiProviderDirectoryOverviewSchema,
+  AdminAiProviderDirectorySyncResponseSchema,
+  AdminAiInternalProviderSchema,
+  AdminDichaAiServiceOverviewSchema,
+  AdminDichaInternalProviderSyncResponseSchema,
   AdminOverviewSchema,
   AdminUserDetailSchema,
   AdminUsersListSchema,
-  type AdminAiProvidersOverview,
-  type AdminAiSystemChannel,
-  type AdminAiSystemChannelUpsert,
+  type AdminAiInternalProvider,
+  type AdminAiInternalProviderUpsert,
+  type AdminAiProviderDirectoryItem,
+  type AdminAiProviderDirectoryModelUpdate,
+  type AdminAiProviderDirectoryOverview,
+  type AdminAiProviderDirectorySyncResponse,
+  type AdminAiProviderDirectoryUpdate,
+  type AdminDichaAiServiceOverview,
+  type AdminDichaInternalProviderSyncResponse,
+  type AdminDichaModelUpdate,
   type AdminOverview,
   type AdminUserDetail,
   type AdminUsersList,
@@ -65,27 +76,92 @@ export function adminUserDetailQueryOptions(id: string) {
   });
 }
 
-export function adminAiProvidersQueryOptions() {
-  return queryOptions<AdminAiProvidersOverview>({
-    queryKey: ['admin', 'ai', 'providers'] as const,
+export function adminAiProviderDirectoryQueryOptions() {
+  return queryOptions<AdminAiProviderDirectoryOverview>({
+    queryKey: ['admin', 'ai', 'provider-directory'] as const,
     queryFn: async () => {
-      const res = await api.admin.getAiProviders();
+      const res = await api.admin.getAiProviderDirectory();
       if (res.status !== 200) {
-        throw new Error(`Admin AI providers request failed (${res.status})`);
+        throw new Error(`Admin AI provider directory request failed (${res.status})`);
       }
-      return AdminAiProvidersOverviewSchema.parse(res.body);
+      return AdminAiProviderDirectoryOverviewSchema.parse(res.body);
     },
     staleTime: 30 * 1000,
     retry: false,
   });
 }
 
-export async function upsertAdminAiSystemChannel(
-  body: AdminAiSystemChannelUpsert,
-): Promise<AdminAiSystemChannel> {
-  const res = await api.admin.upsertAiSystemChannel({ body });
+export async function updateAdminAiProviderDirectory(
+  body: AdminAiProviderDirectoryUpdate,
+): Promise<AdminAiProviderDirectoryItem> {
+  const res = await api.admin.updateAiProviderDirectory({ body });
   if (res.status !== 200) {
-    throw new Error(`Admin AI system channel save failed (${res.status})`);
+    throw new Error(`Admin AI provider directory update failed (${res.status})`);
   }
-  return AdminAiSystemChannelSchema.parse(res.body);
+  return AdminAiProviderDirectoryItemSchema.parse(res.body);
+}
+
+export async function syncAdminAiProviderDirectoryModels(
+  providerId: string,
+): Promise<AdminAiProviderDirectorySyncResponse> {
+  const res = await api.admin.syncAiProviderDirectoryModels({ body: { providerId } });
+  if (res.status !== 200) {
+    throw new Error(`Admin AI provider directory sync failed (${res.status})`);
+  }
+  return AdminAiProviderDirectorySyncResponseSchema.parse(res.body);
+}
+
+export async function updateAdminAiProviderDirectoryModel(
+  body: AdminAiProviderDirectoryModelUpdate,
+): Promise<AdminAiProviderDirectoryOverview> {
+  const res = await api.admin.updateAiProviderDirectoryModel({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin AI provider directory model update failed (${res.status})`);
+  }
+  return AdminAiProviderDirectoryOverviewSchema.parse(res.body);
+}
+
+export function adminDichaAiServiceQueryOptions() {
+  return queryOptions<AdminDichaAiServiceOverview>({
+    queryKey: ['admin', 'ai', 'dicha-service'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getDichaAiService();
+      if (res.status !== 200) {
+        throw new Error(`Admin DicHA AI service request failed (${res.status})`);
+      }
+      return AdminDichaAiServiceOverviewSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export async function upsertAdminDichaInternalProvider(
+  body: AdminAiInternalProviderUpsert,
+): Promise<AdminAiInternalProvider> {
+  const res = await api.admin.upsertDichaInternalProvider({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin DicHA internal provider save failed (${res.status})`);
+  }
+  return AdminAiInternalProviderSchema.parse(res.body);
+}
+
+export async function syncAdminDichaInternalProviderModels(
+  providerId: string,
+): Promise<AdminDichaInternalProviderSyncResponse> {
+  const res = await api.admin.syncDichaInternalProviderModels({ body: { providerId } });
+  if (res.status !== 200) {
+    throw new Error(`Admin DicHA internal provider sync failed (${res.status})`);
+  }
+  return AdminDichaInternalProviderSyncResponseSchema.parse(res.body);
+}
+
+export async function updateAdminDichaModel(
+  body: AdminDichaModelUpdate,
+): Promise<AdminDichaAiServiceOverview> {
+  const res = await api.admin.updateDichaModel({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin DicHA model update failed (${res.status})`);
+  }
+  return AdminDichaAiServiceOverviewSchema.parse(res.body);
 }
