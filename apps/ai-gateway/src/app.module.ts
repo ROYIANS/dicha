@@ -6,6 +6,7 @@ import { HealthModule } from './modules/health/health.module';
 import { InvokeModule } from './modules/invoke/invoke.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsageModule } from './modules/usage/usage.module';
+import { CreditsModule } from './modules/credits/credits.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsageModule } from './modules/usage/usage.module';
     PrismaModule,
     HealthModule,
     CatalogModule,
+    CreditsModule,
     UsageModule,
     InvokeModule,
   ],

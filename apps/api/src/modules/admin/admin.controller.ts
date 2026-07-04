@@ -133,4 +133,64 @@ export class AdminController {
       body: await this.admin.getDichaAiUsage(query.window, query.logLimit),
     }));
   }
+
+  @TsRestHandler(contract.admin.getCreditRules)
+  getCreditRules(): ReturnType<typeof tsRestHandler<typeof contract.admin.getCreditRules>> {
+    return tsRestHandler(contract.admin.getCreditRules, async () => ({
+      status: 200,
+      body: await this.admin.getCreditRules(),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.upsertCreditRule)
+  upsertCreditRule(): ReturnType<typeof tsRestHandler<typeof contract.admin.upsertCreditRule>> {
+    return tsRestHandler(contract.admin.upsertCreditRule, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.upsertCreditRule(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.grantCredits)
+  grantCredits(): ReturnType<typeof tsRestHandler<typeof contract.admin.grantCredits>> {
+    return tsRestHandler(contract.admin.grantCredits, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.grantCredits(body),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.listCreditBalances)
+  listCreditBalances(): ReturnType<typeof tsRestHandler<typeof contract.admin.listCreditBalances>> {
+    return tsRestHandler(contract.admin.listCreditBalances, async ({ query }) => ({
+      status: 200,
+      body: await this.admin.listCreditBalances(query),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.listCreditLedger)
+  listCreditLedger(): ReturnType<typeof tsRestHandler<typeof contract.admin.listCreditLedger>> {
+    return tsRestHandler(contract.admin.listCreditLedger, async ({ query }) => ({
+      status: 200,
+      body: await this.admin.listCreditLedger(query),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.getCreditRedemptionCodes)
+  getCreditRedemptionCodes(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.getCreditRedemptionCodes>
+  > {
+    return tsRestHandler(contract.admin.getCreditRedemptionCodes, async () => ({
+      status: 200,
+      body: await this.admin.getCreditRedemptionCodes(),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.upsertCreditRedemptionCode)
+  upsertCreditRedemptionCode(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.upsertCreditRedemptionCode>
+  > {
+    return tsRestHandler(contract.admin.upsertCreditRedemptionCode, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.upsertCreditRedemptionCode(body),
+    }));
+  }
 }

@@ -63,7 +63,7 @@ const chartColors = [
 type DistributionChartType = 'area' | 'bar';
 type DistributionGroupBy = 'provider' | 'model';
 type DistributionGranularity = 'hour' | 'day';
-type DistributionMetric = 'estimatedCostUsd' | 'totalTokens' | 'calls';
+type DistributionMetric = 'creditAmount' | 'totalTokens' | 'calls';
 
 type ChartDatum = Record<string, number | string>;
 
@@ -129,8 +129,8 @@ function UsageDashboard({ report }: { report: AiUsageReport }) {
         <MetricTile
           icon={Coins}
           tint="sage"
-          label={t('settings.detail.aiUsage.metrics.cost')}
-          value={formatUsd(report.summary.estimatedCostUsd)}
+          label={t('settings.detail.aiUsage.metrics.credits')}
+          value={formatCredits(report.summary.creditAmount)}
           detail={t('settings.detail.aiUsage.metrics.successRate', {
             value: formatPercent(report.performance.successRate),
           })}
@@ -192,9 +192,9 @@ function UsageDashboard({ report }: { report: AiUsageReport }) {
               tint="lavender"
             />
             <TrendCard
-              title={t('settings.detail.aiUsage.trends.cost')}
-              value={formatUsd(sumBuckets(historyBuckets, 'estimatedCostUsd'))}
-              metric="estimatedCostUsd"
+              title={t('settings.detail.aiUsage.trends.credits')}
+              value={formatCredits(sumBuckets(historyBuckets, 'creditAmount'))}
+              metric="creditAmount"
               data={historyBuckets}
               tint="peach"
             />
@@ -334,7 +334,7 @@ function DistributionPanel({ report }: { report: AiUsageReport }) {
   const [chartType, setChartType] = useState<DistributionChartType>('area');
   const [groupBy, setGroupBy] = useState<DistributionGroupBy>('model');
   const [granularity, setGranularity] = useState<DistributionGranularity>('day');
-  const [metric, setMetric] = useState<DistributionMetric>('estimatedCostUsd');
+  const [metric, setMetric] = useState<DistributionMetric>('creditAmount');
   const distribution = selectDistribution(report, groupBy, granularity);
   const { data, series } = useMemo(
     () => buildDistributionChartData(distribution, metric),
@@ -379,7 +379,7 @@ function DistributionPanel({ report }: { report: AiUsageReport }) {
             value={metric}
             onChange={setMetric}
             options={[
-              { value: 'estimatedCostUsd', label: t('settings.detail.aiUsage.distribution.metrics.cost') },
+              { value: 'creditAmount', label: t('settings.detail.aiUsage.distribution.metrics.credits') },
               { value: 'totalTokens', label: t('settings.detail.aiUsage.distribution.metrics.tokens') },
               { value: 'calls', label: t('settings.detail.aiUsage.distribution.metrics.calls') },
             ]}
@@ -495,7 +495,7 @@ function BreakdownPanel({
   rows: AiUsageBreakdown[];
   compact?: boolean;
 }) {
-  const maxCost = Math.max(...rows.map((row) => row.estimatedCostUsd), 0);
+  const maxCredits = Math.max(...rows.map((row) => row.creditAmount), 0);
 
   return (
     <section className="overflow-hidden rounded-md border border-hairline bg-surface">
@@ -505,7 +505,7 @@ function BreakdownPanel({
       </div>
       <div className="divide-y divide-hairline/70">
         {rows.map((row) => (
-          <BreakdownRow key={row.key} row={row} maxCost={maxCost} compact={compact} />
+          <BreakdownRow key={row.key} row={row} maxCredits={maxCredits} compact={compact} />
         ))}
       </div>
     </section>
@@ -514,15 +514,15 @@ function BreakdownPanel({
 
 function BreakdownRow({
   row,
-  maxCost,
+  maxCredits,
   compact,
 }: {
   row: AiUsageBreakdown;
-  maxCost: number;
+  maxCredits: number;
   compact: boolean;
 }) {
   const { t } = useTranslation();
-  const width = maxCost > 0 ? Math.max(8, Math.round((row.estimatedCostUsd / maxCost) * 100)) : 0;
+  const width = maxCredits > 0 ? Math.max(8, Math.round((row.creditAmount / maxCredits) * 100)) : 0;
 
   return (
     <div className="px-4 py-3">
@@ -536,7 +536,7 @@ function BreakdownRow({
             })}
           </p>
         </div>
-        <p className="shrink-0 text-[12px] font-semibold text-ink tabular-nums">{formatUsd(row.estimatedCostUsd)}</p>
+        <p className="shrink-0 text-[12px] font-semibold text-ink tabular-nums">{formatCredits(row.creditAmount)}</p>
       </div>
       {compact ? null : (
         <div className="mt-2 h-2 overflow-hidden rounded-md bg-canvas">
@@ -575,7 +575,7 @@ function RecentEvents({ events }: { events: AiUsageEvent[] }) {
               </span>
             </div>
             <p className="mt-2 text-[11px] text-ink-faint">
-              {formatInteger(event.totalTokens)} tokens / {formatUsd(event.estimatedCostUsd)}
+              {formatInteger(event.totalTokens)} tokens / {formatCredits(event.creditAmount)}
             </p>
           </div>
         ))}
@@ -645,7 +645,7 @@ function buildDistributionChartData(distribution: AiUsageDistribution, metric: D
 
 function sumBuckets(buckets: AiUsageTimeBucket[], metric: DistributionMetric): number {
   const total = buckets.reduce((sum, bucket) => sum + bucket[metric], 0);
-  return metric === 'estimatedCostUsd' ? Number(total.toFixed(6)) : total;
+  return total;
 }
 
 function tintIndex(tint: SettingsTint): number {
@@ -674,21 +674,17 @@ function formatLatency(value: number | null, fallback: string) {
   return value === null ? fallback : `${formatInteger(value)} ms`;
 }
 
-function formatUsd(value: number) {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: value < 1 ? 4 : 2,
-  }).format(value);
+function formatCredits(value: number) {
+  return `${formatInteger(value)} 积分`;
 }
 
 function formatChartValue(value: number, metric: DistributionMetric) {
-  if (metric === 'estimatedCostUsd') return formatUsd(value);
+  if (metric === 'creditAmount') return formatCredits(value);
   return formatInteger(value);
 }
 
 function compactChartValue(value: number, metric: DistributionMetric) {
-  if (metric === 'estimatedCostUsd') return value < 1 ? `$${value.toFixed(3)}` : `$${value.toFixed(1)}`;
+  if (metric === 'creditAmount') return formatInteger(value);
   return new Intl.NumberFormat('zh-CN', {
     notation: 'compact',
     maximumFractionDigits: 1,

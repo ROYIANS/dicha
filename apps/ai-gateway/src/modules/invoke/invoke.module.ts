@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { InternalTokenGuard } from '../../common/internal-token.guard';
 import { CatalogModule } from '../catalog/catalog.module';
+import { CreditsModule } from '../credits/credits.module';
 import { UsageModule } from '../usage/usage.module';
 import { InvokeController } from './invoke.controller';
 import { InvokeService } from './invoke.service';
 
 @Module({
-  imports: [CatalogModule, UsageModule],
+  imports: [CatalogModule, UsageModule, CreditsModule],
   controllers: [InvokeController],
   providers: [InvokeService, InternalTokenGuard],
 })

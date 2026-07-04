@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import type {
   AiGatewayCatalog,
@@ -14,6 +15,8 @@ import type {
 } from '@dicha/shared';
 import { CatalogStore } from '../catalog/catalog.store';
 import type { SystemProviderChannel } from '../catalog/catalog.store';
+import { CreditStore } from '../credits/credit.store';
+import type { CreditCharge } from '../credits/credit.store';
 import { UsageStore } from '../usage/usage.store';
 
 type InvokeSuccess = {
@@ -21,6 +24,13 @@ type InvokeSuccess = {
   promptTokens: number;
   completionTokens: number;
   latencyMs: number;
+};
+
+type UsageSettlement = Pick<
+  AiInvokeUsage,
+  'estimatedCostAmount' | 'estimatedCostCurrency' | 'estimatedCostUsd' | 'creditAmount'
+> & {
+  billingSnapshot: Record<string, unknown> | null;
 };
 
 type InvokeFailure = {
@@ -46,10 +56,12 @@ const DEFAULT_MAX_TOKENS = 1024;
 export class InvokeService {
   constructor(
     private readonly catalogStore: CatalogStore,
+    private readonly creditStore: CreditStore,
     private readonly usageStore: UsageStore,
   ) {}
 
   async invoke(ownerId: string, request: AiInvokeRequest): Promise<AiInvokeResponse> {
+    const requestId = randomUUID();
     const catalog = await this.catalogStore.getCatalog(ownerId);
     const targets = this.attemptTargets(catalog, request);
     const attempts: AiInvokeAttempt[] = [];
@@ -74,6 +86,11 @@ export class InvokeService {
         attempts.push(this.failedAttempt(target, resolvedRequestFormat, null, failure));
         continue;
       }
+      const reserveFailure = await this.reserveCredits(ownerId, target, request);
+      if (reserveFailure) {
+        attempts.push(this.failedAttempt(target, resolvedRequestFormat, null, reserveFailure));
+        break;
+      }
       const startedAt = Date.now();
       try {
         const result = await this.invokeUpstream({
@@ -86,7 +103,9 @@ export class InvokeService {
         const status: AiUsageStatus = attempts.some((attempt) => attempt.status === 'failure')
           ? 'degraded'
           : 'success';
-        const usage = this.invokeUsage(target.model, result);
+        const usageBase = this.invokeUsageBase(request, result);
+        const settlement = await this.settleUsage(target, usageBase, secret.channel);
+        const usage = this.userVisibleUsage(usageBase, settlement);
         attempts.push({
           providerId: target.provider.id,
           providerName: target.provider.name,
@@ -97,7 +116,18 @@ export class InvokeService {
           latencyMs: result.latencyMs,
           errorCategory: null,
         });
-        await this.recordUsage(ownerId, request, target, status, usage, result.latencyMs, null);
+        await this.recordUsage({
+          ownerId,
+          request,
+          requestId,
+          target,
+          channel: secret.channel,
+          status,
+          usage,
+          settlement,
+          latencyMs: result.latencyMs,
+          errorCategory: null,
+        });
         return this.response({
           attempts,
           error: null,
@@ -121,13 +151,18 @@ export class InvokeService {
     const usage = this.emptyUsage();
     if (finalAttempt && finalTarget) {
       await this.recordUsage(
-        ownerId,
-        request,
-        finalTarget,
-        'failure',
-        usage,
-        finalAttempt.latencyMs,
-        finalAttempt.errorCategory,
+        {
+          ownerId,
+          request,
+          requestId,
+          target: finalTarget,
+          channel: null,
+          status: 'failure',
+          usage,
+          settlement: this.emptySettlement(),
+          latencyMs: finalAttempt.latencyMs,
+          errorCategory: finalAttempt.errorCategory,
+        },
       );
     }
 
@@ -552,43 +587,122 @@ export class InvokeService {
   }
 
   private async recordUsage(
-    ownerId: string,
-    request: AiInvokeRequest,
-    target: AttemptTarget,
-    status: AiUsageStatus,
-    usage: AiInvokeUsage,
-    latencyMs: number | null,
-    errorCategory: AiInvokeErrorCategory | null,
+    input: {
+      ownerId: string;
+      request: AiInvokeRequest;
+      requestId: string;
+      target: AttemptTarget;
+      channel: SystemProviderChannel | null | undefined;
+      status: AiUsageStatus;
+      usage: AiInvokeUsage;
+      settlement: UsageSettlement;
+      latencyMs: number | null;
+      errorCategory: AiInvokeErrorCategory | null;
+    },
   ): Promise<void> {
-    await this.usageStore.recordEvent(ownerId, {
+    await this.usageStore.recordEvent(input.ownerId, {
       kind: 'invoke',
-      status,
-      useCase: request.useCase,
-      providerId: target.provider.id,
-      providerName: target.provider.name,
-      modelId: target.model.id,
-      modelName: target.model.displayName,
-      promptTokens: usage.promptTokens,
-      completionTokens: usage.completionTokens,
-      estimatedCostUsd: usage.estimatedCostUsd,
-      estimatedCostAmount: usage.estimatedCostAmount,
-      estimatedCostCurrency: usage.estimatedCostCurrency,
-      latencyMs,
-      errorCategory,
+      status: input.status,
+      useCase: input.request.useCase,
+      providerId: input.target.provider.id,
+      providerName: input.target.provider.name,
+      modelId: input.target.model.id,
+      modelName: input.target.model.displayName,
+      promptTokens: input.usage.promptTokens,
+      completionTokens: input.usage.completionTokens,
+      creditAmount: input.settlement.creditAmount,
+      billingMode: input.target.provider.billingMode,
+      requestId: input.requestId,
+      upstreamRequestId: null,
+      internalProviderId: input.channel?.internalProviderId ?? null,
+      internalProviderModelId: input.channel?.id ?? null,
+      usageEstimated: input.usage.usageEstimated,
+      estimatedCostUsd: input.settlement.estimatedCostUsd,
+      estimatedCostAmount: input.settlement.estimatedCostAmount,
+      estimatedCostCurrency: input.settlement.estimatedCostCurrency,
+      billingSnapshot: input.settlement.billingSnapshot,
+      latencyMs: input.latencyMs,
+      errorCategory: input.errorCategory,
     });
   }
 
-  private invokeUsage(model: AiModel, result: InvokeSuccess): AiInvokeUsage {
-    const promptTokens = result.promptTokens;
-    const completionTokens = result.completionTokens;
-    const cost = this.estimatedCost(model, promptTokens, completionTokens);
+  private invokeUsageBase(request: AiInvokeRequest, result: InvokeSuccess): AiInvokeUsage {
+    const reportedPromptTokens = result.promptTokens;
+    const reportedCompletionTokens = result.completionTokens;
+    const usageEstimated = reportedPromptTokens + reportedCompletionTokens === 0;
+    const promptTokens = usageEstimated
+      ? this.estimateTextTokens(request.messages.map((message) => message.content).join('\n'))
+      : reportedPromptTokens;
+    const completionTokens = usageEstimated ? this.estimateTextTokens(result.text) : reportedCompletionTokens;
     return {
       promptTokens,
       completionTokens,
       totalTokens: promptTokens + completionTokens,
-      estimatedCostUsd: cost.estimatedCostUsd,
-      estimatedCostAmount: cost.estimatedCostAmount,
-      estimatedCostCurrency: cost.estimatedCostCurrency,
+      creditAmount: 0,
+      usageEstimated,
+      estimatedCostUsd: 0,
+      estimatedCostAmount: 0,
+      estimatedCostCurrency: null,
+    };
+  }
+
+  private async reserveCredits(
+    ownerId: string,
+    target: AttemptTarget,
+    request: AiInvokeRequest,
+  ): Promise<InvokeFailure | null> {
+    if (target.provider.billingMode !== 'platform_credits') return null;
+    try {
+      await this.creditStore.assertSufficientReserve(ownerId, target.model, request);
+      return null;
+    } catch {
+      return this.invokeError('quota', 'DicHA credits are insufficient for this AI request', false);
+    }
+  }
+
+  private async settleUsage(
+    target: AttemptTarget,
+    usage: AiInvokeUsage,
+    channel: SystemProviderChannel | null | undefined,
+  ): Promise<UsageSettlement> {
+    if (target.provider.billingMode !== 'platform_credits') return this.emptySettlement();
+    const charge = await this.creditStore.calculateCharge(
+      target.model,
+      usage.promptTokens,
+      usage.completionTokens,
+    );
+    const cost = this.estimatedCost(target.model, usage.promptTokens, usage.completionTokens);
+    return {
+      ...cost,
+      creditAmount: charge.amount,
+      billingSnapshot: this.billingSnapshot(target, channel, usage, charge),
+    };
+  }
+
+  private userVisibleUsage(usage: AiInvokeUsage, settlement: UsageSettlement): AiInvokeUsage {
+    return {
+      ...usage,
+      creditAmount: settlement.creditAmount,
+      estimatedCostUsd: 0,
+      estimatedCostAmount: 0,
+      estimatedCostCurrency: null,
+    };
+  }
+
+  private billingSnapshot(
+    target: AttemptTarget,
+    channel: SystemProviderChannel | null | undefined,
+    usage: AiInvokeUsage,
+    charge: CreditCharge,
+  ): Record<string, unknown> {
+    return {
+      ...charge.snapshot,
+      publicProviderId: target.provider.id,
+      publicModelId: target.model.id,
+      internalProviderId: channel?.internalProviderId ?? null,
+      internalProviderModelId: channel?.id ?? null,
+      upstreamModelName: channel?.upstreamModelName ?? null,
+      usageEstimated: usage.usageEstimated,
     };
   }
 
@@ -630,10 +744,26 @@ export class InvokeService {
       promptTokens: 0,
       completionTokens: 0,
       totalTokens: 0,
+      creditAmount: 0,
+      usageEstimated: false,
       estimatedCostUsd: 0,
       estimatedCostAmount: 0,
       estimatedCostCurrency: null,
     };
+  }
+
+  private emptySettlement(): UsageSettlement {
+    return {
+      creditAmount: 0,
+      estimatedCostUsd: 0,
+      estimatedCostAmount: 0,
+      estimatedCostCurrency: null,
+      billingSnapshot: null,
+    };
+  }
+
+  private estimateTextTokens(text: string): number {
+    return Math.max(1, Math.ceil(text.length / 4));
   }
 
   private targetFromAttempt(catalog: AiGatewayCatalog, attempt: AiInvokeAttempt): AttemptTarget | null {

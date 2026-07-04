@@ -55,10 +55,11 @@ const navSections = [
   {
     title: '积分与计费',
     items: [
-      { label: '积分规则', icon: Coins, planned: true },
-      { label: '积分发放', icon: Gift, planned: true },
-      { label: '账户余额', icon: WalletCards, planned: true },
-      { label: '积分流水', icon: ReceiptText, planned: true },
+      { to: '/credits/rules', label: '积分规则', icon: Coins },
+      { to: '/credits/grants', label: '积分发放', icon: Gift },
+      { to: '/credits/balances', label: '账户余额', icon: WalletCards },
+      { to: '/credits/ledger', label: '积分流水', icon: ReceiptText },
+      { to: '/credits/redemption-codes', label: '兑换码', icon: Gift },
     ],
   },
   {
@@ -75,7 +76,18 @@ type AdminNavItem = {
   label: string;
   icon: LucideIcon;
   planned?: boolean;
-  to?: '/' | '/basic' | '/ai-providers' | '/dicha-ai' | '/system' | '/analytics';
+  to?:
+    | '/'
+    | '/basic'
+    | '/ai-providers'
+    | '/dicha-ai'
+    | '/credits/rules'
+    | '/credits/grants'
+    | '/credits/balances'
+    | '/credits/ledger'
+    | '/credits/redemption-codes'
+    | '/system'
+    | '/analytics';
 };
 
 export function AdminShell() {

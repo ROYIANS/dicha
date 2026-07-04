@@ -4,6 +4,18 @@ import { ConfigService } from '@nestjs/config';
 import type {
   AdminAiInternalProvider,
   AdminAiInternalProviderUpsert,
+  AdminCreditBalancesPage,
+  AdminCreditBalancesQuery,
+  AdminCreditGrant,
+  AdminCreditGrantResponse,
+  AdminCreditLedgerPage,
+  AdminCreditLedgerQuery,
+  AdminCreditRedemptionCode,
+  AdminCreditRedemptionCodeUpsert,
+  AdminCreditRedemptionCodesOverview,
+  AdminCreditRule,
+  AdminCreditRulesOverview,
+  AdminCreditRuleUpsert,
   AdminAiProviderDirectoryItem,
   AdminAiProviderDirectoryModelUpdate,
   AdminAiProviderDirectoryOverview,
@@ -39,6 +51,7 @@ import type {
 import { aiModelBank, aiProviderTemplates } from '@dicha/shared';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreditsService } from '../credits/credits.service';
 
 type AdminSessionUser = {
   id: string;
@@ -70,6 +83,7 @@ export class AdminService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly credits: CreditsService,
     config: ConfigService,
   ) {
     const secret = config.get<string>('AI_GATEWAY_SECRET_KEY') ?? this.developmentAiSecret(config);
@@ -518,6 +532,36 @@ export class AdminService {
       })),
       recentEvents: events.slice(0, logLimit),
     };
+  }
+
+  getCreditRules(): Promise<AdminCreditRulesOverview> {
+    return this.credits.getCreditRules();
+  }
+
+  upsertCreditRule(body: AdminCreditRuleUpsert): Promise<AdminCreditRule> {
+    return this.credits.upsertCreditRule(body);
+  }
+
+  grantCredits(body: AdminCreditGrant): Promise<AdminCreditGrantResponse> {
+    return this.credits.grantCredits(body);
+  }
+
+  listCreditBalances(query: AdminCreditBalancesQuery): Promise<AdminCreditBalancesPage> {
+    return this.credits.listCreditBalances(query);
+  }
+
+  listCreditLedger(query: AdminCreditLedgerQuery): Promise<AdminCreditLedgerPage> {
+    return this.credits.listCreditLedger(query);
+  }
+
+  getCreditRedemptionCodes(): Promise<AdminCreditRedemptionCodesOverview> {
+    return this.credits.getRedemptionCodes();
+  }
+
+  upsertCreditRedemptionCode(
+    body: AdminCreditRedemptionCodeUpsert,
+  ): Promise<AdminCreditRedemptionCode> {
+    return this.credits.upsertRedemptionCode(body);
   }
 
   async listUsers(query: AdminUsersQuery): Promise<AdminUsersList> {
@@ -1155,6 +1199,14 @@ function toAdminDichaUsageEvent(record: AdminDichaUsageRecord): AdminDichaAiUsag
     promptTokens: record.promptTokens,
     completionTokens: record.completionTokens,
     totalTokens: record.totalTokens,
+    creditAmount: record.creditAmount,
+    billingMode: record.billingMode as AdminDichaAiUsageEvent['billingMode'],
+    requestId: record.requestId,
+    upstreamRequestId: record.upstreamRequestId,
+    internalProviderId: record.internalProviderId,
+    internalProviderModelId: record.internalProviderModelId,
+    creditLedgerEntryId: record.creditLedgerEntryId,
+    usageEstimated: record.usageEstimated,
     estimatedCostUsd: record.estimatedCostUsd,
     estimatedCostAmount: record.estimatedCostAmount,
     estimatedCostCurrency: record.estimatedCostCurrency as AdminDichaAiUsageEvent['estimatedCostCurrency'],
@@ -1178,6 +1230,7 @@ function emptyAdminUsageSummary(): AiUsageSummary {
     promptTokens: 0,
     completionTokens: 0,
     totalTokens: 0,
+    creditAmount: 0,
     estimatedCostUsd: 0,
     costByCurrency: [],
     averageLatencyMs: null,
@@ -1197,6 +1250,7 @@ function summarizeAdminUsage(events: AdminDichaAiUsageEvent[]): AiUsageSummary {
     summary.promptTokens += event.promptTokens;
     summary.completionTokens += event.completionTokens;
     summary.totalTokens += event.totalTokens;
+    summary.creditAmount += event.creditAmount;
     summary.estimatedCostUsd += event.estimatedCostUsd;
     addAdminUsageCost(summary, event.estimatedCostCurrency, event.estimatedCostAmount);
     if (event.latencyMs !== null) {

@@ -18,6 +18,11 @@ import { Route as AdminDichaAiRouteImport } from './routes/_admin.dicha-ai'
 import { Route as AdminBasicRouteImport } from './routes/_admin.basic'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
 import { Route as AdminAiProvidersRouteImport } from './routes/_admin.ai-providers'
+import { Route as AdminCreditsRulesRouteImport } from './routes/_admin.credits.rules'
+import { Route as AdminCreditsRedemptionCodesRouteImport } from './routes/_admin.credits.redemption-codes'
+import { Route as AdminCreditsLedgerRouteImport } from './routes/_admin.credits.ledger'
+import { Route as AdminCreditsGrantsRouteImport } from './routes/_admin.credits.grants'
+import { Route as AdminCreditsBalancesRouteImport } from './routes/_admin.credits.balances'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
@@ -63,6 +68,32 @@ const AdminAiProvidersRoute = AdminAiProvidersRouteImport.update({
   path: '/ai-providers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCreditsRulesRoute = AdminCreditsRulesRouteImport.update({
+  id: '/credits/rules',
+  path: '/credits/rules',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCreditsRedemptionCodesRoute =
+  AdminCreditsRedemptionCodesRouteImport.update({
+    id: '/credits/redemption-codes',
+    path: '/credits/redemption-codes',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminCreditsLedgerRoute = AdminCreditsLedgerRouteImport.update({
+  id: '/credits/ledger',
+  path: '/credits/ledger',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCreditsGrantsRoute = AdminCreditsGrantsRouteImport.update({
+  id: '/credits/grants',
+  path: '/credits/grants',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCreditsBalancesRoute = AdminCreditsBalancesRouteImport.update({
+  id: '/credits/balances',
+  path: '/credits/balances',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AdminIndexRoute
@@ -73,6 +104,11 @@ export interface FileRoutesByFullPath {
   '/basic': typeof AdminBasicRoute
   '/dicha-ai': typeof AdminDichaAiRoute
   '/system': typeof AdminSystemRoute
+  '/credits/balances': typeof AdminCreditsBalancesRoute
+  '/credits/grants': typeof AdminCreditsGrantsRoute
+  '/credits/ledger': typeof AdminCreditsLedgerRoute
+  '/credits/redemption-codes': typeof AdminCreditsRedemptionCodesRoute
+  '/credits/rules': typeof AdminCreditsRulesRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -83,6 +119,11 @@ export interface FileRoutesByTo {
   '/dicha-ai': typeof AdminDichaAiRoute
   '/system': typeof AdminSystemRoute
   '/': typeof AdminIndexRoute
+  '/credits/balances': typeof AdminCreditsBalancesRoute
+  '/credits/grants': typeof AdminCreditsGrantsRoute
+  '/credits/ledger': typeof AdminCreditsLedgerRoute
+  '/credits/redemption-codes': typeof AdminCreditsRedemptionCodesRoute
+  '/credits/rules': typeof AdminCreditsRulesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +136,11 @@ export interface FileRoutesById {
   '/_admin/dicha-ai': typeof AdminDichaAiRoute
   '/_admin/system': typeof AdminSystemRoute
   '/_admin/': typeof AdminIndexRoute
+  '/_admin/credits/balances': typeof AdminCreditsBalancesRoute
+  '/_admin/credits/grants': typeof AdminCreditsGrantsRoute
+  '/_admin/credits/ledger': typeof AdminCreditsLedgerRoute
+  '/_admin/credits/redemption-codes': typeof AdminCreditsRedemptionCodesRoute
+  '/_admin/credits/rules': typeof AdminCreditsRulesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +153,11 @@ export interface FileRouteTypes {
     | '/basic'
     | '/dicha-ai'
     | '/system'
+    | '/credits/balances'
+    | '/credits/grants'
+    | '/credits/ledger'
+    | '/credits/redemption-codes'
+    | '/credits/rules'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -117,6 +168,11 @@ export interface FileRouteTypes {
     | '/dicha-ai'
     | '/system'
     | '/'
+    | '/credits/balances'
+    | '/credits/grants'
+    | '/credits/ledger'
+    | '/credits/redemption-codes'
+    | '/credits/rules'
   id:
     | '__root__'
     | '/_admin'
@@ -128,6 +184,11 @@ export interface FileRouteTypes {
     | '/_admin/dicha-ai'
     | '/_admin/system'
     | '/_admin/'
+    | '/_admin/credits/balances'
+    | '/_admin/credits/grants'
+    | '/_admin/credits/ledger'
+    | '/_admin/credits/redemption-codes'
+    | '/_admin/credits/rules'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,6 +262,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiProvidersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/credits/rules': {
+      id: '/_admin/credits/rules'
+      path: '/credits/rules'
+      fullPath: '/credits/rules'
+      preLoaderRoute: typeof AdminCreditsRulesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/credits/redemption-codes': {
+      id: '/_admin/credits/redemption-codes'
+      path: '/credits/redemption-codes'
+      fullPath: '/credits/redemption-codes'
+      preLoaderRoute: typeof AdminCreditsRedemptionCodesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/credits/ledger': {
+      id: '/_admin/credits/ledger'
+      path: '/credits/ledger'
+      fullPath: '/credits/ledger'
+      preLoaderRoute: typeof AdminCreditsLedgerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/credits/grants': {
+      id: '/_admin/credits/grants'
+      path: '/credits/grants'
+      fullPath: '/credits/grants'
+      preLoaderRoute: typeof AdminCreditsGrantsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/credits/balances': {
+      id: '/_admin/credits/balances'
+      path: '/credits/balances'
+      fullPath: '/credits/balances'
+      preLoaderRoute: typeof AdminCreditsBalancesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -211,6 +307,11 @@ interface AdminRouteChildren {
   AdminDichaAiRoute: typeof AdminDichaAiRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminCreditsBalancesRoute: typeof AdminCreditsBalancesRoute
+  AdminCreditsGrantsRoute: typeof AdminCreditsGrantsRoute
+  AdminCreditsLedgerRoute: typeof AdminCreditsLedgerRoute
+  AdminCreditsRedemptionCodesRoute: typeof AdminCreditsRedemptionCodesRoute
+  AdminCreditsRulesRoute: typeof AdminCreditsRulesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -220,6 +321,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDichaAiRoute: AdminDichaAiRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminCreditsBalancesRoute: AdminCreditsBalancesRoute,
+  AdminCreditsGrantsRoute: AdminCreditsGrantsRoute,
+  AdminCreditsLedgerRoute: AdminCreditsLedgerRoute,
+  AdminCreditsRedemptionCodesRoute: AdminCreditsRedemptionCodesRoute,
+  AdminCreditsRulesRoute: AdminCreditsRulesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

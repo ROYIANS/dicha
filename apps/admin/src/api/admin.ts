@@ -4,6 +4,14 @@ import {
   AdminAiProviderDirectoryOverviewSchema,
   AdminAiProviderDirectorySyncResponseSchema,
   AdminAiInternalProviderSchema,
+  AdminCreditBalanceItemSchema,
+  AdminCreditBalancesPageSchema,
+  AdminCreditGrantResponseSchema,
+  AdminCreditLedgerPageSchema,
+  AdminCreditRedemptionCodeSchema,
+  AdminCreditRedemptionCodesOverviewSchema,
+  AdminCreditRuleSchema,
+  AdminCreditRulesOverviewSchema,
   AdminDichaAiServiceOverviewSchema,
   AdminDichaAiUsageReportSchema,
   AdminDichaInternalProviderSyncResponseSchema,
@@ -17,6 +25,19 @@ import {
   type AdminAiProviderDirectoryOverview,
   type AdminAiProviderDirectorySyncResponse,
   type AdminAiProviderDirectoryUpdate,
+  type AdminCreditBalanceItem,
+  type AdminCreditBalancesPage,
+  type AdminCreditBalancesQuery,
+  type AdminCreditGrant,
+  type AdminCreditGrantResponse,
+  type AdminCreditLedgerPage,
+  type AdminCreditLedgerQuery,
+  type AdminCreditRedemptionCode,
+  type AdminCreditRedemptionCodeUpsert,
+  type AdminCreditRedemptionCodesOverview,
+  type AdminCreditRule,
+  type AdminCreditRulesOverview,
+  type AdminCreditRuleUpsert,
   type AdminDichaAiServiceOverview,
   type AdminDichaAiUsageReport,
   type AdminDichaInternalProviderSyncResponse,
@@ -38,6 +59,9 @@ export type AdminDichaAiUsageQueryInput = {
   window?: AiUsageWindow;
   logLimit?: number;
 };
+
+export type AdminCreditBalancesQueryInput = Partial<AdminCreditBalancesQuery>;
+export type AdminCreditLedgerQueryInput = Partial<AdminCreditLedgerQuery>;
 
 export function adminOverviewQueryOptions() {
   return queryOptions<AdminOverview>({
@@ -192,3 +216,104 @@ export function adminDichaAiUsageQueryOptions(query: AdminDichaAiUsageQueryInput
     retry: false,
   });
 }
+
+export function adminCreditRulesQueryOptions() {
+  return queryOptions<AdminCreditRulesOverview>({
+    queryKey: ['admin', 'credits', 'rules'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getCreditRules();
+      if (res.status !== 200) {
+        throw new Error(`Admin credit rules request failed (${res.status})`);
+      }
+      return AdminCreditRulesOverviewSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export async function upsertAdminCreditRule(body: AdminCreditRuleUpsert): Promise<AdminCreditRule> {
+  const res = await api.admin.upsertCreditRule({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin credit rule save failed (${res.status})`);
+  }
+  return AdminCreditRuleSchema.parse(res.body);
+}
+
+export async function grantAdminCredits(body: AdminCreditGrant): Promise<AdminCreditGrantResponse> {
+  const res = await api.admin.grantCredits({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin credit grant failed (${res.status})`);
+  }
+  return AdminCreditGrantResponseSchema.parse(res.body);
+}
+
+export function adminCreditBalancesQueryOptions(query: AdminCreditBalancesQueryInput = {}) {
+  const normalizedQuery = {
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 30,
+    search: query.search,
+  };
+  return queryOptions<AdminCreditBalancesPage>({
+    queryKey: ['admin', 'credits', 'balances', normalizedQuery] as const,
+    queryFn: async () => {
+      const res = await api.admin.listCreditBalances({ query: normalizedQuery });
+      if (res.status !== 200) {
+        throw new Error(`Admin credit balances request failed (${res.status})`);
+      }
+      return AdminCreditBalancesPageSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export function adminCreditLedgerQueryOptions(query: AdminCreditLedgerQueryInput = {}) {
+  const normalizedQuery = {
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 50,
+    search: query.search,
+    type: query.type,
+    ownerId: query.ownerId,
+  };
+  return queryOptions<AdminCreditLedgerPage>({
+    queryKey: ['admin', 'credits', 'ledger', normalizedQuery] as const,
+    queryFn: async () => {
+      const res = await api.admin.listCreditLedger({ query: normalizedQuery });
+      if (res.status !== 200) {
+        throw new Error(`Admin credit ledger request failed (${res.status})`);
+      }
+      return AdminCreditLedgerPageSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export function adminCreditRedemptionCodesQueryOptions() {
+  return queryOptions<AdminCreditRedemptionCodesOverview>({
+    queryKey: ['admin', 'credits', 'redemption-codes'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getCreditRedemptionCodes();
+      if (res.status !== 200) {
+        throw new Error(`Admin credit redemption codes request failed (${res.status})`);
+      }
+      return AdminCreditRedemptionCodesOverviewSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export async function upsertAdminCreditRedemptionCode(
+  body: AdminCreditRedemptionCodeUpsert,
+): Promise<AdminCreditRedemptionCode> {
+  const res = await api.admin.upsertCreditRedemptionCode({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin credit redemption code save failed (${res.status})`);
+  }
+  return AdminCreditRedemptionCodeSchema.parse(res.body);
+}
+
+export { AdminCreditBalanceItemSchema };
+export type { AdminCreditBalanceItem };

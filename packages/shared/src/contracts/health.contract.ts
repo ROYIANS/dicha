@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { adminContract } from './admin.contract';
 import { aiContract } from './ai.contract';
 import { accountContract } from './auth.contract';
+import { creditContract } from './credit.contract';
 
 const c = initContract();
 
@@ -35,5 +36,6 @@ export const contract = c.router({
   },
   account: accountContract,
   ai: aiContract,
+  credits: creditContract,
   admin: adminContract,
 });

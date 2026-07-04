@@ -14,6 +14,11 @@ import {
   AiProviderRequestFormatSchema,
   AiUsageWindowSchema,
 } from './ai.contract';
+import {
+  CreditAccountSchema,
+  CreditLedgerEntrySchema,
+  CreditLedgerTypeSchema,
+} from './credit.contract';
 
 const c = initContract();
 
@@ -364,6 +369,138 @@ export const AdminDichaAiUsageReportSchema = z.object({
 
 export type AdminDichaAiUsageReport = z.infer<typeof AdminDichaAiUsageReportSchema>;
 
+export const AdminCreditRuleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  active: z.boolean(),
+  cnyCreditsPerUnit: z.number().int().min(1),
+  usdCreditsPerUnit: z.number().int().min(1),
+  platformMarkup: z.number().min(0),
+  minimumChargeCredits: z.number().int().min(0),
+  notes: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AdminCreditRule = z.infer<typeof AdminCreditRuleSchema>;
+
+export const AdminCreditRuleUpsertSchema = z.object({
+  ruleId: z.string().optional(),
+  name: z.string().trim().min(1).max(120),
+  active: z.boolean(),
+  cnyCreditsPerUnit: z.number().int().min(1).max(1_000_000_000),
+  usdCreditsPerUnit: z.number().int().min(1).max(1_000_000_000),
+  platformMarkup: z.number().min(0).max(100),
+  minimumChargeCredits: z.number().int().min(0).max(1_000_000),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+export type AdminCreditRuleUpsert = z.infer<typeof AdminCreditRuleUpsertSchema>;
+
+export const AdminCreditRulesOverviewSchema = z.object({
+  generatedAt: z.string().datetime(),
+  rules: z.array(AdminCreditRuleSchema),
+});
+export type AdminCreditRulesOverview = z.infer<typeof AdminCreditRulesOverviewSchema>;
+
+export const AdminCreditGrantSchema = z.object({
+  ownerId: z.string().min(1),
+  amount: z.number().int().positive().max(1_000_000_000),
+  reason: z.string().trim().min(1).max(500),
+});
+export type AdminCreditGrant = z.infer<typeof AdminCreditGrantSchema>;
+
+export const AdminCreditGrantResponseSchema = z.object({
+  account: CreditAccountSchema,
+  ledgerEntry: CreditLedgerEntrySchema,
+});
+export type AdminCreditGrantResponse = z.infer<typeof AdminCreditGrantResponseSchema>;
+
+export const AdminCreditBalancesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(30),
+  search: z.string().trim().max(120).optional(),
+});
+export type AdminCreditBalancesQuery = z.infer<typeof AdminCreditBalancesQuerySchema>;
+
+export const AdminCreditBalanceItemSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+  }),
+  account: CreditAccountSchema,
+});
+export type AdminCreditBalanceItem = z.infer<typeof AdminCreditBalanceItemSchema>;
+
+export const AdminCreditBalancesPageSchema = z.object({
+  generatedAt: z.string().datetime(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1).max(100),
+  total: z.number().int().min(0),
+  totalPages: z.number().int().min(0),
+  balances: z.array(AdminCreditBalanceItemSchema),
+});
+export type AdminCreditBalancesPage = z.infer<typeof AdminCreditBalancesPageSchema>;
+
+export const AdminCreditLedgerQuerySchema = AdminCreditBalancesQuerySchema.extend({
+  type: CreditLedgerTypeSchema.optional(),
+  ownerId: z.string().min(1).optional(),
+});
+export type AdminCreditLedgerQuery = z.infer<typeof AdminCreditLedgerQuerySchema>;
+
+export const AdminCreditLedgerEntrySchema = CreditLedgerEntrySchema.extend({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+  }),
+});
+export type AdminCreditLedgerEntry = z.infer<typeof AdminCreditLedgerEntrySchema>;
+
+export const AdminCreditLedgerPageSchema = z.object({
+  generatedAt: z.string().datetime(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1).max(100),
+  total: z.number().int().min(0),
+  totalPages: z.number().int().min(0),
+  entries: z.array(AdminCreditLedgerEntrySchema),
+});
+export type AdminCreditLedgerPage = z.infer<typeof AdminCreditLedgerPageSchema>;
+
+export const AdminCreditRedemptionCodeSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  creditAmount: z.number().int().positive(),
+  enabled: z.boolean(),
+  maxRedemptions: z.number().int().positive(),
+  redeemedCount: z.number().int().min(0),
+  expiresAt: z.string().datetime().nullable(),
+  notes: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AdminCreditRedemptionCode = z.infer<typeof AdminCreditRedemptionCodeSchema>;
+
+export const AdminCreditRedemptionCodeUpsertSchema = z.object({
+  codeId: z.string().optional(),
+  code: z.string().trim().min(4).max(80),
+  creditAmount: z.number().int().positive().max(1_000_000_000),
+  enabled: z.boolean(),
+  maxRedemptions: z.number().int().positive().max(1_000_000),
+  expiresAt: z.string().datetime().nullable().optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+export type AdminCreditRedemptionCodeUpsert = z.infer<
+  typeof AdminCreditRedemptionCodeUpsertSchema
+>;
+
+export const AdminCreditRedemptionCodesOverviewSchema = z.object({
+  generatedAt: z.string().datetime(),
+  codes: z.array(AdminCreditRedemptionCodeSchema),
+});
+export type AdminCreditRedemptionCodesOverview = z.infer<
+  typeof AdminCreditRedemptionCodesOverviewSchema
+>;
+
 export const adminContract = c.router({
   getOverview: {
     method: 'GET',
@@ -472,5 +609,66 @@ export const adminContract = c.router({
       200: AdminDichaAiUsageReportSchema,
     },
     summary: 'Super admin DicHA AI official usage analytics',
+  },
+  getCreditRules: {
+    method: 'GET',
+    path: '/admin/credits/rules',
+    responses: {
+      200: AdminCreditRulesOverviewSchema,
+    },
+    summary: 'Super admin credit conversion rules',
+  },
+  upsertCreditRule: {
+    method: 'POST',
+    path: '/admin/credits/rules',
+    body: AdminCreditRuleUpsertSchema,
+    responses: {
+      200: AdminCreditRuleSchema,
+    },
+    summary: 'Create or update a credit conversion rule',
+  },
+  grantCredits: {
+    method: 'POST',
+    path: '/admin/credits/grants',
+    body: AdminCreditGrantSchema,
+    responses: {
+      200: AdminCreditGrantResponseSchema,
+    },
+    summary: 'Grant credits to a user',
+  },
+  listCreditBalances: {
+    method: 'GET',
+    path: '/admin/credits/balances',
+    query: AdminCreditBalancesQuerySchema,
+    responses: {
+      200: AdminCreditBalancesPageSchema,
+    },
+    summary: 'List user credit balances',
+  },
+  listCreditLedger: {
+    method: 'GET',
+    path: '/admin/credits/ledger',
+    query: AdminCreditLedgerQuerySchema,
+    responses: {
+      200: AdminCreditLedgerPageSchema,
+    },
+    summary: 'List credit ledger entries',
+  },
+  getCreditRedemptionCodes: {
+    method: 'GET',
+    path: '/admin/credits/redemption-codes',
+    responses: {
+      200: AdminCreditRedemptionCodesOverviewSchema,
+    },
+    summary: 'List credit redemption codes',
+  },
+  upsertCreditRedemptionCode: {
+    method: 'POST',
+    path: '/admin/credits/redemption-codes',
+    body: AdminCreditRedemptionCodeUpsertSchema,
+    responses: {
+      200: AdminCreditRedemptionCodeSchema,
+    },
+    summary: 'Create or update a credit redemption code',
   },
 });

@@ -25,6 +25,7 @@ import {
   Search,
   Server,
   ShieldCheck,
+  WalletCards,
   User,
   type LucideIcon,
 } from 'lucide-react';
@@ -67,6 +68,7 @@ type SettingsRouteTo =
   | '/settings/ai-providers'
   | '/settings/ai-models'
   | '/settings/ai-usage'
+  | '/settings/credits'
   | '/settings/ai-invoke-demo'
   | '/settings/help'
   | '/settings/labs'
@@ -182,6 +184,14 @@ const sections = [
         descKey: 'aiUsageDesc',
         valueKey: 'usage',
         to: '/settings/ai-usage',
+      },
+      {
+        icon: WalletCards,
+        tint: 'peach',
+        labelKey: 'credits',
+        descKey: 'creditsDesc',
+        valueKey: 'credits',
+        to: '/settings/credits',
       },
       {
         icon: FlaskConical,

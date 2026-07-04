@@ -487,3 +487,132 @@ await prisma.aiUsageEvent.findMany({
   include: { owner: { select: { id: true, email: true, name: true } } },
 });
 ```
+
+## Scenario: AI Credit Accounting And User-Facing Cost Masking
+
+### 1. Scope / Trigger
+
+- Trigger: changing DicHA official AI billing, user credit balance, credit ledger, redemption codes, admin credit management, or AI usage reports.
+- This is a cross-layer contract: Prisma stores real cost and immutable billing snapshots; `packages/shared` defines credit and usage DTOs; `apps/ai-gateway` prechecks/settles official calls; `apps/api` exposes user/admin credit endpoints; `apps/web` shows user-facing credits, not upstream cost; `apps/admin` shows operational cost and credits.
+
+### 2. Signatures
+
+- Prisma models:
+  - `CreditAccount(ownerId, balance, lifetimeGranted, lifetimeSpent)`.
+  - `CreditLedgerEntry(ownerId, accountId, type, amount, balanceAfter, source, sourceId, aiUsageEventId, metadata)`.
+  - `CreditRule(name, active, cnyCreditsPerUnit, usdCreditsPerUnit, platformMarkup, minimumChargeCredits)`.
+  - `CreditRedemptionCode(code, creditAmount, enabled, maxRedemptions, redeemedCount, expiresAt)`.
+  - `AiUsageEvent.creditAmount`, `billingMode`, `requestId`, `internalProviderId`, `internalProviderModelId`, `creditLedgerEntryId`, `usageEstimated`, `billingSnapshot`.
+- Shared contracts:
+  - `contract.credits.getBalance` -> `GET /credits/balance`.
+  - `contract.credits.getLedger` -> `GET /credits/ledger`.
+  - `contract.credits.redeemCode` -> `POST /credits/redeem`.
+  - `contract.admin.getCreditRules`, `upsertCreditRule`, `grantCredits`, `listCreditBalances`, `listCreditLedger`, `getCreditRedemptionCodes`, `upsertCreditRedemptionCode`.
+- Gateway entry:
+  - `CreditStore.assertSufficientReserve(ownerId, model, request)`.
+  - `CreditStore.calculateCharge(model, promptTokens, completionTokens)`.
+  - `UsageStore.recordEvent(ownerId, record)` creates the debit ledger row for `billingMode: platform_credits`.
+
+### 3. Contracts
+
+- Credits are integer account units. Do not store credit balances as floats.
+- Credits are derived from model cost and the active credit rule; do not define `1 credit = N tokens` globally because model prices differ.
+- Model settlement pricing remains real `CNY` or `USD`; never add `DSCHA`, `credits`, or other credit labels to `AiModelPricing.currency`.
+- Official DicHA AI uses `billingMode: platform_credits` and must:
+  - precheck balance before calling upstream;
+  - settle credits from actual or estimated token usage after a successful upstream response;
+  - create one debit `CreditLedgerEntry` and link it to the `AiUsageEvent`;
+  - store `billingSnapshot` with rule, pricing, token, request, public model, and internal channel context.
+- User-owned/custom providers use `billingMode: user_provider` and must not debit credits or calculate DicHA cost. They may still record tokens, latency, model, provider, status, and errors.
+- User-facing AI usage and invoke responses must expose credits and usage diagnostics only. They must not expose official upstream `estimatedCostAmount`, `estimatedCostCurrency`, or `costByCurrency`.
+- Admin DicHA AI analytics may show real CNY/USD cost and credits side by side for the official provider.
+- Balance updates and ledger writes must be atomic. Debit must use a conditional balance update (`balance >= amount`) rather than decrement-then-check.
+
+### 4. Validation & Error Matrix
+
+| Condition | Expected Behavior |
+|---|---|
+| No active `CreditRule` | Gateway uses the development default rule, but admin should be able to create and activate a real rule. |
+| Official model has no CNY/USD pricing | Gateway rejects the official call as quota/config failure before upstream use. |
+| User balance is below reserve | Gateway returns sanitized `quota` failure and does not call upstream. |
+| Upstream succeeds and usage is reported | Gateway computes credits from reported tokens and writes usage plus debit ledger in one transaction. |
+| Upstream succeeds without usage tokens | Gateway estimates tokens, sets `usageEstimated: true`, and stores the estimate in the billing snapshot. |
+| Debit race drains balance | Conditional update fails, the transaction aborts, and no negative balance is persisted. |
+| BYOK/custom provider call | Records usage diagnostics with `creditAmount: 0`, no ledger debit, no DicHA cost. |
+| Normal user opens `/ai/usage` | Cost fields are masked to zero/null and `costByCurrency` is empty. |
+| Super admin opens DicHA usage | Admin report may aggregate real `estimatedCostAmount` by `CNY`/`USD`. |
+
+### 5. Good/Base/Bad Cases
+
+- Good: store real official cost in `AiUsageEvent` for admin reconciliation while masking those fields in user-facing gateway reports.
+- Good: store `creditAmount` on both usage events and debit ledger entries so usage pages and balance ledgers can cross-check.
+- Good: append-only ledger rows with stored `balanceAfter`; account balance is a fast read model updated transactionally.
+- Base: redemption codes and admin grants are enough to fund accounts before payment integration exists.
+- Bad: exposing `estimatedCostAmount` for official DicHA calls to `apps/web`.
+- Bad: charging user-owned providers through DicHA credits.
+- Bad: using credits as a model pricing currency.
+- Bad: changing an active rule and recomputing old usage rows instead of preserving billing snapshots.
+
+### 6. Tests Required
+
+- `pnpm --filter @dicha/shared build` after contract changes.
+- `pnpm --filter @dicha/api typecheck && pnpm --filter @dicha/api lint && pnpm --filter @dicha/api build`.
+- `pnpm --filter @dicha/ai-gateway typecheck && pnpm --filter @dicha/ai-gateway lint && pnpm --filter @dicha/ai-gateway test && pnpm --filter @dicha/ai-gateway build`.
+- `pnpm --filter @dicha/web typecheck && pnpm --filter @dicha/web lint && pnpm --filter @dicha/web build`.
+- `pnpm --filter @dicha/admin typecheck && pnpm --filter @dicha/admin lint && pnpm --filter @dicha/admin build`.
+- Focused assertions:
+  - insufficient credits do not call upstream;
+  - successful official invoke creates a debit ledger entry and linked usage event;
+  - concurrent debit cannot create negative balance;
+  - BYOK/custom invoke records zero credits and no cost;
+  - user usage report masks CNY/USD cost while admin DicHA report retains it.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+const credits = totalTokens;
+await prisma.creditAccount.update({
+  where: { ownerId },
+  data: { balance: { decrement: credits } },
+});
+```
+
+This incorrectly binds credits to tokens and can create negative balances under concurrent debit.
+
+#### Correct
+
+```typescript
+const charge = await creditStore.calculateCharge(model, promptTokens, completionTokens);
+const debit = await tx.creditAccount.updateMany({
+  where: { id: account.id, balance: { gte: charge.amount } },
+  data: {
+    balance: { decrement: charge.amount },
+    lifetimeSpent: { increment: charge.amount },
+  },
+});
+if (debit.count !== 1) throw new Error('Insufficient DicHA credits');
+```
+
+#### Wrong
+
+```typescript
+return usageReportFromDbRows(events);
+```
+
+This leaks official upstream cost fields to normal users.
+
+#### Correct
+
+```typescript
+return {
+  ...usageReportFromDbRows(events),
+  summary: { ...summary, estimatedCostUsd: 0, costByCurrency: [] },
+  recentEvents: events.map((event) => ({
+    ...event,
+    estimatedCostAmount: 0,
+    estimatedCostCurrency: null,
+  })),
+};
+```

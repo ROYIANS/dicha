@@ -95,6 +95,9 @@ model User {
   aiModels      AiModelConfig[]
   aiAssignments AiModelAssignmentConfig[]
   aiUsageEvents AiUsageEvent[]
+  creditAccount CreditAccount?
+  creditLedgerEntries CreditLedgerEntry[]
+  creditRedemptions CreditRedemption[]
 }
 
 // ─── Better Auth 表（session / account / verification）───
@@ -406,31 +409,147 @@ model AiUsageEvent {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  kind             String
-  status           String
-  useCase          String
-  providerId       String
-  providerName     String
-  modelId          String
-  modelName        String
-  promptTokens     Int
-  completionTokens Int
-  totalTokens      Int
-  estimatedCostUsd Float
-  estimatedCostAmount Float
+  kind                  String
+  status                String
+  useCase               String
+  providerId            String
+  providerName          String
+  modelId               String
+  modelName             String
+  promptTokens          Int
+  completionTokens      Int
+  totalTokens           Int
+  estimatedCostUsd      Float
+  estimatedCostAmount   Float
   estimatedCostCurrency String?
-  latencyMs        Int?
-  errorCategory    String?
-  createdAt        DateTime @default(now())
+  creditAmount          Int      @default(0)
+  billingMode           String   @default("user_provider")
+  requestId             String?
+  upstreamRequestId     String?
+  internalProviderId    String?
+  internalProviderModelId String?
+  creditLedgerEntryId   String?
+  usageEstimated        Boolean  @default(false)
+  billingSnapshot       Json?
+  latencyMs             Int?
+  errorCategory         String?
+  createdAt             DateTime @default(now())
 
   @@index([ownerId, createdAt])
   @@index([ownerId, providerId, createdAt])
   @@index([ownerId, modelId, createdAt])
   @@index([ownerId, useCase, createdAt])
   @@index([ownerId, status, createdAt])
+  @@index([ownerId, billingMode, createdAt])
   @@index([providerId, createdAt])
   @@index([providerId, status, createdAt])
   @@index([providerId, estimatedCostCurrency, createdAt])
+  @@index([providerId, billingMode, createdAt])
+  @@index([requestId])
+  @@index([creditLedgerEntryId])
+}
+
+// ─── Credit System（积分与官方 AI 消费）────────────────────
+
+model CreditAccount {
+  id String @id @default(cuid())
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String @unique
+
+  balance        Int @default(0)
+  lifetimeGranted Int @default(0)
+  lifetimeSpent   Int @default(0)
+
+  ledgerEntries CreditLedgerEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([balance])
+}
+
+model CreditLedgerEntry {
+  id String @id @default(cuid())
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  account   CreditAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId String
+
+  type         String
+  amount       Int
+  balanceAfter Int
+  source       String
+  sourceId     String?
+  aiUsageEventId String?
+  description  String?
+  metadata     Json?
+
+  redemption CreditRedemption?
+
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, createdAt])
+  @@index([ownerId, type, createdAt])
+  @@index([source, sourceId])
+  @@index([aiUsageEventId])
+}
+
+model CreditRule {
+  id String @id @default(cuid())
+
+  name String
+  active Boolean @default(false)
+  cnyCreditsPerUnit Int @default(1000)
+  usdCreditsPerUnit Int @default(7000)
+  platformMarkup Float @default(1)
+  minimumChargeCredits Int @default(1)
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, updatedAt])
+}
+
+model CreditRedemptionCode {
+  id String @id @default(cuid())
+
+  code String @unique
+  creditAmount Int
+  enabled Boolean @default(true)
+  maxRedemptions Int @default(1)
+  redeemedCount Int @default(0)
+  expiresAt DateTime?
+  notes String?
+
+  redemptions CreditRedemption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, expiresAt])
+}
+
+model CreditRedemption {
+  id String @id @default(cuid())
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  code   CreditRedemptionCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  codeId String
+
+  ledgerEntry CreditLedgerEntry? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+  ledgerEntryId String? @unique
+
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, codeId])
+  @@index([ownerId, createdAt])
+  @@index([codeId, createdAt])
 }
 
 model AiSystemProviderChannel {

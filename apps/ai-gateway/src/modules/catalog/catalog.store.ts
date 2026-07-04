@@ -53,6 +53,7 @@ export type ProviderSecret = {
 
 export type SystemProviderChannel = {
   id: string;
+  internalProviderId?: string;
   providerId: string;
   modelId: string;
   name: string;
@@ -222,6 +223,7 @@ export class CatalogStore {
       if (internalModel) {
         return {
           id: internalModel.id,
+          internalProviderId: internalModel.internalProviderId,
           providerId,
           modelId,
           name: internalModel.dxDisplayName ?? internalModel.upstreamDisplayName,

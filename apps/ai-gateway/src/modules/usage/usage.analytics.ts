@@ -39,6 +39,7 @@ export const emptyUsageSummary = (): AiUsageSummary => ({
   promptTokens: 0,
   completionTokens: 0,
   totalTokens: 0,
+  creditAmount: 0,
   estimatedCostUsd: 0,
   costByCurrency: [],
   averageLatencyMs: null,
@@ -108,6 +109,7 @@ export function summarizeUsage(events: AiUsageEvent[]): AiUsageSummary {
     summary.promptTokens += event.promptTokens;
     summary.completionTokens += event.completionTokens;
     summary.totalTokens += event.totalTokens;
+    summary.creditAmount += event.creditAmount;
     summary.estimatedCostUsd += event.estimatedCostUsd;
     addCost(summary, event.estimatedCostCurrency, event.estimatedCostAmount);
     if (event.latencyMs !== null) {
@@ -207,7 +209,11 @@ function usageBreakdown(
       label: value.label,
       ...summarizeUsage(value.events),
     }))
-    .sort((left, right) => right.estimatedCostUsd - left.estimatedCostUsd);
+    .sort((left, right) => {
+      if (right.creditAmount !== left.creditAmount) return right.creditAmount - left.creditAmount;
+      if (right.estimatedCostUsd !== left.estimatedCostUsd) return right.estimatedCostUsd - left.estimatedCostUsd;
+      return right.totalTokens - left.totalTokens;
+    });
 }
 
 function usageDistribution(
@@ -240,6 +246,7 @@ function usageDistribution(
       buckets: from ? timeBuckets(value.events, from, to, granularity) : [],
     }))
     .sort((left, right) => {
+      if (right.creditAmount !== left.creditAmount) return right.creditAmount - left.creditAmount;
       if (right.estimatedCostUsd !== left.estimatedCostUsd) return right.estimatedCostUsd - left.estimatedCostUsd;
       if (right.totalTokens !== left.totalTokens) return right.totalTokens - left.totalTokens;
       return right.calls - left.calls;

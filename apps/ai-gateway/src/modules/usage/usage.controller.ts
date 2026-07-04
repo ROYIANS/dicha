@@ -24,10 +24,26 @@ const AiUsageRecordSchema = AiUsageEventSchema.omit({
   id: true,
   createdAt: true,
   totalTokens: true,
+  creditAmount: true,
+  billingMode: true,
+  requestId: true,
+  upstreamRequestId: true,
+  internalProviderId: true,
+  internalProviderModelId: true,
+  creditLedgerEntryId: true,
+  usageEstimated: true,
 }).extend({
   id: z.string().optional(),
   createdAt: z.string().datetime().optional(),
   totalTokens: z.number().int().min(0).optional(),
+  creditAmount: AiUsageEventSchema.shape.creditAmount.optional(),
+  billingMode: AiUsageEventSchema.shape.billingMode.optional(),
+  requestId: AiUsageEventSchema.shape.requestId.optional(),
+  upstreamRequestId: AiUsageEventSchema.shape.upstreamRequestId.optional(),
+  internalProviderId: AiUsageEventSchema.shape.internalProviderId.optional(),
+  internalProviderModelId: AiUsageEventSchema.shape.internalProviderModelId.optional(),
+  creditLedgerEntryId: AiUsageEventSchema.shape.creditLedgerEntryId.optional(),
+  usageEstimated: AiUsageEventSchema.shape.usageEstimated.optional(),
 });
 
 type AiUsageRecord = z.infer<typeof AiUsageRecordSchema>;

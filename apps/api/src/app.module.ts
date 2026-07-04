@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MediaModule } from './modules/media/media.module';
 import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { CreditsModule } from './modules/credits/credits.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AdminModule } from './modules/admin/admin.module';
     HealthModule,
     AuthModule,
     AdminModule,
+    CreditsModule,
     MediaModule,
     AiGatewayModule,
   ],
