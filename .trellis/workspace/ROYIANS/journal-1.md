@@ -1027,3 +1027,37 @@ Added theme-aware landing banner and hero gradients, introduced reusable setting
 ### Next Steps
 
 - None - task complete
+
+
+## Session 29: UI ornaments and settings scroll isolation
+
+**Date**: 2026-07-04
+**Task**: UI ornaments and settings scroll isolation
+**Branch**: `main`
+
+### Summary
+
+Refined landing copy and local ornament patterns, documented the landing pattern convention, fixed app route scroll reset at the shared layout layer, and archived completed Trellis tasks.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1a24fdf` | (see git log) |
+| `efc63ab` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
