@@ -1061,3 +1061,36 @@ Refined landing copy and local ornament patterns, documented the landing pattern
 ### Next Steps
 
 - None - task complete
+
+
+## Session 30: AI usage analytics dashboard
+
+**Date**: 2026-07-04
+**Task**: AI usage analytics dashboard
+**Branch**: `main`
+
+### Summary
+
+Enriched the AI usage page with user-scoped analytics, Recharts trend/distribution charts, performance metrics, and tested gateway aggregation.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `311f7d5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
