@@ -34,6 +34,11 @@ export type AdminUsersQueryInput = {
   search?: string;
 };
 
+export type AdminDichaAiUsageQueryInput = {
+  window?: AiUsageWindow;
+  logLimit?: number;
+};
+
 export function adminOverviewQueryOptions() {
   return queryOptions<AdminOverview>({
     queryKey: ['admin', 'overview'],
@@ -169,11 +174,15 @@ export async function updateAdminDichaModel(
   return AdminDichaAiServiceOverviewSchema.parse(res.body);
 }
 
-export function adminDichaAiUsageQueryOptions(window: AiUsageWindow = '7d') {
+export function adminDichaAiUsageQueryOptions(query: AdminDichaAiUsageQueryInput | AiUsageWindow = '7d') {
+  const normalizedQuery =
+    typeof query === 'string'
+      ? { window: query, logLimit: 500 }
+      : { window: query.window ?? '7d', logLimit: query.logLimit ?? 500 };
   return queryOptions<AdminDichaAiUsageReport>({
-    queryKey: ['admin', 'ai', 'dicha-usage', window] as const,
+    queryKey: ['admin', 'ai', 'dicha-usage', normalizedQuery] as const,
     queryFn: async () => {
-      const res = await api.admin.getDichaAiUsage({ query: { window } });
+      const res = await api.admin.getDichaAiUsage({ query: normalizedQuery });
       if (res.status !== 200) {
         throw new Error(`Admin DicHA AI usage request failed (${res.status})`);
       }

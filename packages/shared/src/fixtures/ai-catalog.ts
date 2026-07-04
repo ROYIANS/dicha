@@ -722,10 +722,6 @@ const dichaOfficialModels: AiModel[] = [
     availability: 'healthy',
     priceHint: '未来按 Dicha AI 积分计费',
     catalogSource: 'dicha_catalog',
-    pricing: {
-      currency: 'DICHA_CREDITS',
-      notes: '正式价格以后端 price book 为准。',
-    },
   }),
 ];
 

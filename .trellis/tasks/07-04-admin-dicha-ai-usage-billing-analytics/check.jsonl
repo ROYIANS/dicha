@@ -1,0 +1,6 @@
+{"file":".trellis/spec/frontend/admin-app.md","reason":"Admin analytics page changes must keep the independent super-admin app, shared contract usage, and dense operational UI conventions."}
+{"file":".trellis/spec/frontend/design-system.md","reason":"Statistic cards, controls, chart containers, and table styling must follow the warm matte tokens and rounded-md control rules."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Usage report fields are shared zod/ts-rest contracts consumed by admin, web, API, and gateway packages."}
+{"file":".trellis/spec/backend/ai-catalog.md","reason":"DicHA AI invoke usage, settlement cost recording, provider pricing, and admin analytics are governed by the AI catalog/invoke contract."}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"AiUsageEvent schema changes require Prisma 7 generation and database synchronization awareness."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"The billing fix spans storage, gateway runtime, API aggregation, shared contracts, and frontend display."}

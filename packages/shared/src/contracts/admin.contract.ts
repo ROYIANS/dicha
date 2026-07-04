@@ -325,6 +325,22 @@ export const AdminDichaAiUsageEventSchema = AiUsageEventSchema.extend({
 
 export type AdminDichaAiUsageEvent = z.infer<typeof AdminDichaAiUsageEventSchema>;
 
+export const AdminDichaAiUsageQuerySchema = AiUsageQuerySchema.extend({
+  logLimit: z.coerce.number().int().min(20).max(1000).default(500),
+});
+
+export type AdminDichaAiUsageQuery = z.infer<typeof AdminDichaAiUsageQuerySchema>;
+
+export const AdminDichaAiUserBreakdownSchema = AiUsageBreakdownSchema.extend({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+  }),
+});
+
+export type AdminDichaAiUserBreakdown = z.infer<typeof AdminDichaAiUserBreakdownSchema>;
+
 export const AdminDichaAiUsageReportSchema = z.object({
   generatedAt: z.string().datetime(),
   window: AiUsageWindowSchema,
@@ -333,12 +349,16 @@ export const AdminDichaAiUsageReportSchema = z.object({
   providerId: z.literal('dicha'),
   providerName: z.string(),
   activeUsers: z.number().int().min(0),
+  totalEvents: z.number().int().min(0),
+  logLimit: z.number().int().min(20).max(1000),
   summary: AiUsageSummarySchema,
   performance: AiUsagePerformanceSchema,
   timeSeries: AiUsageTimeSeriesSchema,
   distributions: AiUsageDistributionsSchema,
   byModel: z.array(AiUsageBreakdownSchema),
   byUseCase: z.array(AiUsageBreakdownSchema),
+  byUser: z.array(AdminDichaAiUserBreakdownSchema),
+  byStatus: z.array(AiUsageBreakdownSchema),
   recentEvents: z.array(AdminDichaAiUsageEventSchema),
 });
 
@@ -447,7 +467,7 @@ export const adminContract = c.router({
   getDichaAiUsage: {
     method: 'GET',
     path: '/admin/ai/dicha-usage',
-    query: AiUsageQuerySchema,
+    query: AdminDichaAiUsageQuerySchema,
     responses: {
       200: AdminDichaAiUsageReportSchema,
     },

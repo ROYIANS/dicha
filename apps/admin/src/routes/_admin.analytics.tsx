@@ -1,21 +1,47 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type SortingState,
+} from '@tanstack/react-table';
+import {
   Activity,
+  ArrowDownUp,
   BarChart3,
+  CheckCircle2,
   Clock3,
   Coins,
   Gauge,
+  Layers3,
+  ReceiptText,
   Timer,
   UsersRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { adminDichaAiUsageQueryOptions } from '@/api/admin';
 import { PageHeader } from '@/components/PageHeader';
 import type {
   AdminDichaAiUsageEvent,
   AdminDichaAiUsageReport,
+  AiSettlementCurrency,
   AiUsageBreakdown,
+  AiUsageSummary,
   AiUsageTimeBucket,
   AiUsageWindow,
 } from '@dicha/shared';
@@ -27,15 +53,29 @@ const WINDOWS: Array<{ value: AiUsageWindow; label: string }> = [
   { value: 'all', label: '全部' },
 ];
 
+const LOG_LIMITS = [100, 300, 500, 1000] as const;
+
+type TrendMetric = 'calls' | 'totalTokens' | 'cnyCost' | 'usdCost';
+
+const TREND_METRICS: Array<{ value: TrendMetric; label: string; color: string }> = [
+  { value: 'calls', label: '请求次数', color: 'var(--accent-peach)' },
+  { value: 'totalTokens', label: '总 token', color: 'var(--accent-sage)' },
+  { value: 'cnyCost', label: '人民币费用', color: 'var(--accent-warm)' },
+  { value: 'usdCost', label: '美元费用', color: 'var(--accent-mist)' },
+];
+
 export const Route = createFileRoute('/_admin/analytics')({
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(adminDichaAiUsageQueryOptions('7d')),
+    context.queryClient.ensureQueryData(
+      adminDichaAiUsageQueryOptions({ window: '7d', logLimit: 500 }),
+    ),
   component: AnalyticsPage,
 });
 
 function AnalyticsPage() {
   const [window, setWindow] = useState<AiUsageWindow>('7d');
-  const usage = useQuery(adminDichaAiUsageQueryOptions(window));
+  const [logLimit, setLogLimit] = useState<(typeof LOG_LIMITS)[number]>(500);
+  const usage = useQuery(adminDichaAiUsageQueryOptions({ window, logLimit }));
   const report = usage.data;
 
   return (
@@ -53,21 +93,34 @@ function AnalyticsPage() {
               {report ? `${formatDateTime(report.from)} - ${formatDateTime(report.to)}` : '正在读取统计窗口'}
             </p>
           </div>
-          <div className="flex rounded-md border border-hairline bg-surface-alt p-1">
-            {WINDOWS.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setWindow(item.value)}
-                className={`h-8 rounded px-3 text-xs transition-colors ${
-                  window === item.value
-                    ? 'bg-sidebar-bg text-sidebar-ink'
-                    : 'text-ink-soft hover:text-ink'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-md border border-hairline bg-surface-alt p-1">
+              {WINDOWS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setWindow(item.value)}
+                  className={`h-8 rounded px-3 text-xs transition-colors ${
+                    window === item.value
+                      ? 'bg-sidebar-bg text-sidebar-ink'
+                      : 'text-ink-soft hover:text-ink'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <select
+              value={logLimit}
+              onChange={(event) => setLogLimit(Number(event.target.value) as (typeof LOG_LIMITS)[number])}
+              className="h-9 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink outline-none"
+            >
+              {LOG_LIMITS.map((limit) => (
+                <option key={limit} value={limit}>
+                  日志 {limit} 条
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -81,15 +134,51 @@ function AnalyticsPage() {
 
 function UsageDashboard({ report }: { report: AdminDichaAiUsageReport }) {
   const recentBuckets =
-    report.window === '24h' ? report.timeSeries.recent24h : report.timeSeries.daily.length > 0 ? report.timeSeries.daily : report.timeSeries.hourly;
+    report.window === '24h'
+      ? report.timeSeries.recent24h
+      : report.timeSeries.daily.length > 0
+        ? report.timeSeries.daily
+        : report.timeSeries.hourly;
 
   return (
-    <>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={Activity} label="调用次数" value={formatInteger(report.summary.calls)} detail={`${formatPercent(report.performance.successRate)} 成功率`} />
-        <MetricCard icon={Coins} label="估算费用" value={formatUsd(report.summary.estimatedCostUsd)} detail="仅统计 USD 估算价格" />
-        <MetricCard icon={UsersRound} label="活跃用户" value={formatInteger(report.activeUsers)} detail="调用过 DicHA AI 的用户" />
-        <MetricCard icon={Timer} label="平均延迟" value={formatLatency(report.summary.averageLatencyMs)} detail={`P95 ${formatLatency(report.performance.p95LatencyMs)}`} />
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <MetricCard
+          icon={Activity}
+          label="调用次数"
+          value={formatInteger(report.summary.calls)}
+          detail={`${formatPercent(report.performance.successRate)} 成功率`}
+        />
+        <MetricCard
+          icon={Coins}
+          label="人民币费用"
+          value={formatCurrency('CNY', costAmount(report.summary, 'CNY'))}
+          detail="按 CNY 结算模型汇总"
+        />
+        <MetricCard
+          icon={ReceiptText}
+          label="美元费用"
+          value={formatCurrency('USD', costAmount(report.summary, 'USD'))}
+          detail="按 USD 结算模型汇总"
+        />
+        <MetricCard
+          icon={BarChart3}
+          label="总 token 数"
+          value={formatInteger(report.summary.totalTokens)}
+          detail={`${formatInteger(report.summary.promptTokens)} 输入 / ${formatInteger(report.summary.completionTokens)} 输出`}
+        />
+        <MetricCard
+          icon={UsersRound}
+          label="活跃用户"
+          value={formatInteger(report.activeUsers)}
+          detail={`${formatInteger(report.totalEvents)} 条调用日志`}
+        />
+        <MetricCard
+          icon={Timer}
+          label="平均延迟"
+          value={formatLatency(report.summary.averageLatencyMs)}
+          detail={`P95 ${formatLatency(report.performance.p95LatencyMs)}`}
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
@@ -99,7 +188,7 @@ function UsageDashboard({ report }: { report: AdminDichaAiUsageReport }) {
             title="调用趋势"
             description="按当前窗口聚合请求、token 与费用。"
           />
-          <BucketBars buckets={recentBuckets} />
+          <TrendChart buckets={recentBuckets} />
         </section>
 
         <section className="rounded-md border border-hairline bg-surface p-4">
@@ -109,48 +198,432 @@ function UsageDashboard({ report }: { report: AdminDichaAiUsageReport }) {
             <InfoRow label="平均 TPM" value={formatDecimal(report.performance.averageTpm)} />
             <InfoRow label="峰值 RPM" value={formatInteger(report.performance.peakRpm)} />
             <InfoRow label="峰值 TPM" value={formatInteger(report.performance.peakTpm)} />
+            <InfoRow label="失败调用" value={formatInteger(report.summary.failedCalls)} />
           </div>
         </section>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <BreakdownPanel title="模型分布" items={report.byModel} />
-        <BreakdownPanel title="用途分布" items={report.byUseCase} />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <ModelUsagePanel items={report.byModel} />
+        <StatusPanelBreakdown report={report} />
       </div>
 
-      <section className="rounded-md border border-hairline bg-surface">
-        <div className="border-b border-hairline p-4">
-          <SectionHeader icon={Clock3} title="最近调用日志" description="最近 20 条官方渠道调用记录。" />
+      <div className="grid gap-4 xl:grid-cols-3">
+        <BreakdownPanel title="用户消耗排行" items={report.byUser} valueMode="cost" />
+        <BreakdownPanel title="用途分布" items={report.byUseCase} valueMode="tokens" />
+        <BreakdownPanel title="状态分布" items={report.byStatus} valueMode="calls" />
+      </div>
+
+      <UsageLogTable events={report.recentEvents} totalEvents={report.totalEvents} logLimit={report.logLimit} />
+    </div>
+  );
+}
+
+function TrendChart({ buckets }: { buckets: AiUsageTimeBucket[] }) {
+  const [metric, setMetric] = useState<TrendMetric>('totalTokens');
+  const selectedMetric = TREND_METRICS.find((item) => item.value === metric) ?? TREND_METRICS[1]!;
+  const data = buckets.slice(-72).map((bucket) => ({
+    label: bucket.label,
+    calls: bucket.calls,
+    totalTokens: bucket.totalTokens,
+    cnyCost: costAmount(bucket, 'CNY'),
+    usdCost: costAmount(bucket, 'USD'),
+  }));
+
+  return (
+    <div className="mt-5">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {TREND_METRICS.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            onClick={() => setMetric(item.value)}
+            className={`h-8 rounded-md border px-3 text-xs font-medium transition-colors ${
+              metric === item.value
+                ? 'border-sidebar-bg bg-sidebar-bg text-sidebar-ink'
+                : 'border-hairline bg-surface-alt text-ink-soft hover:text-ink'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className="h-64 rounded-md border border-hairline bg-surface-alt p-3">
+        {data.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="adminTrendFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={selectedMetric.color} stopOpacity={0.42} />
+                  <stop offset="100%" stopColor={selectedMetric.color} stopOpacity={0.04} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="var(--hairline)" vertical={false} />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                width={44}
+                tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                tickFormatter={formatCompact}
+              />
+              <Tooltip
+                cursor={{ stroke: 'var(--hairline)' }}
+                contentStyle={{
+                  border: '1px solid var(--hairline)',
+                  borderRadius: 6,
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
+                  fontSize: 12,
+                  boxShadow: 'var(--shadow-raised)',
+                }}
+                itemStyle={{ color: 'var(--ink)', fontSize: 12 }}
+                labelStyle={{ color: 'var(--ink-soft)', fontSize: 12 }}
+                formatter={(value) => formatTrendValue(Number(value), metric)}
+              />
+              <Area
+                type="monotone"
+                dataKey={metric}
+                name={selectedMetric.label}
+                stroke={selectedMetric.color}
+                fill="url(#adminTrendFill)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 3 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="grid h-full place-items-center text-sm text-ink-soft">暂无趋势数据</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ModelUsagePanel({ items }: { items: AiUsageBreakdown[] }) {
+  const data = items.slice(0, 10).map((item) => ({
+    name: item.label,
+    calls: item.calls,
+    tokens: item.totalTokens,
+    cnyCost: costAmount(item, 'CNY'),
+    usdCost: costAmount(item, 'USD'),
+  }));
+
+  return (
+    <section className="rounded-md border border-hairline bg-surface p-4">
+      <SectionHeader icon={Layers3} title="模型使用信息" description="按模型聚合调用量、token 与实际结算费用。" />
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="h-64 rounded-md border border-hairline bg-surface-alt p-3">
+          {data.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 4 }}>
+                <CartesianGrid stroke="var(--hairline)" horizontal={false} />
+                <XAxis
+                  type="number"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                  tickFormatter={formatCompact}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  width={118}
+                  tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                />
+                <Tooltip
+                  cursor={{ fill: 'color-mix(in oklab, var(--ink) 4%, transparent)' }}
+                  contentStyle={{
+                    border: '1px solid var(--hairline)',
+                    borderRadius: 6,
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
+                    fontSize: 12,
+                  }}
+                  itemStyle={{ color: 'var(--ink)', fontSize: 12 }}
+                />
+                <Bar dataKey="tokens" name="总 token" fill="var(--accent-sage)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="grid h-full place-items-center text-sm text-ink-soft">暂无模型数据</div>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="border-b border-hairline bg-surface-alt text-xs text-ink-soft">
-              <tr>
-                <th className="px-4 py-3 font-medium">时间</th>
-                <th className="px-4 py-3 font-medium">用户</th>
-                <th className="px-4 py-3 font-medium">模型</th>
-                <th className="px-4 py-3 font-medium">用途</th>
-                <th className="px-4 py-3 font-medium">状态</th>
-                <th className="px-4 py-3 text-right font-medium">Token</th>
-                <th className="px-4 py-3 text-right font-medium">费用</th>
-                <th className="px-4 py-3 text-right font-medium">延迟</th>
+        <div className="min-w-0 divide-y divide-hairline rounded-md border border-hairline">
+          {items.slice(0, 8).map((item) => (
+            <div key={item.key} className="grid gap-2 p-3 text-xs md:grid-cols-[minmax(0,1fr)_92px_92px] md:items-center">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink">{item.label}</p>
+                <p className="mt-1 text-ink-soft">{formatInteger(item.calls)} 次调用</p>
+              </div>
+              <div className="text-ink-soft">
+                <p className="font-semibold tabular-nums text-ink">{formatInteger(item.totalTokens)}</p>
+                <p>token</p>
+              </div>
+              <div className="text-ink-soft">
+                <p className="font-semibold tabular-nums text-ink">{formatCostList(item)}</p>
+                <p>费用</p>
+              </div>
+            </div>
+          ))}
+          {items.length === 0 ? <EmptyBlock text="暂无模型数据" /> : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatusPanelBreakdown({ report }: { report: AdminDichaAiUsageReport }) {
+  return (
+    <section className="rounded-md border border-hairline bg-surface p-4">
+      <SectionHeader icon={CheckCircle2} title="调用质量" description="成功、降级与失败状态概览。" />
+      <div className="mt-4 grid gap-2">
+        {report.byStatus.map((item) => (
+          <InfoRow
+            key={item.key}
+            label={statusLabel(item.key)}
+            value={`${formatInteger(item.calls)} 次 · ${formatInteger(item.totalTokens)} tokens`}
+          />
+        ))}
+        {report.byStatus.length === 0 ? <EmptyBlock text="暂无状态数据" /> : null}
+      </div>
+    </section>
+  );
+}
+
+function BreakdownPanel({
+  title,
+  items,
+  valueMode,
+}: {
+  title: string;
+  items: AiUsageBreakdown[];
+  valueMode: 'cost' | 'tokens' | 'calls';
+}) {
+  const maxValue = Math.max(...items.map((item) => breakdownValue(item, valueMode)), 1);
+  return (
+    <section className="rounded-md border border-hairline bg-surface p-4">
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
+      <div className="mt-4 space-y-3">
+        {items.length > 0 ? (
+          items.slice(0, 8).map((item) => {
+            const value = breakdownValue(item, valueMode);
+            return (
+              <div key={item.key}>
+                <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                  <span className="truncate font-medium text-ink">{item.label}</span>
+                  <span className="shrink-0 text-ink-soft">{breakdownText(item, valueMode)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded bg-surface-alt">
+                  <div
+                    className="h-full rounded bg-mist"
+                    style={{ width: `${Math.max(3, (value / maxValue) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <EmptyBlock text="暂无分布数据" />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function UsageLogTable({
+  events,
+  totalEvents,
+  logLimit,
+}: {
+  events: AdminDichaAiUsageEvent[];
+  totalEvents: number;
+  logLimit: number;
+}) {
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
+  const columns = useMemo<ColumnDef<AdminDichaAiUsageEvent>[]>(
+    () => [
+      {
+        id: 'createdAt',
+        accessorFn: (event) => new Date(event.createdAt).getTime(),
+        header: '时间',
+        cell: ({ row }) => <span className="text-xs text-ink-soft">{formatDateTime(row.original.createdAt)}</span>,
+      },
+      {
+        id: 'user',
+        accessorFn: (event) => event.user.email,
+        header: '用户',
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-ink">{row.original.user.name}</p>
+            <p className="mt-0.5 truncate text-xs text-ink-soft">{row.original.user.email}</p>
+          </div>
+        ),
+      },
+      {
+        id: 'model',
+        accessorFn: (event) => event.modelName,
+        header: '模型',
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <p className="truncate text-sm text-ink">{row.original.modelName}</p>
+            <p className="mt-0.5 truncate text-xs text-ink-soft">{row.original.modelId}</p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'useCase',
+        header: '用途',
+        cell: ({ getValue }) => <span className="text-xs text-ink-soft">{String(getValue())}</span>,
+      },
+      {
+        accessorKey: 'status',
+        header: '状态',
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        id: 'totalTokens',
+        accessorFn: (event) => event.totalTokens,
+        header: 'Token',
+        cell: ({ getValue }) => <span className="tabular-nums">{formatInteger(Number(getValue()))}</span>,
+        meta: { align: 'right' },
+      },
+      {
+        id: 'cost',
+        accessorFn: (event) => eventCostSortValue(event),
+        header: '费用',
+        cell: ({ row }) => <span className="tabular-nums">{formatEventCost(row.original)}</span>,
+        meta: { align: 'right' },
+      },
+      {
+        id: 'latencyMs',
+        accessorFn: (event) => event.latencyMs ?? -1,
+        header: '延迟',
+        cell: ({ row }) => <span className="tabular-nums">{formatLatency(row.original.latencyMs)}</span>,
+        meta: { align: 'right' },
+      },
+    ],
+    [],
+  );
+  // TanStack Table intentionally returns function-bearing instances for table state.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: events,
+    columns,
+    state: { sorting },
+    initialState: { pagination: { pageSize: 50 } },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
+  return (
+    <section className="rounded-md border border-hairline bg-surface">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline p-4">
+        <SectionHeader
+          icon={Clock3}
+          title="调用日志"
+          description={`当前返回 ${formatInteger(events.length)} 条，窗口内共 ${formatInteger(totalEvents)} 条。`}
+        />
+        <div className="flex items-center gap-2 text-xs text-ink-soft">
+          <span>每页</span>
+          <select
+            value={table.getState().pagination.pageSize}
+            onChange={(event) => table.setPageSize(Number(event.target.value))}
+            className="h-8 rounded-md border border-hairline bg-surface-alt px-2 text-xs text-ink outline-none"
+          >
+            {[25, 50, 100, 200].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <span>最多 {formatInteger(logLimit)} 条</span>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1040px] text-left text-sm">
+          <thead className="border-b border-hairline bg-surface-alt text-xs text-ink-soft">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className={`px-4 py-3 font-medium ${isRightAligned(header.column.columnDef) ? 'text-right' : ''}`}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <button
+                        type="button"
+                        onClick={header.column.getToggleSortingHandler()}
+                        className={`inline-flex items-center gap-1.5 ${isRightAligned(header.column.columnDef) ? 'justify-end' : ''}`}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanSort() ? <ArrowDownUp className="size-3" strokeWidth={1.8} /> : null}
+                      </button>
+                    )}
+                  </th>
+                ))}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-hairline">
-              {report.recentEvents.length > 0 ? (
-                report.recentEvents.map((event) => <LogRow key={event.id} event={event} />)
-              ) : (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-ink-soft">
-                    还没有 DicHA AI 调用日志
-                  </td>
+            ))}
+          </thead>
+          <tbody className="divide-y divide-hairline">
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="text-ink">
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`px-4 py-3 ${isRightAligned(cell.column.columnDef) ? 'text-right' : ''}`}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-ink-soft">
+                  还没有 DicHA AI 调用日志
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline p-3 text-xs text-ink-soft">
+        <span>
+          第 {table.getState().pagination.pageIndex + 1} / {Math.max(table.getPageCount(), 1)} 页
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+            className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
+          >
+            上一页
+          </button>
+          <button
+            type="button"
+            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+            className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
+          >
+            下一页
+          </button>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
 
@@ -173,8 +646,8 @@ function MetricCard({
           <Icon className="size-4" strokeWidth={1.8} />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold tabular-nums text-ink">{value}</p>
-      <p className="mt-1 text-xs text-ink-soft">{detail}</p>
+      <p className="mt-3 break-words text-xl font-semibold tabular-nums text-ink xl:text-2xl">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-ink-soft">{detail}</p>
     </div>
   );
 }
@@ -201,106 +674,12 @@ function SectionHeader({
   );
 }
 
-function BucketBars({ buckets }: { buckets: AiUsageTimeBucket[] }) {
-  const visibleBuckets = buckets.slice(-36);
-  const maxCalls = Math.max(...visibleBuckets.map((bucket) => bucket.calls), 1);
-  const maxTokens = Math.max(...visibleBuckets.map((bucket) => bucket.totalTokens), 1);
-
-  return (
-    <div className="mt-5">
-      <div className="flex h-48 items-end gap-1 rounded-md border border-hairline bg-surface-alt p-3">
-        {visibleBuckets.length > 0 ? (
-          visibleBuckets.map((bucket) => (
-            <div key={bucket.key} className="group flex min-w-3 flex-1 flex-col items-center justify-end gap-1">
-              <div
-                className="w-full rounded-t bg-sage/70 transition-colors group-hover:bg-sage"
-                style={{ height: `${Math.max(4, (bucket.totalTokens / maxTokens) * 132)}px` }}
-                title={`${bucket.label} · ${formatInteger(bucket.totalTokens)} tokens`}
-              />
-              <div
-                className="w-full rounded-t bg-peach/80 transition-colors group-hover:bg-peach"
-                style={{ height: `${Math.max(2, (bucket.calls / maxCalls) * 44)}px` }}
-                title={`${bucket.label} · ${formatInteger(bucket.calls)} 次调用`}
-              />
-            </div>
-          ))
-        ) : (
-          <div className="grid h-full w-full place-items-center text-sm text-ink-soft">暂无趋势数据</div>
-        )}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-soft">
-        <span>最多展示最近 36 个桶</span>
-        <span className="inline-flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5"><i className="size-2 rounded-sm bg-sage" />Token</span>
-          <span className="inline-flex items-center gap-1.5"><i className="size-2 rounded-sm bg-peach" />调用</span>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function BreakdownPanel({ title, items }: { title: string; items: AiUsageBreakdown[] }) {
-  const maxTokens = Math.max(...items.map((item) => item.totalTokens), 1);
-  return (
-    <section className="rounded-md border border-hairline bg-surface p-4">
-      <h2 className="text-sm font-semibold text-ink">{title}</h2>
-      <div className="mt-4 space-y-3">
-        {items.length > 0 ? (
-          items.slice(0, 8).map((item) => (
-            <div key={item.key}>
-              <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
-                <span className="truncate font-medium text-ink">{item.label}</span>
-                <span className="shrink-0 text-ink-soft">
-                  {formatInteger(item.calls)} 次 · {formatInteger(item.totalTokens)}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded bg-surface-alt">
-                <div
-                  className="h-full rounded bg-mist"
-                  style={{ width: `${Math.max(3, (item.totalTokens / maxTokens) * 100)}%` }}
-                />
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="rounded-md border border-hairline bg-surface-alt p-4 text-sm text-ink-soft">
-            暂无分布数据
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2">
+    <div className="flex items-center justify-between gap-3 rounded-md border border-hairline bg-surface-alt px-3 py-2">
       <span className="text-xs text-ink-soft">{label}</span>
-      <span className="text-sm font-semibold tabular-nums text-ink">{value}</span>
+      <span className="text-right text-sm font-semibold tabular-nums text-ink">{value}</span>
     </div>
-  );
-}
-
-function LogRow({ event }: { event: AdminDichaAiUsageEvent }) {
-  return (
-    <tr className="text-ink">
-      <td className="px-4 py-3 text-xs text-ink-soft">{formatDateTime(event.createdAt)}</td>
-      <td className="px-4 py-3">
-        <p className="truncate text-sm font-medium">{event.user.name}</p>
-        <p className="mt-0.5 truncate text-xs text-ink-soft">{event.user.email}</p>
-      </td>
-      <td className="px-4 py-3">
-        <p className="truncate text-sm">{event.modelName}</p>
-        <p className="mt-0.5 truncate text-xs text-ink-soft">{event.modelId}</p>
-      </td>
-      <td className="px-4 py-3 text-xs text-ink-soft">{event.useCase}</td>
-      <td className="px-4 py-3">
-        <StatusBadge status={event.status} />
-      </td>
-      <td className="px-4 py-3 text-right tabular-nums">{formatInteger(event.totalTokens)}</td>
-      <td className="px-4 py-3 text-right tabular-nums">{formatUsd(event.estimatedCostUsd)}</td>
-      <td className="px-4 py-3 text-right tabular-nums">{formatLatency(event.latencyMs)}</td>
-    </tr>
   );
 }
 
@@ -313,7 +692,7 @@ function StatusBadge({ status }: { status: AdminDichaAiUsageEvent['status'] }) {
         : 'border-pink/40 bg-chip-pink text-pink';
   return (
     <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-medium ${tone}`}>
-      {status}
+      {statusLabel(status)}
     </span>
   );
 }
@@ -326,6 +705,60 @@ function StatusPanel({ text, tone = 'muted' }: { text: string; tone?: 'muted' | 
   );
 }
 
+function EmptyBlock({ text }: { text: string }) {
+  return (
+    <p className="rounded-md border border-hairline bg-surface-alt p-4 text-sm text-ink-soft">
+      {text}
+    </p>
+  );
+}
+
+function costAmount(summary: AiUsageSummary, currency: AiSettlementCurrency): number {
+  return summary.costByCurrency.find((item) => item.currency === currency)?.amount ?? 0;
+}
+
+function formatCostList(summary: AiUsageSummary): string {
+  const cny = costAmount(summary, 'CNY');
+  const usd = costAmount(summary, 'USD');
+  if (cny > 0 && usd > 0) return `${formatCurrency('CNY', cny)} / ${formatCurrency('USD', usd)}`;
+  if (cny > 0) return formatCurrency('CNY', cny);
+  return formatCurrency('USD', usd);
+}
+
+function formatEventCost(event: AdminDichaAiUsageEvent): string {
+  if (event.estimatedCostCurrency) {
+    return formatCurrency(event.estimatedCostCurrency, event.estimatedCostAmount);
+  }
+  return '-';
+}
+
+function eventCostSortValue(event: AdminDichaAiUsageEvent): number {
+  return event.estimatedCostAmount;
+}
+
+function breakdownValue(item: AiUsageBreakdown, mode: 'cost' | 'tokens' | 'calls'): number {
+  if (mode === 'calls') return item.calls;
+  if (mode === 'tokens') return item.totalTokens;
+  return item.costByCurrency.reduce((total, cost) => total + cost.amount, 0);
+}
+
+function breakdownText(item: AiUsageBreakdown, mode: 'cost' | 'tokens' | 'calls'): string {
+  if (mode === 'calls') return `${formatInteger(item.calls)} 次`;
+  if (mode === 'tokens') return `${formatInteger(item.totalTokens)} tokens`;
+  return formatCostList(item);
+}
+
+function statusLabel(status: string): string {
+  if (status === 'success') return '成功';
+  if (status === 'degraded') return '降级';
+  if (status === 'failure') return '失败';
+  return status;
+}
+
+function isRightAligned(column: ColumnDef<AdminDichaAiUsageEvent>): boolean {
+  return (column.meta as { align?: 'right' } | undefined)?.align === 'right';
+}
+
 function formatInteger(value: number): string {
   return new Intl.NumberFormat('zh-CN').format(value);
 }
@@ -334,8 +767,21 @@ function formatDecimal(value: number): string {
   return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 3 }).format(value);
 }
 
-function formatUsd(value: number): string {
-  return `$${value.toFixed(value >= 1 ? 2 : 6)}`;
+function formatCompact(value: number): string {
+  return new Intl.NumberFormat('zh-CN', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+}
+
+function formatCurrency(currency: AiSettlementCurrency, value: number): string {
+  const symbol = currency === 'CNY' ? '¥' : '$';
+  if (value === 0) return `${symbol}0`;
+  return `${symbol}${value.toFixed(value >= 1 ? 2 : 4)}`;
+}
+
+function formatTrendValue(value: number, metric: TrendMetric): string {
+  if (metric === 'cnyCost') return formatCurrency('CNY', value);
+  if (metric === 'usdCost') return formatCurrency('USD', value);
+  if (metric === 'calls') return `${formatInteger(value)} 次`;
+  return `${formatInteger(value)} tokens`;
 }
 
 function formatPercent(value: number): string {

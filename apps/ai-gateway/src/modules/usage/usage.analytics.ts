@@ -40,6 +40,7 @@ export const emptyUsageSummary = (): AiUsageSummary => ({
   completionTokens: 0,
   totalTokens: 0,
   estimatedCostUsd: 0,
+  costByCurrency: [],
   averageLatencyMs: null,
 });
 
@@ -108,6 +109,7 @@ export function summarizeUsage(events: AiUsageEvent[]): AiUsageSummary {
     summary.completionTokens += event.completionTokens;
     summary.totalTokens += event.totalTokens;
     summary.estimatedCostUsd += event.estimatedCostUsd;
+    addCost(summary, event.estimatedCostCurrency, event.estimatedCostAmount);
     if (event.latencyMs !== null) {
       latencyTotal += event.latencyMs;
       latencyCount += 1;
@@ -115,8 +117,26 @@ export function summarizeUsage(events: AiUsageEvent[]): AiUsageSummary {
   }
 
   summary.estimatedCostUsd = Number(summary.estimatedCostUsd.toFixed(6));
+  summary.costByCurrency = summary.costByCurrency.map((item) => ({
+    currency: item.currency,
+    amount: Number(item.amount.toFixed(6)),
+  }));
   summary.averageLatencyMs = latencyCount > 0 ? Math.round(latencyTotal / latencyCount) : null;
   return summary;
+}
+
+function addCost(
+  summary: AiUsageSummary,
+  currency: AiUsageEvent['estimatedCostCurrency'],
+  amount: number,
+): void {
+  if (!currency || amount <= 0) return;
+  const current = summary.costByCurrency.find((item) => item.currency === currency);
+  if (current) {
+    current.amount += amount;
+  } else {
+    summary.costByCurrency.push({ currency, amount });
+  }
 }
 
 function usageTimeSeries(

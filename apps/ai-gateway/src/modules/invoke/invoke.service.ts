@@ -9,6 +9,7 @@ import type {
   AiModel,
   AiProvider,
   AiProviderRequestFormat,
+  AiSettlementCurrency,
   AiUsageStatus,
 } from '@dicha/shared';
 import { CatalogStore } from '../catalog/catalog.store';
@@ -570,6 +571,8 @@ export class InvokeService {
       promptTokens: usage.promptTokens,
       completionTokens: usage.completionTokens,
       estimatedCostUsd: usage.estimatedCostUsd,
+      estimatedCostAmount: usage.estimatedCostAmount,
+      estimatedCostCurrency: usage.estimatedCostCurrency,
       latencyMs,
       errorCategory,
     });
@@ -578,25 +581,48 @@ export class InvokeService {
   private invokeUsage(model: AiModel, result: InvokeSuccess): AiInvokeUsage {
     const promptTokens = result.promptTokens;
     const completionTokens = result.completionTokens;
+    const cost = this.estimatedCost(model, promptTokens, completionTokens);
     return {
       promptTokens,
       completionTokens,
       totalTokens: promptTokens + completionTokens,
-      estimatedCostUsd: this.estimatedCostUsd(model, promptTokens, completionTokens),
+      estimatedCostUsd: cost.estimatedCostUsd,
+      estimatedCostAmount: cost.estimatedCostAmount,
+      estimatedCostCurrency: cost.estimatedCostCurrency,
     };
   }
 
-  private estimatedCostUsd(model: AiModel, promptTokens: number, completionTokens: number): number {
-    if (!model.pricing || model.pricing.currency !== 'USD') return 0;
+  private estimatedCost(
+    model: AiModel,
+    promptTokens: number,
+    completionTokens: number,
+  ): Pick<AiInvokeUsage, 'estimatedCostAmount' | 'estimatedCostCurrency' | 'estimatedCostUsd'> {
+    if (!model.pricing || !this.isSettlementCurrency(model.pricing.currency)) {
+      return {
+        estimatedCostUsd: 0,
+        estimatedCostAmount: 0,
+        estimatedCostCurrency: null,
+      };
+    }
+    const currency = model.pricing.currency;
     const inputRate = model.pricing.inputPerMillionTokens ?? this.unitRate(model, 'textInput');
     const outputRate = model.pricing.outputPerMillionTokens ?? this.unitRate(model, 'textOutput');
     const cost =
       ((inputRate ?? 0) * promptTokens + (outputRate ?? 0) * completionTokens) / 1_000_000;
-    return Number(cost.toFixed(6));
+    const amount = Number(cost.toFixed(6));
+    return {
+      estimatedCostUsd: currency === 'USD' ? amount : 0,
+      estimatedCostAmount: amount,
+      estimatedCostCurrency: currency,
+    };
   }
 
   private unitRate(model: AiModel, name: string): number | undefined {
     return model.pricing?.units?.find((unit) => unit.name === name && unit.strategy === 'fixed')?.rate;
+  }
+
+  private isSettlementCurrency(value: string): value is AiSettlementCurrency {
+    return value === 'USD' || value === 'CNY';
   }
 
   private emptyUsage(): AiInvokeUsage {
@@ -605,6 +631,8 @@ export class InvokeService {
       completionTokens: 0,
       totalTokens: 0,
       estimatedCostUsd: 0,
+      estimatedCostAmount: 0,
+      estimatedCostCurrency: null,
     };
   }
 

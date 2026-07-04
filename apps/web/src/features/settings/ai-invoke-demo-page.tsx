@@ -16,6 +16,7 @@ import type {
   AiInvokeAttempt,
   AiInvokeResponse,
   AiModelUseCase,
+  AiSettlementCurrency,
   AiUsageStatus,
 } from '@dicha/shared';
 import { invokeAi } from '@/api/ai';
@@ -188,7 +189,7 @@ function InvokeResultPanel({
               icon={ReceiptText}
               tint="sage"
               label={t('settings.detail.aiInvokeDemo.usage')}
-              value={`${result.usage.totalTokens} / $${result.usage.estimatedCostUsd.toFixed(6)}`}
+              value={`${result.usage.totalTokens} / ${formatInvokeCost(result.usage.estimatedCostCurrency, result.usage.estimatedCostAmount)}`}
             />
             <ResultMetric
               icon={Clock3}
@@ -242,6 +243,12 @@ function ResultMetric({
       <p className="mt-2 truncate text-[13px] font-medium text-ink">{value}</p>
     </div>
   );
+}
+
+function formatInvokeCost(currency: AiSettlementCurrency | null, amount: number): string {
+  if (!currency) return '-';
+  const symbol = currency === 'CNY' ? '¥' : '$';
+  return `${symbol}${amount.toFixed(amount >= 1 ? 2 : 4)}`;
 }
 
 function AttemptsPanel({ attempts }: { attempts: AiInvokeAttempt[] }) {

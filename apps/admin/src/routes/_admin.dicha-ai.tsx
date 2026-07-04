@@ -30,7 +30,7 @@ import type {
 } from '@dicha/shared';
 
 const NEW_INTERNAL_PROVIDER_ID = '__new_internal_provider__';
-const PRICING_CURRENCIES = ['CNY', 'USD', 'DICHA_CREDITS'] as const;
+const PRICING_CURRENCIES = ['CNY', 'USD'] as const;
 
 export const Route = createFileRoute('/_admin/dicha-ai')({
   loader: ({ context }) =>
@@ -879,6 +879,5 @@ function tieredUnitSummaries(pricing: NonNullable<AdminDichaAiModel['upstreamPri
 
 function currencyLabel(currency: PricingCurrency): string {
   if (currency === 'CNY') return '人民币 CNY';
-  if (currency === 'USD') return '美元 USD';
-  return 'DicHA 积分';
+  return '美元 USD';
 }

@@ -154,6 +154,7 @@ const model = {
 - Catalog source for routing: `AiGatewayCatalog.assignments`, `providers`, and `models`.
 - User credential source: `CatalogStore.getProviderSecret(ownerId, providerId)`.
 - Usage sink: `UsageStore.recordEvent(ownerId, record)` with `kind: 'invoke'`.
+- Usage storage: `AiUsageEvent.estimatedCostAmount` and `AiUsageEvent.estimatedCostCurrency` store the real settlement estimate; `estimatedCostUsd` remains only the USD total field for USD-priced calls and existing user-facing USD views.
 - API BFF entry: `apps/api/src/modules/ai-gateway/ai-gateway.controller.ts`.
 - AI Gateway entry: `apps/ai-gateway/src/modules/invoke/`.
 
@@ -175,7 +176,10 @@ const model = {
   - Anthropic: strip trailing `/v1` or `/v1/messages`, then append `/v1/messages`.
 - Gateway must never return decrypted secrets, Authorization headers, raw upstream stack traces, or full upstream error objects to API/web callers.
 - `kind: 'invoke'` usage events represent real user AI calls. Probe/check/model sync logs must not be counted as user consumption.
-- Usage estimates should use model pricing metadata when direct text token prices are available. Missing pricing records `estimatedCostUsd: 0` rather than blocking the call.
+- Usage estimates must use real settlement currencies only: `CNY` or `USD`. DicHA credits are a future pricing abstraction and must not be accepted as `AiModelPricing.currency`.
+- Usage records must write both the real estimate pair (`estimatedCostAmount`, `estimatedCostCurrency`) and the legacy USD total (`estimatedCostUsd`). For `USD` pricing, all three fields are populated with USD values. For `CNY` pricing, `estimatedCostAmount` is the CNY amount, `estimatedCostCurrency: 'CNY'`, and `estimatedCostUsd: 0` unless a formal FX conversion policy is introduced.
+- Missing pricing records `estimatedCostAmount: 0`, `estimatedCostCurrency: null`, and `estimatedCostUsd: 0` rather than blocking the call.
+- Admin DicHA usage analytics must aggregate `summary.costByCurrency` instead of treating `estimatedCostUsd` as total spend. Super-admin pages may display CNY and USD side by side, but must not invent exchange-rate conversion.
 - `status: 'degraded'` means the final response succeeded on a fallback after at least one earlier attempt failed.
 - `status: 'failure'` means every attempted model failed or routing could not produce an attempt.
 
@@ -197,6 +201,7 @@ const model = {
 | Invalid request / unsupported parameter | `invalid_request` | No | Stop; fix payload/format. |
 | Content safety refusal | `content_safety` | No | Stop and return safe degradation message. |
 | Unknown upstream shape | `unknown` | Yes | Try fallback, but include sanitized message for diagnostics. |
+| Model pricing currency is not `CNY` or `USD` | Contract error | No | Reject at shared/admin schema validation; credits belong to later account-balance logic, not model settlement pricing. |
 
 ### 5. Good/Base/Bad Cases
 
@@ -204,6 +209,7 @@ const model = {
 - Good: `apps/ai-gateway` owns all provider-specific payload building and response parsing.
 - Good: one shared zod contract defines invoke request, response, attempt, usage and error categories.
 - Good: each attempt records latency and sanitized error category/message.
+- Good: CNY-priced models produce CNY usage cost records and admin CNY totals without USD conversion.
 - Good: fallback attempts preserve model assignment order and produce a single final usage event for the user-visible call.
 - Base: no streaming in MVP; return a complete text result.
 - Bad: make web/api know about Anthropic vs OpenAI payload details.
@@ -223,6 +229,7 @@ const model = {
   - OpenAI Responses `output_text` / output content parsing;
   - Anthropic `content[].text` and usage parsing;
   - usage event status `success` vs `degraded` vs `failure`.
+  - usage cost aggregation with both USD-priced and CNY-priced events, including `summary.costByCurrency`.
 - API typecheck verifies BFF handler matches shared contract.
 
 ### 7. Wrong vs Correct
@@ -268,6 +275,45 @@ catch (error) {
     message: sanitizedAiErrorMessage(error),
   };
 }
+```
+
+#### Wrong
+
+```typescript
+{
+  pricing: { currency: 'DICHA_CREDITS' },
+}
+```
+
+Credits are not a model settlement currency.
+
+#### Correct
+
+```typescript
+{
+  pricing: {
+    currency: 'CNY',
+    inputPerMillionTokens: 1,
+    outputPerMillionTokens: 4,
+  },
+}
+```
+
+#### Wrong
+
+```typescript
+summary.spend = sum(events.map((event) => event.estimatedCostUsd));
+```
+
+This hides CNY-priced usage.
+
+#### Correct
+
+```typescript
+summary.costByCurrency = groupByCurrency(events, (event) => ({
+  amount: event.estimatedCostAmount,
+  currency: event.estimatedCostCurrency,
+}));
 ```
 
 ---

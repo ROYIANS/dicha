@@ -450,7 +450,7 @@ export class AdminService {
     return this.getDichaAiService();
   }
 
-  async getDichaAiUsage(window: AiUsageWindow): Promise<AdminDichaAiUsageReport> {
+  async getDichaAiUsage(window: AiUsageWindow, logLimit = 500): Promise<AdminDichaAiUsageReport> {
     const now = new Date();
     const from = usageWindowStart(now, window);
     const records = await this.prisma.aiUsageEvent.findMany({
@@ -483,6 +483,8 @@ export class AdminService {
       providerId: DICHA_PROVIDER_ID,
       providerName: records[0]?.providerName ?? 'DicHA AI',
       activeUsers: new Set(events.map((event) => event.user.id)).size,
+      totalEvents: events.length,
+      logLimit,
       summary: summarizeAdminUsage(events),
       performance: adminUsagePerformance(events, rangeFrom, now),
       timeSeries: {
@@ -509,7 +511,12 @@ export class AdminService {
         key: event.useCase,
         label: event.useCase,
       })),
-      recentEvents: events.slice(0, 20),
+      byUser: adminUserUsageBreakdown(events),
+      byStatus: adminUsageBreakdown(events, (event) => ({
+        key: event.status,
+        label: event.status,
+      })),
+      recentEvents: events.slice(0, logLimit),
     };
   }
 
@@ -1149,6 +1156,8 @@ function toAdminDichaUsageEvent(record: AdminDichaUsageRecord): AdminDichaAiUsag
     completionTokens: record.completionTokens,
     totalTokens: record.totalTokens,
     estimatedCostUsd: record.estimatedCostUsd,
+    estimatedCostAmount: record.estimatedCostAmount,
+    estimatedCostCurrency: record.estimatedCostCurrency as AdminDichaAiUsageEvent['estimatedCostCurrency'],
     latencyMs: record.latencyMs,
     errorCategory: record.errorCategory,
     createdAt: record.createdAt.toISOString(),
@@ -1170,6 +1179,7 @@ function emptyAdminUsageSummary(): AiUsageSummary {
     completionTokens: 0,
     totalTokens: 0,
     estimatedCostUsd: 0,
+    costByCurrency: [],
     averageLatencyMs: null,
   };
 }
@@ -1188,6 +1198,7 @@ function summarizeAdminUsage(events: AdminDichaAiUsageEvent[]): AiUsageSummary {
     summary.completionTokens += event.completionTokens;
     summary.totalTokens += event.totalTokens;
     summary.estimatedCostUsd += event.estimatedCostUsd;
+    addAdminUsageCost(summary, event.estimatedCostCurrency, event.estimatedCostAmount);
     if (event.latencyMs !== null) {
       latencyTotal += event.latencyMs;
       latencyCount += 1;
@@ -1195,8 +1206,26 @@ function summarizeAdminUsage(events: AdminDichaAiUsageEvent[]): AiUsageSummary {
   }
 
   summary.estimatedCostUsd = Number(summary.estimatedCostUsd.toFixed(6));
+  summary.costByCurrency = summary.costByCurrency.map((item) => ({
+    currency: item.currency,
+    amount: Number(item.amount.toFixed(6)),
+  }));
   summary.averageLatencyMs = latencyCount > 0 ? Math.round(latencyTotal / latencyCount) : null;
   return summary;
+}
+
+function addAdminUsageCost(
+  summary: AiUsageSummary,
+  currency: AdminDichaAiUsageEvent['estimatedCostCurrency'],
+  amount: number,
+): void {
+  if (!currency || amount <= 0) return;
+  const current = summary.costByCurrency.find((item) => item.currency === currency);
+  if (current) {
+    current.amount += amount;
+  } else {
+    summary.costByCurrency.push({ currency, amount });
+  }
 }
 
 function adminUsagePerformance(
@@ -1264,7 +1293,39 @@ function adminUsageBreakdown(
       ...summarizeAdminUsage(value.events),
     }))
     .sort((left, right) => {
-      if (right.estimatedCostUsd !== left.estimatedCostUsd) return right.estimatedCostUsd - left.estimatedCostUsd;
+      const rightCost = usageCostSortValue(right);
+      const leftCost = usageCostSortValue(left);
+      if (rightCost !== leftCost) return rightCost - leftCost;
+      if (right.totalTokens !== left.totalTokens) return right.totalTokens - left.totalTokens;
+      return right.calls - left.calls;
+    });
+}
+
+function adminUserUsageBreakdown(events: AdminDichaAiUsageEvent[]) {
+  const grouped = new Map<
+    string,
+    { user: AdminDichaAiUsageEvent['user']; events: AdminDichaAiUsageEvent[] }
+  >();
+  for (const event of events) {
+    const group = grouped.get(event.user.id);
+    if (group) {
+      group.events.push(event);
+    } else {
+      grouped.set(event.user.id, { user: event.user, events: [event] });
+    }
+  }
+
+  return Array.from(grouped.entries())
+    .map(([key, value]) => ({
+      key,
+      label: value.user.name,
+      user: value.user,
+      ...summarizeAdminUsage(value.events),
+    }))
+    .sort((left, right) => {
+      const rightCost = usageCostSortValue(right);
+      const leftCost = usageCostSortValue(left);
+      if (rightCost !== leftCost) return rightCost - leftCost;
       if (right.totalTokens !== left.totalTokens) return right.totalTokens - left.totalTokens;
       return right.calls - left.calls;
     });
@@ -1392,4 +1453,9 @@ function minuteKey(date: Date): string {
 
 function roundRate(value: number): number {
   return Number(value.toFixed(3));
+}
+
+function usageCostSortValue(summary: AiUsageSummary): number {
+  if (summary.estimatedCostUsd > 0) return summary.estimatedCostUsd;
+  return summary.costByCurrency.reduce((total, item) => total + item.amount, 0);
 }

@@ -417,6 +417,8 @@ model AiUsageEvent {
   completionTokens Int
   totalTokens      Int
   estimatedCostUsd Float
+  estimatedCostAmount Float
+  estimatedCostCurrency String?
   latencyMs        Int?
   errorCategory    String?
   createdAt        DateTime @default(now())
@@ -428,6 +430,7 @@ model AiUsageEvent {
   @@index([ownerId, status, createdAt])
   @@index([providerId, createdAt])
   @@index([providerId, status, createdAt])
+  @@index([providerId, estimatedCostCurrency, createdAt])
 }
 
 model AiSystemProviderChannel {

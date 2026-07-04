@@ -141,8 +141,11 @@ export const AiModelCatalogSourceSchema = z.enum([
 ]);
 export type AiModelCatalogSource = z.infer<typeof AiModelCatalogSourceSchema>;
 
+export const AiSettlementCurrencySchema = z.enum(['USD', 'CNY']);
+export type AiSettlementCurrency = z.infer<typeof AiSettlementCurrencySchema>;
+
 export const AiModelPricingSchema = z.object({
-  currency: z.enum(['USD', 'CNY', 'DICHA_CREDITS']),
+  currency: AiSettlementCurrencySchema,
   inputPerMillionTokens: z.number().min(0).optional(),
   outputPerMillionTokens: z.number().min(0).optional(),
   units: z
@@ -412,6 +415,12 @@ export type AiUsageBucketGranularity = z.infer<typeof AiUsageBucketGranularitySc
 export const AiUsageDistributionGroupBySchema = z.enum(['provider', 'model']);
 export type AiUsageDistributionGroupBy = z.infer<typeof AiUsageDistributionGroupBySchema>;
 
+export const AiUsageCostByCurrencySchema = z.object({
+  currency: AiSettlementCurrencySchema,
+  amount: z.number().min(0),
+});
+export type AiUsageCostByCurrency = z.infer<typeof AiUsageCostByCurrencySchema>;
+
 export const AiUsageSummarySchema = z.object({
   calls: z.number().int().min(0),
   successfulCalls: z.number().int().min(0),
@@ -421,6 +430,7 @@ export const AiUsageSummarySchema = z.object({
   completionTokens: z.number().int().min(0),
   totalTokens: z.number().int().min(0),
   estimatedCostUsd: z.number().min(0),
+  costByCurrency: z.array(AiUsageCostByCurrencySchema),
   averageLatencyMs: z.number().min(0).nullable(),
 });
 export type AiUsageSummary = z.infer<typeof AiUsageSummarySchema>;
@@ -494,6 +504,8 @@ export const AiUsageEventSchema = z.object({
   completionTokens: z.number().int().min(0),
   totalTokens: z.number().int().min(0),
   estimatedCostUsd: z.number().min(0),
+  estimatedCostAmount: z.number().min(0),
+  estimatedCostCurrency: AiSettlementCurrencySchema.nullable(),
   latencyMs: z.number().int().min(0).nullable(),
   errorCategory: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -560,6 +572,8 @@ export const AiInvokeUsageSchema = z.object({
   completionTokens: z.number().int().min(0),
   totalTokens: z.number().int().min(0),
   estimatedCostUsd: z.number().min(0),
+  estimatedCostAmount: z.number().min(0),
+  estimatedCostCurrency: AiSettlementCurrencySchema.nullable(),
 });
 export type AiInvokeUsage = z.infer<typeof AiInvokeUsageSchema>;
 

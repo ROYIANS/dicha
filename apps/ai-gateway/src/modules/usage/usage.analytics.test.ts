@@ -9,6 +9,7 @@ describe('buildUsageAnalyticsReport', () => {
     const report = buildUsageAnalyticsReport([], 'all', now);
 
     expect(report.summary.calls).toBe(0);
+    expect(report.summary.costByCurrency).toEqual([]);
     expect(report.performance.averageRpm).toBe(0);
     expect(report.performance.averageTpm).toBe(0);
     expect(report.timeSeries.recent24h.length).toBe(24);
@@ -29,6 +30,8 @@ describe('buildUsageAnalyticsReport', () => {
         promptTokens: 100,
         completionTokens: 50,
         estimatedCostUsd: 0.001,
+        estimatedCostAmount: 0.001,
+        estimatedCostCurrency: 'USD',
         latencyMs: 700,
         createdAt: '2026-07-04T11:30:05.000Z',
       }),
@@ -42,6 +45,8 @@ describe('buildUsageAnalyticsReport', () => {
         promptTokens: 80,
         completionTokens: 40,
         estimatedCostUsd: 0.0012,
+        estimatedCostAmount: 0.0012,
+        estimatedCostCurrency: 'USD',
         latencyMs: 1100,
         createdAt: '2026-07-04T11:30:40.000Z',
       }),
@@ -56,6 +61,8 @@ describe('buildUsageAnalyticsReport', () => {
         promptTokens: 60,
         completionTokens: 0,
         estimatedCostUsd: 0,
+        estimatedCostAmount: 0.0024,
+        estimatedCostCurrency: 'CNY',
         latencyMs: null,
         errorCategory: 'provider_unavailable',
         createdAt: '2026-07-04T10:30:00.000Z',
@@ -73,6 +80,10 @@ describe('buildUsageAnalyticsReport', () => {
       completionTokens: 90,
       totalTokens: 330,
       estimatedCostUsd: 0.0022,
+      costByCurrency: [
+        { currency: 'USD', amount: 0.0022 },
+        { currency: 'CNY', amount: 0.0024 },
+      ],
       averageLatencyMs: 900,
     });
     expect(report.performance.averageRpm).toBeCloseTo(0.002, 3);
@@ -114,6 +125,8 @@ function usageEvent(overrides: Partial<AiUsageEvent>): AiUsageEvent {
     completionTokens,
     totalTokens: overrides.totalTokens ?? promptTokens + completionTokens,
     estimatedCostUsd: overrides.estimatedCostUsd ?? 0,
+    estimatedCostAmount: overrides.estimatedCostAmount ?? 0,
+    estimatedCostCurrency: overrides.estimatedCostCurrency ?? null,
     latencyMs: overrides.latencyMs ?? null,
     errorCategory: overrides.errorCategory ?? null,
     createdAt: overrides.createdAt ?? '2026-07-04T12:00:00.000Z',
