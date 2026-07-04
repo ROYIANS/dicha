@@ -21,27 +21,47 @@ const additionalFields = {
   coins: { type: 'number', required: false, defaultValue: 0 },
 } as const;
 
-// 无密码：只信任 https 子域（app./api. 等）+ 本地开发源。
-// baseURL(BETTER_AUTH_URL) 自动受信，无需重复列。
-function trustedOrigins(): string[] {
+function configuredOrigins(): string[] {
   return [
+    process.env.BETTER_AUTH_URL,
+    process.env.DICHA_WEB_ORIGIN,
+    process.env.DICHA_ADMIN_ORIGIN,
+  ].filter((origin): origin is string => !!origin);
+}
+
+function uniqueOrigins(origins: string[]): string[] {
+  return [...new Set(origins.map((origin) => origin.trim()).filter(Boolean))];
+}
+
+// 无密码：只信任显式前端入口、https 子域（app./admin./api. 等）+ 本地开发源。
+// baseURL(BETTER_AUTH_URL) 自动受信，但这里也显式纳入，便于 passkey 共用。
+function trustedOrigins(): string[] {
+  return uniqueOrigins([
+    ...configuredOrigins(),
     'http://localhost:8080',
     'http://localhost:8081',
     'http://localhost:5173',
     'http://localhost:5174',
     'https://*.dicha.life',
-  ];
+  ]);
 }
 
 // passkey rpID：生产用裸域 dicha.life（覆盖 app./www. 等子域），
-// 本地用 localhost。origin 取 BETTER_AUTH_URL。
+// 本地用 localhost。origin 必须包含实际发起 WebAuthn 的前端 origin。
 function passkeyOptions() {
   const baseUrl = process.env.BETTER_AUTH_URL;
   const isProd = !!baseUrl && baseUrl.startsWith('https://');
+  const origins = uniqueOrigins([
+    ...configuredOrigins(),
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'http://localhost:5173',
+    'http://localhost:5174',
+  ]);
   return {
-    rpID: isProd ? 'dicha.life' : 'localhost',
+    rpID: isProd ? (process.env.DICHA_PASSKEY_RP_ID ?? 'dicha.life') : 'localhost',
     rpName: 'dicha',
-    origin: baseUrl ?? 'http://localhost:8080',
+    origin: origins,
   };
 }
 

@@ -16,7 +16,7 @@ function UnauthorizedPage() {
 
   return (
     <div className="grid min-h-dvh place-items-center bg-canvas p-5">
-      <div className="w-full max-w-md rounded-card border border-hairline bg-surface p-6 shadow-raised">
+      <div className="w-full max-w-md rounded-md border border-hairline bg-surface p-6 shadow-raised">
         <span className="grid size-11 place-items-center rounded-md bg-chip-pink text-pink">
           <ShieldAlert className="size-5" strokeWidth={1.8} />
         </span>

@@ -9,24 +9,60 @@ import { useState } from 'react';
 import {
   Activity,
   BarChart3,
+  Bot,
+  Boxes,
   Database,
+  FileClock,
   LayoutDashboard,
   LogOut,
   Menu,
+  ShieldCheck,
   Settings2,
+  UsersRound,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import { logout } from '@/api/auth';
 import { BrandMark } from '@/components/AppBrand';
 
 const adminRoute = getRouteApi('/_admin');
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/basic', label: '基础管理', icon: Database },
-  { to: '/system', label: '系统功能', icon: Settings2 },
-  { to: '/analytics', label: '统计看板', icon: BarChart3 },
+const navSections = [
+  {
+    title: '总览',
+    items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }],
+  },
+  {
+    title: '用户与权限',
+    items: [
+      { to: '/basic', label: '用户管理', icon: UsersRound },
+      { label: '角色与权限', icon: ShieldCheck, planned: true },
+      { label: '内容与资源', icon: Boxes, planned: true },
+    ],
+  },
+  {
+    title: 'AI 与服务',
+    items: [
+      { label: 'AI 供应商', icon: Bot, planned: true },
+      { label: '模型与用途', icon: Database, planned: true },
+    ],
+  },
+  {
+    title: '系统运营',
+    items: [
+      { to: '/system', label: '系统功能', icon: Settings2 },
+      { to: '/analytics', label: '统计看板', icon: BarChart3 },
+      { label: '审计日志', icon: FileClock, planned: true },
+    ],
+  },
 ] as const;
+
+type AdminNavItem = {
+  label: string;
+  icon: LucideIcon;
+  planned?: boolean;
+  to?: '/' | '/basic' | '/system' | '/analytics';
+};
 
 export function AdminShell() {
   const router = useRouter();
@@ -82,7 +118,7 @@ export function AdminShell() {
         </div>
       ) : null}
 
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-none bg-canvas shadow-float lg:rounded-l-2xl">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas shadow-float lg:rounded-l-md">
         <div className="admin-noise" aria-hidden />
         <header className="relative z-[1] flex h-16 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-surface/90 px-4 lg:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -136,29 +172,27 @@ function AdminSidebarContent({
         </div>
       </div>
 
-      <nav className="mt-7 space-y-1">
-        {navItems.map((item) => {
-          const active = pathname === item.to;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={onNavigate}
-              className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
-              activeProps={{ className: 'bg-[var(--sidebar-active)] text-sidebar-ink' }}
-              inactiveProps={{ className: 'text-sidebar-ink-soft' }}
-              activeOptions={{ exact: item.to === '/' }}
-            >
-              <Icon className="size-4" strokeWidth={1.7} />
-              <span>{item.label}</span>
-              {active ? <span className="ml-auto size-1.5 rounded-full bg-peach" /> : null}
-            </Link>
-          );
-        })}
+      <nav className="mt-7 space-y-5">
+        {navSections.map((section) => (
+          <div key={section.title}>
+            <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-ink-soft/70">
+              {section.title}
+            </p>
+            <div className="mt-2 space-y-1">
+              {section.items.map((item) => (
+                <SidebarNavItem
+                  key={item.label}
+                  item={item}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      <div className="mt-auto rounded-card border border-white/10 bg-white/[0.04] p-3">
+      <div className="mt-auto rounded-md border border-white/10 bg-white/[0.04] p-3">
         <p className="truncate text-xs font-medium">{user.name}</p>
         <p className="mt-1 truncate text-[11px] text-sidebar-ink-soft">{user.email}</p>
         <button
@@ -171,5 +205,49 @@ function AdminSidebarContent({
         </button>
       </div>
     </>
+  );
+}
+
+function SidebarNavItem({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: AdminNavItem;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const Icon = item.icon;
+
+  if (!item.to || item.planned) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-sidebar-ink-soft/50"
+      >
+        <Icon className="size-4" strokeWidth={1.7} />
+        <span>{item.label}</span>
+        <span className="ml-auto rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-sidebar-ink-soft/70">
+          稍后
+        </span>
+      </button>
+    );
+  }
+
+  const active = pathname === item.to;
+  return (
+    <Link
+      to={item.to}
+      onClick={onNavigate}
+      className="admin-sidebar-link flex items-center gap-2 rounded-md px-2.5 py-2 text-sm"
+      activeProps={{ className: 'bg-[var(--sidebar-active)] text-sidebar-ink' }}
+      inactiveProps={{ className: 'text-sidebar-ink-soft' }}
+      activeOptions={{ exact: item.to === '/' }}
+    >
+      <Icon className="size-4" strokeWidth={1.7} />
+      <span>{item.label}</span>
+      {active ? <span className="ml-auto size-1.5 rounded-full bg-peach" /> : null}
+    </Link>
   );
 }

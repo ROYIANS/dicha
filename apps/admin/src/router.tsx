@@ -14,7 +14,7 @@ export const router = createRouter({
   defaultPreload: 'intent',
   defaultErrorComponent: ({ error }) => (
     <div className="grid min-h-dvh place-items-center bg-canvas p-6 text-ink">
-      <div className="w-full max-w-md rounded-card border border-hairline bg-surface p-6">
+      <div className="w-full max-w-md rounded-md border border-hairline bg-surface p-6">
         <p className="text-sm font-semibold">页面加载失败</p>
         <p className="mt-2 text-sm text-ink-soft">{getErrorMessage(error)}</p>
       </div>
@@ -22,7 +22,7 @@ export const router = createRouter({
   ),
   defaultNotFoundComponent: () => (
     <div className="grid min-h-dvh place-items-center bg-canvas p-6 text-ink">
-      <div className="w-full max-w-md rounded-card border border-hairline bg-surface p-6">
+      <div className="w-full max-w-md rounded-md border border-hairline bg-surface p-6">
         <p className="text-sm font-semibold">页面不存在</p>
         <p className="mt-2 text-sm text-ink-soft">请从左侧导航重新进入管理模块。</p>
       </div>

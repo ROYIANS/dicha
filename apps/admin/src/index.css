@@ -1,5 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import '@heroui/styles';
+
+@font-face {
+  font-family: 'Sarasa UI SC';
+  src:
+    local('Sarasa UI SC'),
+    local('SarasaUiSC'),
+    url('/assets/fonts/SarasaUiSC.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --canvas-outer: #e8e2d9;
@@ -25,6 +37,11 @@
   --chip-sage: #edf2ea;
   --chip-pink: #faedef;
   --chip-mist: #eaf1f5;
+  --accent-warm: #7a6248;
+  --lp-brand: var(--accent-warm);
+  --lp-deco: var(--lp-brand);
+  --line: color-mix(in oklab, var(--ink) 16%, transparent);
+  --rule: color-mix(in oklab, var(--ink) 12%, transparent);
   --shadow-raised: 0 1px 2px rgba(40, 30, 20, 0.04), 0 8px 24px rgba(40, 30, 20, 0.06);
   --shadow-float: 0 4px 8px rgba(40, 30, 20, 0.05), 0 16px 40px rgba(40, 30, 20, 0.1);
   --radius-card: 16px;
@@ -42,6 +59,8 @@
   --separator: var(--hairline);
   --focus: #7a6248;
   --radius: 0.375rem;
+  --node-vertical-offset: 3.5px;
+  --node-horizontal-offset: 4.5px;
 }
 
 @theme inline {
@@ -66,12 +85,15 @@
   --color-chip-sage: var(--chip-sage);
   --color-chip-pink: var(--chip-pink);
   --color-chip-mist: var(--chip-mist);
+  --color-lp-brand: var(--lp-brand);
+  --color-accent-warm: var(--accent-warm);
   --shadow-raised: var(--shadow-raised);
   --shadow-float: var(--shadow-float);
   --radius-card: var(--radius-card);
   --font-sans:
-    'Sarasa UI SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
     system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Songti SC', ui-serif, serif;
 }
 
 html,
@@ -85,7 +107,7 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family:
-    'Sarasa UI SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
     system-ui, sans-serif;
 }
 
@@ -108,4 +130,156 @@ body {
     linear-gradient(90deg, color-mix(in oklab, var(--ink) 4%, transparent) 1px, transparent 1px);
   background-size: 32px 32px;
   mask-image: linear-gradient(to bottom, #000, transparent 72%);
+}
+
+.lp-outer-node-offset {
+  --node-horizontal-offset: 12.5px;
+}
+
+@media (min-width: 640px) {
+  .lp-outer-node-offset {
+    --node-horizontal-offset: 19.5px;
+  }
+}
+
+@media (min-width: 768px) {
+  .lp-outer-node-offset {
+    --node-horizontal-offset: 43.5px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-outer-node-offset {
+    --node-horizontal-offset: 45.5px;
+  }
+}
+
+.lp-container-max-w {
+  max-width: 1080px;
+}
+
+@media (min-width: 768px) {
+  .lp-container-max-w {
+    min-width: 680px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-container-max-w {
+    min-width: 920px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .lp-container-max-w {
+    min-width: 1120px;
+    max-width: 1120px;
+  }
+}
+
+.lp-nav-link {
+  color: var(--ink-soft);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 80ms ease;
+}
+
+.lp-nav-link:hover {
+  background-color: color-mix(in oklab, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.lp-nav-link:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.lp-btn {
+  transition:
+    box-shadow 150ms ease,
+    background-color 150ms ease,
+    transform 80ms ease;
+}
+
+.lp-btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.lp-btn-primary {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-ink);
+  box-shadow:
+    inset 0 -2px 0 0 color-mix(in oklab, var(--sidebar-ink) 12%, transparent),
+    0 1px 3px color-mix(in oklab, var(--sidebar-bg) 40%, transparent);
+}
+
+.lp-btn-primary:hover {
+  background-color: color-mix(in oklab, var(--sidebar-bg) 88%, var(--sidebar-ink));
+  box-shadow: none;
+}
+
+.lp-btn-ghost {
+  border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+  background-color: color-mix(in oklab, var(--surface) 55%, transparent);
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 0 color-mix(in oklab, var(--ink) 9%, transparent);
+}
+
+.lp-btn-ghost:hover {
+  background-color: var(--surface-alt);
+  box-shadow: none;
+}
+
+.login-panel {
+  border-color: var(--hairline);
+  border-radius: 0.375rem;
+  box-shadow: 6px 6px 0 color-mix(in oklab, var(--ink) 6%, transparent);
+}
+
+@media (max-width: 767px) {
+  .login-container {
+    max-width: none;
+    min-width: 0;
+  }
+
+  .login-stage {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+
+  .login-panel {
+    display: flex;
+    max-width: none;
+    min-height: 100dvh;
+    flex-direction: column;
+    justify-content: center;
+    border: 0;
+    border-radius: 0;
+    background: var(--surface);
+    box-shadow: none;
+    padding: clamp(1.25rem, 5vw, 1.75rem);
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .login-panel-node {
+    display: none;
+  }
+}
+
+.admin-sidebar-link {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 80ms ease;
+}
+
+.admin-sidebar-link:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--sidebar-ink);
+}
+
+.admin-sidebar-link:active {
+  transform: translateY(1px) scale(0.99);
 }

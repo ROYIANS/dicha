@@ -13,7 +13,7 @@ export function ModulePlaceholder({
 }) {
   return (
     <div className="p-5 lg:p-8">
-      <div className="rounded-card border border-hairline bg-surface p-5 lg:p-6">
+      <div className="rounded-md border border-hairline bg-surface p-5 lg:p-6">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-md bg-chip-lavender text-lavender">
             <Icon className="size-5" strokeWidth={1.8} />

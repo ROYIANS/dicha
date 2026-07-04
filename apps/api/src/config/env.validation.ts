@@ -18,6 +18,20 @@ class EnvVars {
   @IsString()
   BETTER_AUTH_URL!: string;
 
+  // Public browser origins that may initiate Better Auth flows. Used by
+  // trustedOrigins and passkey origin verification.
+  @IsOptional()
+  @IsString()
+  DICHA_WEB_ORIGIN?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_ORIGIN?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_PASSKEY_RP_ID?: string;
+
   // Comma-separated super-admin emails. Kept server-side; web only receives a
   // derived boolean on the current user profile.
   @IsOptional()
