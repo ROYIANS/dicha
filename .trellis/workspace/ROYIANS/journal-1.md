@@ -1264,3 +1264,36 @@ Removed frontend maintenance actions from the official Dicha AI provider, delete
 ### Next Steps
 
 - None - task complete
+
+
+## Session 36: AI Credit System MVP
+
+**Date**: 2026-07-04
+**Task**: AI Credit System MVP
+**Branch**: `main`
+
+### Summary
+
+Implemented the AI credit system MVP across Prisma, shared contracts, API, AI Gateway, web settings, and admin credit management. Official DicHA AI calls now precheck and debit credits while user-facing usage masks real upstream costs.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2eed811` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
