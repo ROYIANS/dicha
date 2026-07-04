@@ -5,6 +5,7 @@ import {
   CircleDashed,
   RefreshCw,
   Save,
+  Search,
   Server,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
@@ -35,6 +36,7 @@ function AiProviderDirectoryPage() {
   const directory = useQuery(adminAiProviderDirectoryQueryOptions());
   const providers = directory.data?.providers ?? [];
   const [selectedProviderId, setSelectedProviderId] = useState('');
+  const [modelSearch, setModelSearch] = useState('');
   const selectedProvider =
     providers.find((provider) => provider.providerId === selectedProviderId) ?? providers[0];
   const models = useMemo(
@@ -43,6 +45,10 @@ function AiProviderDirectoryPage() {
         (model) => model.providerId === selectedProvider?.providerId,
       ),
     [directory.data?.models, selectedProvider?.providerId],
+  );
+  const filteredModels = useMemo(
+    () => models.filter((model) => directoryModelMatchesSearch(model, modelSearch)),
+    [models, modelSearch],
   );
 
   const updateDirectory = useMutation({
@@ -78,58 +84,70 @@ function AiProviderDirectoryPage() {
       />
 
       <div className="grid min-h-[calc(100dvh-9rem)] gap-4 p-5 xl:grid-cols-[280px_minmax(0,1fr)_360px] lg:p-8">
-        <section className="rounded-md border border-hairline bg-surface">
+        <section className="flex max-h-[calc(100dvh-10rem)] flex-col overflow-hidden rounded-md border border-hairline bg-surface">
           <PanelHeader title="内部目录" description={`${providers.length} 个供应商模板`} />
           {directory.isPending ? (
             <EmptyState text="正在加载供应商目录" />
           ) : directory.isError ? (
             <EmptyState tone="error" text="供应商目录加载失败" />
           ) : (
-            <div className="divide-y divide-hairline">
-              {providers.map((provider) => (
-                <ProviderButton
-                  key={provider.providerId}
-                  provider={provider}
-                  selected={provider.providerId === selectedProvider?.providerId}
-                  onClick={() => setSelectedProviderId(provider.providerId)}
-                />
-              ))}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="divide-y divide-hairline">
+                {providers.map((provider) => (
+                  <ProviderButton
+                    key={provider.providerId}
+                    provider={provider}
+                    selected={provider.providerId === selectedProvider?.providerId}
+                    onClick={() => setSelectedProviderId(provider.providerId)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </section>
 
-        <section className="min-w-0 rounded-md border border-hairline bg-surface">
+        <section className="flex max-h-[calc(100dvh-10rem)] min-w-0 flex-col overflow-hidden rounded-md border border-hairline bg-surface">
           <PanelHeader
             title={selectedProvider ? `${selectedProvider.name} 默认模型` : '默认模型'}
             description="平台同步/维护的默认模型，用户进入前台后仍可按自己的 API Key 覆盖配置。"
           />
+          <ModelSearchBar
+            value={modelSearch}
+            total={models.length}
+            visible={filteredModels.length}
+            placeholder="搜索模型名称、ID、类型或能力"
+            onChange={setModelSearch}
+            onClear={() => setModelSearch('')}
+          />
           {selectedProvider ? (
-            <div className="divide-y divide-hairline">
-              {models.length > 0 ? (
-                models.map((model) => (
-                  <ModelRow
-                    key={model.modelId}
-                    model={model}
-                    pending={updateModel.isPending}
-                    onToggle={(enabled) =>
-                      updateModel.mutate({
-                        providerId: model.providerId,
-                        modelId: model.modelId,
-                        enabled,
-                      })
-                    }
-                    onRecommend={(recommended) =>
-                      updateModel.mutate({
-                        providerId: model.providerId,
-                        modelId: model.modelId,
-                        recommended,
-                      })
-                    }
-                  />
-                ))
-              ) : (
-                <EmptyState text="还没有同步模型" />
-              )}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="divide-y divide-hairline">
+                {filteredModels.length > 0 ? (
+                  filteredModels.map((model) => (
+                    <ModelRow
+                      key={model.modelId}
+                      model={model}
+                      pending={updateModel.isPending}
+                      onToggle={(enabled) =>
+                        updateModel.mutate({
+                          providerId: model.providerId,
+                          modelId: model.modelId,
+                          enabled,
+                        })
+                      }
+                      onRecommend={(recommended) =>
+                        updateModel.mutate({
+                          providerId: model.providerId,
+                          modelId: model.modelId,
+                          recommended,
+                        })
+                      }
+                    />
+                  ))
+                ) : (
+                  <EmptyState text={models.length > 0 ? '没有匹配的模型' : '还没有同步模型'} />
+                )}
+              </div>
             </div>
           ) : (
             <EmptyState text="请选择供应商" />
@@ -356,6 +374,52 @@ function ProviderConfigForm({
   );
 }
 
+function ModelSearchBar({
+  value,
+  total,
+  visible,
+  placeholder,
+  onChange,
+  onClear,
+}: {
+  value: string;
+  total: number;
+  visible: number;
+  placeholder: string;
+  onChange: (value: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="border-b border-hairline bg-surface-alt/60 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-ink-faint" />
+          <input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={placeholder}
+            className="h-9 w-full rounded-md border border-hairline bg-surface px-9 text-xs text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
+          />
+        </label>
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
+          <span className="text-xs text-ink-soft">
+            {visible} / {total}
+          </span>
+          {value.trim() ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded-md border border-hairline bg-surface px-2.5 py-1.5 text-xs text-ink-soft transition-colors hover:text-ink"
+            >
+              清除
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PanelHeader({ title, description }: { title: string; description: string }) {
   return (
     <div className="border-b border-hairline p-4">
@@ -384,4 +448,21 @@ function Badge({ children }: { children: ReactNode }) {
 
 function EmptyState({ text, tone = 'muted' }: { text: string; tone?: 'muted' | 'error' }) {
   return <div className={`p-6 text-sm ${tone === 'error' ? 'text-pink' : 'text-ink-soft'}`}>{text}</div>;
+}
+
+function directoryModelMatchesSearch(model: DirectoryModel, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+  return [
+    model.displayName,
+    model.name,
+    model.modelId,
+    model.modelType,
+    model.priceHint,
+    model.availability,
+    ...model.capabilities,
+  ]
+    .join(' ')
+    .toLowerCase()
+    .includes(normalizedQuery);
 }

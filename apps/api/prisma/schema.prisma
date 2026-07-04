@@ -490,6 +490,7 @@ model AiInternalProviderModel {
   dxDisplayName   String?
   dxDescription   String?
   dxPriceHint     String?
+  dxPricing       Json?
   dxRecommended   Boolean @default(false)
   dxSortOrder     Int     @default(100)
   parameterConfig Json?

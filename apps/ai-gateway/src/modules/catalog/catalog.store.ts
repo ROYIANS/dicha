@@ -504,7 +504,7 @@ export class CatalogStore {
       lastLatencyMs: null,
       priceHint: record.dxPriceHint ?? 'DicHA AI 模型',
       catalogSource: 'dicha_catalog',
-      pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
+      pricing: this.optionalJson<AiModel['pricing']>(record.dxPricing),
       releasedAt: record.releasedAt ?? undefined,
     };
   }

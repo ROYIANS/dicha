@@ -2,6 +2,7 @@ import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 import {
   AiModelCapabilitySchema,
+  AiModelPricingSchema,
   AiModelTypeSchema,
   AiProviderRequestFormatSchema,
 } from './ai.contract';
@@ -243,6 +244,9 @@ export const AdminDichaAiModelSchema = z.object({
   availability: z.string(),
   recommended: z.boolean(),
   sortOrder: z.number().int(),
+  priceHint: z.string().nullable(),
+  upstreamPricing: AiModelPricingSchema.nullable(),
+  dxPricing: AiModelPricingSchema.nullable(),
   parameterConfig: z.record(z.string(), z.unknown()).nullable(),
 });
 
@@ -294,6 +298,8 @@ export const AdminDichaModelUpdateSchema = z.object({
   dxModelId: z.string().min(1).max(180).optional(),
   dxDisplayName: z.string().min(1).max(160).optional(),
   dxDescription: z.string().trim().max(500).nullable().optional(),
+  dxPriceHint: z.string().trim().max(240).nullable().optional(),
+  dxPricing: AiModelPricingSchema.nullable().optional(),
   dxRecommended: z.boolean().optional(),
   dxSortOrder: z.number().int().min(1).max(10000).optional(),
   parameterConfig: z.record(z.string(), z.unknown()).nullable().optional(),

@@ -317,6 +317,9 @@ export class AdminService {
         availability: model.availability,
         recommended: model.dxRecommended,
         sortOrder: model.dxSortOrder,
+        priceHint: model.dxPriceHint,
+        upstreamPricing: this.optionalJson<AiModel['pricing']>(model.pricing) ?? null,
+        dxPricing: this.optionalJson<AiModel['pricing']>(model.dxPricing) ?? null,
         parameterConfig: this.recordFromJson(model.parameterConfig),
       })),
     };
@@ -401,6 +404,13 @@ export class AdminService {
         dxModelId: body.dxModelId,
         dxDisplayName: body.dxDisplayName,
         dxDescription: body.dxDescription,
+        dxPriceHint: body.dxPriceHint,
+        dxPricing:
+          body.dxPricing === undefined
+            ? undefined
+            : body.dxPricing === null
+              ? Prisma.JsonNull
+              : (body.dxPricing as Prisma.InputJsonValue),
         dxRecommended: body.dxRecommended,
         dxSortOrder: body.dxSortOrder,
         parameterConfig:
@@ -714,6 +724,7 @@ export class AdminService {
           dxDisplayName: remoteModel.displayName ?? metadata?.displayName ?? remoteModel.id,
           dxDescription: metadata?.lobeMetadata?.description ?? null,
           dxPriceHint: metadata?.priceHint ?? remoteModel.priceHint ?? 'DicHA AI 模型',
+          dxPricing: this.jsonOrUndefined(remoteModel.pricing ?? metadata?.pricing),
           parameterConfig: {},
         },
       });

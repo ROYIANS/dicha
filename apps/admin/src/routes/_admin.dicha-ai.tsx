@@ -8,6 +8,7 @@ import {
   PlugZap,
   RefreshCw,
   Save,
+  Search,
   Server,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
@@ -19,7 +20,9 @@ import {
   upsertAdminDichaInternalProvider,
 } from '@/api/admin';
 import { PageHeader } from '@/components/PageHeader';
+import { AiModelPricingSchema } from '@dicha/shared';
 import type {
+  AiModelPricing,
   AdminAiInternalProvider,
   AdminAiInternalProviderUpsert,
   AdminDichaAiModel,
@@ -27,6 +30,7 @@ import type {
 } from '@dicha/shared';
 
 const NEW_INTERNAL_PROVIDER_ID = '__new_internal_provider__';
+const PRICING_CURRENCIES = ['CNY', 'USD', 'DICHA_CREDITS'] as const;
 
 export const Route = createFileRoute('/_admin/dicha-ai')({
   loader: ({ context }) =>
@@ -39,6 +43,7 @@ function DichaAiServicePage() {
   const service = useQuery(adminDichaAiServiceQueryOptions());
   const providers = service.data?.internalProviders ?? [];
   const [selectedProviderId, setSelectedProviderId] = useState('');
+  const [modelSearch, setModelSearch] = useState('');
   const selectedProvider =
     selectedProviderId === NEW_INTERNAL_PROVIDER_ID
       ? undefined
@@ -50,10 +55,14 @@ function DichaAiServicePage() {
       ),
     [service.data?.models, selectedProvider?.id],
   );
+  const filteredProviderModels = useMemo(
+    () => providerModels.filter((model) => dichaModelMatchesSearch(model, modelSearch)),
+    [providerModels, modelSearch],
+  );
   const [selectedModelRecordId, setSelectedModelRecordId] = useState('');
   const selectedModel =
-    providerModels.find((model) => model.modelRecordId === selectedModelRecordId) ??
-    providerModels[0];
+    filteredProviderModels.find((model) => model.modelRecordId === selectedModelRecordId) ??
+    filteredProviderModels[0];
 
   const saveProvider = useMutation({
     mutationFn: upsertAdminDichaInternalProvider,
@@ -90,7 +99,7 @@ function DichaAiServicePage() {
       />
 
       <div className="grid min-h-[calc(100dvh-9rem)] gap-4 p-5 xl:grid-cols-[300px_minmax(0,1fr)_380px] lg:p-8">
-        <section className="rounded-md border border-hairline bg-surface">
+        <section className="flex max-h-[calc(100dvh-10rem)] flex-col overflow-hidden rounded-md border border-hairline bg-surface">
           <div className="flex items-start justify-between gap-3 border-b border-hairline p-4">
             <div>
               <p className="text-sm font-semibold text-ink">内部供应商</p>
@@ -110,19 +119,21 @@ function DichaAiServicePage() {
           ) : service.isError ? (
             <EmptyState tone="error" text="DicHA AI 服务加载失败" />
           ) : (
-            <div className="divide-y divide-hairline">
-              {providers.map((provider) => (
-                <ProviderButton
-                  key={provider.id}
-                  provider={provider}
-                  selected={provider.id === selectedProvider?.id}
-                  onClick={() => setSelectedProviderId(provider.id)}
-                />
-              ))}
-              {providers.length === 0 ? <EmptyState text="还没有内部供应商" /> : null}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="divide-y divide-hairline">
+                {providers.map((provider) => (
+                  <ProviderButton
+                    key={provider.id}
+                    provider={provider}
+                    selected={provider.id === selectedProvider?.id}
+                    onClick={() => setSelectedProviderId(provider.id)}
+                  />
+                ))}
+                {providers.length === 0 ? <EmptyState text="还没有内部供应商" /> : null}
+              </div>
             </div>
           )}
-          <div className="border-t border-hairline">
+          <div className="shrink-0 border-t border-hairline">
             <InternalProviderForm
               key={selectedProvider?.id ?? NEW_INTERNAL_PROVIDER_ID}
               provider={selectedProvider}
@@ -132,7 +143,7 @@ function DichaAiServicePage() {
           </div>
         </section>
 
-        <section className="min-w-0 rounded-md border border-hairline bg-surface">
+        <section className="flex max-h-[calc(100dvh-10rem)] min-w-0 flex-col overflow-hidden rounded-md border border-hairline bg-surface">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline p-4">
             <div>
               <p className="text-sm font-semibold text-ink">
@@ -152,19 +163,29 @@ function DichaAiServicePage() {
               {syncModels.isPending ? '同步中' : '同步模型'}
             </button>
           </div>
-          <div className="divide-y divide-hairline">
-            {providerModels.length > 0 ? (
-              providerModels.map((model) => (
-                <ModelButton
-                  key={model.modelRecordId}
-                  model={model}
-                  selected={model.modelRecordId === selectedModel?.modelRecordId}
-                  onClick={() => setSelectedModelRecordId(model.modelRecordId)}
-                />
-              ))
-            ) : (
-              <EmptyState text="还没有同步模型" />
-            )}
+          <ModelSearchBar
+            value={modelSearch}
+            total={providerModels.length}
+            visible={filteredProviderModels.length}
+            placeholder="搜索 DX 名称、上游模型、ID 或能力"
+            onChange={setModelSearch}
+            onClear={() => setModelSearch('')}
+          />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="divide-y divide-hairline">
+              {filteredProviderModels.length > 0 ? (
+                filteredProviderModels.map((model) => (
+                  <ModelButton
+                    key={model.modelRecordId}
+                    model={model}
+                    selected={model.modelRecordId === selectedModel?.modelRecordId}
+                    onClick={() => setSelectedModelRecordId(model.modelRecordId)}
+                  />
+                ))
+              ) : (
+                <EmptyState text={providerModels.length > 0 ? '没有匹配的模型' : '还没有同步模型'} />
+              )}
+            </div>
           </div>
         </section>
 
@@ -399,6 +420,12 @@ function DichaModelForm({
     dxModelId: model.modelId,
     dxDisplayName: model.displayName,
     dxDescription: model.description ?? '',
+    dxPriceHint: model.priceHint ?? '',
+    dxPricingCurrency: model.dxPricing?.currency ?? model.upstreamPricing?.currency ?? 'CNY',
+    dxInputPerMillionTokens: pricingRateValue(model.dxPricing?.inputPerMillionTokens),
+    dxOutputPerMillionTokens: pricingRateValue(model.dxPricing?.outputPerMillionTokens),
+    dxPricingUnitsJson: pricingUnitsValue(model.dxPricing?.units),
+    dxPricingNotes: model.dxPricing?.notes ?? '',
     dxRecommended: model.recommended,
     dxSortOrder: String(model.sortOrder),
     parameterConfig: JSON.stringify(model.parameterConfig ?? {}, null, 2),
@@ -413,12 +440,37 @@ function DichaModelForm({
       toast.error('参数配置不是合法 JSON');
       return;
     }
+    if (
+      invalidOptionalRate(form.dxInputPerMillionTokens) ||
+      invalidOptionalRate(form.dxOutputPerMillionTokens)
+    ) {
+      toast.error('计费价格需要是非负数字');
+      return;
+    }
+    const units = parsePricingUnits(form.dxPricingUnitsJson);
+    if (!units.ok) {
+      toast.error(units.message);
+      return;
+    }
+    const dxPricing = buildPricing({
+      currency: form.dxPricingCurrency,
+      inputPerMillionTokens: form.dxInputPerMillionTokens,
+      outputPerMillionTokens: form.dxOutputPerMillionTokens,
+      units: units.value,
+      notes: form.dxPricingNotes,
+    });
+    if (dxPricing && !AiModelPricingSchema.safeParse(dxPricing).success) {
+      toast.error('计费配置不符合价格结构');
+      return;
+    }
     onSave({
       modelRecordId: model.modelRecordId,
       enabled: form.enabled,
       dxModelId: form.dxModelId.trim(),
       dxDisplayName: form.dxDisplayName.trim(),
       dxDescription: form.dxDescription.trim() || null,
+      dxPriceHint: form.dxPriceHint.trim() || null,
+      dxPricing,
       dxRecommended: form.dxRecommended,
       dxSortOrder: Number(form.dxSortOrder) || 100,
       parameterConfig: parsed,
@@ -430,6 +482,19 @@ function DichaModelForm({
       <div className="grid grid-cols-2 gap-3">
         <InfoTile icon={Server} label="上游" value={model.internalProviderName} />
         <InfoTile icon={KeyRound} label="原始模型" value={model.upstreamModelName} />
+      </div>
+      <div className="rounded-md border border-hairline bg-surface-alt p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold text-ink-soft">上游参考价</p>
+            <p className="mt-1 text-sm font-semibold text-ink">
+              {formatPricingSummary(model.upstreamPricing)}
+            </p>
+          </div>
+          <div className="text-xs leading-5 text-ink-faint">
+            仅作定价参考，不直接作为用户计费价
+          </div>
+        </div>
       </div>
       <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
         <span>作为 DX 模型启用</span>
@@ -461,6 +526,96 @@ function DichaModelForm({
           className="admin-input min-h-20 resize-none py-2"
         />
       </Field>
+      <div className="rounded-md border border-hairline bg-surface-alt p-3">
+        <div>
+          <p className="text-xs font-semibold text-ink">DicHA 计费价</p>
+          <p className="mt-1 text-xs leading-5 text-ink-soft">
+            记录真实结算价格；后续积分制按这里的价格做折算。
+          </p>
+        </div>
+        <div className="mt-3 grid grid-cols-[1fr_1.4fr] gap-2">
+          <Field label="结算货币">
+            <select
+              value={form.dxPricingCurrency}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  dxPricingCurrency: event.target.value as PricingCurrency,
+                }))
+              }
+              className="admin-input"
+            >
+              {PRICING_CURRENCIES.map((currency) => (
+                <option key={currency} value={currency}>
+                  {currencyLabel(currency)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="前台价格提示">
+            <input
+              value={form.dxPriceHint}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, dxPriceHint: event.target.value }))
+              }
+              className="admin-input"
+              placeholder="例如 DicHA AI 按量计费"
+            />
+          </Field>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Field label="输入 / 百万 tokens">
+            <input
+              value={form.dxInputPerMillionTokens}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  dxInputPerMillionTokens: event.target.value,
+                }))
+              }
+              className="admin-input"
+              inputMode="decimal"
+              placeholder="例如 0.15"
+            />
+          </Field>
+          <Field label="输出 / 百万 tokens">
+            <input
+              value={form.dxOutputPerMillionTokens}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  dxOutputPerMillionTokens: event.target.value,
+                }))
+              }
+              className="admin-input"
+              inputMode="decimal"
+              placeholder="例如 0.6"
+            />
+          </Field>
+        </div>
+        <div className="mt-2 grid gap-2">
+          <Field label="阶梯计费 units JSON">
+            <textarea
+              value={form.dxPricingUnitsJson}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, dxPricingUnitsJson: event.target.value }))
+              }
+              className="admin-input min-h-28 resize-none py-2 text-xs"
+              placeholder='[{"name":"textInput","unit":"millionTokens","strategy":"tiered","tiers":[{"upTo":100,"rate":2},{"upTo":"infinity","rate":1.5}]}]'
+            />
+          </Field>
+          <Field label="内部计费备注">
+            <input
+              value={form.dxPricingNotes}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, dxPricingNotes: event.target.value }))
+              }
+              className="admin-input"
+              placeholder="例如 暂按上游成本价计"
+            />
+          </Field>
+        </div>
+      </div>
       <div className="grid grid-cols-[1fr_96px] gap-2">
         <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
           <span>推荐</span>
@@ -523,6 +678,52 @@ function InfoTile({
   );
 }
 
+function ModelSearchBar({
+  value,
+  total,
+  visible,
+  placeholder,
+  onChange,
+  onClear,
+}: {
+  value: string;
+  total: number;
+  visible: number;
+  placeholder: string;
+  onChange: (value: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="border-b border-hairline bg-surface-alt/60 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-ink-faint" />
+          <input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={placeholder}
+            className="h-9 w-full rounded-md border border-hairline bg-surface px-9 text-xs text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
+          />
+        </label>
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
+          <span className="text-xs text-ink-soft">
+            {visible} / {total}
+          </span>
+          {value.trim() ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded-md border border-hairline bg-surface px-2.5 py-1.5 text-xs text-ink-soft transition-colors hover:text-ink"
+            >
+              清除
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PanelHeader({ title, description }: { title: string; description: string }) {
   return (
     <div className="border-b border-hairline p-4">
@@ -551,4 +752,133 @@ function Badge({ children }: { children: ReactNode }) {
 
 function EmptyState({ text, tone = 'muted' }: { text: string; tone?: 'muted' | 'error' }) {
   return <div className={`p-6 text-sm ${tone === 'error' ? 'text-pink' : 'text-ink-soft'}`}>{text}</div>;
+}
+
+function dichaModelMatchesSearch(model: AdminDichaAiModel, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+  return [
+    model.displayName,
+    model.name,
+    model.modelId,
+    model.upstreamModelName,
+    model.internalProviderName,
+    model.modelType,
+    model.availability,
+    model.description ?? '',
+    model.priceHint ?? '',
+    ...model.capabilities,
+  ]
+    .join(' ')
+    .toLowerCase()
+    .includes(normalizedQuery);
+}
+
+function pricingRateValue(value: number | undefined): string {
+  return value === undefined ? '' : String(value);
+}
+
+function pricingUnitsValue(units: AiModelPricing['units']): string {
+  return units && units.length > 0 ? JSON.stringify(units, null, 2) : '';
+}
+
+function invalidOptionalRate(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const parsed = Number(trimmed);
+  return !Number.isFinite(parsed) || parsed < 0;
+}
+
+function optionalRate(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return Number(trimmed);
+}
+
+type PricingCurrency = NonNullable<AdminDichaModelUpdate['dxPricing']>['currency'];
+type PricingUnits = NonNullable<AiModelPricing['units']>;
+
+function parsePricingUnits(
+  value: string,
+): { ok: true; value: PricingUnits | undefined } | { ok: false; message: string } {
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: undefined };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return { ok: false, message: '阶梯计费 JSON 格式不正确' };
+  }
+  if (!Array.isArray(parsed)) {
+    return { ok: false, message: '阶梯计费需要是 units 数组' };
+  }
+  const pricing = AiModelPricingSchema.safeParse({ currency: 'CNY', units: parsed });
+  if (!pricing.success) {
+    return { ok: false, message: '阶梯计费内容不符合价格结构' };
+  }
+  return { ok: true, value: pricing.data.units };
+}
+
+function buildPricing({
+  currency,
+  inputPerMillionTokens,
+  outputPerMillionTokens,
+  units,
+  notes,
+}: {
+  currency: PricingCurrency;
+  inputPerMillionTokens: string;
+  outputPerMillionTokens: string;
+  units: PricingUnits | undefined;
+  notes: string;
+}): AdminDichaModelUpdate['dxPricing'] {
+  const inputRate = optionalRate(inputPerMillionTokens);
+  const outputRate = optionalRate(outputPerMillionTokens);
+  const pricingNotes = notes.trim();
+  if (inputRate === undefined && outputRate === undefined && !units && !pricingNotes) return null;
+  return {
+    currency,
+    ...(inputRate !== undefined ? { inputPerMillionTokens: inputRate } : {}),
+    ...(outputRate !== undefined ? { outputPerMillionTokens: outputRate } : {}),
+    ...(units ? { units } : {}),
+    ...(pricingNotes ? { notes: pricingNotes } : {}),
+  };
+}
+
+function formatPricingSummary(pricing: AdminDichaAiModel['upstreamPricing']): string {
+  if (!pricing) return '暂无上游价格';
+  const inputRate = pricing.inputPerMillionTokens ?? fixedUnitRate(pricing, 'textInput');
+  const outputRate = pricing.outputPerMillionTokens ?? fixedUnitRate(pricing, 'textOutput');
+  const segments = [
+    inputRate !== undefined ? `输入 ${formatMoneyRate(inputRate, pricing.currency)}/百万` : null,
+    outputRate !== undefined ? `输出 ${formatMoneyRate(outputRate, pricing.currency)}/百万` : null,
+    ...tieredUnitSummaries(pricing),
+  ].filter(Boolean);
+  return segments.length > 0 ? segments.join(' / ') : pricing.notes ?? `${pricing.currency} 价格已记录`;
+}
+
+function fixedUnitRate(
+  pricing: NonNullable<AdminDichaAiModel['upstreamPricing']>,
+  name: string,
+): number | undefined {
+  return pricing.units?.find((unit) => unit.name === name && unit.strategy === 'fixed')?.rate;
+}
+
+function formatMoneyRate(value: number, currency: string): string {
+  const symbol = currency === 'USD' ? '$' : currency === 'CNY' ? '¥' : '';
+  return `${symbol}${value}`;
+}
+
+function tieredUnitSummaries(pricing: NonNullable<AdminDichaAiModel['upstreamPricing']>): string[] {
+  return (
+    pricing.units
+      ?.filter((unit) => unit.strategy === 'tiered' && unit.tiers && unit.tiers.length > 0)
+      .map((unit) => `${unit.name} ${unit.tiers?.length ?? 0} 档阶梯`) ?? []
+  );
+}
+
+function currencyLabel(currency: PricingCurrency): string {
+  if (currency === 'CNY') return '人民币 CNY';
+  if (currency === 'USD') return '美元 USD';
+  return 'DicHA 积分';
 }
