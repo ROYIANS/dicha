@@ -1,10 +1,18 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 import {
+  AiUsageBreakdownSchema,
+  AiUsageDistributionsSchema,
+  AiUsageEventSchema,
+  AiUsagePerformanceSchema,
+  AiUsageQuerySchema,
+  AiUsageSummarySchema,
+  AiUsageTimeSeriesSchema,
   AiModelCapabilitySchema,
   AiModelPricingSchema,
   AiModelTypeSchema,
   AiProviderRequestFormatSchema,
+  AiUsageWindowSchema,
 } from './ai.contract';
 
 const c = initContract();
@@ -307,6 +315,35 @@ export const AdminDichaModelUpdateSchema = z.object({
 
 export type AdminDichaModelUpdate = z.infer<typeof AdminDichaModelUpdateSchema>;
 
+export const AdminDichaAiUsageEventSchema = AiUsageEventSchema.extend({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+  }),
+});
+
+export type AdminDichaAiUsageEvent = z.infer<typeof AdminDichaAiUsageEventSchema>;
+
+export const AdminDichaAiUsageReportSchema = z.object({
+  generatedAt: z.string().datetime(),
+  window: AiUsageWindowSchema,
+  from: z.string().datetime().nullable(),
+  to: z.string().datetime(),
+  providerId: z.literal('dicha'),
+  providerName: z.string(),
+  activeUsers: z.number().int().min(0),
+  summary: AiUsageSummarySchema,
+  performance: AiUsagePerformanceSchema,
+  timeSeries: AiUsageTimeSeriesSchema,
+  distributions: AiUsageDistributionsSchema,
+  byModel: z.array(AiUsageBreakdownSchema),
+  byUseCase: z.array(AiUsageBreakdownSchema),
+  recentEvents: z.array(AdminDichaAiUsageEventSchema),
+});
+
+export type AdminDichaAiUsageReport = z.infer<typeof AdminDichaAiUsageReportSchema>;
+
 export const adminContract = c.router({
   getOverview: {
     method: 'GET',
@@ -406,5 +443,14 @@ export const adminContract = c.router({
       200: AdminDichaAiServiceOverviewSchema,
     },
     summary: 'Update a DicHA AI model mapping and display settings',
+  },
+  getDichaAiUsage: {
+    method: 'GET',
+    path: '/admin/ai/dicha-usage',
+    query: AiUsageQuerySchema,
+    responses: {
+      200: AdminDichaAiUsageReportSchema,
+    },
+    summary: 'Super admin DicHA AI official usage analytics',
   },
 });

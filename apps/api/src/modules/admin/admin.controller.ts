@@ -125,4 +125,12 @@ export class AdminController {
       body: await this.admin.updateDichaModel(body),
     }));
   }
+
+  @TsRestHandler(contract.admin.getDichaAiUsage)
+  getDichaAiUsage(): ReturnType<typeof tsRestHandler<typeof contract.admin.getDichaAiUsage>> {
+    return tsRestHandler(contract.admin.getDichaAiUsage, async ({ query }) => ({
+      status: 200,
+      body: await this.admin.getDichaAiUsage(query.window),
+    }));
+  }
 }

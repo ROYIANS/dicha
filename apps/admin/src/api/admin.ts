@@ -5,6 +5,7 @@ import {
   AdminAiProviderDirectorySyncResponseSchema,
   AdminAiInternalProviderSchema,
   AdminDichaAiServiceOverviewSchema,
+  AdminDichaAiUsageReportSchema,
   AdminDichaInternalProviderSyncResponseSchema,
   AdminOverviewSchema,
   AdminUserDetailSchema,
@@ -17,11 +18,13 @@ import {
   type AdminAiProviderDirectorySyncResponse,
   type AdminAiProviderDirectoryUpdate,
   type AdminDichaAiServiceOverview,
+  type AdminDichaAiUsageReport,
   type AdminDichaInternalProviderSyncResponse,
   type AdminDichaModelUpdate,
   type AdminOverview,
   type AdminUserDetail,
   type AdminUsersList,
+  type AiUsageWindow,
 } from '@dicha/shared';
 import { api } from './client';
 
@@ -164,4 +167,19 @@ export async function updateAdminDichaModel(
     throw new Error(`Admin DicHA model update failed (${res.status})`);
   }
   return AdminDichaAiServiceOverviewSchema.parse(res.body);
+}
+
+export function adminDichaAiUsageQueryOptions(window: AiUsageWindow = '7d') {
+  return queryOptions<AdminDichaAiUsageReport>({
+    queryKey: ['admin', 'ai', 'dicha-usage', window] as const,
+    queryFn: async () => {
+      const res = await api.admin.getDichaAiUsage({ query: { window } });
+      if (res.status !== 200) {
+        throw new Error(`Admin DicHA AI usage request failed (${res.status})`);
+      }
+      return AdminDichaAiUsageReportSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
 }

@@ -301,6 +301,7 @@ catch (error) {
   - `contract.admin.upsertDichaInternalProvider` -> `POST /api/admin/ai/dicha-service/providers`.
   - `contract.admin.syncDichaInternalProviderModels` -> `POST /api/admin/ai/dicha-service/providers/sync-models`.
   - `contract.admin.updateDichaModel` -> `POST /api/admin/ai/dicha-service/models`.
+  - `contract.admin.getDichaAiUsage` -> `GET /api/admin/ai/dicha-usage?window=24h|7d|30d|all`.
 - Gateway env:
   - `DATABASE_URL` required.
   - `AI_GATEWAY_SECRET_KEY` required in production.
@@ -323,6 +324,8 @@ catch (error) {
   - `(ownerId, modelId, createdAt)`
   - `(ownerId, useCase, createdAt)`
   - `(ownerId, status, createdAt)`
+  - `(providerId, createdAt)` for super-admin official-provider global analytics
+  - `(providerId, status, createdAt)` for super-admin official-provider status analytics
 - `platform_managed` invoke attempts must resolve an enabled `AiSystemProviderChannel` by `(providerId, modelId)` and use that channel's upstream base URL, upstream model name, request format, auth type, and encrypted secret.
 - `AiInternalProvider` and `AiInternalProviderModel` are the DicHA/internal service layer: admin pages may connect multiple internal upstream providers, sync their models, and enable selected models as DX-facing DicHA models. They must not present the official `dicha` provider itself as a normal user-facing enable/disable toggle.
 - Enabled `AiInternalProviderModel` rows are aggregated into the user catalog under the single `dicha` provider using their `dxModelId`, `dxDisplayName`, recommendation flag, sort order, and parameter config metadata.
@@ -331,6 +334,8 @@ catch (error) {
 - DicHA billing price configuration must preserve the settlement currency instead of forcing every model into USD. Supported configuration currencies are `CNY`, `USD`, and future `DICHA_CREDITS`; RMB prices should be recorded as real CNY prices when the upstream or business settlement is RMB-based.
 - DicHA billing price configuration must support both simple fixed token rates (`inputPerMillionTokens` / `outputPerMillionTokens`) and structured `units` pricing with `fixed`, `tiered`, or `lookup` strategies. Tiered prices should be stored as `units[].tiers[]` rather than flattened into a single average rate.
 - The existing usage analytics field `estimatedCostUsd` is an estimate for USD-denominated model pricing only. Do not silently convert CNY or credit pricing into USD without an explicit exchange-rate/settlement policy; a later billing ledger should store authoritative `amount + currency` records for charging users.
+- Super-admin DicHA AI usage analytics must query `AiUsageEvent` globally with `kind = 'invoke'` and `providerId = 'dicha'`. It must not include user-owned BYOK providers in official-channel dashboards.
+- Super-admin DicHA AI usage logs may include safe user identity fields (`id`, `email`, `name`) to trace call origin, but must not include prompt content, responses, credentials, or user-owned private content records.
 - Admin AI provider APIs must be protected by `AuthGuard + SuperAdminGuard` and must never return channel credentials.
 - The API service may encrypt system channel credentials only with the same `AI_GATEWAY_SECRET_KEY` that the gateway uses to decrypt them; this key must not be exposed to any Vite app.
 
@@ -350,14 +355,18 @@ catch (error) {
 | Admin saves a channel credential | API writes encrypted `{ iv, tag, value }`; subsequent admin reads return `credentialState: configured`. |
 | Admin reads AI provider overview | Response includes provider/model counts and channel metadata, never raw credentials. |
 | Usage report for `24h` / `7d` / `30d` | Query filters by `ownerId` and `createdAt` so the composite indexes are usable. |
+| Super-admin reads DicHA AI usage report | Query filters by `providerId = 'dicha'`, `kind = 'invoke'`, and bounded `createdAt` when the selected window is not `all`. |
+| Super-admin reads DicHA AI recent logs | Response includes safe user identity and event metadata only; prompt/response body and secrets are never returned. |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: keep shared AI DTOs stable and replace only the store implementation underneath.
 - Good: add a second Prisma generator for ai-gateway instead of importing API-generated client files across app boundaries.
 - Good: use DB indexes that match user-scoped time-window analytics before adding heavier materialized summaries.
+- Good: keep frontend user usage reports owner-scoped, and keep admin DicHA usage reports provider-scoped with `providerId = 'dicha'`.
 - Base: no historical JSON migration during MVP; dev data can be dropped.
 - Bad: query usage reports without `ownerId` or without a time-window predicate for bounded windows.
+- Bad: aggregate admin official-channel stats across every provider; this mixes DicHA platform cost with user BYOK traffic.
 - Bad: return `credential`, access tokens, or upstream Authorization headers in admin/provider responses.
 - Bad: configure official DicHA as `user_api_key`; it must remain `platform_managed`.
 
@@ -368,6 +377,7 @@ catch (error) {
 - `pnpm --filter @dicha/api typecheck && pnpm --filter @dicha/api lint && pnpm --filter @dicha/api build`
 - `pnpm --filter @dicha/ai-gateway typecheck && pnpm --filter @dicha/ai-gateway lint && pnpm --filter @dicha/ai-gateway test && pnpm --filter @dicha/ai-gateway build`
 - `pnpm --filter @dicha/admin typecheck && pnpm --filter @dicha/admin lint && pnpm --filter @dicha/admin build`
+- Admin DicHA usage API verification should assert that `providerId` is always `dicha`, BYOK provider events are excluded, and recent logs include only safe user identity fields plus usage metadata.
 - `docker compose config --quiet` when env or compose wiring changes.
 
 ### 7. Wrong vs Correct
@@ -401,5 +411,24 @@ This can scan every user's AI usage records.
 await prisma.aiUsageEvent.findMany({
   where: { ownerId, kind: 'invoke', createdAt: { gte: from } },
   orderBy: { createdAt: 'desc' },
+});
+```
+
+#### Wrong
+
+```typescript
+await prisma.aiUsageEvent.findMany({
+  where: { kind: 'invoke' },
+});
+```
+
+This mixes official DicHA traffic with user-owned provider traffic in the admin billing dashboard.
+
+#### Correct
+
+```typescript
+await prisma.aiUsageEvent.findMany({
+  where: { kind: 'invoke', providerId: 'dicha', createdAt: { gte: from } },
+  include: { owner: { select: { id: true, email: true, name: true } } },
 });
 ```

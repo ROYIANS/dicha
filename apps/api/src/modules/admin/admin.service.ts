@@ -11,6 +11,8 @@ import type {
   AdminAiProviderDirectorySyncResponse,
   AdminAiProviderDirectoryUpdate,
   AdminDichaAiServiceOverview,
+  AdminDichaAiUsageEvent,
+  AdminDichaAiUsageReport,
   AdminDichaInternalProviderSync,
   AdminDichaInternalProviderSyncResponse,
   AdminDichaModelUpdate,
@@ -25,6 +27,14 @@ import type {
   AiModelType,
   AiProvider,
   AiProviderRemoteModel,
+  AiUsageBreakdown,
+  AiUsageBucketGranularity,
+  AiUsageDistribution,
+  AiUsageDistributionGroupBy,
+  AiUsagePerformance,
+  AiUsageSummary,
+  AiUsageTimeBucket,
+  AiUsageWindow,
 } from '@dicha/shared';
 import { aiModelBank, aiProviderTemplates } from '@dicha/shared';
 import { Prisma } from '../../generated/prisma/client';
@@ -36,7 +46,23 @@ type AdminSessionUser = {
   name?: string | null;
 };
 
+type AdminDichaUsageRecord = Prisma.AiUsageEventGetPayload<{
+  include: {
+    owner: {
+      select: {
+        id: true;
+        email: true;
+        name: true;
+      };
+    };
+  };
+}>;
+
 const DICHA_PROVIDER_ID = 'dicha';
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const MINUTE_MS = 60 * 1000;
+const MAX_HOURLY_BUCKETS = 24 * 7;
 
 @Injectable()
 export class AdminService {
@@ -422,6 +448,69 @@ export class AdminService {
       },
     });
     return this.getDichaAiService();
+  }
+
+  async getDichaAiUsage(window: AiUsageWindow): Promise<AdminDichaAiUsageReport> {
+    const now = new Date();
+    const from = usageWindowStart(now, window);
+    const records = await this.prisma.aiUsageEvent.findMany({
+      where: {
+        kind: 'invoke',
+        providerId: DICHA_PROVIDER_ID,
+        ...(from ? { createdAt: { gte: from } } : {}),
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    const events = records.map(toAdminDichaUsageEvent);
+    const rangeFrom = usageReportRangeStart(events, from, now);
+    const hourlyFrom = usageHourlyRangeStart(events, rangeFrom, now);
+    const recent24hFrom = new Date(now.getTime() - 24 * HOUR_MS);
+
+    return {
+      generatedAt: now.toISOString(),
+      window,
+      from: from?.toISOString() ?? null,
+      to: now.toISOString(),
+      providerId: DICHA_PROVIDER_ID,
+      providerName: records[0]?.providerName ?? 'DicHA AI',
+      activeUsers: new Set(events.map((event) => event.user.id)).size,
+      summary: summarizeAdminUsage(events),
+      performance: adminUsagePerformance(events, rangeFrom, now),
+      timeSeries: {
+        recent24h: adminUsageTimeBuckets(
+          events.filter((event) => new Date(event.createdAt) >= recent24hFrom),
+          recent24hFrom,
+          now,
+          'hour',
+        ),
+        hourly: adminUsageTimeBuckets(events, hourlyFrom, now, 'hour'),
+        daily: rangeFrom ? adminUsageTimeBuckets(events, rangeFrom, now, 'day') : [],
+      },
+      distributions: {
+        providerHourly: adminUsageDistribution(events, hourlyFrom, now, 'hour', 'provider'),
+        providerDaily: adminUsageDistribution(events, rangeFrom, now, 'day', 'provider'),
+        modelHourly: adminUsageDistribution(events, hourlyFrom, now, 'hour', 'model'),
+        modelDaily: adminUsageDistribution(events, rangeFrom, now, 'day', 'model'),
+      },
+      byModel: adminUsageBreakdown(events, (event) => ({
+        key: event.modelId,
+        label: event.modelName,
+      })),
+      byUseCase: adminUsageBreakdown(events, (event) => ({
+        key: event.useCase,
+        label: event.useCase,
+      })),
+      recentEvents: events.slice(0, 20),
+    };
   }
 
   async listUsers(query: AdminUsersQuery): Promise<AdminUsersList> {
@@ -1044,4 +1133,263 @@ function toAdminAiInternalProvider(provider: AiInternalProviderRecord): AdminAiI
     createdAt: provider.createdAt.toISOString(),
     updatedAt: provider.updatedAt.toISOString(),
   };
+}
+
+function toAdminDichaUsageEvent(record: AdminDichaUsageRecord): AdminDichaAiUsageEvent {
+  return {
+    id: record.id,
+    kind: record.kind as AdminDichaAiUsageEvent['kind'],
+    status: record.status as AdminDichaAiUsageEvent['status'],
+    useCase: record.useCase as AdminDichaAiUsageEvent['useCase'],
+    providerId: record.providerId,
+    providerName: record.providerName,
+    modelId: record.modelId,
+    modelName: record.modelName,
+    promptTokens: record.promptTokens,
+    completionTokens: record.completionTokens,
+    totalTokens: record.totalTokens,
+    estimatedCostUsd: record.estimatedCostUsd,
+    latencyMs: record.latencyMs,
+    errorCategory: record.errorCategory,
+    createdAt: record.createdAt.toISOString(),
+    user: {
+      id: record.owner.id,
+      email: record.owner.email,
+      name: record.owner.name,
+    },
+  };
+}
+
+function emptyAdminUsageSummary(): AiUsageSummary {
+  return {
+    calls: 0,
+    successfulCalls: 0,
+    failedCalls: 0,
+    degradedCalls: 0,
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0,
+    estimatedCostUsd: 0,
+    averageLatencyMs: null,
+  };
+}
+
+function summarizeAdminUsage(events: AdminDichaAiUsageEvent[]): AiUsageSummary {
+  const summary = emptyAdminUsageSummary();
+  let latencyTotal = 0;
+  let latencyCount = 0;
+
+  for (const event of events) {
+    summary.calls += 1;
+    summary.successfulCalls += event.status === 'success' ? 1 : 0;
+    summary.failedCalls += event.status === 'failure' ? 1 : 0;
+    summary.degradedCalls += event.status === 'degraded' ? 1 : 0;
+    summary.promptTokens += event.promptTokens;
+    summary.completionTokens += event.completionTokens;
+    summary.totalTokens += event.totalTokens;
+    summary.estimatedCostUsd += event.estimatedCostUsd;
+    if (event.latencyMs !== null) {
+      latencyTotal += event.latencyMs;
+      latencyCount += 1;
+    }
+  }
+
+  summary.estimatedCostUsd = Number(summary.estimatedCostUsd.toFixed(6));
+  summary.averageLatencyMs = latencyCount > 0 ? Math.round(latencyTotal / latencyCount) : null;
+  return summary;
+}
+
+function adminUsagePerformance(
+  events: AdminDichaAiUsageEvent[],
+  from: Date | null,
+  to: Date,
+): AiUsagePerformance {
+  if (events.length === 0) {
+    return {
+      averageRpm: 0,
+      averageTpm: 0,
+      peakRpm: 0,
+      peakTpm: 0,
+      successRate: 0,
+      p95LatencyMs: null,
+    };
+  }
+
+  const summary = summarizeAdminUsage(events);
+  const rangeStart = from ?? firstAdminUsageEventDate(events) ?? to;
+  const minutes = Math.max(1, (to.getTime() - rangeStart.getTime()) / MINUTE_MS);
+  const minuteBuckets = new Map<string, { calls: number; tokens: number }>();
+  const latencies = events
+    .map((event) => event.latencyMs)
+    .filter((latency): latency is number => latency !== null)
+    .sort((left, right) => left - right);
+
+  for (const event of events) {
+    const key = minuteKey(new Date(event.createdAt));
+    const bucket = minuteBuckets.get(key) ?? { calls: 0, tokens: 0 };
+    bucket.calls += 1;
+    bucket.tokens += event.totalTokens;
+    minuteBuckets.set(key, bucket);
+  }
+
+  return {
+    averageRpm: roundRate(summary.calls / minutes),
+    averageTpm: roundRate(summary.totalTokens / minutes),
+    peakRpm: Math.max(...Array.from(minuteBuckets.values()).map((bucket) => bucket.calls), 0),
+    peakTpm: Math.max(...Array.from(minuteBuckets.values()).map((bucket) => bucket.tokens), 0),
+    successRate: summary.calls > 0 ? roundRate(summary.successfulCalls / summary.calls) : 0,
+    p95LatencyMs: latencies.length > 0 ? (latencies[Math.ceil(latencies.length * 0.95) - 1] ?? null) : null,
+  };
+}
+
+function adminUsageBreakdown(
+  events: AdminDichaAiUsageEvent[],
+  identity: (event: AdminDichaAiUsageEvent) => Pick<AiUsageBreakdown, 'key' | 'label'>,
+): AiUsageBreakdown[] {
+  const grouped = new Map<string, { label: string; events: AdminDichaAiUsageEvent[] }>();
+  for (const event of events) {
+    const item = identity(event);
+    const group = grouped.get(item.key);
+    if (group) {
+      group.events.push(event);
+    } else {
+      grouped.set(item.key, { label: item.label, events: [event] });
+    }
+  }
+
+  return Array.from(grouped.entries())
+    .map(([key, value]) => ({
+      key,
+      label: value.label,
+      ...summarizeAdminUsage(value.events),
+    }))
+    .sort((left, right) => {
+      if (right.estimatedCostUsd !== left.estimatedCostUsd) return right.estimatedCostUsd - left.estimatedCostUsd;
+      if (right.totalTokens !== left.totalTokens) return right.totalTokens - left.totalTokens;
+      return right.calls - left.calls;
+    });
+}
+
+function adminUsageDistribution(
+  events: AdminDichaAiUsageEvent[],
+  from: Date | null,
+  to: Date,
+  granularity: AiUsageBucketGranularity,
+  groupBy: AiUsageDistributionGroupBy,
+): AiUsageDistribution {
+  const buckets = from ? adminUsageTimeBuckets(events, from, to, granularity) : [];
+  const groups = adminUsageBreakdown(events, (event) => ({
+    key: groupBy === 'provider' ? event.providerId : `${event.providerId}:${event.modelId}`,
+    label: groupBy === 'provider' ? event.providerName : `${event.modelName} · ${event.providerName}`,
+  })).map((group) => ({
+    ...group,
+    groupBy,
+    buckets: from
+      ? adminUsageTimeBuckets(
+          events.filter((event) =>
+            groupBy === 'provider'
+              ? event.providerId === group.key
+              : `${event.providerId}:${event.modelId}` === group.key,
+          ),
+          from,
+          to,
+          granularity,
+        )
+      : [],
+  }));
+
+  return {
+    groupBy,
+    granularity,
+    buckets,
+    groups,
+  };
+}
+
+function adminUsageTimeBuckets(
+  events: AdminDichaAiUsageEvent[],
+  from: Date,
+  to: Date,
+  granularity: AiUsageBucketGranularity,
+): AiUsageTimeBucket[] {
+  const buckets: AiUsageTimeBucket[] = [];
+  const bucketStart = granularity === 'hour' ? startOfHour(from) : startOfDay(from);
+  const bucketMs = granularity === 'hour' ? HOUR_MS : DAY_MS;
+
+  for (let cursor = bucketStart; cursor < to; cursor = new Date(cursor.getTime() + bucketMs)) {
+    const end = new Date(cursor.getTime() + bucketMs);
+    const bucketEvents = events.filter((event) => {
+      const createdAt = new Date(event.createdAt);
+      return createdAt >= cursor && createdAt < end;
+    });
+    buckets.push({
+      key: `${granularity}:${cursor.toISOString()}`,
+      label: granularity === 'hour' ? cursor.toISOString().slice(11, 16) : cursor.toISOString().slice(5, 10),
+      granularity,
+      start: cursor.toISOString(),
+      end: end.toISOString(),
+      ...summarizeAdminUsage(bucketEvents),
+    });
+  }
+
+  return buckets;
+}
+
+function usageWindowStart(now: Date, window: AiUsageWindow): Date | null {
+  const hoursByWindow: Record<Exclude<AiUsageWindow, 'all'>, number> = {
+    '24h': 24,
+    '7d': 24 * 7,
+    '30d': 24 * 30,
+  };
+  if (window === 'all') return null;
+  return new Date(now.getTime() - hoursByWindow[window] * HOUR_MS);
+}
+
+function usageReportRangeStart(
+  events: AdminDichaAiUsageEvent[],
+  from: Date | null,
+  now: Date,
+): Date | null {
+  if (from) return from;
+  return firstAdminUsageEventDate(events) ?? (events.length > 0 ? now : null);
+}
+
+function usageHourlyRangeStart(
+  events: AdminDichaAiUsageEvent[],
+  rangeFrom: Date | null,
+  now: Date,
+): Date {
+  const cappedFrom = new Date(now.getTime() - MAX_HOURLY_BUCKETS * HOUR_MS);
+  const candidate = rangeFrom ?? firstAdminUsageEventDate(events) ?? new Date(now.getTime() - 24 * HOUR_MS);
+  return candidate > cappedFrom ? candidate : cappedFrom;
+}
+
+function firstAdminUsageEventDate(events: AdminDichaAiUsageEvent[]): Date | null {
+  if (events.length === 0) return null;
+  return events.reduce((earliest, event) => {
+    const createdAt = new Date(event.createdAt);
+    return createdAt < earliest ? createdAt : earliest;
+  }, new Date(events[0]!.createdAt));
+}
+
+function startOfHour(date: Date): Date {
+  const next = new Date(date);
+  next.setUTCMinutes(0, 0, 0);
+  return next;
+}
+
+function startOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setUTCHours(0, 0, 0, 0);
+  return next;
+}
+
+function minuteKey(date: Date): string {
+  const next = new Date(date);
+  next.setUTCSeconds(0, 0);
+  return next.toISOString();
+}
+
+function roundRate(value: number): number {
+  return Number(value.toFixed(3));
 }
