@@ -84,6 +84,38 @@ describe('invoke adapters', () => {
     });
   });
 
+  test('parses OpenAI-compatible chat completion streams', async () => {
+    mockEventStreamResponse([
+      'data: {"id":"chatcmpl-stream-1","choices":[{"delta":{"content":"Hello"}}]}',
+      'data: {"id":"chatcmpl-stream-1","choices":[{"delta":{"content":" stream"}}]}',
+      'data: {"id":"chatcmpl-stream-1","choices":[],"usage":{"prompt_tokens":9,"completion_tokens":3}}',
+      'data: [DONE]',
+    ]);
+    const deltas: string[] = [];
+
+    const result = await new OpenAiCompatibleInvokeAdapter().stream(
+      {
+        provider,
+        model,
+        request,
+        secret: 'sk-test',
+        parameterConfig: {},
+        signal: new AbortController().signal,
+      },
+      ({ text }) => {
+        deltas.push(text);
+      },
+    );
+
+    expect(deltas).toEqual(['Hello', ' stream']);
+    expect(result).toEqual({
+      text: 'Hello stream',
+      promptTokens: 9,
+      completionTokens: 3,
+      upstreamRequestId: 'chatcmpl-stream-1',
+    });
+  });
+
   test('parses OpenAI Responses output text and usage', async () => {
     mockJsonResponse({
       id: 'resp-1',
@@ -105,6 +137,37 @@ describe('invoke adapters', () => {
       promptTokens: 10,
       completionTokens: 5,
       upstreamRequestId: 'resp-1',
+    });
+  });
+
+  test('parses OpenAI Responses streams', async () => {
+    mockEventStreamResponse([
+      'event: response.output_text.delta\ndata: {"id":"resp-stream-1","delta":"Hello"}',
+      'event: response.output_text.delta\ndata: {"id":"resp-stream-1","delta":" responses"}',
+      'event: response.completed\ndata: {"response":{"id":"resp-stream-1","usage":{"input_tokens":7,"output_tokens":4}}}',
+    ]);
+    const deltas: string[] = [];
+
+    const result = await new OpenAiResponsesInvokeAdapter().stream(
+      {
+        provider: { ...provider, requestFormat: 'openai_responses' },
+        model,
+        request,
+        secret: 'sk-test',
+        parameterConfig: {},
+        signal: new AbortController().signal,
+      },
+      ({ text }) => {
+        deltas.push(text);
+      },
+    );
+
+    expect(deltas).toEqual(['Hello', ' responses']);
+    expect(result).toEqual({
+      text: 'Hello responses',
+      promptTokens: 7,
+      completionTokens: 4,
+      upstreamRequestId: 'resp-stream-1',
     });
   });
 
@@ -146,10 +209,61 @@ describe('invoke adapters', () => {
       upstreamRequestId: 'msg-1',
     });
   });
+
+  test('parses Anthropic Messages streams', async () => {
+    mockEventStreamResponse([
+      'event: message_start\ndata: {"message":{"id":"msg-stream-1","usage":{"input_tokens":8}}}',
+      'event: content_block_delta\ndata: {"delta":{"type":"text_delta","text":"Hello"}}',
+      'event: content_block_delta\ndata: {"delta":{"type":"text_delta","text":" Claude"}}',
+      'event: message_delta\ndata: {"usage":{"output_tokens":5}}',
+      'event: message_stop\ndata: {"type":"message_stop"}',
+    ]);
+    const deltas: string[] = [];
+
+    const result = await new AnthropicMessagesInvokeAdapter().stream(
+      {
+        provider: {
+          ...provider,
+          baseUrl: 'https://api.anthropic.example.com/v1/messages',
+          authType: 'api_key',
+          requestFormat: 'anthropic_messages',
+        },
+        model: { ...model, name: 'claude-test' },
+        request,
+        secret: 'anthropic-key',
+        parameterConfig: {},
+        signal: new AbortController().signal,
+      },
+      ({ text }) => {
+        deltas.push(text);
+      },
+    );
+
+    expect(deltas).toEqual(['Hello', ' Claude']);
+    expect(result).toEqual({
+      text: 'Hello Claude',
+      promptTokens: 8,
+      completionTokens: 5,
+      upstreamRequestId: 'msg-stream-1',
+    });
+  });
 });
 
 function mockJsonResponse(body: unknown): ReturnType<typeof vi.fn> {
   const fetchMock = vi.fn(async () => new Response(JSON.stringify(body), { status: 200 }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+function mockEventStreamResponse(frames: string[]): ReturnType<typeof vi.fn> {
+  const body = `${frames.join('\n\n')}\n\n`;
+  const fetchMock = vi.fn(
+    async () =>
+      new Response(body, {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+  );
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 }

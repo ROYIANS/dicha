@@ -23,9 +23,17 @@ export type InvokeAdapterResult = {
   upstreamRequestId: string | null;
 };
 
+export type InvokeAdapterStreamDelta = {
+  text: string;
+};
+
 export interface InvokeAdapter {
   readonly requestFormat: AiProviderRequestFormat;
   invoke(context: InvokeAdapterContext): Promise<InvokeAdapterResult>;
+  stream(
+    context: InvokeAdapterContext,
+    onDelta: (delta: InvokeAdapterStreamDelta) => void | Promise<void>,
+  ): Promise<InvokeAdapterResult>;
 }
 
 export async function postJson(
@@ -56,6 +64,91 @@ export async function postJson(
     throw upstreamError(response.status, parsed, raw);
   }
   return parsed;
+}
+
+export async function postEventStream(
+  url: string,
+  body: unknown,
+  headers: Record<string, string>,
+  signal: AbortSignal,
+): Promise<AsyncGenerator<EventStreamMessage>> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'text/event-stream',
+        'content-type': 'application/json',
+        ...headers,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+    throw new InvokeError('network', 'AI provider network request failed', true);
+  }
+
+  if (!response.ok) {
+    const raw = await response.text().catch(() => '');
+    const parsed = raw ? safeJson(raw) : {};
+    throw upstreamError(response.status, parsed, raw);
+  }
+  if (!response.body) {
+    throw new InvokeError('unknown', 'AI provider returned an empty stream', true);
+  }
+  return readEventStream(response.body);
+}
+
+export type EventStreamMessage = {
+  event: string;
+  data: string;
+};
+
+export async function* readEventStream(stream: ReadableStream<Uint8Array>): AsyncGenerator<EventStreamMessage> {
+  const decoder = new TextDecoder();
+  const reader = stream.getReader();
+  let buffer = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split(/\r?\n\r?\n/);
+      buffer = parts.pop() ?? '';
+      for (const part of parts) {
+        const message = eventStreamMessage(part);
+        if (message) yield message;
+      }
+    }
+    buffer += decoder.decode();
+    const trailing = eventStreamMessage(buffer);
+    if (trailing) yield trailing;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+function eventStreamMessage(raw: string): EventStreamMessage | null {
+  if (!raw.trim()) return null;
+  let event = '';
+  const data: string[] = [];
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line || line.startsWith(':')) continue;
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim();
+      continue;
+    }
+    if (line.startsWith('data:')) {
+      data.push(line.slice(5).trimStart());
+    }
+  }
+  if (data.length === 0) return null;
+  return { event, data: data.join('\n') };
+}
+
+export function safeParseJson(value: string): unknown {
+  return safeJson(value);
 }
 
 export function isAbortError(error: unknown): boolean {

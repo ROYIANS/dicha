@@ -93,6 +93,91 @@ describe('InvokeService official channel degradation', () => {
       }),
     );
   });
+
+  test('streams through a fallback DicHA channel and settles credits after final output', async () => {
+    const catalogStore = {
+      getCatalog: vi.fn(async () => catalog),
+      getSystemProviderChannels: vi.fn(async () => channels),
+      getProviderSecret: vi.fn(),
+    } as unknown as CatalogStore;
+    const creditStore = {
+      assertSufficientReserve: vi.fn(async () => undefined),
+      calculateCharge: vi.fn(async () => ({
+        amount: 4,
+        costAmount: 0.0015,
+        costCurrency: 'CNY',
+        snapshot: { rule: { id: 'rule-1' }, creditAmount: 4 },
+      })),
+    } as unknown as CreditStore;
+    const usageStore = {
+      recordEvent: vi.fn(async (_ownerId: string, record: unknown) => record),
+    } as unknown as UsageStore;
+    const stream = vi.fn(
+      async (
+        context: { model: { name: string } },
+        onDelta: (delta: { text: string }) => void | Promise<void>,
+      ) => {
+        if (context.model.name === 'upstream-a') {
+          throw new InvokeError('provider_unavailable', 'temporary stream failure', true);
+        }
+        await onDelta({ text: 'hello' });
+        await onDelta({ text: ' stream' });
+        return {
+          text: 'hello stream',
+          promptTokens: 80,
+          completionTokens: 12,
+          upstreamRequestId: 'upstream-stream-b',
+        };
+      },
+    );
+    const adapterRegistry = {
+      adapterFor: vi.fn(() => ({ stream })),
+    } as unknown as InvokeAdapterRegistry;
+    const events: unknown[] = [];
+
+    const { InvokeService } = await import('./invoke.service');
+    await new InvokeService(catalogStore, creditStore, usageStore, adapterRegistry).stream(
+      'user-1',
+      request,
+      {
+        emit: (event) => {
+          events.push(event);
+        },
+      },
+    );
+
+    expect(events.map((event) => (event as { type: string }).type)).toEqual([
+      'start',
+      'attempt',
+      'start',
+      'delta',
+      'delta',
+      'attempt',
+      'final',
+    ]);
+    expect(events.filter((event) => (event as { type: string }).type === 'delta')).toEqual([
+      { type: 'delta', text: 'hello' },
+      { type: 'delta', text: ' stream' },
+    ]);
+    expect(creditStore.assertSufficientReserve).toHaveBeenCalledTimes(2);
+    expect(creditStore.calculateCharge).toHaveBeenCalledTimes(1);
+    expect(usageStore.recordEvent).toHaveBeenCalledTimes(1);
+    expect(usageStore.recordEvent).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        status: 'degraded',
+        creditAmount: 4,
+        upstreamRequestId: 'upstream-stream-b',
+        internalProviderId: 'internal-b',
+        internalProviderModelId: 'channel-b',
+      }),
+    );
+    const final = events.at(-1) as { type: 'final'; response: { text: string; status: string } };
+    expect(final.response).toMatchObject({
+      status: 'degraded',
+      text: 'hello stream',
+    });
+  });
 });
 
 const provider: AiProvider = {

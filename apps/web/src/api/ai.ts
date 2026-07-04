@@ -12,6 +12,8 @@ import {
   type AiUsageWindow,
 } from '@dicha/shared';
 import { api } from './client';
+import { env } from '@/lib/env';
+import { streamAiInvokeEvents, type AiInvokeStreamHandlers } from './ai-stream';
 
 export const aiCatalogQueryOptions = () =>
   queryOptions({
@@ -69,4 +71,20 @@ export async function invokeAi(body: AiInvokeRequest): Promise<AiInvokeResponse>
     return AiInvokeResponseSchema.parse(res.body);
   }
   throw new Error(`AI invoke failed (${res.status})`);
+}
+
+export async function invokeAiStream(
+  body: AiInvokeRequest,
+  handlers: AiInvokeStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  await streamAiInvokeEvents(
+    {
+      url: `${env.VITE_API_BASE_URL}/ai/invoke/stream`,
+      body,
+      credentials: 'include',
+      signal,
+    },
+    handlers,
+  );
 }

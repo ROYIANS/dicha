@@ -46,8 +46,11 @@ import {
   type AdminUserDetail,
   type AdminUsersList,
   type AiUsageWindow,
+  type AiInvokeRequest,
 } from '@dicha/shared';
 import { api } from './client';
+import { env } from '@/lib/env';
+import { streamAiInvokeEvents, type AiInvokeStreamHandlers } from './ai-stream';
 
 export type AdminUsersQueryInput = {
   page?: number;
@@ -62,6 +65,22 @@ export type AdminDichaAiUsageQueryInput = {
 
 export type AdminCreditBalancesQueryInput = Partial<AdminCreditBalancesQuery>;
 export type AdminCreditLedgerQueryInput = Partial<AdminCreditLedgerQuery>;
+
+export async function invokeAdminAiStream(
+  body: AiInvokeRequest,
+  handlers: AiInvokeStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  await streamAiInvokeEvents(
+    {
+      url: `${env.VITE_API_BASE_URL}/ai/invoke/stream`,
+      body,
+      credentials: 'include',
+      signal,
+    },
+    handlers,
+  );
+}
 
 export function adminOverviewQueryOptions() {
   return queryOptions<AdminOverview>({

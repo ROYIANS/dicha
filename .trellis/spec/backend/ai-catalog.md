@@ -616,3 +616,81 @@ return {
   })),
 };
 ```
+
+## Scenario: AI Invoke Streaming
+
+### 1. Scope / Trigger
+
+- Trigger: adding or modifying streaming AI invoke, SSE event payloads, stream settlement, frontend/admin stream test surfaces, or upstream adapter streaming support.
+- This is a cross-layer contract: `packages/shared` owns event schemas; `apps/ai-gateway` owns upstream stream parsing, fallback and settlement; `apps/api` is a BFF stream proxy; browser apps consume DicHA-owned SSE events.
+
+### 2. Signatures
+
+- Shared event schema: `AiInvokeStreamEventSchema` in `packages/shared/src/contracts/ai.contract.ts`.
+- AI Gateway internal route: `POST /invoke/stream`, protected by `InternalTokenGuard`, scoped by `x-dicha-user-id`.
+- API BFF route: `POST /ai/invoke/stream`, protected by `AuthGuard`, forwards current `request.user.id`.
+- Browser helpers live in app-local frontend code (`apps/web/src/api/ai-stream.ts`, `apps/admin/src/api/ai-stream.ts`) because `packages/shared` does not compile with DOM lib types such as `fetch`, `ReadableStream`, or `AbortSignal`.
+
+### 3. Contracts
+
+- Transport is `POST + text/event-stream`, not native `EventSource`, because callers need JSON body, cookies, auth headers and abort.
+- SSE headers must include:
+  - `Content-Type: text/event-stream`
+  - `Cache-Control: no-cache, no-transform`
+  - `Connection: keep-alive`
+  - `X-Accel-Buffering: no`
+- Public stream events are DicHA-owned and must validate against the shared discriminated union:
+  - `start`: request id, selected provider/model, request format, generated timestamp.
+  - `attempt`: one sanitized `AiInvokeAttempt`.
+  - `delta`: text chunk only.
+  - `final`: an `AiInvokeResponse`-compatible response summary.
+  - `error`: sanitized category/message plus attempts.
+- Gateway adapters may parse provider-native OpenAI Chat Completions, OpenAI Responses, or Anthropic Messages SSE, but raw upstream event shapes must not leak past the adapter layer.
+- Successful official DicHA streams debit credits and write one usage event only after final upstream success. User-owned provider streams write diagnostics/usage without DicHA credit debit.
+- Persistent usage/admin logs must not store raw prompt or response bodies.
+
+### 4. Validation & Error Matrix
+
+| Condition | Expected Behavior |
+|---|---|
+| Invalid request body | Gateway/API rejects before starting SSE when possible. |
+| Pre-stream retryable failure | Gateway emits an `attempt` failure and tries the next compatible target/channel. |
+| Pre-stream non-retryable failure | Gateway emits an `attempt` failure followed by `error`; no credit debit. |
+| Stream already emitted `delta`, then upstream fails | Gateway must not switch channel mid-answer; emit sanitized `error` and record failure diagnostics without credit debit. |
+| Client abort before final success | Abort upstream work and do not debit credits; failure/interruption diagnostics may be recorded. |
+| Upstream omits token usage | Existing `invokeUsageBase()` estimation applies and marks `usageEstimated: true`. |
+
+### 5. Good/Base/Bad Cases
+
+- Good: keep `apps/api` as a thin byte-stream proxy after authentication and body validation.
+- Good: frontend/admin parse only DicHA stream events and validate them with `AiInvokeStreamEventSchema`.
+- Good: emit `final` only after settlement and usage recording succeed.
+- Base: no visible non-streaming toggle in product UI; the non-streaming endpoint remains for compatibility/regression.
+- Bad: put fetch-based browser stream helpers in `packages/shared` while its tsconfig has no DOM lib.
+- Bad: expose raw OpenAI/Anthropic event payloads, Authorization headers, stack traces, or upstream error objects in SSE.
+
+### 6. Tests Required
+
+- Gateway adapter tests cover representative SSE fixtures for OpenAI-compatible Chat Completions, OpenAI Responses, and Anthropic Messages.
+- Gateway orchestration tests cover pre-stream fallback, final `delta`/`attempt`/`final` event order, single usage event, and single credit debit.
+- API, web, and admin typecheck must pass after stream route/helper changes.
+- Frontend/admin build must pass after route-tree and stream UI changes.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+const source = new EventSource('/api/ai/invoke/stream');
+```
+
+`EventSource` cannot send the authenticated POST body this invoke contract requires.
+
+#### Correct
+
+```typescript
+await streamAiInvokeEvents(
+  { url: '/api/ai/invoke/stream', body, credentials: 'include', signal },
+  { onDelta: (event) => appendText(event.text), onFinal: (event) => setResult(event.response) },
+);
+```

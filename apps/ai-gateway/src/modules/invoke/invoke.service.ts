@@ -5,6 +5,7 @@ import type {
   AiInvokeErrorCategory,
   AiInvokeRequest,
   AiInvokeResponse,
+  AiInvokeStreamEvent,
   AiInvokeUsage,
   AiModel,
   AiProvider,
@@ -45,6 +46,11 @@ type AttemptTarget = {
   model: AiModel;
   provider: AiProvider;
   channel?: SystemProviderChannel;
+};
+
+type InvokeStreamSink = {
+  emit(event: AiInvokeStreamEvent): void | Promise<void>;
+  signal?: AbortSignal;
 };
 
 const DEFAULT_TIMEOUT_MS = 45_000;
@@ -183,6 +189,176 @@ export class InvokeService {
     });
   }
 
+  async stream(ownerId: string, request: AiInvokeRequest, sink: InvokeStreamSink): Promise<void> {
+    const requestId = randomUUID();
+    const catalog = await this.catalogStore.getCatalog(ownerId);
+    const targets = await this.attemptTargets(catalog, request);
+    const attempts: AiInvokeAttempt[] = [];
+    let finalFailureTarget: AttemptTarget | null = null;
+
+    for (const target of targets) {
+      if (sink.signal?.aborted) return;
+      const validationFailure = await this.validateTarget(ownerId, target);
+      const requestFormat = this.resolvedRequestFormat(target, request);
+      if (validationFailure) {
+        const attempt = this.failedAttempt(target, requestFormat, null, validationFailure);
+        attempts.push(attempt);
+        finalFailureTarget = target;
+        await sink.emit({ type: 'attempt', attempt });
+        if (!validationFailure.retryable) break;
+        continue;
+      }
+
+      if (target.provider.credentialMode === 'platform_managed' && !target.channel) {
+        const failure = this.invokeError(
+          'config',
+          'Platform-managed AI provider channel is not configured',
+          true,
+        );
+        const attempt = this.failedAttempt(target, requestFormat, null, failure);
+        attempts.push(attempt);
+        finalFailureTarget = target;
+        await sink.emit({ type: 'attempt', attempt });
+        continue;
+      }
+      const reserveFailure = await this.reserveCredits(ownerId, target, request);
+      if (reserveFailure) {
+        const attempt = this.failedAttempt(target, requestFormat, null, reserveFailure);
+        attempts.push(attempt);
+        finalFailureTarget = target;
+        await sink.emit({ type: 'attempt', attempt });
+        break;
+      }
+
+      await sink.emit({
+        type: 'start',
+        requestId,
+        providerId: target.provider.id,
+        providerName: target.provider.name,
+        modelId: target.model.id,
+        modelName: target.model.displayName,
+        requestFormat,
+        generatedAt: new Date().toISOString(),
+      });
+
+      const startedAt = Date.now();
+      let emittedDelta = false;
+      try {
+        const result = await this.streamUpstream(
+          {
+            target,
+            request,
+            requestFormat,
+            secret: await this.providerSecret(ownerId, target),
+          },
+          sink.signal,
+          async ({ text }) => {
+            emittedDelta = true;
+            await sink.emit({ type: 'delta', text });
+          },
+        );
+        const status: AiUsageStatus = attempts.some((attempt) => attempt.status === 'failure')
+          ? 'degraded'
+          : 'success';
+        const usageBase = this.invokeUsageBase(request, result);
+        const settlement = await this.settleUsage(target, usageBase, target.channel);
+        const usage = this.userVisibleUsage(usageBase, settlement);
+        const attempt: AiInvokeAttempt = {
+          providerId: target.provider.id,
+          providerName: target.provider.name,
+          modelId: target.model.id,
+          modelName: target.model.displayName,
+          requestFormat,
+          status,
+          latencyMs: result.latencyMs,
+          errorCategory: null,
+        };
+        attempts.push(attempt);
+        await sink.emit({ type: 'attempt', attempt });
+        await this.recordUsage({
+          ownerId,
+          request,
+          requestId,
+          target,
+          channel: target.channel,
+          status,
+          usage,
+          settlement,
+          latencyMs: result.latencyMs,
+          errorCategory: null,
+          upstreamRequestId: result.upstreamRequestId,
+        });
+        await sink.emit({
+          type: 'final',
+          response: this.response({
+            attempts,
+            error: null,
+            generatedAt: new Date().toISOString(),
+            request,
+            requestFormat,
+            status,
+            target,
+            text: result.text,
+            usage,
+          }),
+        });
+        return;
+      } catch (error) {
+        const failure = this.classifyError(error);
+        const attempt = this.failedAttempt(target, requestFormat, Date.now() - startedAt, failure);
+        attempts.push(attempt);
+        finalFailureTarget = target;
+        await sink.emit({ type: 'attempt', attempt });
+        if (!emittedDelta && failure.retryable && !sink.signal?.aborted) continue;
+
+        await this.recordUsage({
+          ownerId,
+          request,
+          requestId,
+          target,
+          channel: target.channel,
+          status: 'failure',
+          usage: this.emptyUsage(),
+          settlement: this.emptySettlement(),
+          latencyMs: attempt.latencyMs,
+          errorCategory: failure.category,
+          upstreamRequestId: null,
+        });
+        await sink.emit({
+          type: 'error',
+          errorCategory: failure.category,
+          message: failure.message,
+          attempts,
+        });
+        return;
+      }
+    }
+
+    const finalAttempt = [...attempts].reverse().find((attempt) => attempt.status === 'failure');
+    const finalTarget = finalFailureTarget ?? (finalAttempt ? this.targetFromAttempt(catalog, finalAttempt) : null);
+    if (finalAttempt && finalTarget) {
+      await this.recordUsage({
+        ownerId,
+        request,
+        requestId,
+        target: finalTarget,
+        channel: finalTarget.channel,
+        status: 'failure',
+        usage: this.emptyUsage(),
+        settlement: this.emptySettlement(),
+        latencyMs: finalAttempt.latencyMs,
+        errorCategory: finalAttempt.errorCategory,
+        upstreamRequestId: null,
+      });
+    }
+    await sink.emit({
+      type: 'error',
+      errorCategory: finalAttempt?.errorCategory ?? 'config',
+      message: finalAttempt?.message ?? 'No available AI model for this use case',
+      attempts,
+    });
+  }
+
   private async attemptTargets(catalog: AiGatewayCatalog, request: AiInvokeRequest): Promise<AttemptTarget[]> {
     const assignment = catalog.assignments.find((item) => item.useCase === request.useCase);
     const modelIds = this.unique([
@@ -317,6 +493,73 @@ export class InvokeService {
       }
       throw error;
     } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async streamUpstream(
+    {
+      target,
+      request,
+      requestFormat,
+      secret,
+    }: {
+      target: AttemptTarget;
+      request: AiInvokeRequest;
+      requestFormat: AiProviderRequestFormat;
+      secret: string;
+    },
+    externalSignal: AbortSignal | undefined,
+    onDelta: (delta: { text: string }) => void | Promise<void>,
+  ): Promise<InvokeSuccess> {
+    const provider = target.channel
+      ? {
+          ...target.provider,
+          baseUrl: target.channel.upstreamBaseUrl,
+          authType: target.channel.authType,
+          requestFormat: target.channel.requestFormat,
+        }
+      : target.provider;
+    const model = target.channel
+      ? {
+          ...target.model,
+          name: target.channel.upstreamModelName,
+        }
+      : target.model;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, request.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    const abort = () => controller.abort();
+    externalSignal?.addEventListener('abort', abort, { once: true });
+    try {
+      const result = await this.adapterRegistry.adapterFor(requestFormat).stream(
+        {
+          provider,
+          model,
+          request,
+          secret,
+          parameterConfig: target.channel?.parameterConfig ?? {},
+          signal: controller.signal,
+        },
+        onDelta,
+      );
+      return {
+        ...result,
+        latencyMs: Date.now() - startedAt,
+      };
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw timedOut
+          ? this.invokeError('timeout', 'AI provider stream timed out', true)
+          : this.invokeError('timeout', 'AI provider stream was interrupted', true);
+      }
+      throw error;
+    } finally {
+      externalSignal?.removeEventListener('abort', abort);
       clearTimeout(timeout);
     }
   }

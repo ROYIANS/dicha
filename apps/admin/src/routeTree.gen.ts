@@ -18,6 +18,7 @@ import { Route as AdminDichaAiRouteImport } from './routes/_admin.dicha-ai'
 import { Route as AdminBasicRouteImport } from './routes/_admin.basic'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
 import { Route as AdminAiProvidersRouteImport } from './routes/_admin.ai-providers'
+import { Route as AdminAiInvokeTestRouteImport } from './routes/_admin.ai-invoke-test'
 import { Route as AdminCreditsRulesRouteImport } from './routes/_admin.credits.rules'
 import { Route as AdminCreditsRedemptionCodesRouteImport } from './routes/_admin.credits.redemption-codes'
 import { Route as AdminCreditsLedgerRouteImport } from './routes/_admin.credits.ledger'
@@ -68,6 +69,11 @@ const AdminAiProvidersRoute = AdminAiProvidersRouteImport.update({
   path: '/ai-providers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAiInvokeTestRoute = AdminAiInvokeTestRouteImport.update({
+  id: '/ai-invoke-test',
+  path: '/ai-invoke-test',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCreditsRulesRoute = AdminCreditsRulesRouteImport.update({
   id: '/credits/rules',
   path: '/credits/rules',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AdminIndexRoute
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/ai-invoke-test': typeof AdminAiInvokeTestRoute
   '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/basic': typeof AdminBasicRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/ai-invoke-test': typeof AdminAiInvokeTestRoute
   '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/basic': typeof AdminBasicRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/_admin/ai-invoke-test': typeof AdminAiInvokeTestRoute
   '/_admin/ai-providers': typeof AdminAiProvidersRoute
   '/_admin/analytics': typeof AdminAnalyticsRoute
   '/_admin/basic': typeof AdminBasicRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/unauthorized'
+    | '/ai-invoke-test'
     | '/ai-providers'
     | '/analytics'
     | '/basic'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/unauthorized'
+    | '/ai-invoke-test'
     | '/ai-providers'
     | '/analytics'
     | '/basic'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/login'
     | '/unauthorized'
+    | '/_admin/ai-invoke-test'
     | '/_admin/ai-providers'
     | '/_admin/analytics'
     | '/_admin/basic'
@@ -262,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiProvidersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/ai-invoke-test': {
+      id: '/_admin/ai-invoke-test'
+      path: '/ai-invoke-test'
+      fullPath: '/ai-invoke-test'
+      preLoaderRoute: typeof AdminAiInvokeTestRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/credits/rules': {
       id: '/_admin/credits/rules'
       path: '/credits/rules'
@@ -301,6 +320,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAiInvokeTestRoute: typeof AdminAiInvokeTestRoute
   AdminAiProvidersRoute: typeof AdminAiProvidersRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminBasicRoute: typeof AdminBasicRoute
@@ -315,6 +335,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAiInvokeTestRoute: AdminAiInvokeTestRoute,
   AdminAiProvidersRoute: AdminAiProvidersRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminBasicRoute: AdminBasicRoute,

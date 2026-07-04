@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
 import {
   Bot,
+  CircleStop,
   Clock3,
   FlaskConical,
   Layers3,
@@ -9,7 +9,7 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type {
@@ -19,7 +19,7 @@ import type {
   AiSettlementCurrency,
   AiUsageStatus,
 } from '@dicha/shared';
-import { invokeAi } from '@/api/ai';
+import { invokeAiStream } from '@/api/ai';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
@@ -42,19 +42,62 @@ export function AiInvokeDemoPage() {
   const [useCase, setUseCase] = useState<AiModelUseCase>('assistant');
   const [modelId, setModelId] = useState('');
   const [prompt, setPrompt] = useState('请用一句话介绍一下滴茶这个应用。');
+  const [isRunning, setIsRunning] = useState(false);
+  const [streamText, setStreamText] = useState('');
+  const [streamAttempts, setStreamAttempts] = useState<AiInvokeAttempt[]>([]);
+  const [result, setResult] = useState<AiInvokeResponse | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: () =>
-      invokeAi({
-        useCase,
-        messages: [{ role: 'user', content: prompt.trim() }],
-        ...(modelId.trim() ? { modelId: modelId.trim() } : {}),
-      }),
-    onSuccess: () => toast.success(t('settings.detail.aiInvokeDemo.success')),
-    onError: () => toast.error(t('settings.detail.aiInvokeDemo.failed')),
-  });
+  const runStream = async () => {
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsRunning(true);
+    setStreamText('');
+    setStreamAttempts([]);
+    setResult(null);
+    setError(null);
+    try {
+      await invokeAiStream(
+        {
+          useCase,
+          messages: [{ role: 'user', content: prompt.trim() }],
+          ...(modelId.trim() ? { modelId: modelId.trim() } : {}),
+        },
+        {
+          onDelta: (event) => setStreamText((current) => current + event.text),
+          onAttempt: (event) => setStreamAttempts((current) => [...current, event.attempt]),
+          onFinal: (event) => {
+            setResult(event.response);
+            setStreamText(event.response.text);
+            toast.success(t('settings.detail.aiInvokeDemo.success'));
+          },
+          onError: (event) => {
+            setError(new Error(event.message));
+            setStreamAttempts(event.attempts);
+            toast.error(t('settings.detail.aiInvokeDemo.failed'));
+          },
+        },
+        controller.signal,
+      );
+    } catch (caught) {
+      if (controller.signal.aborted) {
+        toast.message(t('settings.detail.aiInvokeDemo.cancelled'));
+      } else {
+        setError(caught instanceof Error ? caught : new Error(String(caught)));
+        toast.error(t('settings.detail.aiInvokeDemo.failed'));
+      }
+    } finally {
+      abortRef.current = null;
+      setIsRunning(false);
+    }
+  };
 
-  const canSubmit = prompt.trim().length > 0 && !mutation.isPending;
+  const cancelStream = () => {
+    abortRef.current?.abort();
+  };
+
+  const canSubmit = prompt.trim().length > 0 && !isRunning;
 
   return (
     <SettingsDetailShell
@@ -79,7 +122,7 @@ export function AiInvokeDemoPage() {
               <select
                 value={useCase}
                 onChange={(event) => setUseCase(event.target.value as AiModelUseCase)}
-                disabled={mutation.isPending}
+                disabled={isRunning}
                 className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {useCaseOptions.map((item) => (
@@ -97,7 +140,7 @@ export function AiInvokeDemoPage() {
               <input
                 value={modelId}
                 onChange={(event) => setModelId(event.target.value)}
-                disabled={mutation.isPending}
+                disabled={isRunning}
                 placeholder={t('settings.detail.aiInvokeDemo.modelIdPlaceholder')}
                 className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -110,27 +153,45 @@ export function AiInvokeDemoPage() {
               <textarea
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
-                disabled={mutation.isPending}
+                disabled={isRunning}
                 placeholder={t('settings.detail.aiInvokeDemo.promptPlaceholder')}
                 className="min-h-40 w-full resize-y rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] leading-relaxed text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
               />
             </label>
 
-            <button
-              type="button"
-              disabled={!canSubmit}
-              onClick={() => mutation.mutate()}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Send size={14} />
-              {mutation.isPending
-                ? t('settings.detail.aiInvokeDemo.running')
-                : t('settings.detail.aiInvokeDemo.run')}
-            </button>
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <button
+                type="button"
+                disabled={!canSubmit}
+                onClick={() => void runStream()}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Send size={14} />
+                {isRunning
+                  ? t('settings.detail.aiInvokeDemo.running')
+                  : t('settings.detail.aiInvokeDemo.run')}
+              </button>
+              {isRunning ? (
+                <button
+                  type="button"
+                  onClick={cancelStream}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 text-[12px] font-medium text-ink transition-colors hover:bg-canvas"
+                >
+                  <CircleStop size={14} />
+                  {t('settings.detail.aiInvokeDemo.cancel')}
+                </button>
+              ) : null}
+            </div>
           </div>
         </section>
 
-        <InvokeResultPanel result={mutation.data} error={mutation.error} />
+        <InvokeResultPanel
+          result={result}
+          error={error}
+          isRunning={isRunning}
+          streamText={streamText}
+          streamAttempts={streamAttempts}
+        />
       </div>
     </SettingsDetailShell>
   );
@@ -139,13 +200,19 @@ export function AiInvokeDemoPage() {
 function InvokeResultPanel({
   result,
   error,
+  isRunning,
+  streamText,
+  streamAttempts,
 }: {
-  result: AiInvokeResponse | undefined;
+  result: AiInvokeResponse | null;
   error: Error | null;
+  isRunning: boolean;
+  streamText: string;
+  streamAttempts: AiInvokeAttempt[];
 }) {
   const { t } = useTranslation();
 
-  if (!result) {
+  if (!result && !isRunning && !streamText && streamAttempts.length === 0) {
     return (
       <section className="grid min-h-[420px] place-items-center rounded-md border border-hairline bg-surface px-6 text-center">
         <div className="max-w-sm">
@@ -156,6 +223,37 @@ function InvokeResultPanel({
               : t('settings.detail.aiInvokeDemo.noResponse')}
           </p>
         </div>
+      </section>
+    );
+  }
+  if (!result) {
+    return (
+      <section className="space-y-4">
+        <div className="rounded-md border border-hairline bg-surface">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-surface-alt px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Bot size={15} className="text-ink-faint" />
+              <h2 className="text-[13px] font-semibold text-ink">
+                {t('settings.detail.aiInvokeDemo.responseTitle')}
+              </h2>
+            </div>
+            <span className="rounded-md border border-hairline bg-chip-mist px-2 py-1 text-[11px] font-medium text-mist">
+              {isRunning ? t('settings.detail.aiInvokeDemo.streaming') : t('settings.detail.aiInvokeDemo.status.failure')}
+            </span>
+          </div>
+          <div className="space-y-4 p-4">
+            {error ? (
+              <div className="flex gap-2 rounded-md border border-hairline bg-chip-pink px-3 py-2 text-[12px] leading-relaxed text-pink">
+                <TriangleAlert size={14} className="mt-0.5 shrink-0" />
+                <span>{error.message}</span>
+              </div>
+            ) : null}
+            <pre className="min-h-36 whitespace-pre-wrap rounded-md border border-hairline bg-canvas px-4 py-3 text-[13px] leading-relaxed text-ink">
+              {streamText || t('settings.detail.aiInvokeDemo.waiting')}
+            </pre>
+          </div>
+        </div>
+        <AttemptsPanel attempts={streamAttempts} />
       </section>
     );
   }

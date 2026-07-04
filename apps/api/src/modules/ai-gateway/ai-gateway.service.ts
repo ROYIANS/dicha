@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 import {
   AiConfigUpdateResponseSchema,
   AiGatewayCatalogSchema,
+  AiInvokeRequestSchema,
   AiInvokeResponseSchema,
   AiProviderCheckResponseSchema,
   AiProviderSyncModelsResponseSchema,
@@ -90,6 +91,48 @@ export class AiGatewayService {
       body,
       schema: AiInvokeResponseSchema,
     });
+  }
+
+  async streamInvoke(
+    ownerId: string,
+    body: AiInvokeRequest,
+    signal: AbortSignal,
+  ): Promise<Response> {
+    const headers = new Headers();
+    headers.set('content-type', 'application/json');
+    headers.set('accept', 'text/event-stream');
+    if (this.internalToken) {
+      headers.set('x-ai-gateway-token', this.internalToken);
+    }
+    headers.set('x-dicha-user-id', ownerId);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/invoke/stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(AiInvokeRequestSchema.parse(body)),
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new BadGatewayException(
+          await this.gatewayErrorMessage(response, `${this.baseUrl}/invoke/stream`),
+        );
+      }
+      if (!response.body) {
+        throw new BadGatewayException('AI Gateway returned an empty stream');
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof BadGatewayException) throw error;
+      if (error instanceof ZodError) {
+        throw new BadGatewayException('AI Gateway stream request shape mismatch');
+      }
+      this.logger.error(
+        `AI Gateway stream unavailable at ${this.baseUrl}/invoke/stream: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new BadGatewayException('AI Gateway is unavailable');
+    }
   }
 
   private async request<T>(

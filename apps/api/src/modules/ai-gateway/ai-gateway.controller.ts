@@ -1,7 +1,7 @@
-import { Controller, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
-import { contract } from '@dicha/shared';
-import type { Request } from 'express';
+import { AiInvokeRequestSchema, contract, type AiInvokeRequest } from '@dicha/shared';
+import type { Request, Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { AiGatewayService } from './ai-gateway.service';
 
@@ -72,5 +72,48 @@ export class AiGatewayController {
       status: 200,
       body: await this.aiGateway.invoke(request.user.id, body),
     }));
+  }
+
+  @Post('ai/invoke/stream')
+  async streamInvoke(
+    @Req() request: AuthenticatedRequest,
+    @Body() body: AiInvokeRequest,
+    @Res() response: Response,
+  ): Promise<void> {
+    const controller = new AbortController();
+    response.on('close', () => {
+      if (!response.writableEnded) controller.abort();
+    });
+    const upstream = await this.aiGateway.streamInvoke(
+      request.user.id,
+      AiInvokeRequestSchema.parse(body),
+      controller.signal,
+    );
+
+    response.status(200);
+    response.setHeader('Content-Type', upstream.headers.get('content-type') ?? 'text/event-stream; charset=utf-8');
+    response.setHeader('Cache-Control', 'no-cache, no-transform');
+    response.setHeader('Connection', 'keep-alive');
+    response.setHeader('X-Accel-Buffering', 'no');
+    response.flushHeaders();
+    await pipeStream(upstream.body, response);
+  }
+}
+
+async function pipeStream(stream: ReadableStream<Uint8Array> | null, response: Response): Promise<void> {
+  if (!stream) {
+    response.end();
+    return;
+  }
+  const reader = stream.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      response.write(value);
+    }
+  } finally {
+    reader.releaseLock();
+    response.end();
   }
 }

@@ -619,6 +619,48 @@ export const AiInvokeResponseSchema = z.object({
 });
 export type AiInvokeResponse = z.infer<typeof AiInvokeResponseSchema>;
 
+export const AiInvokeStreamStartEventSchema = z.object({
+  type: z.literal('start'),
+  requestId: z.string(),
+  providerId: z.string().nullable(),
+  providerName: z.string().nullable(),
+  modelId: z.string().nullable(),
+  modelName: z.string().nullable(),
+  requestFormat: AiProviderRequestFormatSchema.nullable(),
+  generatedAt: z.string().datetime(),
+});
+
+export const AiInvokeStreamAttemptEventSchema = z.object({
+  type: z.literal('attempt'),
+  attempt: AiInvokeAttemptSchema,
+});
+
+export const AiInvokeStreamDeltaEventSchema = z.object({
+  type: z.literal('delta'),
+  text: z.string(),
+});
+
+export const AiInvokeStreamFinalEventSchema = z.object({
+  type: z.literal('final'),
+  response: AiInvokeResponseSchema,
+});
+
+export const AiInvokeStreamErrorEventSchema = z.object({
+  type: z.literal('error'),
+  errorCategory: AiInvokeErrorCategorySchema,
+  message: z.string().max(500),
+  attempts: z.array(AiInvokeAttemptSchema),
+});
+
+export const AiInvokeStreamEventSchema = z.discriminatedUnion('type', [
+  AiInvokeStreamStartEventSchema,
+  AiInvokeStreamAttemptEventSchema,
+  AiInvokeStreamDeltaEventSchema,
+  AiInvokeStreamFinalEventSchema,
+  AiInvokeStreamErrorEventSchema,
+]);
+export type AiInvokeStreamEvent = z.infer<typeof AiInvokeStreamEventSchema>;
+
 export const aiContract = c.router({
   getCatalog: {
     method: 'GET',

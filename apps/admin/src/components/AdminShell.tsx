@@ -49,6 +49,7 @@ const navSections = [
     items: [
       { to: '/ai-providers', label: '供应商渠道', icon: Bot },
       { to: '/dicha-ai', label: 'DicHA AI 服务', icon: Database },
+      { to: '/ai-invoke-test', label: 'AI 调用测试', icon: Activity },
       { label: '模型与用途', icon: Database, planned: true },
     ],
   },
@@ -81,6 +82,7 @@ type AdminNavItem = {
     | '/basic'
     | '/ai-providers'
     | '/dicha-ai'
+    | '/ai-invoke-test'
     | '/credits/rules'
     | '/credits/grants'
     | '/credits/balances'
