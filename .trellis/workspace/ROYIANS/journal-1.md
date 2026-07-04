@@ -1197,3 +1197,37 @@ Persisted AI provider/catalog state into PostgreSQL, split admin AI provider cha
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: Refine Admin DicHA AI billing analytics
+
+**Date**: 2026-07-04
+**Task**: Refine Admin DicHA AI billing analytics
+**Branch**: `main`
+
+### Summary
+
+Implemented real CNY/USD AI usage cost recording and admin DicHA analytics improvements, then documented the cost-to-credit-to-user-price billing layers.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `258c1f5` | (see git log) |
+| `16d6506` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
