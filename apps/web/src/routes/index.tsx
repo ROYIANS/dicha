@@ -40,7 +40,6 @@ export const Route = createFileRoute('/')({
    编目网格 / 大金句拼格 / 清单台账 / 非对称信笺 / 留白收尾。
    ════════════════════════════════════════════════════════════════════════════ */
 
-
 const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
 const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
 const LP = {
@@ -56,33 +55,115 @@ const LP = {
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
 const FEATURES: { id: string; icon: LucideIcon; title: string; body: string }[] = [
-  { id: 'capture', icon: ScanLine, title: '录入即装饰', body: '拍照，或者轻轻说一句。它自己就认得了。把东西放进滴茶，就像往窗台上摆一盆花，而不是往表格里塞一行字。' },
-  { id: 'poem', icon: Feather, title: '物品会自己长出一句诗', body: '每件东西都配有一句话，平时收着，只在你翻开它的时候静静出现。' },
-  { id: 'dust', icon: Wind, title: '旧了的东西，会落一点灰', body: '久未触碰的物品会慢慢积灰。不催你清空，也不算 KPI，只是承认时间确实过去了。' },
-  { id: 'zimomo', icon: MessageSquareText, title: '齐默默在旁边，不催你', body: '一个不轻易开口的同伴。它记得所有东西的位置，但只在你需要时才轻声出现。' },
+  {
+    id: 'capture',
+    icon: ScanLine,
+    title: '先放进来，慢慢整理',
+    body: '拍一张照，或轻轻说一句。滴茶会帮你认出来，先安安静静收好，等你有空再慢慢补全。',
+  },
+  {
+    id: 'poem',
+    icon: Feather,
+    title: '给物品留一句话',
+    body: '不是每件东西都要有意义。但有些时候，一句话能把它和某个日子轻轻系在一起。',
+  },
+  {
+    id: 'dust',
+    icon: Wind,
+    title: '旧物会落一点灰',
+    body: '久未触碰的物品会慢慢积灰。它不催你清空，只是温柔地提醒：时间确实从这里经过。',
+  },
+  {
+    id: 'zimomo',
+    icon: MessageSquareText,
+    title: '齐默默在旁边',
+    body: '一个话不多的同伴。它记得东西在哪里，也知道什么时候应该保持安静。',
+  },
 ];
 
 const MARQUEE_ITEMS = [
-  '白瓷盖碗', '牛皮笔记本', '胶片相机', '外婆的顶针', '亚麻衬衫', '维生素 D',
-  '《百年孤独》', '手冲咖啡壶', '旧毛衣', '登山绳', '薄荷茶', '备用钥匙',
-  '尤加利干花', '奶酪刨', '未拆封的画框', '冬被',
+  '白瓷盖碗',
+  '牛皮笔记本',
+  '胶片相机',
+  '外婆的顶针',
+  '亚麻衬衫',
+  '维生素 D',
+  '《百年孤独》',
+  '手冲咖啡壶',
+  '旧毛衣',
+  '登山绳',
+  '薄荷茶',
+  '备用钥匙',
+  '尤加利干花',
+  '奶酪刨',
+  '未拆封的画框',
+  '冬被',
 ];
 
 const SPECS: { k: string; v: string }[] = [
   { k: '房间', v: '6 间' },
   { k: '物品', v: '无上限' },
-  { k: '提醒', v: '不急，但刚好记得' },
+  { k: '提醒', v: '不催，也不忘' },
   { k: '平台', v: 'Web · iOS · Android' },
-  { k: '同步', v: '实时' },
+  { k: '同步', v: '总在身边' },
 ];
 
-const ROOMS: { id: string; no: string; icon: LucideIcon; label: string; caption: string; tint: string }[] = [
-  { id: 'wardrobe', no: '01', icon: Shirt, label: '衣橱', caption: '挂着一整年的晴雨。', tint: 'lavender' },
-  { id: 'library', no: '02', icon: BookOpen, label: '书房', caption: '书在，时间就慢一点。', tint: 'peach' },
-  { id: 'storage', no: '03', icon: Package, label: '杂物间', caption: '「以后用得上」，是家里最温柔的理由。', tint: 'sage' },
-  { id: 'fridge', no: '04', icon: Refrigerator, label: '冰箱', caption: '新鲜的、快过期的，都值得看一眼。', tint: 'mist' },
-  { id: 'meds', no: '05', icon: Pill, label: '药盒', caption: '不生病的时候，也记得打开看看。', tint: 'pink' },
-  { id: 'more', no: '06', icon: PlusIcon, label: '更多房间', caption: '未来，还会有更多。', tint: '' },
+const ROOMS: {
+  id: string;
+  no: string;
+  icon: LucideIcon;
+  label: string;
+  caption: string;
+  tint: string;
+}[] = [
+  {
+    id: 'wardrobe',
+    no: '01',
+    icon: Shirt,
+    label: '衣橱',
+    caption: '挂着一整年的晴雨。',
+    tint: 'lavender',
+  },
+  {
+    id: 'library',
+    no: '02',
+    icon: BookOpen,
+    label: '书房',
+    caption: '书在，时间就慢一点。',
+    tint: 'peach',
+  },
+  {
+    id: 'storage',
+    no: '03',
+    icon: Package,
+    label: '杂物间',
+    caption: '「以后用得上」，是家里最温柔的理由。',
+    tint: 'sage',
+  },
+  {
+    id: 'fridge',
+    no: '04',
+    icon: Refrigerator,
+    label: '冰箱',
+    caption: '新鲜的、快过期的，都值得看一眼。',
+    tint: 'mist',
+  },
+  {
+    id: 'meds',
+    no: '05',
+    icon: Pill,
+    label: '药盒',
+    caption: '不生病的时候，也记得打开看看。',
+    tint: 'pink',
+  },
+  {
+    id: 'more',
+    no: '06',
+    icon: PlusIcon,
+    label: '更多房间',
+    caption: '未来，还会有更多。',
+    tint: '',
+  },
 ];
 
 const PRINCIPLES: { t: string; d: string }[] = [
@@ -93,14 +174,14 @@ const PRINCIPLES: { t: string; d: string }[] = [
 ];
 
 const EXTRAS: { t: string; d: string }[] = [
-  { t: '全文搜索', d: '哪怕只记得一个字，也能找到。' },
-  { t: '到期提醒', d: '药、食物、借出去的书，不容易忘。' },
-  { t: '空间统计', d: '每个房间住了多少东西，看一眼就知道。' },
-  { t: '多端同步', d: '手机和网页，总是同一本账。' },
-  { t: '心情记录', d: '记东西的时候，也记下今天的心情。' },
-  { t: '随时导出', d: '你的东西，永远是你的。' },
-  { t: '落灰提醒', d: '很久没碰的东西，它会轻轻说一声。' },
-  { t: '数据私有', d: '默认只有你自己能看到。' },
+  { t: '全文搜索', d: '只记得一点点，也能顺着线索找回来。' },
+  { t: '到期提醒', d: '药、食物、借出去的书，到时候轻轻说一声。' },
+  { t: '空间统计', d: '每个房间住了多少东西，心里慢慢有数。' },
+  { t: '多端同步', d: '手机和网页，翻开都是同一本小账。' },
+  { t: '心情记录', d: '记东西的时候，也给今天留一点余温。' },
+  { t: '随时导出', d: '你的东西和记录，始终归你自己。' },
+  { t: '落灰提醒', d: '很久没碰的东西，会被温柔地想起来。' },
+  { t: '数据私有', d: '默认只给你一个人看见。' },
 ];
 
 // ─── 工业装饰原子 ──────────────────────────────────────────────────────────────
@@ -132,12 +213,33 @@ function Slash() {
   const id = useId().replace(/:/g, '');
   // 上沿 1px 线画在元素内部（top:0..1），骑线中心在 0.5px → 垂直 offset 改 2.5px
   return (
-    <div className="relative h-3.5 w-full" style={{ '--node-vertical-offset': '2.5px' } as CSSProperties}>
-      <div aria-hidden className="absolute left-1/2 top-0 h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
-      <div aria-hidden className="absolute bottom-0 left-1/2 h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
-      <svg aria-hidden className="absolute inset-x-0 bottom-[1px] top-[1px] w-full" style={{ opacity: 0.45, color: RULE }}>
+    <div
+      className="relative h-3.5 w-full"
+      style={{ '--node-vertical-offset': '2.5px' } as CSSProperties}
+    >
+      <div
+        aria-hidden
+        className="absolute left-1/2 top-0 h-px w-[200vw] -translate-x-1/2"
+        style={{ backgroundColor: LINE }}
+      />
+      <div
+        aria-hidden
+        className="absolute bottom-0 left-1/2 h-px w-[200vw] -translate-x-1/2"
+        style={{ backgroundColor: LINE }}
+      />
+      <svg
+        aria-hidden
+        className="absolute inset-x-0 bottom-[1px] top-[1px] w-full"
+        style={{ opacity: 0.45, color: RULE }}
+      >
         <defs>
-          <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <pattern
+            id={id}
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
             <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
           </pattern>
         </defs>
@@ -156,9 +258,21 @@ function HRule() {
 
 /** 侧沟分段标尺：一条被切成不等段的竖线，部分实段部分虚段。
     zed 式贴边：1px 线压在 rail 的内边界上（side 边 -0.5px，线中心 = 边界）。 */
-function Ruler({ segs, side, color = RULE }: { segs: { f: number; dash?: boolean }[]; side: 'left' | 'right'; color?: string }) {
+function Ruler({
+  segs,
+  side,
+  color = RULE,
+}: {
+  segs: { f: number; dash?: boolean }[];
+  side: 'left' | 'right';
+  color?: string;
+}) {
   return (
-    <div aria-hidden className="absolute inset-y-0 flex flex-col" style={{ width: 1, color, [side]: -0.5 }}>
+    <div
+      aria-hidden
+      className="absolute inset-y-0 flex flex-col"
+      style={{ width: 1, color, [side]: -0.5 }}
+    >
       {segs.map((s, i) => (
         <div
           key={i}
@@ -194,7 +308,14 @@ function Barcode({ rail, color = RULE }: { rail: 'left' | 'right'; color?: strin
       <defs>
         <pattern id={id} width="32" height="198" patternUnits="userSpaceOnUse">
           {rows.map((r, i) => (
-            <rect key={i} x={rail === 'left' ? 32 - r.w : 0} y={r.y} width={r.w} height="1" fill="currentColor" />
+            <rect
+              key={i}
+              x={rail === 'left' ? 32 - r.w : 0}
+              y={r.y}
+              width={r.w}
+              height="1"
+              fill="currentColor"
+            />
           ))}
         </pattern>
       </defs>
@@ -219,7 +340,11 @@ function GridPattern({ mask = 'to bottom' }: { mask?: string }) {
     <svg
       aria-hidden
       className="pointer-events-none absolute inset-0 z-0 size-full"
-      style={{ color: LP.deco, opacity: 0.12, maskImage: `linear-gradient(${mask}, #000, transparent)` }}
+      style={{
+        color: LP.deco,
+        opacity: 0.12,
+        maskImage: `linear-gradient(${mask}, #000, transparent)`,
+      }}
     >
       <defs>
         <pattern id={id} width="8" height="8" patternUnits="userSpaceOnUse" x="-1" y="-1">
@@ -235,10 +360,109 @@ function GridPattern({ mask = 'to bottom' }: { mask?: string }) {
 function DotPattern() {
   const id = useId().replace(/:/g, '');
   return (
-    <svg aria-hidden className="pointer-events-none absolute inset-0 z-0 size-full" style={{ color: LP.deco, opacity: 0.22 }}>
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-0 size-full"
+      style={{ color: LP.deco, opacity: 0.22 }}
+    >
       <defs>
         <pattern id={id} width="8" height="8" patternUnits="userSpaceOnUse">
           <circle cx="4" cy="4" r="0.75" fill="currentColor" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+type PatternVariant = 'weave' | 'ledger' | 'ticks';
+
+function PatternField({
+  variant,
+  className = '',
+  opacity = 0.22,
+  mask = 'linear-gradient(to bottom, #000, transparent)',
+}: {
+  variant: PatternVariant;
+  className?: string;
+  opacity?: number;
+  mask?: string;
+}) {
+  const id = useId().replace(/:/g, '');
+
+  if (variant === 'ledger') {
+    return (
+      <svg
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 z-0 size-full ${className}`}
+        style={{ color: LP.deco, opacity, maskImage: mask, WebkitMaskImage: mask }}
+      >
+        <defs>
+          <pattern id={id} width="36" height="28" patternUnits="userSpaceOnUse">
+            <path d="M0 7.5H36M0 21.5H36" stroke="currentColor" strokeWidth="1" fill="none" />
+            <path
+              d="M18 .5V28"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeDasharray="1 7"
+              fill="none"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${id})`} />
+      </svg>
+    );
+  }
+
+  if (variant === 'ticks') {
+    return (
+      <svg
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 z-0 size-full ${className}`}
+        style={{ color: LP.deco, opacity, maskImage: mask, WebkitMaskImage: mask }}
+      >
+        <defs>
+          <pattern id={id} width="24" height="24" patternUnits="userSpaceOnUse">
+            <path
+              d="M6 .5V8M18 16v7.5M.5 18H8M16 6h7.5"
+              stroke="currentColor"
+              strokeWidth="1"
+              fill="none"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${id})`} />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden
+      className={`pointer-events-none absolute inset-0 z-0 size-full ${className}`}
+      style={{ color: LP.deco, opacity, maskImage: mask, WebkitMaskImage: mask }}
+    >
+      <defs>
+        <pattern id={id} width="48" height="48" patternUnits="userSpaceOnUse">
+          <path
+            d="M-8 30C8 12 24 12 40 30S72 48 88 30"
+            stroke="currentColor"
+            strokeWidth="0.9"
+            fill="none"
+          />
+          <path
+            d="M-8 18C8 36 24 36 40 18S72 0 88 18"
+            stroke="currentColor"
+            strokeWidth="0.9"
+            fill="none"
+          />
+          <path
+            d="M24 0V48M0 24H48"
+            stroke="currentColor"
+            strokeWidth="0.75"
+            strokeDasharray="1 7"
+            fill="none"
+          />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id})`} />
@@ -337,7 +561,11 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
       <Node pos="bottom-right" className="hidden lg:block" />
 
       {/* 五段 rail 框架（header 区 rail 用实线） */}
-      <span aria-hidden className="w-4 shrink-0 border-r sm:w-6 md:w-12 lg:border-r-0" style={{ borderColor: LINE }} />
+      <span
+        aria-hidden
+        className="w-4 shrink-0 border-r sm:w-6 md:w-12 lg:border-r-0"
+        style={{ borderColor: LINE }}
+      />
       <span aria-hidden className="hidden flex-1 border-x lg:block" style={{ borderColor: LINE }} />
 
       <nav className="lp-container-max-w relative isolate z-[2] flex max-md:min-w-0 flex-1 items-center justify-between gap-4 px-3 [--node-horizontal-offset:-3.5px] lg:gap-0 lg:px-3.5">
@@ -348,21 +576,29 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
         <div className="flex min-w-0 items-center gap-4">
           <a href="#top" className="flex shrink-0 items-center gap-2">
             <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
-            <span className="text-[16px] font-semibold font-serif text-ink">
-              滴茶
-            </span>
+            <span className="text-[16px] font-semibold font-serif text-ink">滴茶</span>
           </a>
           <div className="hidden items-center gap-0.5 lg:flex">
             {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="lp-nav-link inline-flex h-8 items-center rounded-md px-2.5">
+              <a
+                key={n.href}
+                href={n.href}
+                className="lp-nav-link inline-flex h-8 items-center rounded-md px-2.5"
+              >
                 <span className="text-[13px]">{n.label}</span>
               </a>
             ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md" iconSize={15} />
-          <Link to="/home" className="lp-btn lp-btn-primary hidden items-center rounded-md px-3 py-1.5 lg:inline-flex">
+          <ThemeToggle
+            className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md"
+            iconSize={15}
+          />
+          <Link
+            to="/home"
+            className="lp-btn lp-btn-primary hidden items-center rounded-md px-3 py-1.5 lg:inline-flex"
+          >
             <span className="text-[13px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
@@ -381,7 +617,11 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
       </nav>
 
       <span aria-hidden className="hidden flex-1 border-x lg:block" style={{ borderColor: LINE }} />
-      <span aria-hidden className="w-4 shrink-0 border-l sm:w-6 md:w-12 lg:border-l-0" style={{ borderColor: LINE }} />
+      <span
+        aria-hidden
+        className="w-4 shrink-0 border-l sm:w-6 md:w-12 lg:border-l-0"
+        style={{ borderColor: LINE }}
+      />
     </header>
   );
 }
@@ -394,12 +634,20 @@ function Announce() {
       className="lp-intro-banner group relative block py-2.5 text-center"
       style={{ '--node-vertical-offset': '2.5px' } as CSSProperties}
     >
-      <span aria-hidden className="absolute bottom-0 left-1/2 block h-px w-[200vw] -translate-x-1/2" style={{ backgroundColor: LINE }} />
+      <span
+        aria-hidden
+        className="absolute bottom-0 left-1/2 block h-px w-[200vw] -translate-x-1/2"
+        style={{ backgroundColor: LINE }}
+      />
       <Node pos="bottom-left" className="hidden lg:block" />
       <Node pos="bottom-right" className="hidden lg:block" />
-      <span className="text-[13px] tracking-wide text-lp-brand">新功能：</span>
-      <span className="text-[13px] font-medium font-serif tracking-wide text-ink">齐默默 —— 陪你慢慢归置</span>
-      <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">→</span>
+      <span className="text-[13px] tracking-wide text-lp-brand">新的陪伴：</span>
+      <span className="text-[13px] font-medium font-serif tracking-wide text-ink">
+        齐默默会在旁边，慢慢帮你归置
+      </span>
+      <span className="ml-2 inline-block text-[13px] text-ink-soft transition-transform group-hover:translate-x-0.5">
+        →
+      </span>
     </a>
   );
 }
@@ -437,14 +685,22 @@ function SectionFrame({
       >
         {leftNarrow && <Ruler side="right" segs={leftNarrow} />}
       </span>
-      <span className={`relative hidden flex-1 lg:block ${tracks ? 'border-x' : ''}`} style={trackBorder}>
+      <span
+        className={`relative hidden flex-1 lg:block ${tracks ? 'border-x' : ''}`}
+        style={trackBorder}
+      >
         {leftFlex?.ruler && <Ruler side="right" segs={leftFlex.ruler} />}
         {leftFlex?.barcode && <Barcode rail="left" />}
       </span>
 
-      <div className="lp-container-max-w relative max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">{children}</div>
+      <div className="lp-container-max-w relative max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
+        {children}
+      </div>
 
-      <span className={`relative hidden flex-1 lg:block ${tracks ? 'border-x' : ''}`} style={trackBorder}>
+      <span
+        className={`relative hidden flex-1 lg:block ${tracks ? 'border-x' : ''}`}
+        style={trackBorder}
+      >
         {rightFlex?.ruler && <Ruler side="left" segs={rightFlex.ruler} />}
         {rightFlex?.barcode && <Barcode rail="right" />}
       </span>
@@ -467,7 +723,10 @@ const RAILS = {
   hero: {
     leftNarrow: [{ f: 1.3 }, { f: 4.6, dash: true }, { f: 2.4 }],
     leftFlex: { ruler: [{ f: 2.9 }, { f: 1.9, dash: true }, { f: 3.7 }], barcode: true },
-    rightFlex: { ruler: [{ f: 2.9, dash: true }, { f: 1.6 }, { f: 1.9, dash: true }, { f: 3.2 }], barcode: true },
+    rightFlex: {
+      ruler: [{ f: 2.9, dash: true }, { f: 1.6 }, { f: 1.9, dash: true }, { f: 3.2 }],
+      barcode: true,
+    },
     rightNarrow: [{ f: 2.4 }, { f: 2.9, dash: true }, { f: 3.8 }],
   },
   marquee: {
@@ -500,7 +759,10 @@ const RAILS = {
 
 function Hero() {
   return (
-    <section id="top" className="relative isolate overflow-clip px-6 pb-24 pt-20 text-center sm:pt-28">
+    <section
+      id="top"
+      className="relative isolate overflow-clip px-6 pb-24 pt-20 text-center sm:pt-28"
+    >
       {/* hero 底：暖色渐变（zed 层次：from/10 via/40）→ 网格叠上 */}
       <div aria-hidden className="lp-hero-gradient pointer-events-none absolute inset-0" />
       <HeroArt />
@@ -509,24 +771,38 @@ function Hero() {
           <span className="sr-only">滴茶</span>
           <BrandMark className="h-[clamp(4.5rem,12vw,8.5rem)] w-[clamp(6.75rem,18vw,12.75rem)]" />
         </h1>
-        <p className="mx-auto mt-6 max-w-[32ch] text-[16px] leading-relaxed text-ink-soft" style={{ textWrap: 'balance' }}>
-          把日子，一件一件归置妥帖。
+        <p
+          className="mx-auto mt-6 max-w-[32ch] text-[16px] leading-relaxed text-ink-soft"
+          style={{ textWrap: 'balance' }}
+        >
+          把日子里舍不得丢的东西，一件一件放好。
         </p>
-        <p className="mx-auto mt-3 max-w-[40ch] text-[12px] leading-relaxed text-ink-faint" style={{ textWrap: 'balance' }}>
-          dicha /ˈdiː.tʃɑː/ · 西语里的「幸福」，中文里的「慢下来」
+        <p
+          className="mx-auto mt-3 max-w-[40ch] text-[12px] leading-relaxed text-ink-faint"
+          style={{ textWrap: 'balance' }}
+        >
+          dicha /ˈdiː.tʃɑː/ · 西语里的幸福，也像中文里的「慢慢来」
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-4 py-2.5">
+          <Link
+            to="/home"
+            className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-4 py-2.5"
+          >
             <Play size={14} className="mr-2" />
             <span className="text-[14px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
-          <a href="#demo" className="lp-btn lp-btn-ghost inline-flex items-center rounded-md px-4 py-2.5">
-            <span className="text-[14px]">查看演示</span>
+          <a
+            href="#demo"
+            className="lp-btn lp-btn-ghost inline-flex items-center rounded-md px-4 py-2.5"
+          >
+            <span className="text-[14px]">先看一眼</span>
             <Key>C</Key>
           </a>
         </div>
-        <span className="mt-6 block text-[12px] text-ink-faint">支持 · 网页 · iOS · Android</span>
+        <span className="mt-6 block text-[12px] text-ink-faint">
+          网页、手机，之后都可以慢慢住进来
+        </span>
       </Reveal>
     </section>
   );
@@ -538,10 +814,7 @@ function HeroArt() {
   const gridId = useId().replace(/:/g, '');
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      <svg
-        aria-hidden
-        className="lp-hero-grid-lines absolute inset-0 size-full opacity-[0.028]"
-      >
+      <svg aria-hidden className="lp-hero-grid-lines absolute inset-0 size-full opacity-[0.028]">
         <defs>
           <pattern id={gridId} width="10" height="10" patternUnits="userSpaceOnUse" x="-1" y="-1">
             <path d="M.5 10V.5H10" fill="none" stroke="currentColor" strokeWidth="1" />
@@ -550,7 +823,11 @@ function HeroArt() {
         <rect width="100%" height="100%" strokeWidth="0" fill={`url(#${gridId})`} />
       </svg>
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <svg viewBox="0 0 480 480" className="lp-spin block w-[680px]" style={{ opacity: 0.035, color: 'var(--ink)' }}>
+        <svg
+          viewBox="0 0 480 480"
+          className="lp-spin block w-[680px]"
+          style={{ opacity: 0.035, color: 'var(--ink)' }}
+        >
           {squares.map((_, i) => {
             const s = 460 * 0.9 ** i;
             return (
@@ -579,8 +856,8 @@ function Marquee() {
     <div aria-hidden={hidden || undefined} className="flex shrink-0 items-center">
       {MARQUEE_ITEMS.map((it, i) => (
         <span key={i} className="flex items-center">
-          <span className="text-[11px] text-ink-faint">№{String(i + 1).padStart(3, '0')}</span>
-          <span className="ml-2 mr-6 text-[13px] text-ink-soft">{it}</span>
+          <span className="mr-3 size-1 rotate-45 border" style={{ borderColor: LINE }} />
+          <span className="mr-6 text-[13px] text-ink-soft">{it}</span>
           <span className="mr-6 size-1 rotate-45 border" style={{ borderColor: LINE }} />
         </span>
       ))}
@@ -588,10 +865,15 @@ function Marquee() {
   );
   return (
     <section className="py-7">
-      <span className="mb-3 block px-6 text-center text-[11px] tracking-[0.2em] text-ink-faint sm:px-10">刚刚，有人收进了这些——</span>
+      <span className="mb-3 block px-6 text-center text-[11px] tracking-[0.14em] text-ink-faint sm:px-10">
+        刚刚，有人把这些放回了自己的小地方
+      </span>
       <div
         className="overflow-hidden border-y py-2.5"
-        style={{ borderColor: LINE, maskImage: 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)' }}
+        style={{
+          borderColor: LINE,
+          maskImage: 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)',
+        }}
       >
         <div className="lp-marquee flex w-max">
           {row(false)}
@@ -610,13 +892,24 @@ function FeatureTabs() {
   return (
     <section id="features">
       {/* 头排：左标题 + 右幽灵按钮（Zed "AI that works..." 的头排布局） */}
-      <div className="flex flex-col gap-5 px-6 py-10 sm:px-10 lg:flex-row lg:items-end lg:justify-between" style={{ borderBottom: `1px solid ${LINE}` }}>
+      <div
+        className="flex flex-col gap-5 px-6 py-10 sm:px-10 lg:flex-row lg:items-end lg:justify-between"
+        style={{ borderBottom: `1px solid ${LINE}` }}
+      >
         <hgroup className="max-w-2xl">
-          <span className="text-[12px] text-lp-brand">// 功能</span>
-          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink" style={{ textWrap: 'balance' }}>记录，不是完成任务，是慢慢地归置。</h2>
+          <span className="text-[12px] text-lp-brand">功能</span>
+          <h2
+            className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-snug text-ink"
+            style={{ textWrap: 'balance' }}
+          >
+            先收下来，再慢慢归置。
+          </h2>
         </hgroup>
-        <a href="#demo" className="lp-btn lp-btn-ghost inline-flex h-9 w-fit items-center gap-1 rounded-md pl-3 pr-2">
-          <span className="text-[13px]">看完整演示</span>
+        <a
+          href="#demo"
+          className="lp-btn lp-btn-ghost inline-flex h-9 w-fit items-center gap-1 rounded-md pl-3 pr-2"
+        >
+          <span className="text-[13px]">看看它怎么做</span>
           <ChevronRight size={15} className="text-ink-soft" />
         </a>
       </div>
@@ -641,11 +934,16 @@ function FeatureTabs() {
                 }}
               >
                 {selected ? (
-                  <div className="relative py-7" style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}>
+                  <div
+                    className="relative py-7"
+                    style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}
+                  >
                     <DotPattern />
                     <div className="relative">
                       <h3 className="text-[20px] font-semibold text-ink">{f.title}</h3>
-                      <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-soft">{f.body}</p>
+                      <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-soft">
+                        {f.body}
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -663,8 +961,15 @@ function FeatureTabs() {
         </div>
 
         {/* 右画布：当前功能的 CSS 小景 */}
-        <div className="relative flex min-h-[340px] items-center justify-center p-6 sm:p-10 lg:col-span-7" style={{ borderLeft: `1px dashed ${LINE}` }}>
-          <div key={current.id} className="w-full max-w-[420px]" style={{ animation: 'lp-fade 0.4s var(--ease-soft)' }}>
+        <div
+          className="relative flex min-h-[340px] items-center justify-center p-6 sm:p-10 lg:col-span-7"
+          style={{ borderLeft: `1px dashed ${LINE}` }}
+        >
+          <div
+            key={current.id}
+            className="w-full max-w-[420px]"
+            style={{ animation: 'lp-fade 0.4s var(--ease-soft)' }}
+          >
             <FeatureVignette id={current.id} />
           </div>
         </div>
@@ -677,18 +982,41 @@ function FeatureTabs() {
 function FeatureVignette({ id }: { id: string }) {
   if (id === 'capture') {
     return (
-      <VignetteCard label="capture — 03:42 PM">
+      <VignetteCard label="刚刚收进一件东西">
         {/* 取景框：四角括号 + 识别结果卡 */}
-        <div className="relative mx-auto h-[180px] w-full rounded-lg" style={{ border: `1px dashed ${LINE}` }}>
-          {(['left-2 top-2 border-l-2 border-t-2', 'right-2 top-2 border-r-2 border-t-2', 'left-2 bottom-2 border-l-2 border-b-2', 'right-2 bottom-2 border-r-2 border-b-2'] as const).map((pos) => (
+        <div
+          className="relative mx-auto h-[180px] w-full rounded-lg"
+          style={{ border: `1px dashed ${LINE}` }}
+        >
+          {(
+            [
+              'left-2 top-2 border-l-2 border-t-2',
+              'right-2 top-2 border-r-2 border-t-2',
+              'left-2 bottom-2 border-l-2 border-b-2',
+              'right-2 bottom-2 border-r-2 border-b-2',
+            ] as const
+          ).map((pos) => (
             <span key={pos} aria-hidden className={`absolute size-4 border-lp-brand ${pos}`} />
           ))}
-          <div className="absolute left-1/2 top-1/2 w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-lg p-4" style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--hairline)`, boxShadow: 'var(--shadow-md)' }}>
+          <div
+            className="absolute left-1/2 top-1/2 w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-lg p-4"
+            style={{
+              backgroundColor: 'var(--surface)',
+              border: `1px solid var(--hairline)`,
+              boxShadow: 'var(--shadow-md)',
+            }}
+          >
             <span className="text-[10px] text-lp-brand">已识别</span>
             <div className="mt-1 text-[15px] font-semibold text-ink">白瓷盖碗</div>
             <div className="mt-2 flex gap-1.5">
               {['茶具', '厨房', '易碎'].map((t) => (
-                <span key={t} className="rounded px-1.5 py-0.5 text-[10px] text-ink-soft" style={{ backgroundColor: 'var(--chip-mist)' }}>{t}</span>
+                <span
+                  key={t}
+                  className="rounded px-1.5 py-0.5 text-[10px] text-ink-soft"
+                  style={{ backgroundColor: 'var(--chip-mist)' }}
+                >
+                  {t}
+                </span>
               ))}
             </div>
           </div>
@@ -698,10 +1026,12 @@ function FeatureVignette({ id }: { id: string }) {
   }
   if (id === 'poem') {
     return (
-      <VignetteCard label="poem — 翻开一件物品时">
+      <VignetteCard label="翻开一件物品时">
         <div className="px-2 py-6 text-center">
           <p className="text-[19px] font-serif leading-loose text-ink">
-            「杯沿的一道细纹，<br />是去年冬天的事了。」
+            「杯沿的一道细纹，
+            <br />
+            是去年冬天的事了。」
           </p>
           <span className="mt-5 block text-[11px] text-ink-faint">—— 写给：白瓷盖碗</span>
         </div>
@@ -710,10 +1040,20 @@ function FeatureVignette({ id }: { id: string }) {
   }
   if (id === 'dust') {
     return (
-      <VignetteCard label="dust — 218 天未翻动">
-        <div className="relative rounded-lg p-5" style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--hairline)` }}>
+      <VignetteCard label="已经 218 天没有翻动">
+        <div
+          className="relative rounded-lg p-5"
+          style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--hairline)` }}
+        >
           {/* 灰膜：自上而下的暖灰渐变盖在卡片上 */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-lg" style={{ background: 'linear-gradient(to bottom, color-mix(in oklab, var(--ink) 9%, transparent), transparent 65%)' }} />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-lg"
+            style={{
+              background:
+                'linear-gradient(to bottom, color-mix(in oklab, var(--ink) 9%, transparent), transparent 65%)',
+            }}
+          />
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[15px] font-semibold text-ink">《百年孤独》</div>
@@ -721,11 +1061,19 @@ function FeatureVignette({ id }: { id: string }) {
             </div>
             <Wind size={18} className="text-ink-faint" />
           </div>
-          <div className="mt-4 h-1 w-full overflow-hidden rounded-full" style={{ backgroundColor: 'var(--hairline)' }}>
+          <div
+            className="mt-4 h-1 w-full overflow-hidden rounded-full"
+            style={{ backgroundColor: 'var(--hairline)' }}
+          >
             <div className="h-full w-[72%] rounded-full bg-lp-brand opacity-45" />
           </div>
           <div className="mt-4 flex gap-2">
-            <span className="rounded-md px-2.5 py-1 text-[11px] text-ink" style={{ border: `1px solid ${LINE}` }}>拂去灰尘</span>
+            <span
+              className="rounded-md px-2.5 py-1 text-[11px] text-ink"
+              style={{ border: `1px solid ${LINE}` }}
+            >
+              拂去灰尘
+            </span>
             <span className="rounded-md px-2.5 py-1 text-[11px] text-ink-faint">让它停着</span>
           </div>
         </div>
@@ -733,13 +1081,21 @@ function FeatureVignette({ id }: { id: string }) {
     );
   }
   return (
-    <VignetteCard label="zimomo — 不轻易开口">
+    <VignetteCard label="齐默默很少主动开口">
       <div className="flex flex-col gap-3 py-2">
-        <div className="max-w-[80%] self-start rounded-xl rounded-bl-sm px-4 py-3" style={{ backgroundColor: 'var(--chip-sage)' }}>
-          <p className="text-[13.5px] font-serif leading-relaxed text-ink">创可贴在药盒第二格。上次用，是三月你切到手指那回。</p>
+        <div
+          className="max-w-[80%] self-start rounded-xl rounded-bl-sm px-4 py-3"
+          style={{ backgroundColor: 'var(--chip-sage)' }}
+        >
+          <p className="text-[13.5px] font-serif leading-relaxed text-ink">
+            创可贴在药盒第二格。上次用，是三月你切到手指那回。
+          </p>
         </div>
         <span className="self-start pl-1 text-[10px] text-ink-faint">齐默默 · 仅在被问起时</span>
-        <div className="mt-2 flex items-center gap-2 self-end rounded-full px-3 py-1.5" style={{ border: `1px solid ${LINE}` }}>
+        <div
+          className="mt-2 flex items-center gap-2 self-end rounded-full px-3 py-1.5"
+          style={{ border: `1px solid ${LINE}` }}
+        >
           <span className="text-[11px] text-ink-soft">创可贴放哪了？</span>
         </div>
       </div>
@@ -762,14 +1118,23 @@ function Demo() {
   return (
     <section id="demo" className="px-6 py-16 sm:px-10">
       <Reveal className="relative mx-auto max-w-[980px]">
-        <Link to="/home" className="lp-btn absolute -top-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 shadow-float" style={{ backgroundColor: 'var(--surface)', border: `1px solid ${LINE}` }}>
-          <span className="grid h-5 w-5 place-items-center rounded-full" style={{ backgroundColor: LP.chrome }}>
+        <Link
+          to="/home"
+          className="lp-btn absolute -top-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 shadow-float"
+          style={{ backgroundColor: 'var(--surface)', border: `1px solid ${LINE}` }}
+        >
+          <span
+            className="grid h-5 w-5 place-items-center rounded-full"
+            style={{ backgroundColor: LP.chrome }}
+          >
             <Play size={10} style={{ color: LP.chromeFg }} />
           </span>
-          <span className="text-[12px] text-ink">亲手试试</span>
+          <span className="text-[12px] text-ink">进去看看</span>
         </Link>
         <AppWindow />
-        <span className="mt-4 block text-center text-[12px] text-ink-faint">一眼看过去，房间、物品、还有那些怕忘记的小事，都在这里了。</span>
+        <span className="mt-4 block text-center text-[12px] text-ink-faint">
+          房间、物品，还有那些怕忘记的小事，都先替你放在这里。
+        </span>
       </Reveal>
     </section>
   );
@@ -779,35 +1144,85 @@ function AppWindow() {
   const chips = ['lavender', 'peach', 'sage', 'pink'];
   const rooms = ['lavender', 'peach', 'sage', 'mist', 'pink'];
   return (
-    <div className="overflow-hidden rounded-[14px]" style={{ border: `1px solid ${LINE}`, backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-lg)' }}>
-      <div className="flex h-9 items-center gap-2 px-4" style={{ backgroundColor: 'var(--surface-alt)', borderBottom: `1px solid ${LINE}` }}>
+    <div
+      className="relative isolate overflow-hidden rounded-[14px]"
+      style={{
+        border: `1px solid ${LINE}`,
+        backgroundColor: 'var(--surface)',
+        boxShadow: 'var(--shadow-lg)',
+      }}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-9 z-0 h-16 overflow-hidden">
+        <PatternField
+          variant="ticks"
+          opacity={0.16}
+          mask="linear-gradient(to right, transparent, #000 18%, #000 82%, transparent)"
+        />
+      </div>
+      <div
+        className="relative z-10 flex h-9 items-center gap-2 px-4"
+        style={{ backgroundColor: 'var(--surface-alt)', borderBottom: `1px solid ${LINE}` }}
+      >
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-pink)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-peach)' }} />
         <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-sage)' }} />
         <span className="mx-auto text-[12px] text-ink-soft">滴茶 — 我的小窝</span>
       </div>
-      <div className="flex h-[360px] sm:h-[420px]">
-        <div className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
-          <span className="grid h-8 w-8 place-items-center rounded-md" style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}>
+      <div className="relative z-10 flex h-[360px] sm:h-[420px]">
+        <div
+          className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex"
+          style={{ backgroundColor: 'var(--sidebar-bg)' }}
+        >
+          <span
+            className="grid h-8 w-8 place-items-center rounded-md"
+            style={{ backgroundColor: LP.chrome, color: LP.chromeFg }}
+          >
             <BrandMark className="h-4 w-6" />
           </span>
-          {[0, 1, 2, 3].map((k) => (<span key={k} className="h-7 w-7 rounded-lg" style={{ backgroundColor: 'var(--sidebar-hover)' }} />))}
+          {[0, 1, 2, 3].map((k) => (
+            <span
+              key={k}
+              className="h-7 w-7 rounded-lg"
+              style={{ backgroundColor: 'var(--sidebar-hover)' }}
+            />
+          ))}
         </div>
         <div className="flex-1 overflow-hidden p-7">
           <div className="text-[16px] font-semibold font-serif text-ink">早，Serena。</div>
-          <span className="mt-0.5 block text-[11px] text-ink-faint">东西归位了，心里也静下来了。</span>
+          <span className="mt-0.5 block text-[11px] text-ink-faint">
+            东西归位了，心里也静下来了。
+          </span>
           <div className="mt-6 grid grid-cols-4 gap-3">
             {chips.map((c, i) => (
-              <div key={i} className="rounded-xl p-3" style={{ border: `1px solid var(--hairline)`, backgroundColor: 'var(--surface)' }}>
-                <span className="mb-2 block h-6 w-6 rounded-full" style={{ backgroundColor: `var(--chip-${c})` }} />
-                <span className="block h-2.5 w-8 rounded" style={{ backgroundColor: `var(--accent-${c})` }} />
-                <span className="mt-1.5 block h-1.5 w-10 rounded" style={{ backgroundColor: 'var(--hairline)' }} />
+              <div
+                key={i}
+                className="rounded-xl p-3"
+                style={{ border: `1px solid var(--hairline)`, backgroundColor: 'var(--surface)' }}
+              >
+                <span
+                  className="mb-2 block h-6 w-6 rounded-full"
+                  style={{ backgroundColor: `var(--chip-${c})` }}
+                />
+                <span
+                  className="block h-2.5 w-8 rounded"
+                  style={{ backgroundColor: `var(--accent-${c})` }}
+                />
+                <span
+                  className="mt-1.5 block h-1.5 w-10 rounded"
+                  style={{ backgroundColor: 'var(--hairline)' }}
+                />
               </div>
             ))}
           </div>
           <span className="mt-6 block text-[11px] text-ink-faint">我的收纳空间</span>
           <div className="mt-2.5 flex gap-3">
-            {rooms.map((c, i) => (<div key={i} className="h-24 w-[96px] shrink-0 rounded-xl" style={{ backgroundColor: `var(--chip-${c})`, border: `1px solid var(--hairline)` }} />))}
+            {rooms.map((c, i) => (
+              <div
+                key={i}
+                className="h-24 w-[96px] shrink-0 rounded-xl"
+                style={{ backgroundColor: `var(--chip-${c})`, border: `1px solid var(--hairline)` }}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -819,10 +1234,20 @@ function AppWindow() {
 
 function SpecPanel() {
   return (
-    <section className="flex flex-wrap">
+    <section className="relative isolate flex flex-wrap overflow-hidden">
+      <PatternField
+        variant="ledger"
+        opacity={0.14}
+        mask="linear-gradient(to right, #000, transparent 72%)"
+      />
       {SPECS.map((s, i) => (
-        <div key={s.k} className="relative min-w-[150px] flex-1 px-7 py-7">
-          {i !== 0 && <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-dashed" style={{ borderColor: LINE }} />}
+        <div key={s.k} className="relative z-10 min-w-[150px] flex-1 px-7 py-7">
+          {i !== 0 && (
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 border-l border-dashed"
+              style={{ borderColor: LINE }}
+            />
+          )}
           <span className="text-[11px] tracking-wider text-ink-faint">{s.k}</span>
           <span className="mt-2 block text-[18px] font-semibold text-ink">{s.v}</span>
         </div>
@@ -838,14 +1263,18 @@ function Rooms() {
     <section id="rooms">
       <div className="flex items-end justify-between px-8 py-9">
         <div>
-          <span className="text-[12px] text-lp-brand">// 房间</span>
-          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">每样东西，都有自己的房间。</h2>
+          <span className="text-[12px] text-lp-brand">房间</span>
+          <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">
+            每样东西，都有能安放的地方。
+          </h2>
         </div>
         <span className="hidden text-[12px] text-ink-faint sm:block">06 间</span>
       </div>
       <HRule />
       <div className="grid grid-cols-2 lg:grid-cols-3">
-        {ROOMS.map((r, i) => (<RoomCell key={r.id} room={r} index={i} />))}
+        {ROOMS.map((r, i) => (
+          <RoomCell key={r.id} room={r} index={i} />
+        ))}
       </div>
     </section>
   );
@@ -855,12 +1284,31 @@ function RoomCell({ room: r, index }: { room: (typeof ROOMS)[number]; index: num
   const Icon = r.icon;
   const isMore = r.id === 'more';
   return (
-    <Reveal as="article" delay={(index % 3) * 60} className="group relative px-8 py-9 transition-colors hover:bg-surface-alt">
-      <div className="pointer-events-none absolute inset-y-0 right-0 border-r border-dashed" style={{ borderColor: LINE }} />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 border-b border-dashed" style={{ borderColor: LINE }} />
+    <Reveal
+      as="article"
+      delay={(index % 3) * 60}
+      className="group relative px-8 py-9 transition-colors hover:bg-surface-alt"
+    >
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 border-r border-dashed"
+        style={{ borderColor: LINE }}
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 border-b border-dashed"
+        style={{ borderColor: LINE }}
+      />
       <div className="flex items-start justify-between">
-        <span className="grid h-11 w-11 place-items-center rounded-xl" style={{ backgroundColor: isMore ? 'transparent' : `var(--chip-${r.tint})`, border: isMore ? `1px dashed ${LINE}` : 'none' }}>
-          <Icon size={20} style={{ color: isMore ? 'var(--ink-faint)' : `var(--accent-${r.tint})` }} />
+        <span
+          className="grid h-11 w-11 place-items-center rounded-xl"
+          style={{
+            backgroundColor: isMore ? 'transparent' : `var(--chip-${r.tint})`,
+            border: isMore ? `1px dashed ${LINE}` : 'none',
+          }}
+        >
+          <Icon
+            size={20}
+            style={{ color: isMore ? 'var(--ink-faint)' : `var(--accent-${r.tint})` }}
+          />
         </span>
         <span className="text-[12px] text-ink-faint">{r.no}</span>
       </div>
@@ -881,22 +1329,34 @@ function RoomCell({ room: r, index }: { room: (typeof ROOMS)[number]; index: num
 function Principles() {
   return (
     <section id="why" className="relative px-6 py-14 sm:px-10">
-      <div className="grid grid-cols-1 gap-px lg:grid-cols-3 lg:grid-rows-2" style={{ backgroundColor: LINE }}>
+      <div
+        className="grid grid-cols-1 gap-px lg:grid-cols-3 lg:grid-rows-2"
+        style={{ backgroundColor: LINE }}
+      >
         {/* 大金句卡（左列跨两行）*/}
         <Reveal className="bg-surface relative isolate overflow-hidden p-8 sm:p-10 lg:col-span-2 lg:row-span-2">
           <GridPattern />
-          <span className="text-[12px] text-lp-brand">// 为什么</span>
-          <p className="mt-5 font-serif leading-[1.55] text-ink" style={{ fontSize: 'clamp(1.15rem,2.2vw,1.6rem)' }}>
-            像滴茶一样，一滴一滴地，把日子放好。
+          <span className="text-[12px] text-lp-brand">为什么</span>
+          <p
+            className="mt-5 font-serif leading-[1.55] text-ink"
+            style={{ fontSize: 'clamp(1.15rem,2.2vw,1.6rem)' }}
+          >
+            像滴茶一样，一点一点地，把日子放好。
           </p>
-          <p className="mt-5 font-serif leading-[1.55] text-ink" style={{ fontSize: 'clamp(1.55rem,3.2vw,2.65rem)' }}>
-            东西不是数字，也不该只是清单上的一行字。你录入一件衬衫，它会变成衣橱里<Mark tint="lavender">一抹蓝</Mark>——挂在那里，连着某一天的心情；那本三年没翻的书，边上真的<Mark tint="mist">落了灰</Mark>，摸得到，也懒得解释为什么还留着。
+          <p
+            className="mt-5 font-serif leading-[1.55] text-ink"
+            style={{ fontSize: 'clamp(1.55rem,3.2vw,2.65rem)' }}
+          >
+            东西不是数字，也不该只是清单上的一行字。你放进一件衬衫，它会变成衣橱里
+            <Mark tint="lavender">一抹蓝</Mark>
+            ，挂在那里，连着某一天的心情；那本三年没翻的书，边上真的<Mark tint="mist">落了灰</Mark>
+            ，摸得到，也不用急着解释为什么还留着。
           </p>
           <p className="mt-6 max-w-[40ch] text-[13px] leading-relaxed text-ink-soft">
-            没有人催你「还剩几本没读」。日子就这么过去了。
+            没有人催你把一切整理得完美。日子本来就会有一点凌乱。
           </p>
           <p className="mt-2 max-w-[40ch] text-[13px] leading-relaxed text-ink-soft">
-            它只是<Mark tint="peach">替你记得</Mark>。留一个慢慢住下来的地方。
+            它只是<Mark tint="peach">替你记得</Mark>，也给这些东西留一个慢慢住下来的地方。
           </p>
         </Reveal>
 
@@ -920,16 +1380,33 @@ function Principles() {
 function HatchCell() {
   const id = useId().replace(/:/g, '');
   return (
-    <div aria-hidden className="bg-surface relative hidden min-h-[120px] lg:block">
-      <svg className="absolute inset-0 size-full" style={{ opacity: 0.4, color: RULE }}>
+    <div
+      aria-hidden
+      className="bg-surface relative isolate hidden min-h-[120px] overflow-hidden lg:block"
+    >
+      <PatternField
+        variant="weave"
+        opacity={0.18}
+        mask="linear-gradient(to bottom, #000, transparent 92%)"
+      />
+      <svg className="absolute inset-0 z-0 size-full" style={{ opacity: 0.28, color: RULE }}>
         <defs>
-          <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <pattern
+            id={id}
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
             <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill={`url(#${id})`} />
       </svg>
-      <span className="absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border" style={{ borderColor: LINE, backgroundColor: 'var(--surface)' }} />
+      <span
+        className="absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border"
+        style={{ borderColor: LINE, backgroundColor: 'var(--surface)' }}
+      />
     </div>
   );
 }
@@ -938,20 +1415,44 @@ function HatchCell() {
 
 function Extras() {
   return (
-    <section>
-      <div className="px-8 py-9">
-        <span className="text-[12px] text-lp-brand">// 细节台账</span>
-        <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">每一处，都为安心而造。</h2>
+    <section className="relative isolate overflow-hidden">
+      <PatternField
+        variant="ledger"
+        opacity={0.1}
+        mask="linear-gradient(to bottom, #000, transparent 86%)"
+      />
+      <div className="relative z-10 px-8 py-9">
+        <span className="text-[12px] text-lp-brand">细节台账</span>
+        <h2 className="mt-1.5 text-[clamp(1.6rem,3.6vw,2.6rem)] font-semibold text-ink">
+          小事不用悬在心上。
+        </h2>
       </div>
       <HRule />
-      <div className="grid grid-cols-1 lg:grid-cols-2">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2">
         {EXTRAS.map((e, i) => (
-          <Reveal as="article" key={e.t} delay={(i % 2) * 50} className="relative flex items-baseline gap-3 px-8 py-5">
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 border-b border-dashed" style={{ borderColor: LINE }} />
-            {i % 2 === 0 && <div className="pointer-events-none absolute inset-y-0 right-0 hidden border-r border-dashed lg:block" style={{ borderColor: LINE }} />}
-            <span className="shrink-0 text-[11px] text-ink-faint">№{String(i + 1).padStart(2, '0')}</span>
+          <Reveal
+            as="article"
+            key={e.t}
+            delay={(i % 2) * 50}
+            className="relative flex items-baseline gap-3 px-8 py-5"
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 border-b border-dashed"
+              style={{ borderColor: LINE }}
+            />
+            {i % 2 === 0 && (
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 hidden border-r border-dashed lg:block"
+                style={{ borderColor: LINE }}
+              />
+            )}
+            <span className="shrink-0 size-1.5 rotate-45 border" style={{ borderColor: LINE }} />
             <span className="shrink-0 text-[15px] font-semibold text-ink">{e.t}</span>
-            <span aria-hidden className="mx-1 flex-1 border-b border-dotted" style={{ borderColor: LINE, transform: 'translateY(-3px)' }} />
+            <span
+              aria-hidden
+              className="mx-1 flex-1 border-b border-dotted"
+              style={{ borderColor: LINE, transform: 'translateY(-3px)' }}
+            />
             <span className="shrink-0 text-[12.5px] text-ink-soft">{e.d}</span>
           </Reveal>
         ))}
@@ -965,10 +1466,18 @@ function Extras() {
 function AuthorLetter() {
   return (
     <section id="author" className="grid grid-cols-1 lg:grid-cols-12">
-      <div className="relative px-8 py-12 lg:col-span-4">
-        <span className="text-[12px] text-lp-brand">// 来自作者</span>
-        <div className="mt-6 flex items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl" style={{ backgroundColor: 'var(--chip-sage)' }}>
+      <div className="relative isolate overflow-hidden px-8 py-12 lg:col-span-4">
+        <PatternField
+          variant="weave"
+          opacity={0.16}
+          mask="linear-gradient(to right, #000, transparent 82%)"
+        />
+        <span className="relative z-10 text-[12px] text-lp-brand">来自作者</span>
+        <div className="relative z-10 mt-6 flex items-center gap-3">
+          <span
+            className="grid h-12 w-12 place-items-center rounded-2xl"
+            style={{ backgroundColor: 'var(--chip-sage)' }}
+          >
             <MessageSquareText size={22} style={{ color: 'var(--accent-sage)' }} />
           </span>
           <div>
@@ -977,15 +1486,29 @@ function AuthorLetter() {
           </div>
         </div>
       </div>
-      <Reveal className="relative px-8 py-12 lg:col-span-8">
-        <div className="pointer-events-none absolute inset-y-0 left-0 hidden border-l border-dashed lg:block" style={{ borderColor: LINE }} />
-        <blockquote className="text-[clamp(1.15rem,2.2vw,1.5rem)] font-serif leading-loose text-ink">
-          <p>「有时候收拾，有时候乱着。很少问自己：<Mark tint="mist">这些东西，为什么还留着？</Mark>」</p>
+      <Reveal className="relative isolate overflow-hidden px-8 py-12 lg:col-span-8">
+        <PatternField
+          variant="ticks"
+          opacity={0.09}
+          mask="linear-gradient(to left, #000, transparent 76%)"
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 hidden border-l border-dashed lg:block"
+          style={{ borderColor: LINE }}
+        />
+        <blockquote className="relative z-10 text-[clamp(1.15rem,2.2vw,1.5rem)] font-serif leading-loose text-ink">
+          <p>
+            「有时候收拾，有时候乱着。很少问自己：<Mark tint="mist">这些东西，为什么还留着？</Mark>
+            」
+          </p>
           <p className="mt-5">
-            「滴茶不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>。东西有地方放了，你也就慢慢，住下来了。」
+            「滴茶不是要你更自律。它就是一个<Mark tint="lavender">安静的角落</Mark>
+            。东西有地方放了，你也就慢慢，住下来了。」
           </p>
         </blockquote>
-        <span className="mt-8 block text-[13px] text-ink-soft">—— 齐默默，写于滴茶的第一个清晨</span>
+        <span className="relative z-10 mt-8 block text-[13px] text-ink-soft">
+          —— 齐默默，写于滴茶的第一个清晨
+        </span>
       </Reveal>
     </section>
   );
@@ -997,10 +1520,23 @@ function FinalCTA() {
   return (
     <section className="relative px-8 py-24 text-center">
       <Reveal>
-        <h2 className="font-medium font-serif leading-tight text-ink" style={{ fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}>推开门，进来坐坐。</h2>
-        <p className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft" style={{ textWrap: 'balance' }}>在忙忙碌碌的日子里，给自己留一个安静的、住得下来的地方。</p>
+        <h2
+          className="font-medium font-serif leading-tight text-ink"
+          style={{ fontSize: 'clamp(2.2rem,5.5vw,3.8rem)' }}
+        >
+          推开门，进来坐坐。
+        </h2>
+        <p
+          className="mx-auto mt-4 max-w-[36ch] text-[15px] text-ink-soft"
+          style={{ textWrap: 'balance' }}
+        >
+          在忙忙碌碌的日子里，给自己留一个安静的、住得下来的地方。
+        </p>
         <div className="mt-9 flex items-center justify-center gap-3">
-          <Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-5 py-3">
+          <Link
+            to="/home"
+            className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-5 py-3"
+          >
             <span className="text-[15px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
@@ -1013,10 +1549,27 @@ function FinalCTA() {
 // ─── 页脚 ──────────────────────────────────────────────────────────────────────
 
 const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
-  { h: '产品', items: [{ label: '功能' }, { label: '房间' }, { label: '齐默默' }, { label: '更新日志' }] },
-  { h: '资源', items: [{ label: '使用指南' }, { label: '常见问题' }, { label: '开源' }, { label: '反馈' }] },
-  { h: '公司', items: [{ label: '理念' }, { label: '团队' }, { label: '博客' }, { label: '联系我们' }] },
-  { h: '社交', items: [{ label: '微博', ext: true }, { label: '小红书', ext: true }, { label: 'GitHub', ext: true }, { label: 'X', ext: true }] },
+  {
+    h: '产品',
+    items: [{ label: '功能' }, { label: '房间' }, { label: '齐默默' }, { label: '更新日志' }],
+  },
+  {
+    h: '资源',
+    items: [{ label: '使用指南' }, { label: '常见问题' }, { label: '开源' }, { label: '反馈' }],
+  },
+  {
+    h: '公司',
+    items: [{ label: '理念' }, { label: '团队' }, { label: '博客' }, { label: '联系我们' }],
+  },
+  {
+    h: '社交',
+    items: [
+      { label: '微博', ext: true },
+      { label: '小红书', ext: true },
+      { label: 'GitHub', ext: true },
+      { label: 'X', ext: true },
+    ],
+  },
 ];
 
 /** 页脚底部装饰带：border-t + 45° 斜纹 + 渐隐水平刻线 + 低透明 logo mark
@@ -1024,10 +1577,22 @@ const FOOT_COLS: { h: string; items: { label: string; ext?: boolean }[] }[] = [
 function FooterBand() {
   const id = useId().replace(/:/g, '');
   return (
-    <div className="lp-footer-band relative col-span-full flex w-full justify-center border-t" style={{ borderColor: LP.footHair }}>
-      <svg aria-hidden className="lp-footer-band-slash pointer-events-none absolute inset-0 size-full opacity-30">
+    <div
+      className="lp-footer-band relative col-span-full flex w-full justify-center border-t"
+      style={{ borderColor: LP.footHair }}
+    >
+      <svg
+        aria-hidden
+        className="lp-footer-band-slash pointer-events-none absolute inset-0 size-full opacity-30"
+      >
         <defs>
-          <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <pattern
+            id={id}
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
             <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="1.5" />
           </pattern>
         </defs>
@@ -1052,10 +1617,18 @@ function Footer() {
 
       {/* 五段 rail 框架（深底白低透明标尺；无网格/条码，保持 footer 干净） */}
       <span className="relative z-[1] w-4 shrink-0 sm:w-6 md:w-12">
-        <Ruler side="right" color={LP.footRail} segs={[{ f: 2.2 }, { f: 3.4, dash: true }, { f: 1.8 }]} />
+        <Ruler
+          side="right"
+          color={LP.footRail}
+          segs={[{ f: 2.2 }, { f: 3.4, dash: true }, { f: 1.8 }]}
+        />
       </span>
       <span className="relative z-[1] hidden flex-1 lg:block">
-        <Ruler side="right" color={LP.footRail} segs={[{ f: 3.1 }, { f: 2.2, dash: true }, { f: 2.8 }]} />
+        <Ruler
+          side="right"
+          color={LP.footRail}
+          segs={[{ f: 3.1 }, { f: 2.2, dash: true }, { f: 2.8 }]}
+        />
       </span>
 
       <div className="lp-container-max-w relative z-[1] max-md:min-w-0 flex-1 [--node-horizontal-offset:-3.5px]">
@@ -1067,23 +1640,47 @@ function Footer() {
             <div className="flex flex-col px-5 py-8 sm:col-span-2 lg:py-10 lg:pl-6">
               <div className="flex items-center gap-2">
                 <BrandMark className="h-5 w-[30px]" style={{ color: LP.chromeFg }} />
-                <span className="text-[16px] font-semibold font-serif" style={{ color: LP.chromeFg }}>滴茶</span>
+                <span
+                  className="text-[16px] font-semibold font-serif"
+                  style={{ color: LP.chromeFg }}
+                >
+                  滴茶
+                </span>
               </div>
-              <BrandMark className="mt-4 h-9 w-[54px] opacity-[0.65]" style={{ color: LP.footMuted }} />
-              <span className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>dicha © 2026</span>
+              <BrandMark
+                className="mt-4 h-9 w-[54px] opacity-[0.65]"
+                style={{ color: LP.footMuted }}
+              />
+              <span className="mt-2 block text-[12px]" style={{ color: LP.footMuted }}>
+                dicha © 2026
+              </span>
               <hr className="my-3 w-20 border-t" style={{ borderColor: LP.footHair }} />
-              <Link to="/home" className="lp-foot-link w-fit"><span className="text-[12px]">已有账号？登录</span></Link>
-              <span className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>服务条款 · 隐私政策</span>
+              <Link to="/home" className="lp-foot-link w-fit">
+                <span className="text-[12px]">已有账号？登录</span>
+              </Link>
+              <span className="mt-3 block text-[11px]" style={{ color: LP.footFaint }}>
+                服务条款 · 隐私政策
+              </span>
             </div>
             {FOOT_COLS.map((c) => (
               <div key={c.h} className="flex flex-col gap-4 px-5 py-4 md:py-8 lg:py-10">
-                <span className="text-[12px] font-semibold" style={{ color: LP.chromeFg }}>{c.h}</span>
+                <span className="text-[12px] font-semibold" style={{ color: LP.chromeFg }}>
+                  {c.h}
+                </span>
                 <ul className="flex flex-col gap-3">
                   {c.items.map((it) => (
                     <li key={it.label}>
                       <a href="#about" className="lp-foot-link">
                         <span className="text-[12px]">{it.label}</span>
-                        {it.ext && <span aria-hidden className="ml-2 text-[12px]" style={{ color: LP.footFaint }}>↗</span>}
+                        {it.ext && (
+                          <span
+                            aria-hidden
+                            className="ml-2 text-[12px]"
+                            style={{ color: LP.footFaint }}
+                          >
+                            ↗
+                          </span>
+                        )}
                       </a>
                     </li>
                   ))}
@@ -1096,10 +1693,18 @@ function Footer() {
       </div>
 
       <span className="relative z-[1] hidden flex-1 lg:block">
-        <Ruler side="left" color={LP.footRail} segs={[{ f: 1.9, dash: true }, { f: 3.6 }, { f: 2.4 }]} />
+        <Ruler
+          side="left"
+          color={LP.footRail}
+          segs={[{ f: 1.9, dash: true }, { f: 3.6 }, { f: 2.4 }]}
+        />
       </span>
       <span className="relative z-[1] w-4 shrink-0 sm:w-6 md:w-12">
-        <Ruler side="left" color={LP.footRail} segs={[{ f: 2.7 }, { f: 1.6 }, { f: 3.9, dash: true }]} />
+        <Ruler
+          side="left"
+          color={LP.footRail}
+          segs={[{ f: 2.7 }, { f: 1.6 }, { f: 3.9, dash: true }]}
+        />
       </span>
     </footer>
   );
@@ -1120,50 +1725,50 @@ function LandingPage() {
         <Nav drawerOpen={drawerOpen} onMenuClick={() => setDrawerOpen((v) => !v)} />
         {/* isolate：内容里的 z-50 节点只在 main 内比较，不会盖过 sticky 顶栏 */}
         <main className="isolate">
-        <SectionFrame {...RAILS.intro}>
-          <Announce />
-        </SectionFrame>
-        <SectionFrame {...RAILS.hero}>
-          <Hero />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.marquee}>
-          <Marquee />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.standard}>
-          <FeatureTabs />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.leftHeavy}>
-          <Demo />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.minimal}>
-          <SpecPanel />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.standard}>
-          <Rooms />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.standard}>
-          <Principles />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.leftHeavy}>
-          <Extras />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.marquee}>
-          <AuthorLetter />
-        </SectionFrame>
-        <Slash />
-        <SectionFrame {...RAILS.bare}>
-          <FinalCTA />
-        </SectionFrame>
-        <Footer />
-      </main>
+          <SectionFrame {...RAILS.intro}>
+            <Announce />
+          </SectionFrame>
+          <SectionFrame {...RAILS.hero}>
+            <Hero />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.marquee}>
+            <Marquee />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.standard}>
+            <FeatureTabs />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.leftHeavy}>
+            <Demo />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.minimal}>
+            <SpecPanel />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.standard}>
+            <Rooms />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.standard}>
+            <Principles />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.leftHeavy}>
+            <Extras />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.marquee}>
+            <AuthorLetter />
+          </SectionFrame>
+          <Slash />
+          <SectionFrame {...RAILS.bare}>
+            <FinalCTA />
+          </SectionFrame>
+          <Footer />
+        </main>
       </div>
     </div>
   );

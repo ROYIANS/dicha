@@ -51,7 +51,7 @@ const WIDGETS: Widget[] = [
     label: '记录物品',
     value: '12',
     unit: '件',
-    sub: '比昨天 +5',
+    sub: '今天多安放了 5 件',
   },
   {
     key: 'reminder',
@@ -69,7 +69,7 @@ const WIDGETS: Widget[] = [
     label: '连续记录',
     value: '23',
     unit: '天',
-    sub: '继续保持！',
+    sub: '慢慢来，也已经很好',
   },
   {
     key: 'mood',
@@ -77,7 +77,7 @@ const WIDGETS: Widget[] = [
     tint: 'pink',
     label: '心情',
     value: '平静',
-    sub: '记录此刻心情 →',
+    sub: '给此刻留一句话',
   },
 ];
 
@@ -93,11 +93,51 @@ type Space = {
   to: SpaceTo | null;
 };
 const SPACES: Space[] = [
-  { key: 'wardrobe', label: '衣橱', count: '298 件物品', icon: Shirt, tint: 'lavender', img: UNSPLASH('1558997519-83ea9252edf8'), to: '/wardrobe' },
-  { key: 'library', label: '书房', count: '156 件', icon: BookOpen, tint: 'peach', img: UNSPLASH('1507842217343-583bb7270b66'), to: '/library' },
-  { key: 'storage', label: '杂物间', count: '89 件', icon: Package, tint: 'sage', img: UNSPLASH('1493934558415-9d19f0b2b4d2'), to: '/storage-room' },
-  { key: 'kitchen', label: '厨房·冰箱', count: '64 件', icon: Refrigerator, tint: 'mist', img: UNSPLASH('1571175443880-49e1d25b2bc5'), to: null },
-  { key: 'meds', label: '药盒', count: '27 件', icon: Pill, tint: 'pink', img: UNSPLASH('1584308666744-24d5c474f2ae'), to: null },
+  {
+    key: 'wardrobe',
+    label: '衣橱',
+    count: '298 件物品',
+    icon: Shirt,
+    tint: 'lavender',
+    img: UNSPLASH('1558997519-83ea9252edf8'),
+    to: '/wardrobe',
+  },
+  {
+    key: 'library',
+    label: '书房',
+    count: '156 件',
+    icon: BookOpen,
+    tint: 'peach',
+    img: UNSPLASH('1507842217343-583bb7270b66'),
+    to: '/library',
+  },
+  {
+    key: 'storage',
+    label: '杂物间',
+    count: '89 件',
+    icon: Package,
+    tint: 'sage',
+    img: UNSPLASH('1493934558415-9d19f0b2b4d2'),
+    to: '/storage-room',
+  },
+  {
+    key: 'kitchen',
+    label: '厨房·冰箱',
+    count: '64 件',
+    icon: Refrigerator,
+    tint: 'mist',
+    img: UNSPLASH('1571175443880-49e1d25b2bc5'),
+    to: null,
+  },
+  {
+    key: 'meds',
+    label: '药盒',
+    count: '27 件',
+    icon: Pill,
+    tint: 'pink',
+    img: UNSPLASH('1584308666744-24d5c474f2ae'),
+    to: null,
+  },
 ];
 
 // A4 — 最近添加
@@ -110,11 +150,46 @@ type RecentItem = {
   img: string;
 };
 const RECENT_ITEMS: RecentItem[] = [
-  { key: 'aesop', name: 'Aesop 香水 Hwyl', tag: '衣橱·饰品', time: '2 小时前', tint: 'peach', img: UNSPLASH('1541643600914-78b084683601') },
-  { key: 'kinfolk', name: '《KINFOLK》', tag: '书房·书籍', time: '昨天', tint: 'lavender', img: UNSPLASH('1544716278-ca5e3f4abd8c') },
-  { key: 'pourover', name: '手冲咖啡杯', tag: '厨房·器具', time: '昨天', tint: 'mist', img: UNSPLASH('1495474472287-4d71bcdd2085') },
-  { key: 'linen', name: '亚麻四件套', tag: '衣橱·床品', time: '2 天前', tint: 'sage', img: UNSPLASH('1522771739844-6a9f6d5f14af') },
-  { key: 'leica', name: 'Leica M6', tag: '书房·收藏', time: '2 天前', tint: 'pink', img: UNSPLASH('1452780212940-6f5c0d14d848') },
+  {
+    key: 'aesop',
+    name: 'Aesop 香水 Hwyl',
+    tag: '衣橱·饰品',
+    time: '2 小时前',
+    tint: 'peach',
+    img: UNSPLASH('1541643600914-78b084683601'),
+  },
+  {
+    key: 'kinfolk',
+    name: '《KINFOLK》',
+    tag: '书房·书籍',
+    time: '昨天',
+    tint: 'lavender',
+    img: UNSPLASH('1544716278-ca5e3f4abd8c'),
+  },
+  {
+    key: 'pourover',
+    name: '手冲咖啡杯',
+    tag: '厨房·器具',
+    time: '昨天',
+    tint: 'mist',
+    img: UNSPLASH('1495474472287-4d71bcdd2085'),
+  },
+  {
+    key: 'linen',
+    name: '亚麻四件套',
+    tag: '衣橱·床品',
+    time: '2 天前',
+    tint: 'sage',
+    img: UNSPLASH('1522771739844-6a9f6d5f14af'),
+  },
+  {
+    key: 'leica',
+    name: 'Leica M6',
+    tag: '书房·收藏',
+    time: '2 天前',
+    tint: 'pink',
+    img: UNSPLASH('1452780212940-6f5c0d14d848'),
+  },
 ];
 
 // A5/2 — 在读书籍封面
@@ -148,7 +223,15 @@ function DashSectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 /** 功能性柔彩图标圆片 */
-function IconChip({ tint, children, className = '' }: { tint: Tint; children: React.ReactNode; className?: string }) {
+function IconChip({
+  tint,
+  children,
+  className = '',
+}: {
+  tint: Tint;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <span
       className={`dash-card-chip ${className}`}
@@ -172,8 +255,12 @@ function TopBar() {
           <Sun size={18} className="shrink-0 text-peach" />
           <h1 className="text-lg font-bold tracking-tight text-ink sm:text-xl">早安，{DEV_NAME}</h1>
         </div>
-        <p className="mt-1 pl-6 text-[13px] leading-snug text-ink-soft">有序的空间，安定的心。今天也很棒</p>
-        <p className="mt-1 pl-6 text-[12px] leading-snug text-ink-faint">5月 20日 · 星期二 · 22°C 多云转晴</p>
+        <p className="mt-1 pl-6 text-[13px] leading-snug text-ink-soft">
+          今天也不用急，先把眼前的小东西放好。
+        </p>
+        <p className="mt-1 pl-6 text-[12px] leading-snug text-ink-faint">
+          5月 20日 · 星期二 · 22°C 多云转晴
+        </p>
       </div>
     </header>
   );
@@ -196,10 +283,16 @@ function TodayOverview() {
                     {w.label}
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="dash-card-stat-value text-xl font-bold text-ink sm:text-2xl">{w.value}</span>
-                    {w.unit ? <span className="text-[10px] text-ink-faint sm:text-[11px]">{w.unit}</span> : null}
+                    <span className="dash-card-stat-value text-xl font-bold text-ink sm:text-2xl">
+                      {w.value}
+                    </span>
+                    {w.unit ? (
+                      <span className="text-[10px] text-ink-faint sm:text-[11px]">{w.unit}</span>
+                    ) : null}
                   </div>
-                  <div className="mt-1.5 text-[10px] leading-snug text-ink-faint sm:text-[11px]">{w.sub}</div>
+                  <div className="mt-1.5 text-[10px] leading-snug text-ink-faint sm:text-[11px]">
+                    {w.sub}
+                  </div>
                 </div>
                 <IconChip tint={w.tint}>
                   <Icon size={15} />
@@ -220,12 +313,23 @@ function SpaceCard({ space }: { space: Space }) {
   const body = (
     <>
       <div className="dash-card-media-img">
-        <div className="absolute inset-0" style={{ backgroundColor: `var(--chip-${space.tint})` }} />
-        <img src={space.img} alt={space.label} loading="lazy" className="absolute inset-0 size-full object-cover" />
+        <div
+          className="absolute inset-0"
+          style={{ backgroundColor: `var(--chip-${space.tint})` }}
+        />
+        <img
+          src={space.img}
+          alt={space.label}
+          loading="lazy"
+          className="absolute inset-0 size-full object-cover"
+        />
         <div className="dash-card-space-overlay absolute inset-x-0 bottom-0 top-1/3" />
         <span
           className="dash-card-chip absolute left-2 top-2"
-          style={{ backgroundColor: `var(--chip-${space.tint})`, color: `var(--accent-${space.tint})` }}
+          style={{
+            backgroundColor: `var(--chip-${space.tint})`,
+            color: `var(--accent-${space.tint})`,
+          }}
         >
           <Icon size={13} />
         </span>
@@ -259,7 +363,14 @@ function SpaceCard({ space }: { space: Space }) {
     );
   }
   return (
-    <DashCard as="button" type="button" variant="media" className={cardClass} interactive onClick={() => toast.info('即将开放')}>
+    <DashCard
+      as="button"
+      type="button"
+      variant="media"
+      className={cardClass}
+      interactive
+      onClick={() => toast.info('即将开放')}
+    >
       {body}
     </DashCard>
   );
@@ -285,7 +396,9 @@ function MySpaces() {
           onClick={stub}
         >
           <Plus size={18} className="text-ink-faint" />
-          <span className="mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.addSpace')}</span>
+          <span className="mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">
+            {t('dashboard.addSpace')}
+          </span>
         </DashCard>
       </ScrollArea>
     </section>
@@ -303,13 +416,26 @@ function RecentAdded() {
       <ScrollArea orientation="horizontal" className="app-dash-pad flex gap-2 pb-1 sm:gap-2.5">
         {RECENT_ITEMS.map((item) => (
           <DashCard key={item.key} variant="media" className="dash-card-scroll-item" interactive>
-            <div className="dash-card-media-img max-h-[108px] sm:max-h-[120px]" style={{ aspectRatio: 'auto' }}>
-              <div className="absolute inset-0" style={{ backgroundColor: `var(--chip-${item.tint})` }} />
-              <img src={item.img} alt={item.name} loading="lazy" className="absolute inset-0 size-full object-cover" />
+            <div
+              className="dash-card-media-img max-h-[108px] sm:max-h-[120px]"
+              style={{ aspectRatio: 'auto' }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{ backgroundColor: `var(--chip-${item.tint})` }}
+              />
+              <img
+                src={item.img}
+                alt={item.name}
+                loading="lazy"
+                className="absolute inset-0 size-full object-cover"
+              />
             </div>
             <div className="dash-card-media-body">
               <div className="truncate text-[13px] font-semibold text-ink">{item.name}</div>
-              <div className="mt-0.5 truncate text-[10px] text-ink-faint sm:text-[11px]">{item.tag}</div>
+              <div className="mt-0.5 truncate text-[10px] text-ink-faint sm:text-[11px]">
+                {item.tag}
+              </div>
               <div className="mt-0.5 text-[10px] text-ink-faint">{item.time}</div>
             </div>
           </DashCard>
@@ -323,7 +449,9 @@ function RecentAdded() {
           onClick={stub}
         >
           <Plus size={18} className="text-ink-faint" />
-          <span className="mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">{t('dashboard.recordNew')}</span>
+          <span className="mt-1.5 text-[10px] text-ink-faint sm:text-[11px]">
+            {t('dashboard.recordNew')}
+          </span>
         </DashCard>
       </ScrollArea>
     </section>
@@ -350,7 +478,9 @@ function Reminders() {
             <span className="dash-card-check" aria-hidden />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] leading-snug text-ink">{r.text}</div>
-              <div className={`mt-0.5 text-[11px] ${r.urgent ? 'text-pink' : 'text-ink-faint'}`}>{r.due}</div>
+              <div className={`mt-0.5 text-[11px] ${r.urgent ? 'text-pink' : 'text-ink-faint'}`}>
+                {r.due}
+              </div>
             </div>
           </div>
         ))}
@@ -381,7 +511,11 @@ function Reading() {
           <div className="mt-1 text-[11px] tabular-nums text-ink-faint">68%</div>
         </div>
       </div>
-      <button type="button" onClick={stub} className="lp-btn lp-btn-ghost mt-3 w-full rounded-md py-2 text-[12px] text-ink">
+      <button
+        type="button"
+        onClick={stub}
+        className="lp-btn lp-btn-ghost mt-3 w-full rounded-md py-2 text-[12px] text-ink"
+      >
         {t('dashboard.continueReading')}
       </button>
     </DashCard>
@@ -411,16 +545,24 @@ function SpaceUsage() {
         }
       />
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-        <div className="relative size-[5.5rem] shrink-0 rounded-full sm:size-28" style={{ background: conic }}>
+        <div
+          className="relative size-[5.5rem] shrink-0 rounded-full sm:size-28"
+          style={{ background: conic }}
+        >
           <div className="absolute inset-[12px] flex flex-col items-center justify-center rounded-full border border-hairline bg-surface sm:inset-[14px]">
-            <span className="dash-card-stat-value text-lg font-bold leading-none text-ink">{USAGE_TOTAL}</span>
+            <span className="dash-card-stat-value text-lg font-bold leading-none text-ink">
+              {USAGE_TOTAL}
+            </span>
             <span className="mt-0.5 text-[10px] text-ink-faint">件物品</span>
           </div>
         </div>
         <div className="w-full flex-1 space-y-1.5 sm:w-auto">
           {USAGE.map((u) => (
             <div key={u.key} className="flex items-center gap-2">
-              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: `var(--accent-${u.tint})` }} />
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: `var(--accent-${u.tint})` }}
+              />
               <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{u.label}</span>
               <span className="text-[11px] tabular-nums text-ink-faint">{u.pct}%</span>
             </div>
@@ -460,9 +602,8 @@ const HERO_MASK =
 
 function HeroDecoration() {
   const { theme } = useTheme();
-  const heroSrc = theme === 'dark'
-    ? '/assets/dashboard-hero-dark.png'
-    : '/assets/dashboard-hero.png';
+  const heroSrc =
+    theme === 'dark' ? '/assets/dashboard-hero-dark.png' : '/assets/dashboard-hero.png';
 
   return (
     <div
