@@ -1127,3 +1127,36 @@ Built the first-stage super-admin management system skeleton: independent admin 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 32: Admin user management
+
+**Date**: 2026-07-04
+**Task**: Admin user management
+**Branch**: `main`
+
+### Summary
+
+Implemented the first real admin feature: read-only user management with safe account/login details, admin dashboard stats, cross-domain admin auth fixes for Passkey and GitHub, grouped admin navigation, and design-system-aligned admin UI.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `54bd6ca` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

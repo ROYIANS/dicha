@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 31
+- **Total Sessions**: 32
 - **Last Active**: 2026-07-04
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1129 | Active |
+| `journal-1.md` | ~1162 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 32 | 2026-07-04 | Admin user management | `54bd6ca` | `main` |
 | 31 | 2026-07-04 | Admin management skeleton | `423f463` | `main` |
 | 30 | 2026-07-04 | AI usage analytics dashboard | `311f7d5` | `main` |
 | 29 | 2026-07-04 | UI ornaments and settings scroll isolation | `1a24fdf`, `efc63ab` | `main` |
