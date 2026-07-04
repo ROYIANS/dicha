@@ -960,3 +960,36 @@ Implemented real non-streaming AI invoke routing with provider adapters and fall
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: AI provider sync and model assignment fixes
+
+**Date**: 2026-07-04
+**Task**: AI provider sync and model assignment fixes
+**Branch**: `main`
+
+### Summary
+
+Fixed AI provider model sync capability detection for LobeHub router providers such as AI Hub Mix, refreshed built-in provider metadata during catalog normalization, corrected service model select unavailable state handling, preserved fallback assignments, and documented future database persistence direction.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `065828b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
