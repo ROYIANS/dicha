@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/backend/ai-catalog.md", "reason": "Validate any invoke/routing/credit changes against the executable backend AI contract before completion."}
+{"file": ".trellis/tasks/07-04-ai-gateway-hardening/prd.md", "reason": "Check implementation scope against the agreed first-phase gateway hardening acceptance criteria."}

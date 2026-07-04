@@ -47,6 +47,18 @@
 - **MVP 不强制单测覆盖率** —— ROYIANS 单人开发，过度测试 = 拖慢迭代
 - **集成测试只覆盖关键路径**：录入流程、AI 降级路径、auth
 - v1.0 发布前重点跑一遍核心链路 e2e
+- Vitest 当前不会可靠转译 Nest provider class 上的 decorator 语法。需要直接单测复杂 service orchestration 时，优先把可测逻辑写成普通 class，并在 Nest module 里用 `useFactory` 显式注入依赖；controller 仍可按 class token 注入该 service。
+
+```typescript
+providers: [
+  {
+    provide: InvokeService,
+    useFactory: (catalogStore, creditStore, usageStore, adapterRegistry) =>
+      new InvokeService(catalogStore, creditStore, usageStore, adapterRegistry),
+    inject: [CatalogStore, CreditStore, UsageStore, InvokeAdapterRegistry],
+  },
+];
+```
 
 > 注：与典型团队 spec 不同，这条是 dicha 项目的自觉选择，因为是单人 weekend warrior 项目（15-25h/周）。
 

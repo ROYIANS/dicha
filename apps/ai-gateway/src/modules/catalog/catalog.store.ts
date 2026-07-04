@@ -206,8 +206,16 @@ export class CatalogStore {
     providerId: string,
     modelId: string,
   ): Promise<SystemProviderChannel | null> {
+    return (await this.getSystemProviderChannels(providerId, modelId))[0] ?? null;
+  }
+
+  async getSystemProviderChannels(
+    providerId: string,
+    modelId: string,
+  ): Promise<SystemProviderChannel[]> {
+    const channels: SystemProviderChannel[] = [];
     if (providerId === DICHA_PROVIDER_ID) {
-      const internalModel = await this.prisma.aiInternalProviderModel.findFirst({
+      const internalModels = await this.prisma.aiInternalProviderModel.findMany({
         where: {
           enabled: true,
           dxModelId: modelId,
@@ -220,8 +228,8 @@ export class CatalogStore {
           { updatedAt: 'desc' },
         ],
       });
-      if (internalModel) {
-        return {
+      channels.push(
+        ...internalModels.map((internalModel) => ({
           id: internalModel.id,
           internalProviderId: internalModel.internalProviderId,
           providerId,
@@ -235,17 +243,15 @@ export class CatalogStore {
             ? this.decrypt(internalModel.internalProvider.credential as PersistedCredential)
             : '',
           parameterConfig: this.recordFromJson(internalModel.parameterConfig),
-        };
-      }
+        })),
+      );
     }
 
-    const channel = await this.prisma.aiSystemProviderChannel.findFirst({
+    const legacyChannels = await this.prisma.aiSystemProviderChannel.findMany({
       where: { providerId, modelId, enabled: true },
       orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
     });
-    if (!channel) return null;
-
-    return {
+    channels.push(...legacyChannels.map((channel) => ({
       id: channel.id,
       providerId: channel.providerId,
       modelId: channel.modelId,
@@ -255,7 +261,8 @@ export class CatalogStore {
       requestFormat: channel.requestFormat as AiProvider['requestFormat'],
       authType: channel.authType as AiProvider['authType'],
       secret: channel.credential ? this.decrypt(channel.credential as PersistedCredential) : '',
-    };
+    })));
+    return channels;
   }
 
   async mergeSyncedModels(

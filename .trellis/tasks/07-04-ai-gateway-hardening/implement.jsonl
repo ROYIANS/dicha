@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/ai-catalog.md", "reason": "Owns AI provider catalog, invoke routing/degradation, billing, usage, and credit accounting contracts that govern this gateway hardening task."}
+{"file": ".trellis/tasks/archive/2026-07/07-04-ai-credit-system/research/new-api-ai-gateway-design.md", "reason": "Prior New API gateway research with adapter, routing, streaming, settlement, and logging takeaways for the new hardening task."}
+{"file": ".trellis/tasks/archive/2026-07/07-04-ai-credit-system/research/new-api-billing.md", "reason": "Prior New API billing research to preserve credit settlement and billing snapshot semantics during gateway refactoring."}

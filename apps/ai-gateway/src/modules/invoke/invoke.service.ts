@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
 import type {
   AiGatewayCatalog,
   AiInvokeAttempt,
@@ -13,17 +12,20 @@ import type {
   AiSettlementCurrency,
   AiUsageStatus,
 } from '@dicha/shared';
-import { CatalogStore } from '../catalog/catalog.store';
-import type { SystemProviderChannel } from '../catalog/catalog.store';
-import { CreditStore } from '../credits/credit.store';
+import type { CatalogStore, SystemProviderChannel } from '../catalog/catalog.store';
+import type { CreditStore } from '../credits/credit.store';
 import type { CreditCharge } from '../credits/credit.store';
-import { UsageStore } from '../usage/usage.store';
+import type { UsageStore } from '../usage/usage.store';
+import type { InvokeAdapterRegistry } from './adapters/invoke-adapter.registry';
+import { isAbortError } from './adapters/invoke-adapter';
+import { InvokeError, sanitizedAiMessage } from './adapters/invoke-error';
 
 type InvokeSuccess = {
   text: string;
   promptTokens: number;
   completionTokens: number;
   latencyMs: number;
+  upstreamRequestId: string | null;
 };
 
 type UsageSettlement = Pick<
@@ -42,76 +44,72 @@ type InvokeFailure = {
 type AttemptTarget = {
   model: AiModel;
   provider: AiProvider;
-};
-
-type ProviderSecret = {
-  secret: string;
   channel?: SystemProviderChannel;
 };
 
 const DEFAULT_TIMEOUT_MS = 45_000;
-const DEFAULT_MAX_TOKENS = 1024;
 
-@Injectable()
 export class InvokeService {
   constructor(
     private readonly catalogStore: CatalogStore,
     private readonly creditStore: CreditStore,
     private readonly usageStore: UsageStore,
+    private readonly adapterRegistry: InvokeAdapterRegistry,
   ) {}
 
   async invoke(ownerId: string, request: AiInvokeRequest): Promise<AiInvokeResponse> {
     const requestId = randomUUID();
     const catalog = await this.catalogStore.getCatalog(ownerId);
-    const targets = this.attemptTargets(catalog, request);
+    const targets = await this.attemptTargets(catalog, request);
     const attempts: AiInvokeAttempt[] = [];
+    let finalFailureTarget: AttemptTarget | null = null;
 
     for (const target of targets) {
       const validationFailure = await this.validateTarget(ownerId, target);
-      const requestFormat = request.requestFormat ?? target.provider.requestFormat ?? 'openai_compatible';
+      const requestFormat = this.resolvedRequestFormat(target, request);
       if (validationFailure) {
         attempts.push(this.failedAttempt(target, requestFormat, null, validationFailure));
+        finalFailureTarget = target;
         if (!validationFailure.retryable) break;
         continue;
       }
 
-      const secret = await this.providerSecret(ownerId, target);
-      const resolvedRequestFormat = secret.channel?.requestFormat ?? requestFormat;
-      if (target.provider.credentialMode === 'platform_managed' && !secret.channel) {
+      if (target.provider.credentialMode === 'platform_managed' && !target.channel) {
         const failure = this.invokeError(
           'config',
           'Platform-managed AI provider channel is not configured',
           true,
         );
-        attempts.push(this.failedAttempt(target, resolvedRequestFormat, null, failure));
+        attempts.push(this.failedAttempt(target, requestFormat, null, failure));
+        finalFailureTarget = target;
         continue;
       }
       const reserveFailure = await this.reserveCredits(ownerId, target, request);
       if (reserveFailure) {
-        attempts.push(this.failedAttempt(target, resolvedRequestFormat, null, reserveFailure));
+        attempts.push(this.failedAttempt(target, requestFormat, null, reserveFailure));
+        finalFailureTarget = target;
         break;
       }
       const startedAt = Date.now();
       try {
         const result = await this.invokeUpstream({
-          model: target.model,
-          provider: target.provider,
+          target,
           request,
-          requestFormat: resolvedRequestFormat,
-          secret,
+          requestFormat,
+          secret: await this.providerSecret(ownerId, target),
         });
         const status: AiUsageStatus = attempts.some((attempt) => attempt.status === 'failure')
           ? 'degraded'
           : 'success';
         const usageBase = this.invokeUsageBase(request, result);
-        const settlement = await this.settleUsage(target, usageBase, secret.channel);
+        const settlement = await this.settleUsage(target, usageBase, target.channel);
         const usage = this.userVisibleUsage(usageBase, settlement);
         attempts.push({
           providerId: target.provider.id,
           providerName: target.provider.name,
           modelId: target.model.id,
           modelName: target.model.displayName,
-          requestFormat: resolvedRequestFormat,
+          requestFormat,
           status,
           latencyMs: result.latencyMs,
           errorCategory: null,
@@ -121,19 +119,20 @@ export class InvokeService {
           request,
           requestId,
           target,
-          channel: secret.channel,
+          channel: target.channel,
           status,
           usage,
           settlement,
           latencyMs: result.latencyMs,
           errorCategory: null,
+          upstreamRequestId: result.upstreamRequestId,
         });
         return this.response({
           attempts,
           error: null,
           generatedAt: new Date().toISOString(),
           request,
-          requestFormat: resolvedRequestFormat,
+          requestFormat,
           status,
           target,
           text: result.text,
@@ -141,13 +140,14 @@ export class InvokeService {
         });
       } catch (error) {
         const failure = this.classifyError(error);
-        attempts.push(this.failedAttempt(target, resolvedRequestFormat, Date.now() - startedAt, failure));
+        attempts.push(this.failedAttempt(target, requestFormat, Date.now() - startedAt, failure));
+        finalFailureTarget = target;
         if (!failure.retryable) break;
       }
     }
 
     const finalAttempt = [...attempts].reverse().find((attempt) => attempt.status === 'failure');
-    const finalTarget = finalAttempt ? this.targetFromAttempt(catalog, finalAttempt) : null;
+    const finalTarget = finalFailureTarget ?? (finalAttempt ? this.targetFromAttempt(catalog, finalAttempt) : null);
     const usage = this.emptyUsage();
     if (finalAttempt && finalTarget) {
       await this.recordUsage(
@@ -156,12 +156,13 @@ export class InvokeService {
           request,
           requestId,
           target: finalTarget,
-          channel: null,
+          channel: finalTarget.channel,
           status: 'failure',
           usage,
           settlement: this.emptySettlement(),
           latencyMs: finalAttempt.latencyMs,
           errorCategory: finalAttempt.errorCategory,
+          upstreamRequestId: null,
         },
       );
     }
@@ -182,7 +183,7 @@ export class InvokeService {
     });
   }
 
-  private attemptTargets(catalog: AiGatewayCatalog, request: AiInvokeRequest): AttemptTarget[] {
+  private async attemptTargets(catalog: AiGatewayCatalog, request: AiInvokeRequest): Promise<AttemptTarget[]> {
     const assignment = catalog.assignments.find((item) => item.useCase === request.useCase);
     const modelIds = this.unique([
       request.modelId,
@@ -190,7 +191,7 @@ export class InvokeService {
       ...(request.fallbackModelIds ?? []),
       ...(assignment?.fallbackModelIds ?? []),
     ]);
-    return modelIds
+    const baseTargets = modelIds
       .map((modelId) => {
         const model = catalog.models.find((item) => item.id === modelId);
         if (!model) return null;
@@ -199,6 +200,23 @@ export class InvokeService {
         return { model, provider };
       })
       .filter((target): target is AttemptTarget => Boolean(target));
+    const targets: AttemptTarget[] = [];
+    for (const target of baseTargets) {
+      if (target.provider.credentialMode !== 'platform_managed') {
+        targets.push(target);
+        continue;
+      }
+      const channels = await this.catalogStore.getSystemProviderChannels(
+        target.provider.id,
+        target.model.id,
+      );
+      if (channels.length === 0) {
+        targets.push(target);
+        continue;
+      }
+      targets.push(...channels.map((channel) => ({ ...target, channel })));
+    }
+    return targets;
   }
 
   private async validateTarget(ownerId: string, target: AttemptTarget): Promise<InvokeFailure | null> {
@@ -236,65 +254,65 @@ export class InvokeService {
     return null;
   }
 
-  private async providerSecret(ownerId: string, target: AttemptTarget): Promise<ProviderSecret> {
-    if (target.provider.credentialMode === 'not_required') return { secret: '' };
+  private async providerSecret(ownerId: string, target: AttemptTarget): Promise<string> {
+    if (target.provider.credentialMode === 'not_required') return '';
     if (target.provider.credentialMode === 'platform_managed') {
-      const channel = await this.catalogStore.getSystemProviderChannel(
-        target.provider.id,
-        target.model.id,
-      );
-      return {
-        secret: channel?.secret ?? '',
-        ...(channel ? { channel } : {}),
-      };
+      return target.channel?.secret ?? '';
     }
     const value = await this.catalogStore.getProviderSecret(ownerId, target.provider.id);
-    return { secret: value?.secret ?? '' };
+    return value?.secret ?? '';
+  }
+
+  private resolvedRequestFormat(
+    target: AttemptTarget,
+    request: AiInvokeRequest,
+  ): AiProviderRequestFormat {
+    return target.channel?.requestFormat ?? request.requestFormat ?? target.provider.requestFormat ?? 'openai_compatible';
   }
 
   private async invokeUpstream({
-    model: requestedModel,
-    provider: requestedProvider,
+    target,
     request,
     requestFormat,
     secret,
   }: {
-    model: AiModel;
-    provider: AiProvider;
+    target: AttemptTarget;
     request: AiInvokeRequest;
     requestFormat: AiProviderRequestFormat;
-    secret: ProviderSecret;
+    secret: string;
   }): Promise<InvokeSuccess> {
-    const provider = secret.channel
+    const provider = target.channel
       ? {
-          ...requestedProvider,
-          baseUrl: secret.channel.upstreamBaseUrl,
-          authType: secret.channel.authType,
-          requestFormat: secret.channel.requestFormat,
+          ...target.provider,
+          baseUrl: target.channel.upstreamBaseUrl,
+          authType: target.channel.authType,
+          requestFormat: target.channel.requestFormat,
         }
-      : requestedProvider;
-    const model = secret.channel
+      : target.provider;
+    const model = target.channel
       ? {
-          ...requestedModel,
-          name: secret.channel.upstreamModelName,
+          ...target.model,
+          name: target.channel.upstreamModelName,
         }
-      : requestedModel;
+      : target.model;
     const startedAt = Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), request.timeoutMs ?? DEFAULT_TIMEOUT_MS);
     try {
-      const result =
-        requestFormat === 'anthropic_messages'
-          ? await this.invokeAnthropic(provider, model, request, secret, controller.signal)
-          : requestFormat === 'openai_responses'
-            ? await this.invokeOpenAiResponses(provider, model, request, secret, controller.signal)
-            : await this.invokeOpenAiCompatible(provider, model, request, secret, controller.signal);
+      const result = await this.adapterRegistry.adapterFor(requestFormat).invoke({
+        provider,
+        model,
+        request,
+        secret,
+        parameterConfig: target.channel?.parameterConfig ?? {},
+        signal: controller.signal,
+      });
       return {
         ...result,
         latencyMs: Date.now() - startedAt,
       };
     } catch (error) {
-      if (this.isAbortError(error)) {
+      if (isAbortError(error)) {
         throw this.invokeError('timeout', 'AI provider request timed out', true);
       }
       throw error;
@@ -303,214 +321,22 @@ export class InvokeService {
     }
   }
 
-  private async invokeOpenAiCompatible(
-    provider: AiProvider,
-    model: AiModel,
-    request: AiInvokeRequest,
-    secret: ProviderSecret,
-    signal: AbortSignal,
-  ): Promise<Omit<InvokeSuccess, 'latencyMs'>> {
-    const defaults = this.channelParameters(secret);
-    const body = await this.postJson(
-      `${this.openAiBaseUrl(provider.baseUrl)}/chat/completions`,
-      {
-        ...defaults,
-        model: model.name,
-        messages: request.messages,
-        stream: false,
-        ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
-        ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
-      },
-      this.openAiHeaders(provider, secret),
-      signal,
-    );
-    const text =
-      this.asString(body, ['choices', 0, 'message', 'content']) ??
-      this.asString(body, ['choices', 0, 'text']) ??
-      '';
-    if (!text) {
-      throw this.invokeError('unknown', 'AI provider returned an empty completion', true);
-    }
-    return {
-      text,
-      promptTokens: this.asNumber(body, ['usage', 'prompt_tokens']) ?? 0,
-      completionTokens: this.asNumber(body, ['usage', 'completion_tokens']) ?? 0,
-    };
-  }
-
-  private async invokeOpenAiResponses(
-    provider: AiProvider,
-    model: AiModel,
-    request: AiInvokeRequest,
-    secret: ProviderSecret,
-    signal: AbortSignal,
-  ): Promise<Omit<InvokeSuccess, 'latencyMs'>> {
-    const defaults = this.channelParameters(secret);
-    const system = request.messages
-      .filter((message) => message.role === 'system')
-      .map((message) => message.content)
-      .join('\n\n');
-    const input = request.messages
-      .filter((message) => message.role !== 'system')
-      .map((message) => ({ role: message.role, content: message.content }));
-    const body = await this.postJson(
-      `${this.openAiBaseUrl(provider.baseUrl)}/responses`,
-      {
-        ...defaults,
-        model: model.name,
-        input,
-        stream: false,
-        ...(system ? { instructions: system } : {}),
-        ...(request.maxTokens ? { max_output_tokens: request.maxTokens } : {}),
-        ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
-      },
-      this.openAiHeaders(provider, secret),
-      signal,
-    );
-    const text = this.openAiResponsesText(body);
-    if (!text) {
-      throw this.invokeError('unknown', 'AI provider returned an empty response', true);
-    }
-    return {
-      text,
-      promptTokens: this.asNumber(body, ['usage', 'input_tokens']) ?? 0,
-      completionTokens: this.asNumber(body, ['usage', 'output_tokens']) ?? 0,
-    };
-  }
-
-  private async invokeAnthropic(
-    provider: AiProvider,
-    model: AiModel,
-    request: AiInvokeRequest,
-    secret: ProviderSecret,
-    signal: AbortSignal,
-  ): Promise<Omit<InvokeSuccess, 'latencyMs'>> {
-    const defaults = this.channelParameters(secret);
-    const system = request.messages
-      .filter((message) => message.role === 'system')
-      .map((message) => message.content)
-      .join('\n\n');
-    const messages = request.messages
-      .filter((message) => message.role !== 'system')
-      .map((message) => ({
-        role: message.role === 'assistant' ? 'assistant' : 'user',
-        content: message.content,
-      }));
-    const body = await this.postJson(
-      `${this.anthropicBaseUrl(provider.baseUrl)}/v1/messages`,
-      {
-        ...defaults,
-        model: model.name,
-        messages,
-        max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
-        ...(system ? { system } : {}),
-        ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
-      },
-      this.anthropicHeaders(secret),
-      signal,
-    );
-    const text = this.anthropicText(body);
-    if (!text) {
-      throw this.invokeError('unknown', 'AI provider returned an empty response', true);
-    }
-    return {
-      text,
-      promptTokens: this.asNumber(body, ['usage', 'input_tokens']) ?? 0,
-      completionTokens: this.asNumber(body, ['usage', 'output_tokens']) ?? 0,
-    };
-  }
-
-  private async postJson(
-    url: string,
-    body: unknown,
-    headers: Record<string, string>,
-    signal: AbortSignal,
-  ): Promise<unknown> {
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...headers,
-        },
-        body: JSON.stringify(body),
-        signal,
-      });
-    } catch (error) {
-      if (this.isAbortError(error)) throw error;
-      throw this.invokeError('network', 'AI provider network request failed', true);
-    }
-
-    const raw = await response.text();
-    const parsed = raw ? this.safeJson(raw) : {};
-    if (!response.ok) {
-      throw this.upstreamError(response.status, parsed, raw);
-    }
-    return parsed;
-  }
-
-  private channelParameters(secret: ProviderSecret): Record<string, unknown> {
-    return secret.channel?.parameterConfig ?? {};
-  }
-
-  private openAiHeaders(provider: AiProvider, secret: ProviderSecret): Record<string, string> {
-    if (provider.authType === 'none' || !secret.secret) return {};
-    return { authorization: `Bearer ${secret.secret}` };
-  }
-
-  private anthropicHeaders(secret: ProviderSecret): Record<string, string> {
-    return {
-      'anthropic-version': '2023-06-01',
-      ...(secret.secret ? { 'x-api-key': secret.secret } : {}),
-    };
-  }
-
-  private openAiBaseUrl(baseUrl: string): string {
-    return baseUrl
-      .replace(/\/+$/, '')
-      .replace(/\/(?:chat\/completions|responses)\/?$/, '');
-  }
-
-  private anthropicBaseUrl(baseUrl: string): string {
-    return baseUrl.replace(/\/+$/, '').replace(/\/v1(?:\/messages)?\/?$/, '');
-  }
-
-  private upstreamError(status: number, parsed: unknown, raw: string): InvokeFailure {
-    const message = this.sanitizedMessage(
-      (this.asString(parsed, ['error', 'message']) ??
-        this.asString(parsed, ['message']) ??
-        raw) ||
-        `AI provider request failed (${status})`,
-    );
-    if (status === 401 || status === 403) return this.invokeError('auth', message, false);
-    if (status === 402) return this.invokeError('quota', message, false);
-    if (status === 404) return this.invokeError('model_not_found', message, true);
-    if (status === 408 || status === 409 || status === 423 || status === 425) {
-      return this.invokeError('provider_unavailable', message, true);
-    }
-    if (status === 429) return this.invokeError('rate_limit', message, true);
-    if (status >= 500) return this.invokeError('provider_unavailable', message, true);
-
-    const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('context') || lowerMessage.includes('token')) {
-      return this.invokeError('context_limit', message, false);
-    }
-    if (lowerMessage.includes('safety') || lowerMessage.includes('moderation') || lowerMessage.includes('policy')) {
-      return this.invokeError('content_safety', message, false);
-    }
-    return this.invokeError('invalid_request', message, false);
-  }
-
   private invokeError(
     category: AiInvokeErrorCategory,
     message: string,
     retryable: boolean,
   ): InvokeFailure {
-    return { category, message: this.sanitizedMessage(message), retryable };
+    return { category, message: sanitizedAiMessage(message), retryable };
   }
 
   private classifyError(error: unknown): InvokeFailure {
+    if (error instanceof InvokeError) {
+      return {
+        category: error.category,
+        message: error.message,
+        retryable: error.retryable,
+      };
+    }
     if (this.isInvokeFailure(error)) return error;
     if (error instanceof Error) {
       return this.invokeError('unknown', error.message || 'AI provider request failed', true);
@@ -598,6 +424,7 @@ export class InvokeService {
       settlement: UsageSettlement;
       latencyMs: number | null;
       errorCategory: AiInvokeErrorCategory | null;
+      upstreamRequestId: string | null;
     },
   ): Promise<void> {
     await this.usageStore.recordEvent(input.ownerId, {
@@ -613,7 +440,7 @@ export class InvokeService {
       creditAmount: input.settlement.creditAmount,
       billingMode: input.target.provider.billingMode,
       requestId: input.requestId,
-      upstreamRequestId: null,
+      upstreamRequestId: input.upstreamRequestId,
       internalProviderId: input.channel?.internalProviderId ?? null,
       internalProviderModelId: input.channel?.id ?? null,
       usageEstimated: input.usage.usageEstimated,
@@ -781,72 +608,5 @@ export class InvokeService {
       result.push(value);
     }
     return result;
-  }
-
-  private safeJson(raw: string): unknown {
-    try {
-      return JSON.parse(raw) as unknown;
-    } catch {
-      return {};
-    }
-  }
-
-  private asString(value: unknown, path: Array<string | number>): string | undefined {
-    const item = this.pathValue(value, path);
-    return typeof item === 'string' ? item : undefined;
-  }
-
-  private asNumber(value: unknown, path: Array<string | number>): number | undefined {
-    const item = this.pathValue(value, path);
-    return typeof item === 'number' && Number.isFinite(item) ? item : undefined;
-  }
-
-  private pathValue(value: unknown, path: Array<string | number>): unknown {
-    let current = value;
-    for (const key of path) {
-      if (!current || typeof current !== 'object') return undefined;
-      if (Array.isArray(current)) {
-        if (typeof key !== 'number') return undefined;
-        current = current[key];
-        continue;
-      }
-      current = (current as Record<string, unknown>)[key];
-    }
-    return current;
-  }
-
-  private isAbortError(error: unknown): boolean {
-    return error instanceof Error && error.name === 'AbortError';
-  }
-
-  private openAiResponsesText(value: unknown): string {
-    const outputText = this.asString(value, ['output_text']);
-    if (outputText) return outputText;
-    const output = this.pathValue(value, ['output']);
-    if (!Array.isArray(output)) return '';
-    return output
-      .flatMap((item) => {
-        const content = this.pathValue(item, ['content']);
-        return Array.isArray(content) ? content : [];
-      })
-      .map((item) => this.asString(item, ['text']) ?? this.asString(item, ['content']) ?? '')
-      .filter(Boolean)
-      .join('\n');
-  }
-
-  private anthropicText(value: unknown): string {
-    const content = this.pathValue(value, ['content']);
-    if (!Array.isArray(content)) return '';
-    return content
-      .map((item) => this.asString(item, ['text']) ?? '')
-      .filter(Boolean)
-      .join('\n');
-  }
-
-  private sanitizedMessage(value: string): string {
-    return value
-      .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/g, 'Bearer [redacted]')
-      .replace(/sk-[A-Za-z0-9_-]+/g, 'sk-[redacted]')
-      .slice(0, 500);
   }
 }
