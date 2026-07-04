@@ -13,10 +13,10 @@
 ### Prisma 7 关键配置（与 v5/v6 不同，易踩坑）
 
 - **NestJS 用 CommonJS**，故 generator 必须设 `moduleFormat = "cjs"`（NestJS 官方 Prisma 配方明示 Prisma 7 默认 ESM 与 Nest 不兼容）。
-- generator `output = "../src/generated/prisma"` 必填——client 不再生成进 `node_modules`，且该目录已 gitignore（构建产物）。
-- **新 checkout 必须先 `pnpm --filter @dicha/api prisma:generate`**：该 client 是 gitignore 的构建产物，不生成则 `PrismaService` 丢失 `$queryRaw`/`$connect` 类型，`typecheck`/`build` 直接报错。
+- generator `output = "../src/generated/prisma"` 必填——client 不再生成进 `node_modules`，且该目录已 gitignore（构建产物）。如果另一个 Nest app 也需要 DB access（当前为 `apps/ai-gateway`），在同一个 schema 内增加第二个 generator 输出到该 app 自己的 `src/generated/prisma`，不要跨 app import 另一边的 generated client。
+- **新 checkout 必须先 `pnpm --filter @dicha/api prisma:generate`**：该命令会同时生成 API 与 AI Gateway 两份 client；generated client 是 gitignore 的构建产物，不生成则 `PrismaService` 丢失 `$queryRaw`/`$connect` 类型，`typecheck`/`build` 直接报错。
 - **datasource 块不含 `url`**（Prisma 7 移除）。连接串放 `apps/api/prisma.config.ts` 的 `datasource.url`（供 CLI/migrate），运行时由 `PrismaService` 通过 `@prisma/adapter-pg` driver adapter 注入。
-- `PrismaClient` 从 `../generated/prisma/client` 导入，**不再从 `@prisma/client`**。
+- `PrismaClient` 从当前 app 自己的 `../generated/prisma/client` 导入，**不再从 `@prisma/client`**，也不从其它 app 的 generated 目录导入。
 - `new PrismaClient({ adapter: new PrismaPg({ connectionString }) })`——v7 运行时强制要求 driver adapter。
 - 不自动加载 `.env`：`prisma.config.ts` 顶部 `import 'dotenv/config'`。
 - `prisma migrate diff` 的 `--to-schema-datamodel` 已改名为 `--to-schema`。
