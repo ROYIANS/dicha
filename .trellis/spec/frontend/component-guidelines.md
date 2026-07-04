@@ -13,15 +13,16 @@
 
 ## 组件分类
 
-| 位置 | 性质 | 例子 |
-|---|---|---|
-| `features/<x>/components/` | 业务组件，可直连 store / query | `ItemDraftCard` |
-| `components/` | 跨 feature 复用件：**优先用 HeroUI**，必要时在此薄封装 | `Button`(HeroUI)、`Modal` |
-| `pixi/scenes/` | PixiJS 场景（不是 React 组件，M2） | `StorageRoomScene` |
+| 位置                       | 性质                                                   | 例子                      |
+| -------------------------- | ------------------------------------------------------ | ------------------------- |
+| `features/<x>/components/` | 业务组件，可直连 store / query                         | `ItemDraftCard`           |
+| `components/`              | 跨 feature 复用件：**优先用 HeroUI**，必要时在此薄封装 | `Button`(HeroUI)、`Modal` |
+| `pixi/scenes/`             | PixiJS 场景（不是 React 组件，M2）                     | `StorageRoomScene`        |
 
 ## 设置二级页
 
 - `/settings/*` 二级页面统一使用 `components/SettingsScaffold.tsx` 的 `SettingsDetailShell` 作为页面骨架：返回 `/settings`、标题/说明、右侧 summary、轻斜纹分隔和内容容器由它负责。
+- 设置主页和二级页共享 `_app.tsx` 的 `.app-content-scroll` 滚动容器；路由切换时的滚动归零必须集中在 `_app` 布局层按 `location.pathname` 执行。不要在 `SettingsDetailShell` 或具体二级页里 `querySelector('.app-content-scroll')` / `window.scrollTo()`，否则返回设置主页或跨二级页跳转会互相继承滚动位置。
 - 设置页内的 iOS 风格分组行优先复用 `SettingsPanel` / `SettingsValueRow` / `SettingsSwitch`；图标色块使用 `components/settings-ui.ts` 的 `SettingsTint` 与 `settingsTintClass`，不要在 route 文件里重复定义 tint map。
 - `SettingsValueRow` 的移动端布局必须把 action/value 放到下一行并占满可用宽度；只有 `sm` 以上才恢复左右两列，避免选择器、状态标签和开关挤压标题说明。复杂 action 内部控件在移动端也应 `w-full` / `min-w-0`，不要写 `46vw` 这类会截断中文的宽度。
 - `/settings/ai-providers` 的供应商列表必须把官方 `dicha` 供应商固定排在第一位，无论它是否启用；其余供应商继续按启用状态优先，再按 priority 排序。

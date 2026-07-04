@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, type LucideIcon } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrandMark } from '@/components/AppBrand';
 import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
@@ -16,11 +16,6 @@ export function SettingsDetailShell({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-
-  useEffect(() => {
-    document.querySelector('.app-content-scroll')?.scrollTo({ top: 0, left: 0 });
-    window.scrollTo({ top: 0, left: 0 });
-  }, [title]);
 
   return (
     <main className="relative min-h-full overflow-hidden">
@@ -64,10 +59,7 @@ export function SettingsDetailShell({
 function SettingsFooterMark() {
   return (
     <div className="flex min-h-44 items-end justify-center pt-16 pb-0 sm:min-h-56 sm:pt-24">
-      <BrandMark
-        aria-hidden
-        className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56"
-      />
+      <BrandMark aria-hidden className="h-28 w-44 text-ink-faint opacity-[0.12] sm:h-36 sm:w-56" />
     </div>
   );
 }
@@ -84,12 +76,16 @@ export function SettingsPanel({
   return (
     <section>
       {title ? (
-        <h2 className="mb-2 px-1 text-[11px] font-semibold tracking-wider text-ink-faint">{title}</h2>
+        <h2 className="mb-2 px-1 text-[11px] font-semibold tracking-wider text-ink-faint">
+          {title}
+        </h2>
       ) : null}
       <div className="overflow-hidden rounded-md border border-hairline bg-surface shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)]">
         {children}
       </div>
-      {footer ? <p className="mt-2 px-1 text-[11px] leading-relaxed text-ink-faint">{footer}</p> : null}
+      {footer ? (
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-ink-faint">{footer}</p>
+      ) : null}
     </section>
   );
 }

@@ -1,5 +1,5 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { useState } from 'react';
+import { createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { authQueryOptions } from '@/api/auth';
 import { Sidebar } from '@/components/Sidebar';
 import { AppNavDrawer } from '@/components/AppNavDrawer';
@@ -31,6 +31,17 @@ export const Route = createFileRoute('/_app')({
 function AppLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  useLayoutEffect(() => {
+    const scrollEl = contentScrollRef.current;
+    if (scrollEl) {
+      scrollEl.scrollTop = 0;
+      scrollEl.scrollLeft = 0;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
 
   return (
     <div className="app-shell flex h-dvh overflow-hidden bg-canvas lg:bg-sidebar-bg">
@@ -43,7 +54,10 @@ function AppLayout() {
           <Header navOpen={navOpen} onMenuClick={() => setNavOpen((v) => !v)} />
         </div>
 
-        <div className="app-content-scroll relative z-[1] min-h-0 flex-1 overflow-auto">
+        <div
+          ref={contentScrollRef}
+          className="app-content-scroll relative z-[1] min-h-0 flex-1 overflow-auto"
+        >
           <Outlet />
         </div>
 
