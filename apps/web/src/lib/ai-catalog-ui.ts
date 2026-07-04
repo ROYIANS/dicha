@@ -1,4 +1,4 @@
-import type { AiModel, AiProvider } from '@dicha/shared';
+import type { AiGatewayCatalog, AiModel, AiProvider } from '@dicha/shared';
 
 const lobeProviderKeyByProviderId: Partial<Record<string, string>> = {
   baidu_wenxin: 'wenxin',
@@ -11,8 +11,13 @@ const lobeProviderKeyByProviderId: Partial<Record<string, string>> = {
 };
 
 const providerIdsWithoutLobeIcon = new Set(['dicha']);
+const officialDichaProviderId = 'dicha';
 
 export function compareProvidersByEnabled(left: AiProvider, right: AiProvider) {
+  const officialDelta =
+    Number(right.id === officialDichaProviderId) - Number(left.id === officialDichaProviderId);
+  if (officialDelta !== 0) return officialDelta;
+
   const enabledDelta = Number(isProviderEnabled(right)) - Number(isProviderEnabled(left));
   if (enabledDelta !== 0) return enabledDelta;
   return left.priority - right.priority;
@@ -42,6 +47,46 @@ export function lobeProviderKey(provider: Pick<AiProvider, 'custom' | 'id'>) {
   return lobeProviderKeyByProviderId[provider.id] ?? provider.id;
 }
 
+export function getAssignableModelGroups(
+  catalog: Pick<AiGatewayCatalog, 'models' | 'providers'>,
+) {
+  const providerPriority = new Map(
+    catalog.providers.map((provider) => [provider.id, provider.priority] as const),
+  );
+  const assignableProviderIds = new Set(
+    catalog.providers.filter(isProviderAssignable).map((provider) => provider.id),
+  );
+  const modelsByProvider = new Map<string, AiModel[]>();
+
+  for (const model of catalog.models) {
+    if (!model.enabled || !assignableProviderIds.has(model.providerId)) continue;
+    const providerModels = modelsByProvider.get(model.providerId);
+    if (providerModels) {
+      providerModels.push(model);
+    } else {
+      modelsByProvider.set(model.providerId, [model]);
+    }
+  }
+
+  return catalog.providers
+    .filter(isProviderAssignable)
+    .slice()
+    .sort(compareProvidersByEnabled)
+    .flatMap((provider) => {
+      const models =
+        modelsByProvider
+          .get(provider.id)
+          ?.slice()
+          .sort((left, right) => compareModelsByEnabled(left, right, providerPriority)) ?? [];
+
+      return models.length > 0 ? [{ provider, models }] : [];
+    });
+}
+
 function isProviderEnabled(provider: AiProvider) {
   return provider.status === 'enabled' || provider.status === 'needs_config';
+}
+
+function isProviderAssignable(provider: AiProvider) {
+  return provider.status === 'enabled';
 }

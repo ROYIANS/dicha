@@ -7,6 +7,6 @@ import { CatalogStore } from './catalog.store';
 @Module({
   controllers: [CatalogController],
   providers: [CatalogService, CatalogStore, InternalTokenGuard],
+  exports: [CatalogStore],
 })
 export class CatalogModule {}
-

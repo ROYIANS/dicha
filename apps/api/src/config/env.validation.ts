@@ -18,6 +18,12 @@ class EnvVars {
   @IsString()
   BETTER_AUTH_URL!: string;
 
+  // Comma-separated super-admin emails. Kept server-side; web only receives a
+  // derived boolean on the current user profile.
+  @IsOptional()
+  @IsString()
+  DICHA_SUPER_ADMIN_EMAILS?: string;
+
   // ── ALTCHA（邮箱发码 proof-of-work 防滥用）────────────────
   // 自托管 PoW 的 HMAC 签名密钥；缺失则发码守卫无法校验，故必填（fail fast）。
   // 生成：openssl rand -base64 32

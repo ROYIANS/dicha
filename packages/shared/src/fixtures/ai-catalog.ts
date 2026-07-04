@@ -83,6 +83,7 @@ const curatedProviderTemplates: ProviderTemplate[] = [
     status: 'disabled',
     category: 'global',
     authType: 'api_key',
+    requestFormat: 'anthropic_messages',
     credentialMode: 'user_api_key',
     billingMode: 'user_provider',
     modelSyncMode: 'manual',
@@ -564,12 +565,17 @@ function lobeProviderToTemplate(card: LobeProviderCard, index: number): Provider
     status: 'disabled',
     category: providerCategory(providerId),
     authType: noCredential ? 'none' : 'api_key',
+    requestFormat: providerRequestFormat(card),
     credentialMode: noCredential ? 'not_required' : 'user_api_key',
     billingMode: 'user_provider',
     modelSyncMode: providerModelSyncMode(card),
     credentialState: noCredential ? 'not_required' : 'missing',
     priority: 280 + index * 10,
   });
+}
+
+function providerRequestFormat(card: LobeProviderCard): ProviderTemplate['requestFormat'] {
+  return card.settings?.sdkType === 'anthropic' ? 'anthropic_messages' : 'openai_compatible';
 }
 
 function normalizedProviderId(value: string): string {

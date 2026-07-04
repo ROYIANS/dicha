@@ -34,6 +34,7 @@ import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/setting
 import { Route as AppSettingsAiUsageRouteImport } from './routes/_app/settings.ai-usage'
 import { Route as AppSettingsAiProvidersRouteImport } from './routes/_app/settings.ai-providers'
 import { Route as AppSettingsAiModelsRouteImport } from './routes/_app/settings.ai-models'
+import { Route as AppSettingsAiInvokeDemoRouteImport } from './routes/_app/settings.ai-invoke-demo'
 import { Route as AppSettingsAboutRouteImport } from './routes/_app/settings.about'
 
 const LoginRoute = LoginRouteImport.update({
@@ -161,6 +162,11 @@ const AppSettingsAiModelsRoute = AppSettingsAiModelsRouteImport.update({
   path: '/ai-models',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsAiInvokeDemoRoute = AppSettingsAiInvokeDemoRouteImport.update({
+  id: '/ai-invoke-demo',
+  path: '/ai-invoke-demo',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsAboutRoute = AppSettingsAboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
   '/settings/about': typeof AppSettingsAboutRoute
+  '/settings/ai-invoke-demo': typeof AppSettingsAiInvokeDemoRoute
   '/settings/ai-models': typeof AppSettingsAiModelsRoute
   '/settings/ai-providers': typeof AppSettingsAiProvidersRoute
   '/settings/ai-usage': typeof AppSettingsAiUsageRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/wardrobe': typeof AppWardrobeRoute
   '/world': typeof AppWorldRoute
   '/settings/about': typeof AppSettingsAboutRoute
+  '/settings/ai-invoke-demo': typeof AppSettingsAiInvokeDemoRoute
   '/settings/ai-models': typeof AppSettingsAiModelsRoute
   '/settings/ai-providers': typeof AppSettingsAiProvidersRoute
   '/settings/ai-usage': typeof AppSettingsAiUsageRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/_app/wardrobe': typeof AppWardrobeRoute
   '/_app/world': typeof AppWorldRoute
   '/_app/settings/about': typeof AppSettingsAboutRoute
+  '/_app/settings/ai-invoke-demo': typeof AppSettingsAiInvokeDemoRoute
   '/_app/settings/ai-models': typeof AppSettingsAiModelsRoute
   '/_app/settings/ai-providers': typeof AppSettingsAiProvidersRoute
   '/_app/settings/ai-usage': typeof AppSettingsAiUsageRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/wardrobe'
     | '/world'
     | '/settings/about'
+    | '/settings/ai-invoke-demo'
     | '/settings/ai-models'
     | '/settings/ai-providers'
     | '/settings/ai-usage'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/wardrobe'
     | '/world'
     | '/settings/about'
+    | '/settings/ai-invoke-demo'
     | '/settings/ai-models'
     | '/settings/ai-providers'
     | '/settings/ai-usage'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/_app/wardrobe'
     | '/_app/world'
     | '/_app/settings/about'
+    | '/_app/settings/ai-invoke-demo'
     | '/_app/settings/ai-models'
     | '/_app/settings/ai-providers'
     | '/_app/settings/ai-usage'
@@ -518,6 +530,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAiModelsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/ai-invoke-demo': {
+      id: '/_app/settings/ai-invoke-demo'
+      path: '/ai-invoke-demo'
+      fullPath: '/settings/ai-invoke-demo'
+      preLoaderRoute: typeof AppSettingsAiInvokeDemoRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/about': {
       id: '/_app/settings/about'
       path: '/about'
@@ -530,6 +549,7 @@ declare module '@tanstack/react-router' {
 
 interface AppSettingsRouteChildren {
   AppSettingsAboutRoute: typeof AppSettingsAboutRoute
+  AppSettingsAiInvokeDemoRoute: typeof AppSettingsAiInvokeDemoRoute
   AppSettingsAiModelsRoute: typeof AppSettingsAiModelsRoute
   AppSettingsAiProvidersRoute: typeof AppSettingsAiProvidersRoute
   AppSettingsAiUsageRoute: typeof AppSettingsAiUsageRoute
@@ -549,6 +569,7 @@ interface AppSettingsRouteChildren {
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAboutRoute: AppSettingsAboutRoute,
+  AppSettingsAiInvokeDemoRoute: AppSettingsAiInvokeDemoRoute,
   AppSettingsAiModelsRoute: AppSettingsAiModelsRoute,
   AppSettingsAiProvidersRoute: AppSettingsAiProvidersRoute,
   AppSettingsAiUsageRoute: AppSettingsAiUsageRoute,

@@ -1,6 +1,7 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 import { aiContract } from './ai.contract';
+import { accountContract } from './auth.contract';
 
 const c = initContract();
 
@@ -18,8 +19,9 @@ export type Health = z.infer<typeof HealthSchema>;
  * The app contract. Future routes are added to this one router so the
  * ts-rest client + Nest handlers stay in sync from a single export.
  *
- * Auth is NOT here: sign-in/up/out + session are served by the Better Auth
- * handler mounted at `/api/auth/*` and driven by the frontend auth client.
+ * Sign-in/up/out are still served by the Better Auth handler mounted at
+ * `/api/auth/*`. The app-owned account profile lives here so web/API share
+ * derived user fields such as `isSuperAdmin`.
  */
 export const contract = c.router({
   getHealth: {
@@ -30,5 +32,6 @@ export const contract = c.router({
     },
     summary: 'Liveness + DB probe',
   },
+  account: accountContract,
   ai: aiContract,
 });

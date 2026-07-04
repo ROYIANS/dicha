@@ -1,1 +1,12 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend spec index for AI Gateway/API work."}
+{"file": ".trellis/spec/backend/ai-catalog.md", "reason": "Existing provider/model/credential/model-bank contract that invoke must consume."}
+{"file": ".trellis/spec/backend/auth-admin.md", "reason": "Server-derived super-admin profile and internal AI demo page gate."}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Graceful degradation and AI failure behavior expectations."}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend TypeScript, MVP, compatibility, and testing constraints."}
+{"file": ".trellis/spec/backend/third-party-integration.md", "reason": "Dependency/version and shared contract validation constraints."}
+{"file": ".trellis/spec/frontend/index.md", "reason": "Frontend spec index for shared contract and usage page impact awareness."}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "ts-rest shared contract and loader/query architecture context."}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Shared zod contract and cross-layer type-safety rules."}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Invoke spans shared contracts, API BFF, AI Gateway, and usage UI."}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Reuse current catalog/usage stores and avoid duplicated DTO logic."}
+{"file": ".trellis/tasks/06-30-ai-routing-degradation/research/lobehub-model-runtime-routing.md", "reason": "Reference research for provider runtime, request formats, fallback, and error taxonomy."}

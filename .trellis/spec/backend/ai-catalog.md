@@ -133,3 +133,135 @@ const model = {
   catalogSource: 'upstream_sync',
 };
 ```
+
+---
+
+## Scenario: AI Invoke Routing And Degradation
+
+### 1. Scope / Trigger
+
+- Trigger: adding or modifying AI invoke, provider adapters, fallback routing, request format support, usage recording, or error classification.
+- This is a cross-layer contract: `packages/shared` defines invoke DTOs; `apps/api` authenticates and forwards the user scope; `apps/ai-gateway` owns routing, credentials, upstream calls, fallback and usage logging.
+
+### 2. Signatures
+
+- Shared invoke contract: `aiContract.invoke` in `packages/shared/src/contracts/ai.contract.ts`.
+- Request format discriminator: `AiProvider.requestFormat`.
+- Catalog source for routing: `AiGatewayCatalog.assignments`, `providers`, and `models`.
+- User credential source: `CatalogStore.getProviderSecret(ownerId, providerId)`.
+- Usage sink: `UsageStore.recordEvent(ownerId, record)` with `kind: 'invoke'`.
+- API BFF entry: `apps/api/src/modules/ai-gateway/ai-gateway.controller.ts`.
+- AI Gateway entry: `apps/ai-gateway/src/modules/invoke/`.
+
+### 3. Contracts
+
+- Business callers request AI by `useCase`; they must not hardcode provider credentials or upstream URLs.
+- Gateway builds attempts in order: explicit `modelId` when present, assignment primary model, then assignment fallback models. Duplicate model ids must be removed while preserving order.
+- Each attempt joins:
+  - `AiModel` for model id/name/display/price/capability metadata.
+  - `AiProvider` for base URL, credential mode, request format, status and billing semantics.
+  - Optional decrypted credential from `CatalogStore`.
+- Supported MVP request formats:
+  - `openai_compatible` -> `POST <baseUrl>/chat/completions`.
+  - `openai_responses` -> `POST <baseUrl>/responses`.
+  - `anthropic_messages` -> `POST <normalizedBaseUrl>/messages`.
+- Provider base URL normalization must avoid duplicate path suffixes:
+  - OpenAI-compatible: trim trailing slash, append `/chat/completions`.
+  - OpenAI Responses: trim trailing slash, append `/responses`.
+  - Anthropic: strip trailing `/v1` or `/v1/messages`, then append `/v1/messages`.
+- Gateway must never return decrypted secrets, Authorization headers, raw upstream stack traces, or full upstream error objects to API/web callers.
+- `kind: 'invoke'` usage events represent real user AI calls. Probe/check/model sync logs must not be counted as user consumption.
+- Usage estimates should use model pricing metadata when direct text token prices are available. Missing pricing records `estimatedCostUsd: 0` rather than blocking the call.
+- `status: 'degraded'` means the final response succeeded on a fallback after at least one earlier attempt failed.
+- `status: 'failure'` means every attempted model failed or routing could not produce an attempt.
+
+### 4. Validation & Error Matrix
+
+| Condition | Category | Retry/Fallback | Expected Behavior |
+|---|---|---:|---|
+| Missing assignment / no model ids | `config` | No | Return sanitized failure; record failure if a model attempt existed. |
+| Unknown model id | `model_not_found` | Yes, for next model | Skip missing model and continue if other fallback ids exist. |
+| Provider disabled / needs config | `config` | Yes, for next model | Skip and continue; do not call upstream. |
+| Missing credential for `user_api_key` provider | `config` | Yes, for next model | Skip and continue; no Authorization header is synthesized. |
+| Invalid API key / 401 | `auth` | No for same credential | Stop fallback unless a later attempt uses a different provider/credential and product explicitly permits it. |
+| Permission denied / 403 | `auth` | No for same credential | Stop or skip same-provider attempts. |
+| Rate limit / 429 | `rate_limit` | Yes | Try next fallback. |
+| Timeout / abort | `timeout` | Yes | Try next fallback. |
+| Network failure | `network` | Yes | Try next fallback. |
+| 5xx / provider unavailable | `provider_unavailable` | Yes | Try next fallback. |
+| Context window exceeded | `context_limit` | No | Stop; caller should reduce input. |
+| Invalid request / unsupported parameter | `invalid_request` | No | Stop; fix payload/format. |
+| Content safety refusal | `content_safety` | No | Stop and return safe degradation message. |
+| Unknown upstream shape | `unknown` | Yes | Try fallback, but include sanitized message for diagnostics. |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `apps/api` handler is thin: authenticate session, forward `request.user.id`, parse shared response schema.
+- Good: `apps/ai-gateway` owns all provider-specific payload building and response parsing.
+- Good: one shared zod contract defines invoke request, response, attempt, usage and error categories.
+- Good: each attempt records latency and sanitized error category/message.
+- Good: fallback attempts preserve model assignment order and produce a single final usage event for the user-visible call.
+- Base: no streaming in MVP; return a complete text result.
+- Bad: make web/api know about Anthropic vs OpenAI payload details.
+- Bad: treat Anthropic as OpenAI-compatible by changing only the base URL.
+- Bad: retry invalid API keys or invalid request payloads until all fallbacks are exhausted.
+- Bad: record probe/check/model-sync logs as user consumption.
+- Bad: include API keys, raw headers, or stack traces in `AiInvokeResponse`.
+
+### 6. Tests Required
+
+- Shared contract typecheck covers new zod schemas and ts-rest endpoint.
+- Gateway tests or focused verification cover:
+  - ordered attempt construction with primary/fallback de-duplication;
+  - retryable 5xx/429/timeout continuing to fallback;
+  - non-retryable auth/config/invalid request stopping or skipping safely;
+  - OpenAI-compatible response parsing;
+  - OpenAI Responses `output_text` / output content parsing;
+  - Anthropic `content[].text` and usage parsing;
+  - usage event status `success` vs `degraded` vs `failure`.
+- API typecheck verifies BFF handler matches shared contract.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+await fetch(`${provider.baseUrl}/chat/completions`, {
+  headers: { authorization: `Bearer ${secret}` },
+  body: JSON.stringify({ model: model.id, messages }),
+});
+```
+
+This assumes every provider speaks OpenAI Chat Completions and leaks request-format decisions into generic invoke code.
+
+#### Correct
+
+```typescript
+const adapter = adapterFor(provider.requestFormat);
+const result = await adapter.invoke({
+  provider,
+  model,
+  secret,
+  request,
+  signal,
+});
+```
+
+#### Wrong
+
+```typescript
+catch (error) {
+  return { error };
+}
+```
+
+#### Correct
+
+```typescript
+catch (error) {
+  return {
+    category: classifyAiInvokeError(error),
+    message: sanitizedAiErrorMessage(error),
+  };
+}
+```

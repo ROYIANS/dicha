@@ -2,10 +2,13 @@ import { queryOptions } from '@tanstack/react-query';
 import {
   AiConfigUpdateResponseSchema,
   AiGatewayCatalogSchema,
+  AiInvokeResponseSchema,
   AiProviderCheckResponseSchema,
   AiProviderSyncModelsResponseSchema,
   AiUsageReportSchema,
   type AiConfigUpdate,
+  type AiInvokeRequest,
+  type AiInvokeResponse,
   type AiUsageWindow,
 } from '@dicha/shared';
 import { api } from './client';
@@ -58,4 +61,12 @@ export async function checkAiProviderConnection(providerId: string) {
     return AiProviderCheckResponseSchema.parse(res.body);
   }
   throw new Error(`AI provider connection check failed (${res.status})`);
+}
+
+export async function invokeAi(body: AiInvokeRequest): Promise<AiInvokeResponse> {
+  const res = await api.ai.invoke({ body });
+  if (res.status === 200) {
+    return AiInvokeResponseSchema.parse(res.body);
+  }
+  throw new Error(`AI invoke failed (${res.status})`);
 }

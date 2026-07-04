@@ -12,7 +12,11 @@ export const AiProviderStatusSchema = z.enum([
 ]);
 export type AiProviderStatus = z.infer<typeof AiProviderStatusSchema>;
 
-export const AiProviderRequestFormatSchema = z.enum(['openai_compatible']);
+export const AiProviderRequestFormatSchema = z.enum([
+  'openai_compatible',
+  'openai_responses',
+  'anthropic_messages',
+]);
 export type AiProviderRequestFormat = z.infer<typeof AiProviderRequestFormatSchema>;
 
 export const AiProviderCredentialModeSchema = z.enum([
@@ -458,6 +462,79 @@ export const AiUsageQuerySchema = z.object({
 });
 export type AiUsageQuery = z.infer<typeof AiUsageQuerySchema>;
 
+export const AiInvokeErrorCategorySchema = z.enum([
+  'auth',
+  'config',
+  'quota',
+  'rate_limit',
+  'provider_unavailable',
+  'timeout',
+  'network',
+  'model_not_found',
+  'context_limit',
+  'content_safety',
+  'invalid_request',
+  'unknown',
+]);
+export type AiInvokeErrorCategory = z.infer<typeof AiInvokeErrorCategorySchema>;
+
+export const AiInvokeMessageSchema = z.object({
+  role: z.enum(['system', 'user', 'assistant']),
+  content: z.string().min(1).max(64_000),
+});
+export type AiInvokeMessage = z.infer<typeof AiInvokeMessageSchema>;
+
+export const AiInvokeRequestSchema = z.object({
+  useCase: AiModelUseCaseSchema,
+  messages: z.array(AiInvokeMessageSchema).min(1).max(64),
+  modelId: z.string().min(1).optional(),
+  fallbackModelIds: z.array(z.string().min(1)).max(8).optional(),
+  requestFormat: AiProviderRequestFormatSchema.optional(),
+  maxTokens: z.number().int().positive().max(32_000).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  timeoutMs: z.number().int().min(1_000).max(120_000).optional(),
+});
+export type AiInvokeRequest = z.infer<typeof AiInvokeRequestSchema>;
+
+export const AiInvokeUsageSchema = z.object({
+  promptTokens: z.number().int().min(0),
+  completionTokens: z.number().int().min(0),
+  totalTokens: z.number().int().min(0),
+  estimatedCostUsd: z.number().min(0),
+});
+export type AiInvokeUsage = z.infer<typeof AiInvokeUsageSchema>;
+
+export const AiInvokeAttemptSchema = z.object({
+  providerId: z.string(),
+  providerName: z.string(),
+  modelId: z.string(),
+  modelName: z.string(),
+  requestFormat: AiProviderRequestFormatSchema,
+  status: AiUsageStatusSchema,
+  latencyMs: z.number().int().min(0).nullable(),
+  errorCategory: AiInvokeErrorCategorySchema.nullable(),
+  message: z.string().max(500).optional(),
+});
+export type AiInvokeAttempt = z.infer<typeof AiInvokeAttemptSchema>;
+
+export const AiInvokeResponseSchema = z.object({
+  generatedAt: z.string().datetime(),
+  status: AiUsageStatusSchema,
+  useCase: AiModelUseCaseSchema,
+  providerId: z.string().nullable(),
+  providerName: z.string().nullable(),
+  modelId: z.string().nullable(),
+  modelName: z.string().nullable(),
+  requestFormat: AiProviderRequestFormatSchema.nullable(),
+  text: z.string(),
+  degraded: z.boolean(),
+  usage: AiInvokeUsageSchema,
+  attempts: z.array(AiInvokeAttemptSchema),
+  errorCategory: AiInvokeErrorCategorySchema.nullable(),
+  message: z.string().max(500).nullable(),
+});
+export type AiInvokeResponse = z.infer<typeof AiInvokeResponseSchema>;
+
 export const aiContract = c.router({
   getCatalog: {
     method: 'GET',
@@ -502,5 +579,14 @@ export const aiContract = c.router({
       200: AiUsageReportSchema,
     },
     summary: 'AI usage and estimated spend for the authenticated user',
+  },
+  invoke: {
+    method: 'POST',
+    path: '/ai/invoke',
+    body: AiInvokeRequestSchema,
+    responses: {
+      200: AiInvokeResponseSchema,
+    },
+    summary: 'Invoke an AI use case through gateway routing and fallback',
   },
 });

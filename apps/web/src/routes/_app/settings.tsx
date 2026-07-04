@@ -1,4 +1,11 @@
-import { createFileRoute, Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useRouteContext,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router';
 import {
   Activity,
   Bell,
@@ -40,6 +47,7 @@ type SettingsItem = {
   description?: string;
   value?: string;
   to?: SettingsRouteTo;
+  adminOnly?: boolean;
   onPress?: () => void;
   danger?: boolean;
   loading?: boolean;
@@ -58,6 +66,7 @@ type SettingsRouteTo =
   | '/settings/ai-providers'
   | '/settings/ai-models'
   | '/settings/ai-usage'
+  | '/settings/ai-invoke-demo'
   | '/settings/help'
   | '/settings/labs'
   | '/settings/diagnostics'
@@ -173,6 +182,15 @@ const sections = [
         valueKey: 'usage',
         to: '/settings/ai-usage',
       },
+      {
+        icon: FlaskConical,
+        tint: 'peach',
+        labelKey: 'aiInvokeDemo',
+        descKey: 'aiInvokeDemoDesc',
+        valueKey: 'internal',
+        to: '/settings/ai-invoke-demo',
+        adminOnly: true,
+      },
     ],
   },
   {
@@ -210,6 +228,7 @@ const sections = [
 function SettingsPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useRouteContext({ from: '/_app' });
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [loggingOut, setLoggingOut] = useState(false);
   const { mode, palette } = useTheme();
@@ -234,21 +253,23 @@ function SettingsPage() {
 
   const settingSections = sections.map((section) => ({
     title: t(`settings.sections.${section.key}`),
-    items: section.items.map((item) => ({
-      icon: item.icon,
-      tint: item.tint,
-      label: t(`settings.items.${item.labelKey}`),
-      description: t(`settings.items.${item.descKey}`),
-      value:
-        item.labelKey === 'appearance'
-          ? t(`settings.themePalettes.${palette}.name`)
-          : item.labelKey === 'theme'
-            ? t(`settings.values.${mode === 'auto' ? 'autoTheme' : 'manualTheme'}`)
-            : 'valueKey' in item
-              ? t(`settings.values.${item.valueKey}`)
-              : undefined,
-      to: 'to' in item ? item.to : undefined,
-    })),
+    items: section.items
+      .filter((item) => !('adminOnly' in item) || user.isSuperAdmin)
+      .map((item) => ({
+        icon: item.icon,
+        tint: item.tint,
+        label: t(`settings.items.${item.labelKey}`),
+        description: t(`settings.items.${item.descKey}`),
+        value:
+          item.labelKey === 'appearance'
+            ? t(`settings.themePalettes.${palette}.name`)
+            : item.labelKey === 'theme'
+              ? t(`settings.values.${mode === 'auto' ? 'autoTheme' : 'manualTheme'}`)
+              : 'valueKey' in item
+                ? t(`settings.values.${item.valueKey}`)
+                : undefined,
+        to: 'to' in item ? item.to : undefined,
+      })),
   }));
   const actionItems: SettingsItem[] = [
     {

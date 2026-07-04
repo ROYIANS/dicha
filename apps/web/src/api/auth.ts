@@ -1,24 +1,26 @@
 import { queryOptions } from '@tanstack/react-query';
 import { authClient } from '@/lib/auth-client';
-import type { UserDto } from '@dicha/shared';
+import { UserDto, type UserDto as UserDtoType } from '@dicha/shared';
+import { api } from './client';
 
 /**
  * Query options factory for the current auth user.
  * Loader and components share the same factory (loader-first pattern).
  *
- * Source of truth is the Better Auth session endpoint via `authClient`.
+ * Source of truth is the app-owned account endpoint. It is backed by Better
+ * Auth on the server and adds server-derived fields such as `isSuperAdmin`.
  *
  * Throws when there's no session so the `_app` route guard can redirect.
  */
 export function authQueryOptions() {
-  return queryOptions<UserDto>({
+  return queryOptions<UserDtoType>({
     queryKey: ['auth', 'session'],
     queryFn: async () => {
-      const { data, error } = await authClient.getSession();
-      if (error || !data) {
+      const res = await api.account.getMe();
+      if (res.status !== 200) {
         throw new Error('Unauthorized');
       }
-      return data.user as UserDto;
+      return UserDto.parse(res.body);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,

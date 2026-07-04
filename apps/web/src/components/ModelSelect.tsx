@@ -1,6 +1,7 @@
 import { AlertCircle, Check, ChevronDown } from 'lucide-react';
-import type { AiGatewayCatalog, AiModel } from '@dicha/shared';
-import { compareModelsByEnabled } from '@/lib/ai-catalog-ui';
+import { useMemo } from 'react';
+import type { AiGatewayCatalog } from '@dicha/shared';
+import { getAssignableModelGroups } from '@/lib/ai-catalog-ui';
 
 type ModelSelectProps = {
   catalog: AiGatewayCatalog;
@@ -13,6 +14,8 @@ type ModelSelectProps = {
   emptyLabel: string;
 };
 
+type AssignableModelGroup = ReturnType<typeof getAssignableModelGroups>[number];
+
 export function ModelSelect({
   catalog,
   value,
@@ -23,19 +26,36 @@ export function ModelSelect({
   unavailableLabel,
   emptyLabel,
 }: ModelSelectProps) {
-  const providerPriority = new Map(
-    catalog.providers.map((provider) => [provider.id, provider.priority] as const),
-  );
-  const models = catalog.models
-    .slice()
-    .sort((left, right) => compareModelsByEnabled(left, right, providerPriority));
-  const selected = models.find((model) => model.id === value);
-  const selectedUnavailable = Boolean(value) && (selected ? !isModelUsable(selected) : true);
+  const { modelGroups, selectableModels } = useMemo(() => {
+    const groups = getAssignableModelGroups(catalog);
+    const modelById = new Map<
+      string,
+      { model: AssignableModelGroup['models'][number]; provider: AssignableModelGroup['provider'] }
+    >();
 
-  if (models.length === 0) {
+    for (const group of groups) {
+      for (const model of group.models) {
+        modelById.set(model.id, { model, provider: group.provider });
+      }
+    }
+
+    return { modelGroups: groups, selectableModels: modelById };
+  }, [catalog]);
+  const selected = selectableModels.get(value);
+  const selectedUnavailable = Boolean(value) && !selected;
+
+  if (modelGroups.length === 0) {
     return (
-      <span className="inline-flex w-full rounded-md border border-hairline bg-surface-alt px-2.5 py-1.5 text-[12px] text-ink-faint">
-        {emptyLabel}
+      <span className="flex w-full min-w-0 flex-col items-stretch gap-1">
+        <span className="inline-flex w-full rounded-md border border-hairline bg-surface-alt px-2.5 py-1.5 text-[12px] text-ink-faint">
+          {emptyLabel}
+        </span>
+        {selectedUnavailable ? (
+          <span className="inline-flex min-w-0 items-center gap-1 text-[11px] leading-tight text-pink">
+            <AlertCircle size={12} className="shrink-0" />
+            <span className="truncate">{unavailableLabel}</span>
+          </span>
+        ) : null}
       </span>
     );
   }
@@ -53,10 +73,14 @@ export function ModelSelect({
           <option value="" disabled={!allowEmpty}>
             {placeholder}
           </option>
-          {models.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.displayName}
-            </option>
+          {modelGroups.map((group) => (
+            <optgroup key={group.provider.id} label={group.provider.name}>
+              {group.models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.displayName}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <ChevronDown
@@ -72,13 +96,11 @@ export function ModelSelect({
       ) : selected ? (
         <span className="inline-flex min-w-0 items-center gap-1 text-[11px] leading-tight text-ink-faint">
           <Check size={12} className="shrink-0 text-sage" />
-          <span className="truncate">{selected.priceHint}</span>
+          <span className="truncate">
+            {selected.provider.name} / {selected.model.priceHint}
+          </span>
         </span>
       ) : null}
     </span>
   );
-}
-
-function isModelUsable(model: AiModel) {
-  return model.enabled && model.availability !== 'offline' && model.availability !== 'config_required';
 }

@@ -1,1 +1,10 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend spec index for review."}
+{"file": ".trellis/spec/backend/ai-catalog.md", "reason": "Verify invoke respects provider/model/credential catalog contract."}
+{"file": ".trellis/spec/backend/auth-admin.md", "reason": "Verify super-admin env and internal tool gate stay server-derived."}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Verify graceful degradation and sanitized errors."}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Verify backend quality, TypeScript, and testing expectations."}
+{"file": ".trellis/spec/backend/third-party-integration.md", "reason": "Verify dependency and shared contract validation constraints."}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "Verify shared ts-rest contract remains consistent with frontend architecture."}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Verify zod/contract single-source typing."}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Review cross-layer request/response/usage flow."}
+{"file": ".trellis/tasks/06-30-ai-routing-degradation/research/lobehub-model-runtime-routing.md", "reason": "Review implementation against accepted LobeHub-derived architecture."}

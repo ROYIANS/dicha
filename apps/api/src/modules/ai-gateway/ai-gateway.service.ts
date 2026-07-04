@@ -4,12 +4,15 @@ import { ZodError } from 'zod';
 import {
   AiConfigUpdateResponseSchema,
   AiGatewayCatalogSchema,
+  AiInvokeResponseSchema,
   AiProviderCheckResponseSchema,
   AiProviderSyncModelsResponseSchema,
   AiUsageReportSchema,
   type AiConfigUpdate,
   type AiConfigUpdateResponse,
   type AiGatewayCatalog,
+  type AiInvokeRequest,
+  type AiInvokeResponse,
   type AiProviderCheckBody,
   type AiProviderCheckResponse,
   type AiProviderSyncModelsBody,
@@ -77,6 +80,15 @@ export class AiGatewayService {
       method: 'GET',
       ownerId,
       schema: AiUsageReportSchema,
+    });
+  }
+
+  invoke(ownerId: string, body: AiInvokeRequest): Promise<AiInvokeResponse> {
+    return this.request('/invoke', {
+      method: 'POST',
+      ownerId,
+      body,
+      schema: AiInvokeResponseSchema,
     });
   }
 

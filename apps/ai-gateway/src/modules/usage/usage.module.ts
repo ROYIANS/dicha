@@ -7,5 +7,6 @@ import { UsageStore } from './usage.store';
 @Module({
   controllers: [UsageController],
   providers: [UsageService, UsageStore, InternalTokenGuard],
+  exports: [UsageStore],
 })
 export class UsageModule {}

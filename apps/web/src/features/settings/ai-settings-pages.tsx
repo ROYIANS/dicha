@@ -36,6 +36,7 @@ import {
   type AiModelType,
   type AiModelUseCase,
   type AiProvider,
+  type AiProviderRequestFormat,
   type AiProviderStatus,
 } from '@dicha/shared';
 import {
@@ -116,6 +117,12 @@ const modelTypeOptions = [
   'text2music',
   'realtime',
 ] satisfies AiModelType[];
+
+const requestFormatOptions = [
+  { value: 'openai_compatible', label: 'OpenAI-compatible Chat Completions' },
+  { value: 'openai_responses', label: 'OpenAI Responses API' },
+  { value: 'anthropic_messages', label: 'Anthropic Messages API' },
+] satisfies Array<{ value: AiProviderRequestFormat; label: string }>;
 
 const contextWindowPresets = [0, 4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000];
 
@@ -772,7 +779,7 @@ function ProviderCredentialPopover({
                       enabled: true,
                       avatar: trimmedAvatar,
                       baseUrl: trimmedBaseUrl,
-                      requestFormat: 'openai_compatible',
+                      requestFormat: provider.requestFormat ?? 'openai_compatible',
                       ...(trimmedCredential ? { credential: trimmedCredential } : {}),
                     },
                   ],
@@ -1034,6 +1041,7 @@ function ProviderFormModal({
   const [description, setDescription] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [credential, setCredential] = useState('');
+  const [requestFormat, setRequestFormat] = useState<AiProviderRequestFormat>('openai_compatible');
   const normalizedProviderId = providerId.trim().toLowerCase();
   const shortName = providerShortName(name || providerId);
   const avatarValue = avatar.trim() || shortName;
@@ -1070,7 +1078,7 @@ function ProviderFormModal({
                   description: description.trim(),
                   baseUrl: baseUrl.trim(),
                   credential: credential.trim() || undefined,
-                  requestFormat: 'openai_compatible',
+                  requestFormat,
                   category: 'global',
                   authType: 'api_key',
                   credentialMode: 'user_api_key',
@@ -1193,11 +1201,21 @@ function ProviderFormModal({
         <FormSectionTitle>{t('settings.detail.aiProviders.configInfo')}</FormSectionTitle>
         <FormField title={t('settings.detail.aiProviders.requestFormat')} required>
           <select
-            value="openai_compatible"
+            value={requestFormat}
+            onChange={(event) => {
+              const next =
+                requestFormatOptions.find((option) => option.value === event.target.value)?.value ??
+                'openai_compatible';
+              setRequestFormat(next);
+            }}
             disabled={pending}
             className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <option value="openai_compatible">OpenAI-compatible</option>
+            {requestFormatOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </FormField>
         <FormField title={t('settings.detail.aiProviders.baseUrl')} required>
