@@ -1297,3 +1297,36 @@ Implemented the AI credit system MVP across Prisma, shared contracts, API, AI Ga
 ### Next Steps
 
 - None - task complete
+
+
+## Session 37: AI Gateway invocation hardening
+
+**Date**: 2026-07-04
+**Task**: AI Gateway invocation hardening
+**Branch**: `main`
+
+### Summary
+
+Extracted AI invoke adapters, added official DicHA multi-channel degradation, preserved usage billing snapshots, and covered adapter parsing plus retry settlement tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `22b4ae7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
