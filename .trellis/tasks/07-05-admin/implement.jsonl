@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/auth-admin.md","reason":"Admin API guard boundary, user management privacy contract, and super-admin env-derived role model."}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"Prisma schema and query/index conventions for user status and audit log storage."}
+{"file":".trellis/spec/frontend/admin-app.md","reason":"Admin app routing, ts-rest API usage, sidebar, and dense operational UI style."}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"Shared contract/zod typing expectations across admin API and frontend."}

@@ -1,10 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Ban,
   ChevronLeft,
   ChevronRight,
   KeyRound,
+  LogOut,
   MonitorSmartphone,
+  RotateCcw,
   Search,
   UserRound,
   type LucideIcon,
@@ -13,7 +16,9 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import {
   adminUserDetailQueryOptions,
   adminUsersQueryOptions,
+  revokeAdminUserSessions,
   type AdminUsersQueryInput,
+  updateAdminUserStatus,
 } from '@/api/admin';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminUserDetail, AdminUserSummary } from '@dicha/shared';
@@ -22,27 +27,33 @@ const PAGE_SIZE = 12;
 
 export const Route = createFileRoute('/_admin/basic')({
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(
-      adminUsersQueryOptions({ page: 1, pageSize: PAGE_SIZE }),
-    ),
+    context.queryClient.ensureQueryData(adminUsersQueryOptions({ page: 1, pageSize: PAGE_SIZE })),
   component: BasicPage,
 });
 
 function BasicPage() {
   const [searchDraft, setSearchDraft] = useState('');
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<AdminUsersQueryInput['status'] | ''>('');
+  const [emailVerified, setEmailVerified] = useState<'all' | 'true' | 'false'>('all');
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const usersQuery = useMemo<AdminUsersQueryInput>(
-    () => ({ page, pageSize: PAGE_SIZE, search: search || undefined }),
-    [page, search],
+    () => ({
+      page,
+      pageSize: PAGE_SIZE,
+      search: search || undefined,
+      status: status || undefined,
+      emailVerified: emailVerified === 'all' ? undefined : emailVerified === 'true',
+    }),
+    [emailVerified, page, search, status],
   );
   const users = useQuery(adminUsersQueryOptions(usersQuery));
   const visibleUsers = users.data?.users ?? [];
   const effectiveSelectedUserId =
     selectedUserId && visibleUsers.some((user) => user.id === selectedUserId)
       ? selectedUserId
-      : visibleUsers[0]?.id ?? null;
+      : (visibleUsers[0]?.id ?? null);
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
@@ -68,6 +79,32 @@ function BasicPage() {
                 className="h-10 w-full rounded-md border border-hairline bg-surface px-9 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
               />
             </label>
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value as AdminUsersQueryInput['status'] | '');
+                setPage(1);
+                setSelectedUserId(null);
+              }}
+              className="h-10 rounded-md border border-hairline bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-ink-soft"
+            >
+              <option value="">全部状态</option>
+              <option value="active">正常</option>
+              <option value="disabled">已禁用</option>
+            </select>
+            <select
+              value={emailVerified}
+              onChange={(event) => {
+                setEmailVerified(event.target.value as 'all' | 'true' | 'false');
+                setPage(1);
+                setSelectedUserId(null);
+              }}
+              className="h-10 rounded-md border border-hairline bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-ink-soft"
+            >
+              <option value="all">全部邮箱</option>
+              <option value="true">已验证</option>
+              <option value="false">未验证</option>
+            </select>
             <button
               type="submit"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90"
@@ -89,12 +126,14 @@ function BasicPage() {
                   : '正在加载用户'}
               </p>
             </div>
-            {search ? (
+            {search || status || emailVerified !== 'all' ? (
               <button
                 type="button"
                 onClick={() => {
                   setSearch('');
                   setSearchDraft('');
+                  setStatus('');
+                  setEmailVerified('all');
                   setPage(1);
                   setSelectedUserId(null);
                 }}
@@ -178,20 +217,20 @@ function UserRow({
           <UserRound className="size-5" strokeWidth={1.8} />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-ink">
-            {user.displayName || user.name}
-          </p>
+          <p className="truncate text-sm font-semibold text-ink">{user.displayName || user.name}</p>
           <p className="mt-1 truncate text-xs text-ink-soft">{user.email}</p>
         </div>
       </div>
       <div className="min-w-0 text-xs text-ink-soft">
-        <p className={user.emailVerified ? 'text-sage' : 'text-peach'}>
+        <p className={user.status === 'active' ? 'text-sage' : 'text-pink'}>
+          {user.status === 'active' ? '账户正常' : '账户已禁用'}
+        </p>
+        <p className={user.emailVerified ? 'mt-1 text-sage' : 'mt-1 text-peach'}>
           {user.emailVerified ? '邮箱已验证' : '邮箱未验证'}
         </p>
-        <p className="mt-1 truncate">{user.city || user.homeName || '未填写地区/小屋'}</p>
       </div>
       <div className="grid grid-cols-3 gap-2 text-xs text-ink-soft">
-        <MiniCount label="会话" value={user.counts.sessions} />
+        <MiniCount label="活跃" value={user.activeSessionCount} />
         <MiniCount label="绑定" value={user.counts.accounts} />
         <MiniCount label="密钥" value={user.counts.passkeys} />
       </div>
@@ -212,7 +251,23 @@ function UserDetailPanel({ userId }: { userId: string | null }) {
 }
 
 function LoadedUserDetailPanel({ userId }: { userId: string }) {
+  const queryClient = useQueryClient();
   const detail = useQuery(adminUserDetailQueryOptions(userId));
+  const invalidateUserData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'audit-logs'] }),
+    ]);
+  };
+  const statusMutation = useMutation({
+    mutationFn: ({ status, reason }: { status: 'active' | 'disabled'; reason?: string }) =>
+      updateAdminUserStatus(userId, { status, reason }),
+    onSuccess: invalidateUserData,
+  });
+  const revokeMutation = useMutation({
+    mutationFn: () => revokeAdminUserSessions(userId),
+    onSuccess: invalidateUserData,
+  });
 
   if (detail.isPending) {
     return (
@@ -230,10 +285,40 @@ function LoadedUserDetailPanel({ userId }: { userId: string }) {
     );
   }
 
-  return <UserDetailContent user={detail.data} />;
+  return (
+    <UserDetailContent
+      user={detail.data}
+      actionPending={statusMutation.isPending || revokeMutation.isPending}
+      onToggleStatus={() => {
+        if (detail.data.status === 'active') {
+          const reason = window.prompt('请输入禁用原因（可选）')?.trim();
+          statusMutation.mutate({ status: 'disabled', reason: reason || undefined });
+          return;
+        }
+        if (window.confirm('确认重新启用这个用户？')) {
+          statusMutation.mutate({ status: 'active' });
+        }
+      }}
+      onRevokeSessions={() => {
+        if (window.confirm('确认强制退出这个用户的所有会话？')) {
+          revokeMutation.mutate();
+        }
+      }}
+    />
+  );
 }
 
-function UserDetailContent({ user }: { user: AdminUserDetail }) {
+function UserDetailContent({
+  user,
+  actionPending,
+  onToggleStatus,
+  onRevokeSessions,
+}: {
+  user: AdminUserDetail;
+  actionPending: boolean;
+  onToggleStatus: () => void;
+  onRevokeSessions: () => void;
+}) {
   return (
     <aside className="rounded-md border border-hairline bg-surface">
       <div className="border-b border-hairline p-5">
@@ -250,16 +335,49 @@ function UserDetailContent({ user }: { user: AdminUserDetail }) {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <DetailStat icon={MonitorSmartphone} label="会话" value={user.counts.sessions} />
+          <DetailStat icon={MonitorSmartphone} label="活跃会话" value={user.activeSessionCount} />
           <DetailStat icon={UserRound} label="绑定账号" value={user.counts.accounts} />
           <DetailStat icon={KeyRound} label="Passkey" value={user.counts.passkeys} />
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            disabled={actionPending}
+            onClick={onToggleStatus}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2 text-xs text-ink transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {user.status === 'active' ? (
+              <Ban className="size-3.5 text-pink" strokeWidth={1.8} />
+            ) : (
+              <RotateCcw className="size-3.5 text-sage" strokeWidth={1.8} />
+            )}
+            {user.status === 'active' ? '禁用用户' : '启用用户'}
+          </button>
+          <button
+            type="button"
+            disabled={actionPending}
+            onClick={onRevokeSessions}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2 text-xs text-ink transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <LogOut className="size-3.5 text-mist" strokeWidth={1.8} />
+            强制退出
+          </button>
         </div>
       </div>
 
       <div className="space-y-5 p-5">
         <DetailSection title="账户资料">
+          <InfoRow label="账户状态" value={user.status === 'active' ? '正常' : '已禁用'} />
+          {user.disabledAt ? (
+            <InfoRow label="禁用时间" value={formatDateTime(user.disabledAt)} />
+          ) : null}
+          {user.disabledReason ? <InfoRow label="禁用原因" value={user.disabledReason} /> : null}
           <InfoRow label="注册时间" value={formatDateTime(user.createdAt)} />
           <InfoRow label="更新时间" value={formatDateTime(user.updatedAt)} />
+          <InfoRow
+            label="最近会话"
+            value={user.lastSessionAt ? formatDateTime(user.lastSessionAt) : '暂无'}
+          />
           <InfoRow label="邮箱状态" value={user.emailVerified ? '已验证' : '未验证'} />
           <InfoRow label="城市" value={user.city ?? '未填写'} />
           <InfoRow label="小屋名" value={user.homeName ?? '未填写'} />
@@ -271,7 +389,10 @@ function UserDetailContent({ user }: { user: AdminUserDetail }) {
           ) : (
             <div className="space-y-2">
               {user.accounts.map((account) => (
-                <div key={account.id} className="rounded-md border border-hairline bg-surface-alt p-3">
+                <div
+                  key={account.id}
+                  className="rounded-md border border-hairline bg-surface-alt p-3"
+                >
                   <p className="text-sm font-medium text-ink">{account.providerId}</p>
                   <p className="mt-1 text-xs text-ink-soft">
                     绑定于 {formatDateTime(account.createdAt)}
@@ -288,7 +409,10 @@ function UserDetailContent({ user }: { user: AdminUserDetail }) {
           ) : (
             <div className="space-y-2">
               {user.sessions.map((session) => (
-                <div key={session.id} className="rounded-md border border-hairline bg-surface-alt p-3">
+                <div
+                  key={session.id}
+                  className="rounded-md border border-hairline bg-surface-alt p-3"
+                >
                   <p className="truncate text-xs text-ink">
                     {session.ipAddress ?? '未知 IP'} · 过期 {formatDateTime(session.expiresAt)}
                   </p>
@@ -307,7 +431,10 @@ function UserDetailContent({ user }: { user: AdminUserDetail }) {
           ) : (
             <div className="space-y-2">
               {user.passkeys.map((passkey) => (
-                <div key={passkey.id} className="rounded-md border border-hairline bg-surface-alt p-3">
+                <div
+                  key={passkey.id}
+                  className="rounded-md border border-hairline bg-surface-alt p-3"
+                >
                   <p className="text-sm font-medium text-ink">{passkey.deviceType}</p>
                   <p className="mt-1 text-xs text-ink-soft">
                     {passkey.backedUp ? '已备份' : '未备份'} · {formatDateTime(passkey.createdAt)}
@@ -348,13 +475,7 @@ function DetailStat({
   );
 }
 
-function DetailSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint">

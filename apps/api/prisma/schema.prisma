@@ -63,12 +63,16 @@ model User {
   id String @id @default(cuid())
 
   // ── Better Auth 必需列 ──────────────────────────────────
-  name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  name           String
+  email          String    @unique
+  emailVerified  Boolean   @default(false)
+  image          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  status         String    @default("active")
+  disabledAt     DateTime?
+  disabledReason String?
+  disabledById   String?
 
   // ── dicha 应用字段（additionalFields）────────────────
   displayName          String
@@ -91,13 +95,41 @@ model User {
   events Event[]
 
   // ── AI Gateway 关系 ───────────────────────────────────
-  aiProviders   AiProviderConfig[]
-  aiModels      AiModelConfig[]
-  aiAssignments AiModelAssignmentConfig[]
-  aiUsageEvents AiUsageEvent[]
-  creditAccount CreditAccount?
+  aiProviders         AiProviderConfig[]
+  aiModels            AiModelConfig[]
+  aiAssignments       AiModelAssignmentConfig[]
+  aiUsageEvents       AiUsageEvent[]
+  creditAccount       CreditAccount?
   creditLedgerEntries CreditLedgerEntry[]
-  creditRedemptions CreditRedemption[]
+  creditRedemptions   CreditRedemption[]
+
+  @@index([status, createdAt])
+  @@index([emailVerified, createdAt])
+}
+
+model AdminAuditLog {
+  id String @id @default(cuid())
+
+  actorId    String?
+  actorEmail String?
+  actorName  String?
+
+  action       String
+  resourceType String
+  resourceId   String?
+  result       String
+  ipAddress    String?
+  userAgent    String?
+  summary      String
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([resourceType, resourceId, createdAt])
+  @@index([result, createdAt])
 }
 
 // ─── Better Auth 表（session / account / verification）───
@@ -270,7 +302,7 @@ model Event {
 // ─── AI Gateway 持久化（用户维度 + 系统托管渠道）──────────
 
 model AiProviderDirectorySetting {
-  providerId    String @id
+  providerId    String  @id
   enabled       Boolean @default(false)
   baseUrl       String?
   requestFormat String?
@@ -409,31 +441,31 @@ model AiUsageEvent {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  kind                  String
-  status                String
-  useCase               String
-  providerId            String
-  providerName          String
-  modelId               String
-  modelName             String
-  promptTokens          Int
-  completionTokens      Int
-  totalTokens           Int
-  estimatedCostUsd      Float
-  estimatedCostAmount   Float
-  estimatedCostCurrency String?
-  creditAmount          Int      @default(0)
-  billingMode           String   @default("user_provider")
-  requestId             String?
-  upstreamRequestId     String?
-  internalProviderId    String?
+  kind                    String
+  status                  String
+  useCase                 String
+  providerId              String
+  providerName            String
+  modelId                 String
+  modelName               String
+  promptTokens            Int
+  completionTokens        Int
+  totalTokens             Int
+  estimatedCostUsd        Float
+  estimatedCostAmount     Float
+  estimatedCostCurrency   String?
+  creditAmount            Int      @default(0)
+  billingMode             String   @default("user_provider")
+  requestId               String?
+  upstreamRequestId       String?
+  internalProviderId      String?
   internalProviderModelId String?
-  creditLedgerEntryId   String?
-  usageEstimated        Boolean  @default(false)
-  billingSnapshot       Json?
-  latencyMs             Int?
-  errorCategory         String?
-  createdAt             DateTime @default(now())
+  creditLedgerEntryId     String?
+  usageEstimated          Boolean  @default(false)
+  billingSnapshot         Json?
+  latencyMs               Int?
+  errorCategory           String?
+  createdAt               DateTime @default(now())
 
   @@index([ownerId, createdAt])
   @@index([ownerId, providerId, createdAt])
@@ -461,7 +493,7 @@ model CreditAccount {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String @unique
 
-  balance        Int @default(0)
+  balance         Int @default(0)
   lifetimeGranted Int @default(0)
   lifetimeSpent   Int @default(0)
 
@@ -482,14 +514,14 @@ model CreditLedgerEntry {
   account   CreditAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   accountId String
 
-  type         String
-  amount       Int
-  balanceAfter Int
-  source       String
-  sourceId     String?
+  type           String
+  amount         Int
+  balanceAfter   Int
+  source         String
+  sourceId       String?
   aiUsageEventId String?
-  description  String?
-  metadata     Json?
+  description    String?
+  metadata       Json?
 
   redemption CreditRedemption?
 
@@ -506,13 +538,13 @@ model CreditLedgerEntry {
 model CreditRule {
   id String @id @default(cuid())
 
-  name String
-  active Boolean @default(false)
-  cnyCreditsPerUnit Int @default(1000)
-  usdCreditsPerUnit Int @default(7000)
-  platformMarkup Float @default(1)
-  minimumChargeCredits Int @default(1)
-  notes String?
+  name                 String
+  active               Boolean @default(false)
+  cnyCreditsPerUnit    Int     @default(1000)
+  usdCreditsPerUnit    Int     @default(7000)
+  platformMarkup       Float   @default(1)
+  minimumChargeCredits Int     @default(1)
+  notes                String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -523,13 +555,13 @@ model CreditRule {
 model CreditRedemptionCode {
   id String @id @default(cuid())
 
-  code String @unique
-  creditAmount Int
-  enabled Boolean @default(true)
-  maxRedemptions Int @default(1)
-  redeemedCount Int @default(0)
-  expiresAt DateTime?
-  notes String?
+  code           String    @unique
+  creditAmount   Int
+  enabled        Boolean   @default(true)
+  maxRedemptions Int       @default(1)
+  redeemedCount  Int       @default(0)
+  expiresAt      DateTime?
+  notes          String?
 
   redemptions CreditRedemption[]
 
@@ -548,8 +580,8 @@ model CreditRedemption {
   code   CreditRedemptionCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
   codeId String
 
-  ledgerEntry CreditLedgerEntry? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
-  ledgerEntryId String? @unique
+  ledgerEntry   CreditLedgerEntry? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+  ledgerEntryId String?            @unique
 
   createdAt DateTime @default(now())
 
@@ -614,7 +646,7 @@ model AiInternalProviderModel {
   pricing             Json?
   releasedAt          String?
   enabled             Boolean @default(false)
-  availability         String  @default("unknown")
+  availability        String  @default("unknown")
 
   dxModelId       String?
   dxDisplayName   String?

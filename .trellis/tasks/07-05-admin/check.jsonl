@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/auth-admin.md","reason":"Verify admin endpoints stay protected, safe fields remain safe, and user-management mutations obey security constraints."}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"Verify Prisma relations, indexes, and query behavior for audit/user status changes."}
+{"file":".trellis/spec/frontend/admin-app.md","reason":"Verify new admin pages match route/API/style conventions."}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"Verify frontend lint/build expectations and no ad-hoc API calls."}

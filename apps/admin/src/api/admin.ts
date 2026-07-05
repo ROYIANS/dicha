@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import {
+  AdminAuditLogsPageSchema,
   AdminAiProviderDirectoryItemSchema,
   AdminAiProviderDirectoryOverviewSchema,
   AdminAiProviderDirectorySyncResponseSchema,
@@ -18,8 +19,14 @@ import {
   AdminDichaAiUsageReportSchema,
   AdminDichaInternalProviderSyncResponseSchema,
   AdminOverviewSchema,
+  AdminPermissionSummarySchema,
+  AdminSystemActionResultSchema,
+  AdminSystemOperationsSchema,
+  AdminUserSecurityActionResponseSchema,
   AdminUserDetailSchema,
   AdminUsersListSchema,
+  type AdminAuditLogsPage,
+  type AdminAuditLogsQuery,
   type AdminAiInternalProvider,
   type AdminAiInternalProviderUpsert,
   type AdminAiProviderDirectoryItem,
@@ -49,8 +56,14 @@ import {
   type AdminDichaInternalProviderSyncResponse,
   type AdminDichaModelUpdate,
   type AdminOverview,
+  type AdminPermissionSummary,
+  type AdminSystemActionResult,
+  type AdminSystemActionRun,
+  type AdminSystemOperations,
   type AdminUserDetail,
+  type AdminUserSecurityActionResponse,
   type AdminUsersList,
+  type AdminUserStatusUpdate,
   type AiUsageWindow,
   type AiInvokeRequest,
 } from '@dicha/shared';
@@ -62,6 +75,8 @@ export type AdminUsersQueryInput = {
   page?: number;
   pageSize?: number;
   search?: string;
+  status?: 'active' | 'disabled';
+  emailVerified?: boolean;
 };
 
 export type AdminDichaAiUsageQueryInput = {
@@ -73,6 +88,7 @@ export type AdminDichaAiDiagnosticsQueryInput = Partial<AdminDichaAiDiagnosticsQ
 export type AdminCreditBalancesQueryInput = Partial<AdminCreditBalancesQuery>;
 export type AdminCreditLedgerQueryInput = Partial<AdminCreditLedgerQuery>;
 export type AdminCreditOperationsQueryInput = Partial<AdminCreditOperationsQuery>;
+export type AdminAuditLogsQueryInput = Partial<AdminAuditLogsQuery>;
 
 export async function invokeAdminAiStream(
   body: AiInvokeRequest,
@@ -133,6 +149,91 @@ export function adminUserDetailQueryOptions(id: string) {
     staleTime: 30 * 1000,
     retry: false,
   });
+}
+
+export async function updateAdminUserStatus(
+  id: string,
+  body: AdminUserStatusUpdate,
+): Promise<AdminUserSecurityActionResponse> {
+  const res = await api.admin.updateUserStatus({ params: { id }, body });
+  if (res.status !== 200) {
+    throw new Error(`Admin user status update failed (${res.status})`);
+  }
+  return AdminUserSecurityActionResponseSchema.parse(res.body);
+}
+
+export async function revokeAdminUserSessions(
+  id: string,
+): Promise<AdminUserSecurityActionResponse> {
+  const res = await api.admin.revokeUserSessions({ params: { id }, body: {} });
+  if (res.status !== 200) {
+    throw new Error(`Admin user session revoke failed (${res.status})`);
+  }
+  return AdminUserSecurityActionResponseSchema.parse(res.body);
+}
+
+export function adminPermissionSummaryQueryOptions() {
+  return queryOptions<AdminPermissionSummary>({
+    queryKey: ['admin', 'permissions'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getPermissionSummary();
+      if (res.status !== 200) {
+        throw new Error(`Admin permission summary request failed (${res.status})`);
+      }
+      return AdminPermissionSummarySchema.parse(res.body);
+    },
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
+
+export function adminAuditLogsQueryOptions(query: AdminAuditLogsQueryInput = {}) {
+  const normalizedQuery = {
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? 50,
+    window: query.window ?? '7d',
+    action: query.action,
+    resourceType: query.resourceType,
+    result: query.result,
+    search: query.search,
+  };
+  return queryOptions<AdminAuditLogsPage>({
+    queryKey: ['admin', 'audit-logs', normalizedQuery] as const,
+    queryFn: async () => {
+      const res = await api.admin.listAuditLogs({ query: normalizedQuery });
+      if (res.status !== 200) {
+        throw new Error(`Admin audit log request failed (${res.status})`);
+      }
+      return AdminAuditLogsPageSchema.parse(res.body);
+    },
+    staleTime: 15 * 1000,
+    retry: false,
+  });
+}
+
+export function adminSystemOperationsQueryOptions() {
+  return queryOptions<AdminSystemOperations>({
+    queryKey: ['admin', 'system', 'operations'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getSystemOperations();
+      if (res.status !== 200) {
+        throw new Error(`Admin system operations request failed (${res.status})`);
+      }
+      return AdminSystemOperationsSchema.parse(res.body);
+    },
+    staleTime: 15 * 1000,
+    retry: false,
+  });
+}
+
+export async function runAdminSystemAction(
+  body: AdminSystemActionRun,
+): Promise<AdminSystemActionResult> {
+  const res = await api.admin.runSystemAction({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin system action failed (${res.status})`);
+  }
+  return AdminSystemActionResultSchema.parse(res.body);
 }
 
 export function adminAiProviderDirectoryQueryOptions() {
@@ -225,7 +326,9 @@ export async function updateAdminDichaModel(
   return AdminDichaAiServiceOverviewSchema.parse(res.body);
 }
 
-export function adminDichaAiUsageQueryOptions(query: AdminDichaAiUsageQueryInput | AiUsageWindow = '7d') {
+export function adminDichaAiUsageQueryOptions(
+  query: AdminDichaAiUsageQueryInput | AiUsageWindow = '7d',
+) {
   const normalizedQuery =
     typeof query === 'string'
       ? { window: query, logLimit: 500 }
@@ -244,9 +347,7 @@ export function adminDichaAiUsageQueryOptions(query: AdminDichaAiUsageQueryInput
   });
 }
 
-export function adminDichaAiDiagnosticsQueryOptions(
-  query: AdminDichaAiDiagnosticsQueryInput = {},
-) {
+export function adminDichaAiDiagnosticsQueryOptions(query: AdminDichaAiDiagnosticsQueryInput = {}) {
   const normalizedQuery = {
     window: query.window ?? '7d',
     page: query.page ?? 1,
@@ -287,9 +388,7 @@ export function adminCreditRulesQueryOptions() {
   });
 }
 
-export function adminCreditOperationsQueryOptions(
-  query: AdminCreditOperationsQueryInput = {},
-) {
+export function adminCreditOperationsQueryOptions(query: AdminCreditOperationsQueryInput = {}) {
   const normalizedQuery = {
     window: query.window ?? '7d',
   };

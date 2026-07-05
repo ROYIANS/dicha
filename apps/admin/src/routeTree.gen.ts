@@ -14,8 +14,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as AdminIndexRouteImport } from './routes/_admin.index'
 import { Route as AdminSystemRouteImport } from './routes/_admin.system'
+import { Route as AdminRolesRouteImport } from './routes/_admin.roles'
 import { Route as AdminDichaAiRouteImport } from './routes/_admin.dicha-ai'
 import { Route as AdminBasicRouteImport } from './routes/_admin.basic'
+import { Route as AdminAuditLogsRouteImport } from './routes/_admin.audit-logs'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
 import { Route as AdminAiProvidersRouteImport } from './routes/_admin.ai-providers'
 import { Route as AdminAiInvokeTestRouteImport } from './routes/_admin.ai-invoke-test'
@@ -51,6 +53,11 @@ const AdminSystemRoute = AdminSystemRouteImport.update({
   path: '/system',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDichaAiRoute = AdminDichaAiRouteImport.update({
   id: '/dicha-ai',
   path: '/dicha-ai',
@@ -59,6 +66,11 @@ const AdminDichaAiRoute = AdminDichaAiRouteImport.update({
 const AdminBasicRoute = AdminBasicRouteImport.update({
   id: '/basic',
   path: '/basic',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -121,8 +133,10 @@ export interface FileRoutesByFullPath {
   '/ai-invoke-test': typeof AdminAiInvokeTestRoute
   '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
+  '/audit-logs': typeof AdminAuditLogsRoute
   '/basic': typeof AdminBasicRoute
   '/dicha-ai': typeof AdminDichaAiRoute
+  '/roles': typeof AdminRolesRoute
   '/system': typeof AdminSystemRoute
   '/credits/balances': typeof AdminCreditsBalancesRoute
   '/credits/grants': typeof AdminCreditsGrantsRoute
@@ -138,8 +152,10 @@ export interface FileRoutesByTo {
   '/ai-invoke-test': typeof AdminAiInvokeTestRoute
   '/ai-providers': typeof AdminAiProvidersRoute
   '/analytics': typeof AdminAnalyticsRoute
+  '/audit-logs': typeof AdminAuditLogsRoute
   '/basic': typeof AdminBasicRoute
   '/dicha-ai': typeof AdminDichaAiRoute
+  '/roles': typeof AdminRolesRoute
   '/system': typeof AdminSystemRoute
   '/': typeof AdminIndexRoute
   '/credits/balances': typeof AdminCreditsBalancesRoute
@@ -158,8 +174,10 @@ export interface FileRoutesById {
   '/_admin/ai-invoke-test': typeof AdminAiInvokeTestRoute
   '/_admin/ai-providers': typeof AdminAiProvidersRoute
   '/_admin/analytics': typeof AdminAnalyticsRoute
+  '/_admin/audit-logs': typeof AdminAuditLogsRoute
   '/_admin/basic': typeof AdminBasicRoute
   '/_admin/dicha-ai': typeof AdminDichaAiRoute
+  '/_admin/roles': typeof AdminRolesRoute
   '/_admin/system': typeof AdminSystemRoute
   '/_admin/': typeof AdminIndexRoute
   '/_admin/credits/balances': typeof AdminCreditsBalancesRoute
@@ -179,8 +197,10 @@ export interface FileRouteTypes {
     | '/ai-invoke-test'
     | '/ai-providers'
     | '/analytics'
+    | '/audit-logs'
     | '/basic'
     | '/dicha-ai'
+    | '/roles'
     | '/system'
     | '/credits/balances'
     | '/credits/grants'
@@ -196,8 +216,10 @@ export interface FileRouteTypes {
     | '/ai-invoke-test'
     | '/ai-providers'
     | '/analytics'
+    | '/audit-logs'
     | '/basic'
     | '/dicha-ai'
+    | '/roles'
     | '/system'
     | '/'
     | '/credits/balances'
@@ -215,8 +237,10 @@ export interface FileRouteTypes {
     | '/_admin/ai-invoke-test'
     | '/_admin/ai-providers'
     | '/_admin/analytics'
+    | '/_admin/audit-logs'
     | '/_admin/basic'
     | '/_admin/dicha-ai'
+    | '/_admin/roles'
     | '/_admin/system'
     | '/_admin/'
     | '/_admin/credits/balances'
@@ -270,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSystemRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/roles': {
+      id: '/_admin/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/dicha-ai': {
       id: '/_admin/dicha-ai'
       path: '/dicha-ai'
@@ -282,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/basic'
       fullPath: '/basic'
       preLoaderRoute: typeof AdminBasicRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/audit-logs': {
+      id: '/_admin/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/audit-logs'
+      preLoaderRoute: typeof AdminAuditLogsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/analytics': {
@@ -362,8 +400,10 @@ interface AdminRouteChildren {
   AdminAiInvokeTestRoute: typeof AdminAiInvokeTestRoute
   AdminAiProvidersRoute: typeof AdminAiProvidersRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminBasicRoute: typeof AdminBasicRoute
   AdminDichaAiRoute: typeof AdminDichaAiRoute
+  AdminRolesRoute: typeof AdminRolesRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCreditsBalancesRoute: typeof AdminCreditsBalancesRoute
@@ -379,8 +419,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAiInvokeTestRoute: AdminAiInvokeTestRoute,
   AdminAiProvidersRoute: AdminAiProvidersRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminBasicRoute: AdminBasicRoute,
   AdminDichaAiRoute: AdminDichaAiRoute,
+  AdminRolesRoute: AdminRolesRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCreditsBalancesRoute: AdminCreditsBalancesRoute,

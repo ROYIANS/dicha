@@ -1,10 +1,4 @@
-import {
-  getRouteApi,
-  Link,
-  Outlet,
-  useRouter,
-  useRouterState,
-} from '@tanstack/react-router';
+import { getRouteApi, Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import {
   Activity,
@@ -40,7 +34,7 @@ const navSections = [
     title: '用户与权限',
     items: [
       { to: '/basic', label: '用户管理', icon: UsersRound },
-      { label: '角色与权限', icon: ShieldCheck, planned: true },
+      { to: '/roles', label: '角色与权限', icon: ShieldCheck },
       { label: '内容与资源', icon: Boxes, planned: true },
     ],
   },
@@ -70,7 +64,7 @@ const navSections = [
     items: [
       { to: '/system', label: '系统功能', icon: Settings2 },
       { to: '/analytics', label: '统计看板', icon: BarChart3 },
-      { label: '审计日志', icon: FileClock, planned: true },
+      { to: '/audit-logs', label: '审计日志', icon: FileClock },
     ],
   },
 ] as const;
@@ -81,6 +75,7 @@ type AdminNavItem = {
   planned?: boolean;
   to?:
     | '/'
+    | '/audit-logs'
     | '/basic'
     | '/ai-providers'
     | '/dicha-ai'
@@ -92,6 +87,7 @@ type AdminNavItem = {
     | '/credits/balances'
     | '/credits/ledger'
     | '/credits/redemption-codes'
+    | '/roles'
     | '/system'
     | '/analytics';
 };

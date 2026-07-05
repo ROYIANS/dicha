@@ -1,7 +1,10 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
+  AdminAuditLog,
+  AdminAuditLogsPage,
+  AdminAuditLogsQuery,
   AdminAiInternalProvider,
   AdminAiInternalProviderUpsert,
   AdminCreditBalancesPage,
@@ -33,10 +36,17 @@ import type {
   AdminDichaInternalProviderSyncResponse,
   AdminDichaModelUpdate,
   AdminOverview,
+  AdminPermissionSummary,
   AdminPlatformStats,
   AdminUserDetail,
+  AdminUserSecurityActionResponse,
+  AdminSystemActionResult,
+  AdminSystemActionRun,
+  AdminSystemOperations,
+  AdminSystemService,
   AdminUsersList,
   AdminUsersQuery,
+  AdminUserStatusUpdate,
   AiInvokeErrorCategory,
   AiModel,
   AiModelCapability,
@@ -65,6 +75,12 @@ type AdminSessionUser = {
   name?: string | null;
 };
 
+type AdminAuditContext = {
+  actor: AdminSessionUser;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+};
+
 type AdminDichaUsageRecord = Prisma.AiUsageEventGetPayload<{
   include: typeof adminUsageOwnerInclude;
 }>;
@@ -88,6 +104,7 @@ const MAX_HOURLY_BUCKETS = 24 * 7;
 @Injectable()
 export class AdminService {
   private readonly aiEncryptionKey: Buffer;
+  private readonly aiGatewayBaseUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -96,6 +113,7 @@ export class AdminService {
   ) {
     const secret = config.get<string>('AI_GATEWAY_SECRET_KEY') ?? this.developmentAiSecret(config);
     this.aiEncryptionKey = createHash('sha256').update(secret).digest();
+    this.aiGatewayBaseUrl = config.get<string>('AI_GATEWAY_BASE_URL', 'http://localhost:3100/ai');
   }
 
   async getOverview(user: AdminSessionUser): Promise<AdminOverview> {
@@ -129,6 +147,24 @@ export class AdminService {
           status: 'ready',
         },
         {
+          id: 'credits',
+          title: '积分与计费',
+          description: '积分规则、发放、余额、流水、兑换码和运营看板已经接入。',
+          status: 'ready',
+        },
+        {
+          id: 'permissions',
+          title: '角色与权限',
+          description: '当前采用普通用户与超级管理员的轻量权限模型。',
+          status: 'ready',
+        },
+        {
+          id: 'auditLogs',
+          title: '审计日志',
+          description: '后台关键写操作会记录操作人、对象、结果和安全摘要。',
+          status: 'ready',
+        },
+        {
           id: 'system',
           title: '系统功能',
           description: '服务健康、配置摘要与维护任务入口。',
@@ -141,6 +177,204 @@ export class AdminService {
           status: 'planned',
         },
       ],
+    };
+  }
+
+  getPermissionSummary(user: AdminSessionUser): AdminPermissionSummary {
+    const superAdminPermissions = [
+      'admin.read',
+      'users.manage',
+      'audit.read',
+      'ai.manage',
+      'credits.manage',
+      'system.read',
+    ];
+
+    return {
+      generatedAt: new Date().toISOString(),
+      roles: [
+        {
+          id: 'user',
+          name: '普通用户',
+          description: '默认前台用户，只能访问自己的数据与个人设置。',
+          source: 'Better Auth account',
+          permissions: ['self.read', 'self.update'],
+        },
+        {
+          id: 'super_admin',
+          name: '超级管理员',
+          description: '由服务端 DICHA_SUPER_ADMIN_EMAILS 派生，拥有后台管理权限。',
+          source: 'DICHA_SUPER_ADMIN_EMAILS',
+          permissions: superAdminPermissions,
+        },
+      ],
+      currentAdmin: {
+        id: user.id,
+        email: user.email,
+        role: 'super_admin',
+        permissions: superAdminPermissions,
+      },
+    };
+  }
+
+  async listAuditLogs(query: AdminAuditLogsQuery): Promise<AdminAuditLogsPage> {
+    const now = new Date();
+    const from = auditWindowStart(now, query.window);
+    const andWhere: Prisma.AdminAuditLogWhereInput[] = [from ? { createdAt: { gte: from } } : {}];
+    if (query.action) andWhere.push({ action: query.action });
+    if (query.resourceType) andWhere.push({ resourceType: query.resourceType });
+    if (query.result) andWhere.push({ result: query.result });
+    if (query.search) {
+      const mode = Prisma.QueryMode.insensitive;
+      andWhere.push({
+        OR: [
+          { actorEmail: { contains: query.search, mode } },
+          { actorName: { contains: query.search, mode } },
+          { resourceId: { contains: query.search, mode } },
+          { summary: { contains: query.search, mode } },
+        ],
+      });
+    }
+    const where: Prisma.AdminAuditLogWhereInput = { AND: andWhere };
+    const [total, logs, optionRows] = await Promise.all([
+      this.prisma.adminAuditLog.count({ where }),
+      this.prisma.adminAuditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      }),
+      this.prisma.adminAuditLog.findMany({
+        where: from ? { createdAt: { gte: from } } : {},
+        select: { action: true, resourceType: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1000,
+      }),
+    ]);
+
+    return {
+      generatedAt: now.toISOString(),
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: total === 0 ? 0 : Math.ceil(total / query.pageSize),
+      logs: logs.map(toAdminAuditLog),
+      filters: {
+        actions: [...new Set(optionRows.map((row) => row.action))].sort(),
+        resourceTypes: [...new Set(optionRows.map((row) => row.resourceType))].sort(),
+      },
+    };
+  }
+
+  async getSystemOperations(): Promise<AdminSystemOperations> {
+    const generatedAt = new Date();
+    const [database, aiGateway, expiredSessions, disabledUsers, recentFailures, recentAuditLogs] =
+      await Promise.all([
+        this.checkDatabase(),
+        this.checkAiGateway(),
+        this.prisma.session.count({ where: { expiresAt: { lt: generatedAt } } }),
+        this.prisma.user.count({ where: { status: 'disabled' } }),
+        this.prisma.adminAuditLog.count({
+          where: {
+            result: 'failure',
+            createdAt: { gte: new Date(generatedAt.getTime() - DAY_MS) },
+          },
+        }),
+        this.prisma.adminAuditLog.findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 8,
+        }),
+      ]);
+    const memory = process.memoryUsage();
+
+    return {
+      generatedAt: generatedAt.toISOString(),
+      runtime: {
+        nodeVersion: process.version,
+        platform: `${process.platform}/${process.arch}`,
+        uptimeSeconds: Math.floor(process.uptime()),
+        memory: {
+          rssMb: bytesToMb(memory.rss),
+          heapUsedMb: bytesToMb(memory.heapUsed),
+          heapTotalMb: bytesToMb(memory.heapTotal),
+        },
+      },
+      database,
+      services: [
+        {
+          id: 'api',
+          name: 'Dicha API',
+          status: database.status === 'healthy' ? 'healthy' : 'degraded',
+          detail:
+            database.status === 'healthy'
+              ? 'API 正常响应，数据库可访问'
+              : 'API 可响应，但数据库探针异常',
+          checkedAt: generatedAt.toISOString(),
+          latencyMs: database.latencyMs,
+        },
+        aiGateway,
+      ],
+      maintenance: {
+        expiredSessions,
+        disabledUsers,
+        recentFailures,
+      },
+      actions: systemActions(),
+      recentAuditLogs: recentAuditLogs.map(toAdminAuditLog),
+    };
+  }
+
+  async runSystemAction(
+    body: AdminSystemActionRun,
+    audit: AdminAuditContext,
+  ): Promise<AdminSystemActionResult> {
+    if (body.actionId === 'refresh_health' || body.actionId === 'inspect_audit_logs') {
+      await this.recordAuditLog(audit, {
+        action: `system.${body.actionId}`,
+        resourceType: 'system',
+        resourceId: body.actionId,
+        summary: body.actionId === 'refresh_health' ? '刷新系统健康检查' : '查看审计日志入口',
+        metadata: this.safeMetadata({ actionId: body.actionId }),
+      });
+      return {
+        actionId: body.actionId,
+        status: 'completed',
+        message: body.actionId === 'refresh_health' ? '健康检查已刷新' : '审计日志入口已确认',
+        affectedCount: null,
+        operations: await this.getSystemOperations(),
+      };
+    }
+
+    if (body.actionId === 'prune_expired_sessions') {
+      const result = await this.prisma.session.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      });
+      await this.recordAuditLog(audit, {
+        action: 'system.prune_expired_sessions',
+        resourceType: 'system',
+        resourceId: 'session',
+        summary: `清理 ${result.count} 个过期登录会话`,
+        metadata: this.safeMetadata({ affectedCount: result.count }),
+      });
+      return {
+        actionId: body.actionId,
+        status: 'completed',
+        message: `已清理 ${result.count} 个过期登录会话`,
+        affectedCount: result.count,
+        operations: await this.getSystemOperations(),
+      };
+    }
+
+    const action = systemActions().find((item) => item.id === body.actionId);
+    if (!action || action.executable) {
+      throw new BadRequestException('Unknown system action');
+    }
+    return {
+      actionId: body.actionId,
+      status: 'skipped',
+      message: action.disabledReason ?? '该操作需要外部运维编排执行',
+      affectedCount: null,
+      operations: await this.getSystemOperations(),
     };
   }
 
@@ -180,8 +414,7 @@ export class AdminService {
             enabled: setting?.enabled ?? false,
             baseUrl: setting?.baseUrl ?? provider.baseUrl,
             requestFormat: (setting?.requestFormat ?? provider.requestFormat) as
-              | AiProvider['requestFormat']
-              | undefined,
+              AiProvider['requestFormat'] | undefined,
             authType: (setting?.authType ?? provider.authType) as AiProvider['authType'],
             notes: setting?.notes ?? null,
           };
@@ -196,6 +429,7 @@ export class AdminService {
 
   async updateAiProviderDirectory(
     body: AdminAiProviderDirectoryUpdate,
+    audit: AdminAuditContext,
   ): Promise<AdminAiProviderDirectoryItem> {
     const provider = aiProviderTemplates.find((item) => item.id === body.providerId);
     if (!provider || provider.id === DICHA_PROVIDER_ID) {
@@ -224,12 +458,27 @@ export class AdminService {
 
     const overview = await this.getAiProviderDirectory();
     const updated = overview.providers.find((item) => item.providerId === provider.id);
-    if (updated) return updated;
+    if (updated) {
+      await this.recordAuditLog(audit, {
+        action: 'ai.provider_directory.update',
+        resourceType: 'ai_provider',
+        resourceId: provider.id,
+        summary: `更新用户侧 AI 供应商 ${provider.name}`,
+        metadata: this.safeMetadata({
+          providerId: provider.id,
+          enabled: body.enabled,
+          baseUrlChanged: body.baseUrl !== undefined,
+          requestFormat: body.requestFormat,
+          authType: body.authType,
+        }),
+      });
+      return updated;
+    }
     const counts = this.countDirectoryModels(overview.models).get(provider.id) ?? {
       modelCount: 0,
       enabledModelCount: 0,
     };
-    return {
+    const fallbackResponse = {
       providerId: provider.id,
       name: provider.name,
       shortName: provider.shortName,
@@ -246,10 +495,19 @@ export class AdminService {
       authType: body.authType ?? provider.authType,
       notes: body.notes ?? null,
     };
+    await this.recordAuditLog(audit, {
+      action: 'ai.provider_directory.update',
+      resourceType: 'ai_provider',
+      resourceId: provider.id,
+      summary: `更新用户侧 AI 供应商 ${provider.name}`,
+      metadata: this.safeMetadata({ providerId: provider.id, enabled: body.enabled }),
+    });
+    return fallbackResponse;
   }
 
   async syncAiProviderDirectoryModels(
     body: AdminAiProviderDirectorySync,
+    audit: AdminAuditContext,
   ): Promise<AdminAiProviderDirectorySyncResponse> {
     const provider = aiProviderTemplates.find((item) => item.id === body.providerId);
     if (!provider || provider.id === DICHA_PROVIDER_ID) {
@@ -266,11 +524,20 @@ export class AdminService {
 
     const remoteModels = await this.fetchModelsWithModelBankFallback(provider.id, baseUrl);
     await this.upsertDirectoryModels(provider.id, remoteModels);
-    return { providerId: provider.id, syncedCount: remoteModels.length };
+    const response = { providerId: provider.id, syncedCount: remoteModels.length };
+    await this.recordAuditLog(audit, {
+      action: 'ai.provider_directory.sync_models',
+      resourceType: 'ai_provider',
+      resourceId: provider.id,
+      summary: `同步用户侧 AI 供应商 ${provider.name} 的模型`,
+      metadata: this.safeMetadata(response),
+    });
+    return response;
   }
 
   async updateAiProviderDirectoryModel(
     body: AdminAiProviderDirectoryModelUpdate,
+    audit: AdminAuditContext,
   ): Promise<AdminAiProviderDirectoryOverview> {
     const provider = aiProviderTemplates.find((item) => item.id === body.providerId);
     if (!provider || provider.id === DICHA_PROVIDER_ID) {
@@ -312,7 +579,21 @@ export class AdminService {
         displayName: body.displayName ?? model.displayName,
       }),
     });
-    return this.getAiProviderDirectory();
+    const overview = await this.getAiProviderDirectory();
+    await this.recordAuditLog(audit, {
+      action: 'ai.provider_directory_model.update',
+      resourceType: 'ai_provider_model',
+      resourceId: `${body.providerId}:${body.modelId}`,
+      summary: `更新用户侧 AI 模型 ${body.modelId}`,
+      metadata: this.safeMetadata({
+        providerId: body.providerId,
+        modelId: body.modelId,
+        enabled: body.enabled,
+        recommended: body.recommended,
+        displayNameChanged: body.displayName !== undefined,
+      }),
+    });
+    return overview;
   }
 
   async getDichaAiService(): Promise<AdminDichaAiServiceOverview> {
@@ -375,6 +656,7 @@ export class AdminService {
 
   async upsertDichaInternalProvider(
     body: AdminAiInternalProviderUpsert,
+    audit: AdminAuditContext,
   ): Promise<AdminAiInternalProvider> {
     const existing = body.providerId
       ? await this.prisma.aiInternalProvider.findUnique({ where: { id: body.providerId } })
@@ -415,11 +697,28 @@ export class AdminService {
           },
         });
 
-    return toAdminAiInternalProvider(provider);
+    const response = toAdminAiInternalProvider(provider);
+    await this.recordAuditLog(audit, {
+      action: body.providerId
+        ? 'ai.dicha_internal_provider.update'
+        : 'ai.dicha_internal_provider.create',
+      resourceType: 'dicha_internal_provider',
+      resourceId: provider.id,
+      summary: `${body.providerId ? '更新' : '创建'} Dicha AI 内部供应商 ${provider.name}`,
+      metadata: this.safeMetadata({
+        providerId: provider.id,
+        enabled: provider.enabled,
+        requestFormat: provider.requestFormat,
+        authType: provider.authType,
+        credentialChanged: body.credential !== undefined,
+      }),
+    });
+    return response;
   }
 
   async syncDichaInternalProviderModels(
     body: AdminDichaInternalProviderSync,
+    audit: AdminAuditContext,
   ): Promise<AdminDichaInternalProviderSyncResponse> {
     const provider = await this.prisma.aiInternalProvider.findUnique({
       where: { id: body.providerId },
@@ -434,10 +733,21 @@ export class AdminService {
     const secret = provider.credential ? this.decryptAiCredential(provider.credential) : undefined;
     const remoteModels = await this.fetchOpenAiCompatibleModels(provider.baseUrl, secret);
     await this.upsertInternalProviderModels(provider.id, remoteModels);
-    return { providerId: provider.id, syncedCount: remoteModels.length };
+    const response = { providerId: provider.id, syncedCount: remoteModels.length };
+    await this.recordAuditLog(audit, {
+      action: 'ai.dicha_internal_provider.sync_models',
+      resourceType: 'dicha_internal_provider',
+      resourceId: provider.id,
+      summary: `同步 Dicha AI 内部供应商 ${provider.name} 的模型`,
+      metadata: this.safeMetadata(response),
+    });
+    return response;
   }
 
-  async updateDichaModel(body: AdminDichaModelUpdate): Promise<AdminDichaAiServiceOverview> {
+  async updateDichaModel(
+    body: AdminDichaModelUpdate,
+    audit: AdminAuditContext,
+  ): Promise<AdminDichaAiServiceOverview> {
     const existing = await this.prisma.aiInternalProviderModel.findUnique({
       where: { id: body.modelRecordId },
     });
@@ -469,7 +779,22 @@ export class AdminService {
               : (body.parameterConfig as Prisma.InputJsonValue),
       },
     });
-    return this.getDichaAiService();
+    const overview = await this.getDichaAiService();
+    await this.recordAuditLog(audit, {
+      action: 'ai.dicha_model.update',
+      resourceType: 'dicha_model',
+      resourceId: body.modelRecordId,
+      summary: `更新 Dicha AI 模型 ${body.modelRecordId}`,
+      metadata: this.safeMetadata({
+        modelRecordId: body.modelRecordId,
+        enabled: body.enabled,
+        dxModelId: body.dxModelId,
+        dxDisplayNameChanged: body.dxDisplayName !== undefined,
+        pricingChanged: body.dxPricing !== undefined,
+        parameterConfigChanged: body.parameterConfig !== undefined,
+      }),
+    });
+    return overview;
   }
 
   async getDichaAiUsage(window: AiUsageWindow, logLimit = 500): Promise<AdminDichaAiUsageReport> {
@@ -635,12 +960,46 @@ export class AdminService {
     return this.credits.getCreditOperations(query);
   }
 
-  upsertCreditRule(body: AdminCreditRuleUpsert): Promise<AdminCreditRule> {
-    return this.credits.upsertCreditRule(body);
+  async upsertCreditRule(
+    body: AdminCreditRuleUpsert,
+    audit: AdminAuditContext,
+  ): Promise<AdminCreditRule> {
+    const rule = await this.credits.upsertCreditRule(body);
+    await this.recordAuditLog(audit, {
+      action: body.ruleId ? 'credits.rule.update' : 'credits.rule.create',
+      resourceType: 'credit_rule',
+      resourceId: rule.id,
+      summary: `${body.ruleId ? '更新' : '创建'}积分规则 ${rule.name}`,
+      metadata: this.safeMetadata({
+        ruleId: rule.id,
+        active: rule.active,
+        cnyCreditsPerUnit: rule.cnyCreditsPerUnit,
+        usdCreditsPerUnit: rule.usdCreditsPerUnit,
+        platformMarkup: rule.platformMarkup,
+        minimumChargeCredits: rule.minimumChargeCredits,
+      }),
+    });
+    return rule;
   }
 
-  grantCredits(body: AdminCreditGrant): Promise<AdminCreditGrantResponse> {
-    return this.credits.grantCredits(body);
+  async grantCredits(
+    body: AdminCreditGrant,
+    audit: AdminAuditContext,
+  ): Promise<AdminCreditGrantResponse> {
+    const response = await this.credits.grantCredits(body);
+    await this.recordAuditLog(audit, {
+      action: 'credits.grant',
+      resourceType: 'credit_account',
+      resourceId: body.ownerId,
+      summary: `向用户 ${body.ownerId} 发放 ${body.amount} 积分`,
+      metadata: this.safeMetadata({
+        ownerId: body.ownerId,
+        amount: body.amount,
+        ledgerEntryId: response.ledgerEntry.id,
+        balanceAfter: response.account.balance,
+      }),
+    });
+    return response;
   }
 
   listCreditBalances(query: AdminCreditBalancesQuery): Promise<AdminCreditBalancesPage> {
@@ -655,17 +1014,32 @@ export class AdminService {
     return this.credits.getRedemptionCodes();
   }
 
-  upsertCreditRedemptionCode(
+  async upsertCreditRedemptionCode(
     body: AdminCreditRedemptionCodeUpsert,
+    audit: AdminAuditContext,
   ): Promise<AdminCreditRedemptionCode> {
-    return this.credits.upsertRedemptionCode(body);
+    const code = await this.credits.upsertRedemptionCode(body);
+    await this.recordAuditLog(audit, {
+      action: body.codeId ? 'credits.redemption_code.update' : 'credits.redemption_code.create',
+      resourceType: 'credit_redemption_code',
+      resourceId: code.id,
+      summary: `${body.codeId ? '更新' : '创建'}积分兑换码 ${code.code}`,
+      metadata: this.safeMetadata({
+        codeId: code.id,
+        code: code.code,
+        creditAmount: code.creditAmount,
+        enabled: code.enabled,
+        maxRedemptions: code.maxRedemptions,
+        expiresAt: code.expiresAt,
+      }),
+    });
+    return code;
   }
 
   async listUsers(query: AdminUsersQuery): Promise<AdminUsersList> {
     const page = query.page;
     const pageSize = query.pageSize;
-    const search = query.search?.trim();
-    const where = this.userSearchWhere(search);
+    const where = this.userListWhere(query);
 
     const [total, users] = await Promise.all([
       this.prisma.user.count({ where }),
@@ -677,6 +1051,7 @@ export class AdminService {
         select: userSummarySelect,
       }),
     ]);
+    const sessionSummaries = await this.userSessionSummaries(users.map((user) => user.id));
 
     return {
       generatedAt: new Date().toISOString(),
@@ -684,7 +1059,7 @@ export class AdminService {
       pageSize,
       total,
       totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
-      users: users.map(toUserSummary),
+      users: users.map((user) => toUserSummary(user, sessionSummaries.get(user.id))),
     };
   }
 
@@ -732,8 +1107,10 @@ export class AdminService {
 
     if (!user) return null;
 
+    const sessionSummaries = await this.userSessionSummaries([user.id]);
+
     return {
-      ...toUserSummary(user),
+      ...toUserSummary(user, sessionSummaries.get(user.id)),
       sessions: user.sessions.map((session) => ({
         id: session.id,
         expiresAt: session.expiresAt.toISOString(),
@@ -761,8 +1138,84 @@ export class AdminService {
     };
   }
 
+  async updateUserStatus(
+    id: string,
+    body: AdminUserStatusUpdate,
+    audit: AdminAuditContext,
+  ): Promise<AdminUserSecurityActionResponse> {
+    const current = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, name: true, status: true },
+    });
+    if (!current) throw new NotFoundException('User not found');
+    if (id === audit.actor.id && body.status === 'disabled') {
+      throw new BadRequestException('Super admin cannot disable their current account');
+    }
+
+    const disabled = body.status === 'disabled';
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        status: body.status,
+        disabledAt: disabled ? new Date() : null,
+        disabledReason: disabled ? (body.reason ?? null) : null,
+        disabledById: disabled ? audit.actor.id : null,
+      },
+    });
+    const sessions = disabled
+      ? await this.prisma.session.deleteMany({ where: { userId: id } })
+      : { count: 0 };
+
+    const detail = await this.getUser(id);
+    if (!detail) throw new NotFoundException('User not found');
+    await this.recordAuditLog(audit, {
+      action: disabled ? 'users.disable' : 'users.enable',
+      resourceType: 'user',
+      resourceId: id,
+      summary: `${disabled ? '禁用' : '启用'}用户 ${current.email}`,
+      metadata: this.safeMetadata({
+        userId: id,
+        email: current.email,
+        previousStatus: current.status,
+        status: body.status,
+        revokedSessions: sessions.count,
+        reason: body.reason,
+      }),
+    });
+    return { user: detail, revokedSessions: sessions.count };
+  }
+
+  async revokeUserSessions(
+    id: string,
+    audit: AdminAuditContext,
+  ): Promise<AdminUserSecurityActionResponse> {
+    const current = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true },
+    });
+    if (!current) throw new NotFoundException('User not found');
+    const sessions = await this.prisma.session.deleteMany({ where: { userId: id } });
+    const detail = await this.getUser(id);
+    if (!detail) throw new NotFoundException('User not found');
+    await this.recordAuditLog(audit, {
+      action: 'users.revoke_sessions',
+      resourceType: 'user',
+      resourceId: id,
+      summary: `强制退出用户 ${current.email} 的所有会话`,
+      metadata: this.safeMetadata({
+        userId: id,
+        email: current.email,
+        revokedSessions: sessions.count,
+      }),
+    });
+    return { user: detail, revokedSessions: sessions.count };
+  }
+
   private directoryOverviewModels(
-    recordsByProvider: Map<string, Prisma.AiProviderDirectoryModelGetPayload<Record<string, never>>[]>,
+    recordsByProvider: Map<
+      string,
+      Prisma.AiProviderDirectoryModelGetPayload<Record<string, never>>[]
+    >,
   ): AdminAiProviderDirectoryOverview['models'] {
     const models: AdminAiProviderDirectoryOverview['models'] = [];
     for (const provider of aiProviderTemplates) {
@@ -856,7 +1309,9 @@ export class AdminService {
       avatar: record.avatar ?? undefined,
       contextWindow: record.contextWindow,
       modelType: record.modelType as AiModelType,
-      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(record.extensionParameters),
+      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(
+        record.extensionParameters,
+      ),
       capabilities: this.arrayFromJson<AiModelCapability>(record.capabilities),
       maxOutput: record.maxOutput ?? undefined,
       enabled: record.enabled,
@@ -871,9 +1326,7 @@ export class AdminService {
     };
   }
 
-  private directoryModelCreateInput(
-    model: AiModel,
-  ): Prisma.AiProviderDirectoryModelCreateInput {
+  private directoryModelCreateInput(model: AiModel): Prisma.AiProviderDirectoryModelCreateInput {
     return {
       providerId: model.providerId,
       modelId: model.id,
@@ -980,7 +1433,10 @@ export class AdminService {
       displayName: remoteModel.displayName ?? metadata?.displayName ?? remoteModel.id,
       avatar: metadata?.avatar ?? this.modelAvatar(remoteModel.displayName ?? remoteModel.id),
       contextWindow: remoteModel.contextWindow ?? metadata?.contextWindow ?? null,
-      modelType: remoteModel.modelType ?? metadata?.modelType ?? this.modelTypeFromCapabilities(capabilities),
+      modelType:
+        remoteModel.modelType ??
+        metadata?.modelType ??
+        this.modelTypeFromCapabilities(capabilities),
       extensionParameters: remoteModel.extensionParameters ?? metadata?.extensionParameters ?? [],
       capabilities,
       maxOutput: remoteModel.maxOutput ?? metadata?.maxOutput,
@@ -1090,10 +1546,13 @@ export class AdminService {
   private isAuthenticationFailure(error: unknown): boolean {
     if (!(error instanceof BadRequestException)) return false;
     const response = error.getResponse();
-    const message = typeof response === 'string' ? response : (response as { message?: unknown }).message;
+    const message =
+      typeof response === 'string' ? response : (response as { message?: unknown }).message;
     if (typeof message === 'string') return message.includes('(401)') || message.includes('(403)');
     return Array.isArray(message)
-      ? message.some((item) => typeof item === 'string' && (item.includes('(401)') || item.includes('(403)')))
+      ? message.some(
+          (item) => typeof item === 'string' && (item.includes('(401)') || item.includes('(403)')),
+        )
       : false;
   }
 
@@ -1164,17 +1623,159 @@ export class AdminService {
     };
   }
 
-  private userSearchWhere(search: string | undefined): Prisma.UserWhereInput {
-    if (!search) return {};
-    return {
-      OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { displayName: { contains: search, mode: 'insensitive' } },
-        { city: { contains: search, mode: 'insensitive' } },
-        { homeName: { contains: search, mode: 'insensitive' } },
-      ],
-    };
+  private userListWhere(query: AdminUsersQuery): Prisma.UserWhereInput {
+    const andWhere: Prisma.UserWhereInput[] = [];
+    const search = query.search?.trim();
+    if (search) {
+      andWhere.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { displayName: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+    if (query.status) andWhere.push({ status: query.status });
+    if (query.emailVerified !== undefined) {
+      andWhere.push({ emailVerified: query.emailVerified });
+    }
+    return andWhere.length > 0 ? { AND: andWhere } : {};
+  }
+
+  private async userSessionSummaries(
+    userIds: string[],
+  ): Promise<Map<string, { lastSessionAt: string | null; activeSessionCount: number }>> {
+    const summaries = new Map<
+      string,
+      { lastSessionAt: string | null; activeSessionCount: number }
+    >();
+    for (const userId of userIds) {
+      summaries.set(userId, { lastSessionAt: null, activeSessionCount: 0 });
+    }
+    if (userIds.length === 0) return summaries;
+
+    const now = new Date();
+    const [latestSessions, activeSessionCounts] = await Promise.all([
+      this.prisma.session.findMany({
+        where: { userId: { in: userIds } },
+        orderBy: { updatedAt: 'desc' },
+        select: { userId: true, updatedAt: true, createdAt: true },
+      }),
+      this.prisma.session.groupBy({
+        by: ['userId'],
+        where: { userId: { in: userIds }, expiresAt: { gt: now } },
+        _count: { _all: true },
+      }),
+    ]);
+
+    for (const session of latestSessions) {
+      const current = summaries.get(session.userId);
+      if (current?.lastSessionAt) continue;
+      summaries.set(session.userId, {
+        lastSessionAt: (session.updatedAt ?? session.createdAt).toISOString(),
+        activeSessionCount: current?.activeSessionCount ?? 0,
+      });
+    }
+    for (const count of activeSessionCounts) {
+      const current = summaries.get(count.userId) ?? { lastSessionAt: null, activeSessionCount: 0 };
+      summaries.set(count.userId, {
+        ...current,
+        activeSessionCount: count._count._all,
+      });
+    }
+    return summaries;
+  }
+
+  private async checkDatabase(): Promise<AdminSystemOperations['database']> {
+    const startedAt = Date.now();
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'healthy', latencyMs: Date.now() - startedAt };
+    } catch {
+      return { status: 'down', latencyMs: null };
+    }
+  }
+
+  private async checkAiGateway(): Promise<AdminSystemService> {
+    const checkedAt = new Date();
+    const startedAt = Date.now();
+    const healthUrl = `${this.aiGatewayBaseUrl.replace(/\/+$/, '')}/health`;
+    try {
+      const response = await fetch(healthUrl, {
+        signal: AbortSignal.timeout(2500),
+      });
+      if (!response.ok) {
+        return {
+          id: 'ai-gateway',
+          name: 'AI Gateway',
+          status: 'degraded',
+          detail: `AI Gateway 健康检查返回 ${response.status}`,
+          checkedAt: checkedAt.toISOString(),
+          latencyMs: Date.now() - startedAt,
+        };
+      }
+      return {
+        id: 'ai-gateway',
+        name: 'AI Gateway',
+        status: 'healthy',
+        detail: 'AI Gateway 正常响应',
+        checkedAt: checkedAt.toISOString(),
+        latencyMs: Date.now() - startedAt,
+      };
+    } catch {
+      return {
+        id: 'ai-gateway',
+        name: 'AI Gateway',
+        status: 'unknown',
+        detail: 'AI Gateway 健康检查暂不可达',
+        checkedAt: checkedAt.toISOString(),
+        latencyMs: null,
+      };
+    }
+  }
+
+  private async recordAuditLog(
+    context: AdminAuditContext,
+    input: {
+      action: string;
+      resourceType: string;
+      resourceId?: string | null;
+      summary: string;
+      result?: 'success' | 'failure';
+      metadata?: Prisma.InputJsonValue;
+    },
+  ): Promise<void> {
+    await this.prisma.adminAuditLog.create({
+      data: {
+        actorId: context.actor.id,
+        actorEmail: context.actor.email,
+        actorName: context.actor.name ?? null,
+        action: input.action,
+        resourceType: input.resourceType,
+        resourceId: input.resourceId ?? null,
+        result: input.result ?? 'success',
+        ipAddress: context.ipAddress ?? null,
+        userAgent: context.userAgent ?? null,
+        summary: input.summary,
+        metadata: input.metadata,
+      },
+    });
+  }
+
+  private safeMetadata(value: Record<string, unknown>): Prisma.InputJsonObject {
+    const metadata: Record<string, Prisma.InputJsonValue> = {};
+    for (const [key, item] of Object.entries(value)) {
+      if (item === undefined) continue;
+      if (item instanceof Date) {
+        metadata[key] = item.toISOString();
+        continue;
+      }
+      if (item === null) continue;
+      if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+        metadata[key] = item;
+      }
+    }
+    return metadata as Prisma.InputJsonObject;
   }
 
   private encryptAiCredential(value: string): Prisma.InputJsonValue {
@@ -1228,6 +1829,10 @@ const userSummarySelect = {
   city: true,
   homeName: true,
   coins: true,
+  status: true,
+  disabledAt: true,
+  disabledReason: true,
+  disabledById: true,
   createdAt: true,
   updatedAt: true,
   _count: {
@@ -1243,7 +1848,10 @@ type UserSummaryRecord = Prisma.UserGetPayload<{
   select: typeof userSummarySelect;
 }>;
 
-function toUserSummary(user: UserSummaryRecord) {
+function toUserSummary(
+  user: UserSummaryRecord,
+  sessionSummary?: { lastSessionAt: string | null; activeSessionCount: number },
+) {
   return {
     id: user.id,
     name: user.name,
@@ -1254,6 +1862,12 @@ function toUserSummary(user: UserSummaryRecord) {
     city: user.city,
     homeName: user.homeName,
     coins: user.coins,
+    status: user.status as 'active' | 'disabled',
+    disabledAt: user.disabledAt?.toISOString() ?? null,
+    disabledReason: user.disabledReason,
+    disabledById: user.disabledById,
+    lastSessionAt: sessionSummary?.lastSessionAt ?? null,
+    activeSessionCount: sessionSummary?.activeSessionCount ?? 0,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
     counts: {
@@ -1262,6 +1876,105 @@ function toUserSummary(user: UserSummaryRecord) {
       passkeys: user._count.passkeys,
     },
   };
+}
+
+type AdminAuditLogRecord = Prisma.AdminAuditLogGetPayload<Record<string, never>>;
+
+function toAdminAuditLog(record: AdminAuditLogRecord): AdminAuditLog {
+  return {
+    id: record.id,
+    actorId: record.actorId,
+    actorEmail: record.actorEmail,
+    actorName: record.actorName,
+    action: record.action,
+    resourceType: record.resourceType,
+    resourceId: record.resourceId,
+    result: record.result as AdminAuditLog['result'],
+    ipAddress: record.ipAddress,
+    userAgent: record.userAgent,
+    summary: record.summary,
+    metadata:
+      record.metadata && typeof record.metadata === 'object' && !Array.isArray(record.metadata)
+        ? (record.metadata as Record<string, unknown>)
+        : null,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
+function auditWindowStart(now: Date, window: AdminAuditLogsQuery['window']): Date | null {
+  switch (window) {
+    case '24h':
+      return new Date(now.getTime() - DAY_MS);
+    case '7d':
+      return new Date(now.getTime() - 7 * DAY_MS);
+    case '30d':
+      return new Date(now.getTime() - 30 * DAY_MS);
+    case '90d':
+      return new Date(now.getTime() - 90 * DAY_MS);
+    case 'all':
+      return null;
+    default: {
+      const exhaustive: never = window;
+      return exhaustive;
+    }
+  }
+}
+
+function bytesToMb(value: number): number {
+  return Math.round((value / 1024 / 1024) * 10) / 10;
+}
+
+function systemActions(): AdminSystemOperations['actions'] {
+  return [
+    {
+      id: 'refresh_health',
+      title: '刷新健康检查',
+      description: '重新探测 API、数据库与 AI Gateway 的当前状态。',
+      category: 'diagnostic',
+      executable: true,
+      disabledReason: null,
+    },
+    {
+      id: 'prune_expired_sessions',
+      title: '清理过期会话',
+      description: '删除已经过期的 Better Auth session，降低登录表噪音。',
+      category: 'maintenance',
+      executable: true,
+      disabledReason: null,
+    },
+    {
+      id: 'inspect_audit_logs',
+      title: '查看审计日志',
+      description: '跳转到后台审计日志，用于排查近期管理操作。',
+      category: 'diagnostic',
+      executable: true,
+      disabledReason: null,
+    },
+    {
+      id: 'clear_runtime_cache',
+      title: '清理运行时缓存',
+      description: '当前 API 没有集中式运行时缓存；后续接入 Redis/队列后再开放。',
+      category: 'maintenance',
+      executable: false,
+      disabledReason: '当前没有可清理的服务端缓存。',
+    },
+    {
+      id: 'restart_api',
+      title: '重启 API 服务',
+      description: '重启应由 Docker、systemd、PaaS 或发布流水线执行，后台只展示操作入口。',
+      category: 'dangerous',
+      executable: false,
+      disabledReason: '需要通过部署平台或服务器终端执行，避免 Web 请求中断自身进程。',
+    },
+    {
+      id: 'restart_ai_gateway',
+      title: '重启 AI Gateway',
+      description: 'AI Gateway 重启应由外部编排执行，避免中断正在进行的流式调用。',
+      category: 'dangerous',
+      executable: false,
+      disabledReason: '需要通过部署平台或服务器终端执行。',
+    },
+  ];
 }
 
 type AiInternalProviderRecord = Prisma.AiInternalProviderGetPayload<Record<string, never>>;
@@ -1276,7 +1989,11 @@ function toAdminAiInternalProvider(provider: AiInternalProviderRecord): AdminAiI
     enabled: provider.enabled,
     priority: provider.priority,
     credentialState:
-      provider.authType === 'none' ? 'not_required' : provider.credential ? 'configured' : 'missing',
+      provider.authType === 'none'
+        ? 'not_required'
+        : provider.credential
+          ? 'configured'
+          : 'missing',
     notes: provider.notes,
     createdAt: provider.createdAt.toISOString(),
     updatedAt: provider.updatedAt.toISOString(),
@@ -1306,7 +2023,8 @@ function toAdminDichaUsageEvent(record: AdminDichaUsageRecord): AdminDichaAiUsag
     usageEstimated: record.usageEstimated,
     estimatedCostUsd: record.estimatedCostUsd,
     estimatedCostAmount: record.estimatedCostAmount,
-    estimatedCostCurrency: record.estimatedCostCurrency as AdminDichaAiUsageEvent['estimatedCostCurrency'],
+    estimatedCostCurrency:
+      record.estimatedCostCurrency as AdminDichaAiUsageEvent['estimatedCostCurrency'],
     latencyMs: record.latencyMs,
     errorCategory: record.errorCategory,
     createdAt: record.createdAt.toISOString(),
@@ -1363,7 +2081,7 @@ function diagnosticFilterOptions(
     if (channelKey) {
       const label = record.internalProviderModelId
         ? `${record.internalProviderModelId}${record.internalProviderId ? ` · ${record.internalProviderId}` : ''}`
-        : record.internalProviderId ?? channelKey;
+        : (record.internalProviderId ?? channelKey);
       incrementOption(internalChannels, channelKey, label);
     }
   }
@@ -1488,7 +2206,8 @@ function adminUsagePerformance(
     peakRpm: Math.max(...Array.from(minuteBuckets.values()).map((bucket) => bucket.calls), 0),
     peakTpm: Math.max(...Array.from(minuteBuckets.values()).map((bucket) => bucket.tokens), 0),
     successRate: summary.calls > 0 ? roundRate(summary.successfulCalls / summary.calls) : 0,
-    p95LatencyMs: latencies.length > 0 ? (latencies[Math.ceil(latencies.length * 0.95) - 1] ?? null) : null,
+    p95LatencyMs:
+      latencies.length > 0 ? (latencies[Math.ceil(latencies.length * 0.95) - 1] ?? null) : null,
   };
 }
 
@@ -1562,7 +2281,8 @@ function adminUsageDistribution(
   const buckets = from ? adminUsageTimeBuckets(events, from, to, granularity) : [];
   const groups = adminUsageBreakdown(events, (event) => ({
     key: groupBy === 'provider' ? event.providerId : `${event.providerId}:${event.modelId}`,
-    label: groupBy === 'provider' ? event.providerName : `${event.modelName} · ${event.providerName}`,
+    label:
+      groupBy === 'provider' ? event.providerName : `${event.modelName} · ${event.providerName}`,
   })).map((group) => ({
     ...group,
     groupBy,
@@ -1606,7 +2326,10 @@ function adminUsageTimeBuckets(
     });
     buckets.push({
       key: `${granularity}:${cursor.toISOString()}`,
-      label: granularity === 'hour' ? cursor.toISOString().slice(11, 16) : cursor.toISOString().slice(5, 10),
+      label:
+        granularity === 'hour'
+          ? cursor.toISOString().slice(11, 16)
+          : cursor.toISOString().slice(5, 10),
       granularity,
       start: cursor.toISOString(),
       end: end.toISOString(),
@@ -1642,7 +2365,8 @@ function usageHourlyRangeStart(
   now: Date,
 ): Date {
   const cappedFrom = new Date(now.getTime() - MAX_HOURLY_BUCKETS * HOUR_MS);
-  const candidate = rangeFrom ?? firstAdminUsageEventDate(events) ?? new Date(now.getTime() - 24 * HOUR_MS);
+  const candidate =
+    rangeFrom ?? firstAdminUsageEventDate(events) ?? new Date(now.getTime() - 24 * HOUR_MS);
   return candidate > cappedFrom ? candidate : cappedFrom;
 }
 

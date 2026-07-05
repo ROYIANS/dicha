@@ -33,14 +33,14 @@
 
 ### 4. Validation & Error Matrix
 
-| Condition | Expected Behavior |
-|---|---|
-| Missing session | `/api/account/me` returns unauthorized via `AuthGuard`; web redirects to `/login`. |
-| `DICHA_SUPER_ADMIN_EMAILS` empty or missing | All users receive `isSuperAdmin: false`. |
-| User email matches configured list | API returns `isSuperAdmin: true`. |
-| User email differs only by case/space from configured entry | API still returns `isSuperAdmin: true`. |
-| Ordinary user directly opens admin route | Web redirects to `/settings` or another safe authenticated page. |
-| Admin email list accidentally placed in `VITE_*` | Wrong; remove it because Vite exposes it to the browser bundle. |
+| Condition                                                   | Expected Behavior                                                                  |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Missing session                                             | `/api/account/me` returns unauthorized via `AuthGuard`; web redirects to `/login`. |
+| `DICHA_SUPER_ADMIN_EMAILS` empty or missing                 | All users receive `isSuperAdmin: false`.                                           |
+| User email matches configured list                          | API returns `isSuperAdmin: true`.                                                  |
+| User email differs only by case/space from configured entry | API still returns `isSuperAdmin: true`.                                            |
+| Ordinary user directly opens admin route                    | Web redirects to `/settings` or another safe authenticated page.                   |
+| Admin email list accidentally placed in `VITE_*`            | Wrong; remove it because Vite exposes it to the browser bundle.                    |
 
 ### 5. Good/Base/Bad Cases
 
@@ -104,13 +104,13 @@ if (user.isSuperAdmin) {
 
 ### 4. Validation & Error Matrix
 
-| Condition | Expected Behavior |
-|---|---|
-| Missing session | `AuthGuard` returns unauthorized before admin logic runs. |
-| Authenticated non-admin user | `SuperAdminGuard` throws `403 Forbidden`. |
-| Empty `DICHA_SUPER_ADMIN_EMAILS` | All users fail admin API authorization. |
-| Matching email with case/space differences | Authorization succeeds after normalization. |
-| Frontend hides admin UI only | Insufficient; backend endpoint must still reject non-admin calls. |
+| Condition                                  | Expected Behavior                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| Missing session                            | `AuthGuard` returns unauthorized before admin logic runs.         |
+| Authenticated non-admin user               | `SuperAdminGuard` throws `403 Forbidden`.                         |
+| Empty `DICHA_SUPER_ADMIN_EMAILS`           | All users fail admin API authorization.                           |
+| Matching email with case/space differences | Authorization succeeds after normalization.                       |
+| Frontend hides admin UI only               | Insufficient; backend endpoint must still reject non-admin calls. |
 
 ### 5. Good/Base/Bad Cases
 
@@ -180,14 +180,14 @@ export class AdminController {}
 
 ### 4. Validation & Error Matrix
 
-| Condition | Expected Behavior |
-|---|---|
-| Anonymous request | Rejected by `AuthGuard`. |
-| Authenticated ordinary user | Rejected by `SuperAdminGuard` with `403`. |
-| `pageSize > 50` or invalid query | Rejected by shared zod/ts-rest validation. |
-| User id does not exist | `GET /api/admin/users/:id` returns `404` with `{ message }`. |
-| Account/passkey records contain secret columns | Service `select` excludes those columns before response mapping. |
-| User has items/events/artwork | User-management detail does not return those content/activity records or counts. |
+| Condition                                      | Expected Behavior                                                                |
+| ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| Anonymous request                              | Rejected by `AuthGuard`.                                                         |
+| Authenticated ordinary user                    | Rejected by `SuperAdminGuard` with `403`.                                        |
+| `pageSize > 50` or invalid query               | Rejected by shared zod/ts-rest validation.                                       |
+| User id does not exist                         | `GET /api/admin/users/:id` returns `404` with `{ message }`.                     |
+| Account/passkey records contain secret columns | Service `select` excludes those columns before response mapping.                 |
+| User has items/events/artwork                  | User-management detail does not return those content/activity records or counts. |
 
 ### 5. Good/Base/Bad Cases
 
@@ -236,6 +236,194 @@ const user = await prisma.user.findUnique({
 });
 ```
 
+## Scenario: Super Admin User Security And Audit Logs
+
+### 1. Scope / Trigger
+
+- Trigger: adding or modifying user status operations, session revocation, admin audit log storage, role/permission summaries, or admin write-operation tracing.
+- This is a cross-layer contract: Prisma stores user security state and audit rows; `packages/shared` defines admin DTOs; `apps/api` enforces disabled-account access and writes audit logs; `apps/admin` displays user security actions, lightweight permissions, and audit logs.
+
+### 2. Signatures
+
+- Prisma fields:
+  - `User.status: "active" | "disabled"` stored as string.
+  - `User.disabledAt`, `disabledReason`, `disabledById`.
+  - `AdminAuditLog(actorId, actorEmail, actorName, action, resourceType, resourceId, result, ipAddress, userAgent, summary, metadata, createdAt)`.
+- Shared contract:
+  - `contract.admin.updateUserStatus` -> `POST /admin/users/:id/status`.
+  - `contract.admin.revokeUserSessions` -> `POST /admin/users/:id/revoke-sessions`.
+  - `contract.admin.getPermissionSummary` -> `GET /admin/permissions`.
+  - `contract.admin.listAuditLogs` -> `GET /admin/audit-logs`.
+- Runtime paths use the Nest global prefix:
+  - `POST /api/admin/users/:id/status`.
+  - `POST /api/admin/users/:id/revoke-sessions`.
+  - `GET /api/admin/permissions`.
+  - `GET /api/admin/audit-logs`.
+
+### 3. Contracts
+
+- All endpoints stay behind `@UseGuards(AuthGuard, SuperAdminGuard)`.
+- `AuthGuard` must reject disabled users after Better Auth session lookup by checking `User.status`.
+- Disabling a user must revoke that user's existing sessions. Re-enabling does not recreate sessions.
+- A super admin must not be able to disable their own current account.
+- User-management responses may include `status`, disabled metadata, recent-session timestamp, and active-session count.
+- Audit logs are append-only operational records. Do not update old audit rows to hide or rewrite an operation.
+- Audit rows may store safe summaries and scalar metadata only. Never store raw request bodies, API keys, OAuth tokens, Better Auth session tokens, passkey `publicKey`/`credentialID`, decrypted credentials, prompts, response bodies, or user content/activity payloads.
+- Admin write operations that mutate users, credits, AI provider directory, Dicha AI internals, or redemption codes should call the shared audit helper with an action string such as `users.disable`, `credits.grant`, or `ai.dicha_model.update`.
+- Permission summary is informational in MVP. The actual privilege source remains server-side `DICHA_SUPER_ADMIN_EMAILS`; do not expose the configured email list to the browser.
+
+### 4. Validation & Error Matrix
+
+| Condition                                              | Expected Behavior                                                                             |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Disabled user calls protected API with an old session  | `AuthGuard` returns unauthorized.                                                             |
+| Super admin disables another user                      | User status becomes `disabled`, sessions are deleted, audit log records `users.disable`.      |
+| Super admin re-enables a user                          | User status becomes `active`, disabled metadata is cleared, audit log records `users.enable`. |
+| Super admin attempts to disable self                   | API rejects with bad request and does not update status.                                      |
+| Target user id does not exist                          | API returns not found / throws `NotFoundException`.                                           |
+| Audit log query has `pageSize > 100` or invalid result | Shared zod/ts-rest validation rejects it.                                                     |
+| Mutation body contains secrets                         | Audit metadata must omit them and store only safe scalar summaries.                           |
+
+### 5. Good/Base/Bad Cases
+
+- Good: store actor email/name snapshots on `AdminAuditLog` so audit history remains readable if user profile data changes later.
+- Good: keep `disabledById` as an id snapshot, not a hard dependency that can break audit/history retention.
+- Good: derive active-session count from `Session`, not from a denormalized `User` field.
+- Base: only two roles exist in MVP: ordinary user and super admin.
+- Bad: using the frontend role page to decide whether an API operation is allowed.
+- Bad: logging full mutation bodies for AI provider or Dicha internal channel updates because they may include credentials.
+- Bad: adding content/activity details to user-management responses without a new privacy review.
+
+### 6. Tests Required
+
+- `pnpm --filter @dicha/shared build` after shared admin contract changes.
+- `pnpm --filter @dicha/api typecheck && pnpm --filter @dicha/api lint && pnpm --filter @dicha/api build`.
+- `pnpm --filter @dicha/admin typecheck && pnpm --filter @dicha/admin lint && pnpm --filter @dicha/admin build`.
+- Focused assertions:
+  - disabled user is rejected by `AuthGuard`;
+  - disabling a user revokes sessions and writes one safe audit row;
+  - self-disable is rejected;
+  - audit log list supports pagination, window, result, resource type/action, and search filters;
+  - audit metadata does not include token/credential/passkey secret fields.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+await prisma.adminAuditLog.create({
+  data: {
+    action: 'ai.dicha_internal_provider.update',
+    metadata: body,
+  },
+});
+```
+
+This can persist decrypted credentials or raw request content in an audit table.
+
+#### Correct
+
+```typescript
+await recordAuditLog(context, {
+  action: 'ai.dicha_internal_provider.update',
+  resourceType: 'dicha_internal_provider',
+  resourceId: provider.id,
+  summary: `Updated Dicha AI internal provider ${provider.name}`,
+  metadata: safeMetadata({
+    providerId: provider.id,
+    enabled: provider.enabled,
+    credentialChanged: body.credential !== undefined,
+  }),
+});
+```
+
+## Scenario: Super Admin System Operations Console
+
+### 1. Scope / Trigger
+
+- Trigger: adding or modifying admin dashboard situation reports, system operations pages, service health probes, maintenance actions, cache/log tooling, or restart controls.
+- This is a cross-layer contract: `packages/shared` defines safe system operation DTOs; `apps/api` performs probes and whitelisted maintenance; `apps/admin` renders the situation report and operations console.
+
+### 2. Signatures
+
+- Shared contract:
+  - `contract.admin.getSystemOperations` -> `GET /admin/system/operations`.
+  - `contract.admin.runSystemAction` -> `POST /admin/system/actions`.
+- Runtime paths:
+  - `GET /api/admin/system/operations`.
+  - `POST /api/admin/system/actions` with `{ actionId }`.
+- Supported action ids:
+  - executable: `refresh_health`, `prune_expired_sessions`, `inspect_audit_logs`.
+  - non-executable/externally orchestrated: `restart_api`, `restart_ai_gateway`, `clear_runtime_cache`.
+- Response includes runtime memory/uptime, database probe, service health cards, maintenance counters, action descriptors, and recent audit logs.
+
+### 3. Contracts
+
+- All system operations endpoints must remain protected by `AuthGuard + SuperAdminGuard`.
+- Health probes may call internal services with short timeouts and sanitized status details only.
+- The API may execute only bounded, request-safe actions. Current allowed mutation is pruning expired Better Auth sessions.
+- Dangerous or externally orchestrated operations, especially restarting the API process or AI Gateway, must not be executed directly by a web request. Return an action descriptor with `executable: false` and a clear `disabledReason`.
+- Runtime responses may include Node version, platform, uptime, memory summary, service status, and counts. They must not expose raw env variables, connection strings, secrets, tokens, API keys, decrypted credentials, filesystem paths containing secrets, or process dumps.
+- System actions that mutate state or represent an operational check should write safe audit rows through the admin audit helper.
+- The admin dashboard situation report may reuse `GET /admin/system/operations`; do not duplicate service-probe logic in the frontend.
+
+### 4. Validation & Error Matrix
+
+| Condition                                         | Expected Behavior                                                                                       |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Ordinary user calls system operations endpoint    | `SuperAdminGuard` returns `403`.                                                                        |
+| Database probe fails                              | Response reports database `down`; API should still return a sanitized operations payload when possible. |
+| AI Gateway is unreachable                         | Service status is `unknown` or `degraded`; do not throw the whole dashboard response.                   |
+| `prune_expired_sessions` runs                     | Expired sessions are deleted and an audit row records affected count.                                   |
+| Restart action requested                          | API returns skipped/non-executable guidance; it must not terminate the process.                         |
+| Runtime cache clear requested before cache exists | API returns skipped/non-executable guidance.                                                            |
+
+### 5. Good/Base/Bad Cases
+
+- Good: use short timeout probes for AI Gateway so the admin dashboard does not hang.
+- Good: make maintenance actions self-describing so the UI can render executable and disabled operations from the same response.
+- Good: use audit logs as the first "view logs" surface until a server/container log pipeline exists.
+- Base: operational console shows health, runtime, expired sessions, recent audit, and troubleshooting guidance.
+- Bad: calling `process.exit()` or shelling out to restart services from an HTTP request.
+- Bad: rendering `.env` values or connection strings in the system settings page.
+- Bad: implementing cache clearing UI before a real server-side cache backend exists.
+
+### 6. Tests Required
+
+- `pnpm --filter @dicha/shared build`.
+- `pnpm --filter @dicha/api typecheck && pnpm --filter @dicha/api lint && pnpm --filter @dicha/api build`.
+- `pnpm --filter @dicha/admin typecheck && pnpm --filter @dicha/admin lint && pnpm --filter @dicha/admin build`.
+- Focused assertions:
+  - operations response stays sanitized;
+  - AI Gateway probe failure degrades gracefully;
+  - expired session pruning deletes only expired sessions;
+  - restart actions are not executable through the API;
+  - dashboard and system page consume the shared operations contract.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+if (body.actionId === 'restart_api') {
+  process.exit(0);
+}
+```
+
+This lets an HTTP request kill its own server process and can interrupt in-flight requests.
+
+#### Correct
+
+```typescript
+return {
+  actionId: 'restart_api',
+  status: 'skipped',
+  message: 'Restart must be performed by Docker, systemd, PaaS, or deploy pipeline.',
+  affectedCount: null,
+  operations: await getSystemOperations(),
+};
+```
+
 ## Scenario: Cross-Domain Admin Auth Flows
 
 ### 1. Scope / Trigger
@@ -267,13 +455,13 @@ const user = await prisma.user.findUnique({
 
 ### 4. Validation & Error Matrix
 
-| Condition | Expected Behavior |
-|---|---|
-| Admin origin missing from passkey `origin` | Passkey sign-in fails after browser credential assertion. |
-| Admin origin missing from `trustedOrigins` | Better Auth rejects cross-origin admin auth requests. |
-| GitHub login from admin uses relative `/` callback | User may be redirected to the auth base/frontend origin. |
-| GitHub login from admin uses absolute `https://admin.../` callback | User returns to admin shell after OAuth completes. |
-| GitHub OAuth App has only one callback URL | Keep it pointed at the API Better Auth callback route; do not create a second admin callback. |
+| Condition                                                          | Expected Behavior                                                                             |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Admin origin missing from passkey `origin`                         | Passkey sign-in fails after browser credential assertion.                                     |
+| Admin origin missing from `trustedOrigins`                         | Better Auth rejects cross-origin admin auth requests.                                         |
+| GitHub login from admin uses relative `/` callback                 | User may be redirected to the auth base/frontend origin.                                      |
+| GitHub login from admin uses absolute `https://admin.../` callback | User returns to admin shell after OAuth completes.                                            |
+| GitHub OAuth App has only one callback URL                         | Keep it pointed at the API Better Auth callback route; do not create a second admin callback. |
 
 ### 5. Good/Base/Bad Cases
 

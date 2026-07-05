@@ -29,7 +29,16 @@ const AdminErrorSchema = z.object({
 });
 
 export const AdminModuleSummarySchema = z.object({
-  id: z.enum(['dashboard', 'basic', 'aiProviders', 'system', 'analytics']),
+  id: z.enum([
+    'dashboard',
+    'basic',
+    'permissions',
+    'aiProviders',
+    'credits',
+    'auditLogs',
+    'system',
+    'analytics',
+  ]),
   title: z.string(),
   description: z.string(),
   status: z.enum(['ready', 'planned']),
@@ -71,6 +80,12 @@ export const AdminUserSummarySchema = z.object({
   city: z.string().nullable(),
   homeName: z.string().nullable(),
   coins: z.number().int(),
+  status: z.enum(['active', 'disabled']),
+  disabledAt: z.string().nullable(),
+  disabledReason: z.string().nullable(),
+  disabledById: z.string().nullable(),
+  lastSessionAt: z.string().nullable(),
+  activeSessionCount: z.number().int().min(0),
   createdAt: z.string(),
   updatedAt: z.string(),
   counts: z.object({
@@ -86,6 +101,8 @@ export const AdminUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(20),
   search: z.string().trim().max(120).optional(),
+  status: z.enum(['active', 'disabled']).optional(),
+  emailVerified: z.coerce.boolean().optional(),
 });
 
 export type AdminUsersQuery = z.infer<typeof AdminUsersQuerySchema>;
@@ -135,6 +152,163 @@ export const AdminUserDetailSchema = AdminUserSummarySchema.extend({
 });
 
 export type AdminUserDetail = z.infer<typeof AdminUserDetailSchema>;
+
+export const AdminUserStatusUpdateSchema = z.object({
+  status: z.enum(['active', 'disabled']),
+  reason: z.string().trim().max(240).optional(),
+});
+
+export type AdminUserStatusUpdate = z.infer<typeof AdminUserStatusUpdateSchema>;
+
+export const AdminUserSecurityActionResponseSchema = z.object({
+  user: AdminUserDetailSchema,
+  revokedSessions: z.number().int().min(0),
+});
+
+export type AdminUserSecurityActionResponse = z.infer<typeof AdminUserSecurityActionResponseSchema>;
+
+export const AdminPermissionSummarySchema = z.object({
+  generatedAt: z.string(),
+  roles: z.array(
+    z.object({
+      id: z.enum(['user', 'super_admin']),
+      name: z.string(),
+      description: z.string(),
+      source: z.string(),
+      permissions: z.array(z.string()),
+    }),
+  ),
+  currentAdmin: z.object({
+    id: z.string(),
+    email: z.string(),
+    role: z.literal('super_admin'),
+    permissions: z.array(z.string()),
+  }),
+});
+
+export type AdminPermissionSummary = z.infer<typeof AdminPermissionSummarySchema>;
+
+export const AdminAuditResultSchema = z.enum(['success', 'failure']);
+
+export const AdminAuditLogSchema = z.object({
+  id: z.string(),
+  actorId: z.string().nullable(),
+  actorEmail: z.string().nullable(),
+  actorName: z.string().nullable(),
+  action: z.string(),
+  resourceType: z.string(),
+  resourceId: z.string().nullable(),
+  result: AdminAuditResultSchema,
+  ipAddress: z.string().nullable(),
+  userAgent: z.string().nullable(),
+  summary: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  createdAt: z.string(),
+});
+
+export type AdminAuditLog = z.infer<typeof AdminAuditLogSchema>;
+
+export const AdminAuditLogsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+  window: z.enum(['24h', '7d', '30d', '90d', 'all']).default('7d'),
+  action: z.string().trim().max(120).optional(),
+  resourceType: z.string().trim().max(80).optional(),
+  result: AdminAuditResultSchema.optional(),
+  search: z.string().trim().max(120).optional(),
+});
+
+export type AdminAuditLogsQuery = z.infer<typeof AdminAuditLogsQuerySchema>;
+
+export const AdminAuditLogsPageSchema = z.object({
+  generatedAt: z.string(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1).max(100),
+  total: z.number().int().min(0),
+  totalPages: z.number().int().min(0),
+  logs: z.array(AdminAuditLogSchema),
+  filters: z.object({
+    actions: z.array(z.string()),
+    resourceTypes: z.array(z.string()),
+  }),
+});
+
+export type AdminAuditLogsPage = z.infer<typeof AdminAuditLogsPageSchema>;
+
+export const AdminSystemServiceStatusSchema = z.enum(['healthy', 'degraded', 'down', 'unknown']);
+
+export const AdminSystemServiceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: AdminSystemServiceStatusSchema,
+  detail: z.string(),
+  checkedAt: z.string(),
+  latencyMs: z.number().int().min(0).nullable(),
+});
+
+export type AdminSystemService = z.infer<typeof AdminSystemServiceSchema>;
+
+export const AdminSystemActionSchema = z.object({
+  id: z.enum([
+    'refresh_health',
+    'prune_expired_sessions',
+    'inspect_audit_logs',
+    'restart_api',
+    'restart_ai_gateway',
+    'clear_runtime_cache',
+  ]),
+  title: z.string(),
+  description: z.string(),
+  category: z.enum(['diagnostic', 'maintenance', 'dangerous']),
+  executable: z.boolean(),
+  disabledReason: z.string().nullable(),
+});
+
+export type AdminSystemAction = z.infer<typeof AdminSystemActionSchema>;
+
+export const AdminSystemOperationsSchema = z.object({
+  generatedAt: z.string(),
+  runtime: z.object({
+    nodeVersion: z.string(),
+    platform: z.string(),
+    uptimeSeconds: z.number().int().min(0),
+    memory: z.object({
+      rssMb: z.number(),
+      heapUsedMb: z.number(),
+      heapTotalMb: z.number(),
+    }),
+  }),
+  database: z.object({
+    status: AdminSystemServiceStatusSchema,
+    latencyMs: z.number().int().min(0).nullable(),
+  }),
+  services: z.array(AdminSystemServiceSchema),
+  maintenance: z.object({
+    expiredSessions: z.number().int().min(0),
+    disabledUsers: z.number().int().min(0),
+    recentFailures: z.number().int().min(0),
+  }),
+  actions: z.array(AdminSystemActionSchema),
+  recentAuditLogs: z.array(AdminAuditLogSchema),
+});
+
+export type AdminSystemOperations = z.infer<typeof AdminSystemOperationsSchema>;
+
+export const AdminSystemActionRunSchema = z.object({
+  actionId: AdminSystemActionSchema.shape.id,
+});
+
+export type AdminSystemActionRun = z.infer<typeof AdminSystemActionRunSchema>;
+
+export const AdminSystemActionResultSchema = z.object({
+  actionId: AdminSystemActionSchema.shape.id,
+  status: z.enum(['completed', 'skipped']),
+  message: z.string(),
+  affectedCount: z.number().int().min(0).nullable(),
+  operations: AdminSystemOperationsSchema,
+});
+
+export type AdminSystemActionResult = z.infer<typeof AdminSystemActionResultSchema>;
 
 export const AdminAiProviderSummarySchema = z.object({
   providerId: z.string(),
@@ -194,9 +368,7 @@ export const AdminAiProviderDirectoryUpdateSchema = z.object({
   notes: z.string().trim().max(240).nullable().optional(),
 });
 
-export type AdminAiProviderDirectoryUpdate = z.infer<
-  typeof AdminAiProviderDirectoryUpdateSchema
->;
+export type AdminAiProviderDirectoryUpdate = z.infer<typeof AdminAiProviderDirectoryUpdateSchema>;
 
 export const AdminAiProviderDirectoryModelUpdateSchema = z.object({
   providerId: z.string().min(1),
@@ -214,9 +386,7 @@ export const AdminAiProviderDirectorySyncSchema = z.object({
   providerId: z.string().min(1),
 });
 
-export type AdminAiProviderDirectorySync = z.infer<
-  typeof AdminAiProviderDirectorySyncSchema
->;
+export type AdminAiProviderDirectorySync = z.infer<typeof AdminAiProviderDirectorySyncSchema>;
 
 export const AdminAiProviderDirectorySyncResponseSchema = z.object({
   providerId: z.string(),
@@ -294,9 +464,7 @@ export const AdminDichaInternalProviderSyncSchema = z.object({
   providerId: z.string().min(1),
 });
 
-export type AdminDichaInternalProviderSync = z.infer<
-  typeof AdminDichaInternalProviderSyncSchema
->;
+export type AdminDichaInternalProviderSync = z.infer<typeof AdminDichaInternalProviderSyncSchema>;
 
 export const AdminDichaInternalProviderSyncResponseSchema = z.object({
   providerId: z.string(),
@@ -383,9 +551,7 @@ export const AdminDichaAiDiagnosticsQuerySchema = z.object({
   internalChannelId: z.string().trim().max(160).optional(),
 });
 
-export type AdminDichaAiDiagnosticsQuery = z.infer<
-  typeof AdminDichaAiDiagnosticsQuerySchema
->;
+export type AdminDichaAiDiagnosticsQuery = z.infer<typeof AdminDichaAiDiagnosticsQuerySchema>;
 
 export const AdminDichaAiDiagnosticsFilterOptionSchema = z.object({
   key: z.string(),
@@ -416,9 +582,7 @@ export const AdminDichaAiDiagnosticsReportSchema = z.object({
   }),
 });
 
-export type AdminDichaAiDiagnosticsReport = z.infer<
-  typeof AdminDichaAiDiagnosticsReportSchema
->;
+export type AdminDichaAiDiagnosticsReport = z.infer<typeof AdminDichaAiDiagnosticsReportSchema>;
 
 export const AdminCreditRuleSchema = z.object({
   id: z.string(),
@@ -540,9 +704,7 @@ export const AdminCreditRedemptionCodeUpsertSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
   notes: z.string().trim().max(500).nullable().optional(),
 });
-export type AdminCreditRedemptionCodeUpsert = z.infer<
-  typeof AdminCreditRedemptionCodeUpsertSchema
->;
+export type AdminCreditRedemptionCodeUpsert = z.infer<typeof AdminCreditRedemptionCodeUpsertSchema>;
 
 export const AdminCreditRedemptionCodesOverviewSchema = z.object({
   generatedAt: z.string().datetime(),
@@ -555,9 +717,7 @@ export type AdminCreditRedemptionCodesOverview = z.infer<
 export const AdminCreditOperationsQuerySchema = z.object({
   window: AiUsageWindowSchema.default('7d'),
 });
-export type AdminCreditOperationsQuery = z.infer<
-  typeof AdminCreditOperationsQuerySchema
->;
+export type AdminCreditOperationsQuery = z.infer<typeof AdminCreditOperationsQuerySchema>;
 
 export const AdminCreditOperationsSummarySchema = z.object({
   totalBalance: z.number().int(),
@@ -574,9 +734,7 @@ export const AdminCreditOperationsSummarySchema = z.object({
   aiSpentCredits: z.number().int().min(0),
   netChange: z.number().int(),
 });
-export type AdminCreditOperationsSummary = z.infer<
-  typeof AdminCreditOperationsSummarySchema
->;
+export type AdminCreditOperationsSummary = z.infer<typeof AdminCreditOperationsSummarySchema>;
 
 export const AdminCreditOperationsBucketSchema = z.object({
   key: z.string(),
@@ -591,9 +749,7 @@ export const AdminCreditOperationsBucketSchema = z.object({
   netChange: z.number().int(),
   entries: z.number().int().min(0),
 });
-export type AdminCreditOperationsBucket = z.infer<
-  typeof AdminCreditOperationsBucketSchema
->;
+export type AdminCreditOperationsBucket = z.infer<typeof AdminCreditOperationsBucketSchema>;
 
 export const AdminCreditOperationsBreakdownSchema = z.object({
   key: z.string(),
@@ -601,9 +757,7 @@ export const AdminCreditOperationsBreakdownSchema = z.object({
   credits: z.number().int(),
   entries: z.number().int().min(0),
 });
-export type AdminCreditOperationsBreakdown = z.infer<
-  typeof AdminCreditOperationsBreakdownSchema
->;
+export type AdminCreditOperationsBreakdown = z.infer<typeof AdminCreditOperationsBreakdownSchema>;
 
 export const AdminCreditOperationsUserRankSchema = z.object({
   user: z.object({
@@ -617,9 +771,7 @@ export const AdminCreditOperationsUserRankSchema = z.object({
   credits: z.number().int(),
   lastActivityAt: z.string().datetime().nullable(),
 });
-export type AdminCreditOperationsUserRank = z.infer<
-  typeof AdminCreditOperationsUserRankSchema
->;
+export type AdminCreditOperationsUserRank = z.infer<typeof AdminCreditOperationsUserRankSchema>;
 
 export const AdminCreditOperationsRedemptionSummarySchema = z.object({
   totalCodes: z.number().int().min(0),
@@ -668,9 +820,7 @@ export const AdminCreditOperationsReportSchema = z.object({
     byUseCase: z.array(AdminCreditOperationsAiBreakdownSchema),
   }),
 });
-export type AdminCreditOperationsReport = z.infer<
-  typeof AdminCreditOperationsReportSchema
->;
+export type AdminCreditOperationsReport = z.infer<typeof AdminCreditOperationsReportSchema>;
 
 export const adminContract = c.router({
   getOverview: {
@@ -701,6 +851,68 @@ export const adminContract = c.router({
       404: AdminErrorSchema,
     },
     summary: 'Super admin user detail',
+  },
+  updateUserStatus: {
+    method: 'POST',
+    path: '/admin/users/:id/status',
+    pathParams: z.object({
+      id: z.string().min(1),
+    }),
+    body: AdminUserStatusUpdateSchema,
+    responses: {
+      200: AdminUserSecurityActionResponseSchema,
+      400: AdminErrorSchema,
+      404: AdminErrorSchema,
+    },
+    summary: 'Enable or disable a platform user',
+  },
+  revokeUserSessions: {
+    method: 'POST',
+    path: '/admin/users/:id/revoke-sessions',
+    pathParams: z.object({
+      id: z.string().min(1),
+    }),
+    body: z.object({}),
+    responses: {
+      200: AdminUserSecurityActionResponseSchema,
+      404: AdminErrorSchema,
+    },
+    summary: 'Revoke all active sessions for a platform user',
+  },
+  getPermissionSummary: {
+    method: 'GET',
+    path: '/admin/permissions',
+    responses: {
+      200: AdminPermissionSummarySchema,
+    },
+    summary: 'Super admin lightweight permission model summary',
+  },
+  listAuditLogs: {
+    method: 'GET',
+    path: '/admin/audit-logs',
+    query: AdminAuditLogsQuerySchema,
+    responses: {
+      200: AdminAuditLogsPageSchema,
+    },
+    summary: 'Super admin audit log list',
+  },
+  getSystemOperations: {
+    method: 'GET',
+    path: '/admin/system/operations',
+    responses: {
+      200: AdminSystemOperationsSchema,
+    },
+    summary: 'Super admin system operations summary',
+  },
+  runSystemAction: {
+    method: 'POST',
+    path: '/admin/system/actions',
+    body: AdminSystemActionRunSchema,
+    responses: {
+      200: AdminSystemActionResultSchema,
+      400: AdminErrorSchema,
+    },
+    summary: 'Run a safe system maintenance action',
   },
   getAiProviderDirectory: {
     method: 'GET',
