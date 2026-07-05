@@ -41,4 +41,24 @@ export class CreditsController {
       body: await this.credits.redeemCode(request.user.id, body.code),
     }));
   }
+
+  @TsRestHandler(contract.credits.getCheckInStatus)
+  getCheckInStatus(
+    @Req() request: AuthenticatedRequest,
+  ): ReturnType<typeof tsRestHandler<typeof contract.credits.getCheckInStatus>> {
+    return tsRestHandler(contract.credits.getCheckInStatus, async () => ({
+      status: 200,
+      body: await this.credits.getCheckInStatus(request.user.id),
+    }));
+  }
+
+  @TsRestHandler(contract.credits.checkInToday)
+  checkInToday(
+    @Req() request: AuthenticatedRequest,
+  ): ReturnType<typeof tsRestHandler<typeof contract.credits.checkInToday>> {
+    return tsRestHandler(contract.credits.checkInToday, async () => ({
+      status: 200,
+      body: await this.credits.checkInToday(request.user.id),
+    }));
+  }
 }

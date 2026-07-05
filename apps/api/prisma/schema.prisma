@@ -102,6 +102,7 @@ model User {
   creditAccount       CreditAccount?
   creditLedgerEntries CreditLedgerEntry[]
   creditRedemptions   CreditRedemption[]
+  creditCheckIns      CreditCheckIn[]
 
   @@index([status, createdAt])
   @@index([emailVerified, createdAt])
@@ -524,6 +525,7 @@ model CreditLedgerEntry {
   metadata       Json?
 
   redemption CreditRedemption?
+  checkIn    CreditCheckIn?
 
   createdAt DateTime @default(now())
 
@@ -533,6 +535,49 @@ model CreditLedgerEntry {
   @@index([type, createdAt])
   @@index([source, sourceId])
   @@index([aiUsageEventId])
+}
+
+model CreditCheckInCampaign {
+  id String @id @default(cuid())
+
+  name              String
+  enabled           Boolean @default(false)
+  dailyCreditAmount Int     @default(20)
+  timezone          String  @default("Asia/Shanghai")
+  description       String?
+  startsAt          DateTime?
+  endsAt            DateTime?
+
+  checkIns CreditCheckIn[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, updatedAt])
+  @@index([startsAt, endsAt])
+}
+
+model CreditCheckIn {
+  id String @id @default(cuid())
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  campaign   CreditCheckInCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId String
+
+  checkInDate  String
+  creditAmount Int
+  metadata     Json?
+
+  ledgerEntry   CreditLedgerEntry? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+  ledgerEntryId String?            @unique
+
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, campaignId, checkInDate])
+  @@index([ownerId, createdAt])
+  @@index([campaignId, checkInDate])
 }
 
 model CreditRule {

@@ -533,12 +533,17 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
   - `CreditLedgerEntry(ownerId, accountId, type, amount, balanceAfter, source, sourceId, aiUsageEventId, metadata)`.
   - `CreditRule(name, active, cnyCreditsPerUnit, usdCreditsPerUnit, platformMarkup, minimumChargeCredits)`.
   - `CreditRedemptionCode(code, creditAmount, enabled, maxRedemptions, redeemedCount, expiresAt)`.
+  - `CreditCheckInCampaign(name, enabled, dailyCreditAmount, timezone, description, startsAt, endsAt)`.
+  - `CreditCheckIn(ownerId, campaignId, checkInDate, creditAmount, ledgerEntryId, metadata)` with unique `(ownerId, campaignId, checkInDate)`.
   - `AiUsageEvent.creditAmount`, `billingMode`, `requestId`, `internalProviderId`, `internalProviderModelId`, `creditLedgerEntryId`, `usageEstimated`, `billingSnapshot`.
 - Shared contracts:
   - `contract.credits.getBalance` -> `GET /credits/balance`.
   - `contract.credits.getLedger` -> `GET /credits/ledger`.
   - `contract.credits.redeemCode` -> `POST /credits/redeem`.
+  - `contract.credits.getCheckInStatus` -> `GET /credits/check-in`.
+  - `contract.credits.checkInToday` -> `POST /credits/check-in`.
   - `contract.admin.getCreditRules`, `upsertCreditRule`, `grantCredits`, `listCreditBalances`, `listCreditLedger`, `getCreditRedemptionCodes`, `upsertCreditRedemptionCode`.
+  - `contract.admin.getCreditCheckInCampaign`, `upsertCreditCheckInCampaign`.
   - `contract.admin.getCreditOperations` -> `GET /admin/credits/operations`.
 - Gateway entry:
   - `CreditStore.assertSufficientReserve(ownerId, model, request)`.
@@ -561,6 +566,11 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 - User-facing AI usage and invoke responses must expose credits and usage diagnostics only. They must not expose official upstream `estimatedCostAmount`, `estimatedCostCurrency`, or `costByCurrency`.
 - Admin Dicha AI analytics may show real CNY/USD cost and credits side by side for the official provider.
 - Balance updates and ledger writes must be atomic. Debit must use a conditional balance update (`balance >= amount`) rather than decrement-then-check.
+- Daily check-in is a grant source, not a separate balance store:
+  - Admin controls the activity through `CreditCheckInCampaign.enabled`, reward amount, timezone, and optional active window.
+  - User-facing status uses the campaign timezone to derive `todayDate` and the month calendar.
+  - A successful check-in creates one `CreditCheckIn`, increments `CreditAccount.balance` and `lifetimeGranted`, creates one grant `CreditLedgerEntry` with `source: 'daily_checkin'`, and links the ledger row back through `CreditCheckIn.ledgerEntryId`.
+  - The unique `(ownerId, campaignId, checkInDate)` constraint is the source of truth for daily idempotency. Service code must turn duplicate races into a user-facing "already checked in" error, not a 500.
 - The admin credit operations dashboard is an accounting dashboard, not an AI request diagnostics page:
   - `CreditAccount` is the source for global balance, lifetime granted, and lifetime spent.
   - `CreditLedgerEntry` is the source of truth for windowed credit movement, trends, type distribution, and user rankings.
@@ -587,17 +597,23 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 | Normal user calls `/admin/credits/operations` | Auth guard/super-admin guard rejects the request. |
 | Operations report has no ledger rows in the selected window | Return zero-valued summaries and empty bucket/ranking arrays, not an error. |
 | Official Dicha usage has request diagnostics fields | Keep them out of the credit operations response; use the AI diagnostics surface instead. |
+| Check-in campaign disabled or outside active window | User status returns `campaign: null`; `POST /credits/check-in` returns a 400 business error. |
+| User checks in successfully | Transaction creates `CreditCheckIn`, grant ledger, and account increment atomically. |
+| User checks in twice on the same campaign date | Service returns a 400 business error; no second ledger row or balance increment is created. |
+| Admin changes campaign timezone | Future `todayDate` and calendar rendering use the new timezone; existing check-in rows remain ledger facts. |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: store real official cost in `AiUsageEvent` for admin reconciliation while masking those fields in user-facing gateway reports.
 - Good: store `creditAmount` on both usage events and debit ledger entries so usage pages and balance ledgers can cross-check.
 - Good: append-only ledger rows with stored `balanceAfter`; account balance is a fast read model updated transactionally.
+- Good: treat daily check-in as a `daily_checkin` grant ledger source so balance, lifetime granted, operations reports, and user ledger all reconcile through the same accounting path.
 - Good: aggregate credit operations from ledger/account tables and only join AI usage for small Dicha model/use-case rankings.
 - Base: redemption codes and admin grants are enough to fund accounts before payment integration exists.
 - Bad: exposing `estimatedCostAmount` for official Dicha calls to `apps/web`.
 - Bad: charging user-owned providers through Dicha credits.
 - Bad: using credits as a model pricing currency.
+- Bad: storing check-in rewards only in a check-in table without a matching grant ledger row.
 - Bad: changing an active rule and recomputing old usage rows instead of preserving billing snapshots.
 - Bad: building the credit operations page from AI usage logs alone; ledger/account data is the accounting source of truth.
 - Bad: mixing request-level AI troubleshooting fields into the credit operations dashboard.
@@ -617,6 +633,7 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
   - BYOK/custom invoke records zero credits and no cost;
   - user usage report masks CNY/USD cost while admin Dicha report retains it.
   - credit operations report uses `CreditLedgerEntry` for accounting summaries and only filters official Dicha `AiUsageEvent` rows for lightweight AI rankings.
+  - daily check-in creates exactly one grant ledger row and one account increment per `(ownerId, campaignId, checkInDate)`.
 
 ### 7. Wrong vs Correct
 
@@ -666,6 +683,37 @@ const aiRows = await prisma.aiUsageEvent.findMany({
   where: { providerId: 'dicha', kind: 'invoke', creditAmount: { gt: 0 } },
 });
 return buildCreditOperationsReport({ ledgerRows, aiRows });
+```
+
+#### Wrong
+
+```typescript
+await prisma.creditCheckIn.create({
+  data: { ownerId, campaignId, checkInDate, creditAmount },
+});
+```
+
+This records the activity but bypasses the credit ledger, so balance reports and operations dashboards cannot reconcile the grant.
+
+#### Correct
+
+```typescript
+const checkIn = await tx.creditCheckIn.create({ data: { ownerId, campaignId, checkInDate, creditAmount } });
+const updated = await tx.creditAccount.update({
+  where: { id: account.id },
+  data: { balance: { increment: creditAmount }, lifetimeGranted: { increment: creditAmount } },
+});
+await tx.creditLedgerEntry.create({
+  data: {
+    ownerId,
+    accountId: updated.id,
+    type: 'grant',
+    amount: creditAmount,
+    balanceAfter: updated.balance,
+    source: 'daily_checkin',
+    sourceId: checkIn.id,
+  },
+});
 ```
 
 #### Wrong

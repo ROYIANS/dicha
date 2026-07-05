@@ -1,6 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
 import {
   CreditBalanceReportSchema,
+  CreditCheckInResponseSchema,
+  CreditCheckInStatusSchema,
   CreditLedgerPageSchema,
   CreditRedeemResponseSchema,
   type CreditLedgerQuery,
@@ -33,6 +35,19 @@ export const creditLedgerQueryOptions = (query: CreditLedgerQuery) =>
     staleTime: 30 * 1000,
   });
 
+export const creditCheckInQueryOptions = () =>
+  queryOptions({
+    queryKey: ['credits', 'check-in'] as const,
+    queryFn: async ({ signal }) => {
+      const res = await api.credits.getCheckInStatus({ fetchOptions: { signal } });
+      if (res.status === 200) {
+        return CreditCheckInStatusSchema.parse(res.body);
+      }
+      throw new Error(`Credit check-in status request failed (${res.status})`);
+    },
+    staleTime: 30 * 1000,
+  });
+
 export async function redeemCreditCode(code: string) {
   const res = await api.credits.redeemCode({ body: { code } });
   if (res.status === 200) {
@@ -42,4 +57,15 @@ export async function redeemCreditCode(code: string) {
     throw new Error(res.body.message);
   }
   throw new Error(`Credit redemption failed (${res.status})`);
+}
+
+export async function checkInToday() {
+  const res = await api.credits.checkInToday({ body: {} });
+  if (res.status === 200) {
+    return CreditCheckInResponseSchema.parse(res.body);
+  }
+  if (res.status === 400) {
+    throw new Error(res.body.message);
+  }
+  throw new Error(`Credit check-in failed (${res.status})`);
 }

@@ -16,6 +16,8 @@ import type {
   AdminCreditBalancesQuery,
   AdminCreditGrant,
   AdminCreditGrantResponse,
+  AdminCreditCheckInCampaignUpsert,
+  AdminCreditCheckInOverview,
   AdminCreditLedgerPage,
   AdminCreditLedgerQuery,
   AdminCreditOperationsQuery,
@@ -1120,6 +1122,32 @@ export class AdminService {
 
   getCreditRedemptionCodes(): Promise<AdminCreditRedemptionCodesOverview> {
     return this.credits.getRedemptionCodes();
+  }
+
+  getCreditCheckInCampaign(): Promise<AdminCreditCheckInOverview> {
+    return this.credits.getCreditCheckInOverview();
+  }
+
+  async upsertCreditCheckInCampaign(
+    body: AdminCreditCheckInCampaignUpsert,
+    audit: AdminAuditContext,
+  ): Promise<AdminCreditCheckInOverview> {
+    const overview = await this.credits.upsertCreditCheckInCampaign(body);
+    await this.recordAuditLog(audit, {
+      action: body.campaignId ? 'credits.check_in_campaign.update' : 'credits.check_in_campaign.create',
+      resourceType: 'credit_check_in_campaign',
+      resourceId: overview.campaign.id,
+      summary: `${body.campaignId ? '更新' : '创建'}积分签到活动 ${overview.campaign.name}`,
+      metadata: this.safeMetadata({
+        campaignId: overview.campaign.id,
+        enabled: overview.campaign.enabled,
+        dailyCreditAmount: overview.campaign.dailyCreditAmount,
+        timezone: overview.campaign.timezone,
+        startsAt: overview.campaign.startsAt,
+        endsAt: overview.campaign.endsAt,
+      }),
+    });
+    return overview;
   }
 
   async upsertCreditRedemptionCode(

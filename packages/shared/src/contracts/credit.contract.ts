@@ -16,6 +16,7 @@ export type CreditLedgerType = z.infer<typeof CreditLedgerTypeSchema>;
 export const CreditLedgerSourceSchema = z.enum([
   'admin_grant',
   'redemption_code',
+  'daily_checkin',
   'ai_invoke',
   'manual_adjustment',
   'system',
@@ -81,6 +82,48 @@ export const CreditRedeemResponseSchema = z.object({
 });
 export type CreditRedeemResponse = z.infer<typeof CreditRedeemResponseSchema>;
 
+export const CreditCheckInCampaignSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  enabled: z.boolean(),
+  dailyCreditAmount: z.number().int().positive(),
+  timezone: z.string(),
+  description: z.string().nullable(),
+  startsAt: z.string().datetime().nullable(),
+  endsAt: z.string().datetime().nullable(),
+});
+export type CreditCheckInCampaign = z.infer<typeof CreditCheckInCampaignSchema>;
+
+export const CreditCheckInDaySchema = z.object({
+  date: z.string(),
+  checkedIn: z.boolean(),
+  creditAmount: z.number().int().min(0),
+  ledgerEntryId: z.string().nullable(),
+  createdAt: z.string().datetime().nullable(),
+});
+export type CreditCheckInDay = z.infer<typeof CreditCheckInDaySchema>;
+
+export const CreditCheckInStatusSchema = z.object({
+  generatedAt: z.string().datetime(),
+  campaign: CreditCheckInCampaignSchema.nullable(),
+  todayDate: z.string(),
+  checkedInToday: z.boolean(),
+  todayCreditAmount: z.number().int().min(0),
+  month: z.object({
+    year: z.number().int(),
+    month: z.number().int().min(1).max(12),
+    days: z.array(CreditCheckInDaySchema),
+  }),
+});
+export type CreditCheckInStatus = z.infer<typeof CreditCheckInStatusSchema>;
+
+export const CreditCheckInResponseSchema = z.object({
+  account: CreditAccountSchema,
+  ledgerEntry: CreditLedgerEntrySchema,
+  status: CreditCheckInStatusSchema,
+});
+export type CreditCheckInResponse = z.infer<typeof CreditCheckInResponseSchema>;
+
 export const creditContract = c.router({
   getBalance: {
     method: 'GET',
@@ -108,5 +151,23 @@ export const creditContract = c.router({
       400: z.object({ message: z.string() }),
     },
     summary: 'Redeem a credit code',
+  },
+  getCheckInStatus: {
+    method: 'GET',
+    path: '/credits/check-in',
+    responses: {
+      200: CreditCheckInStatusSchema,
+    },
+    summary: 'Authenticated user daily credit check-in status',
+  },
+  checkInToday: {
+    method: 'POST',
+    path: '/credits/check-in',
+    body: z.object({}),
+    responses: {
+      200: CreditCheckInResponseSchema,
+      400: z.object({ message: z.string() }),
+    },
+    summary: 'Claim today daily check-in credits',
   },
 });

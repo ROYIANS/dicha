@@ -266,6 +266,26 @@ export class AdminController {
     }));
   }
 
+  @TsRestHandler(contract.admin.getCreditCheckInCampaign)
+  getCreditCheckInCampaign(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.getCreditCheckInCampaign>
+  > {
+    return tsRestHandler(contract.admin.getCreditCheckInCampaign, async () => ({
+      status: 200,
+      body: await this.admin.getCreditCheckInCampaign(),
+    }));
+  }
+
+  @TsRestHandler(contract.admin.upsertCreditCheckInCampaign)
+  upsertCreditCheckInCampaign(
+    @Req() request: AdminRequest,
+  ): ReturnType<typeof tsRestHandler<typeof contract.admin.upsertCreditCheckInCampaign>> {
+    return tsRestHandler(contract.admin.upsertCreditCheckInCampaign, async ({ body }) => ({
+      status: 200,
+      body: await this.admin.upsertCreditCheckInCampaign(body, auditContext(request)),
+    }));
+  }
+
   @TsRestHandler(contract.admin.upsertCreditRedemptionCode)
   upsertCreditRedemptionCode(
     @Req() request: AdminRequest,

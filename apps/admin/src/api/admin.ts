@@ -8,6 +8,7 @@ import {
   AdminCreditBalanceItemSchema,
   AdminCreditBalancesPageSchema,
   AdminCreditGrantResponseSchema,
+  AdminCreditCheckInOverviewSchema,
   AdminCreditLedgerPageSchema,
   AdminCreditOperationsReportSchema,
   AdminCreditRedemptionCodeSchema,
@@ -39,6 +40,8 @@ import {
   type AdminCreditBalancesQuery,
   type AdminCreditGrant,
   type AdminCreditGrantResponse,
+  type AdminCreditCheckInCampaignUpsert,
+  type AdminCreditCheckInOverview,
   type AdminCreditLedgerPage,
   type AdminCreditLedgerQuery,
   type AdminCreditOperationsQuery,
@@ -477,6 +480,31 @@ export function adminCreditRedemptionCodesQueryOptions() {
     staleTime: 30 * 1000,
     retry: false,
   });
+}
+
+export function adminCreditCheckInQueryOptions() {
+  return queryOptions<AdminCreditCheckInOverview>({
+    queryKey: ['admin', 'credits', 'check-in'] as const,
+    queryFn: async () => {
+      const res = await api.admin.getCreditCheckInCampaign();
+      if (res.status !== 200) {
+        throw new Error(`Admin credit check-in request failed (${res.status})`);
+      }
+      return AdminCreditCheckInOverviewSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export async function upsertAdminCreditCheckInCampaign(
+  body: AdminCreditCheckInCampaignUpsert,
+): Promise<AdminCreditCheckInOverview> {
+  const res = await api.admin.upsertCreditCheckInCampaign({ body });
+  if (res.status !== 200) {
+    throw new Error(`Admin credit check-in campaign save failed (${res.status})`);
+  }
+  return AdminCreditCheckInOverviewSchema.parse(res.body);
 }
 
 export async function upsertAdminCreditRedemptionCode(

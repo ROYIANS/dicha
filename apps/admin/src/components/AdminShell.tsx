@@ -5,6 +5,7 @@ import {
   BarChart3,
   Bot,
   Boxes,
+  CalendarCheck,
   Coins,
   Database,
   FileClock,
@@ -54,6 +55,7 @@ const navSections = [
       { to: '/credits/operations', label: '积分看板', icon: BarChart3 },
       { to: '/credits/rules', label: '积分规则', icon: Coins },
       { to: '/credits/grants', label: '积分发放', icon: Gift },
+      { to: '/credits/check-in', label: '签到活动', icon: CalendarCheck },
       { to: '/credits/balances', label: '账户余额', icon: WalletCards },
       { to: '/credits/ledger', label: '积分流水', icon: ReceiptText },
       { to: '/credits/redemption-codes', label: '兑换码', icon: Gift },
@@ -84,6 +86,7 @@ type AdminNavItem = {
     | '/credits/rules'
     | '/credits/operations'
     | '/credits/grants'
+    | '/credits/check-in'
     | '/credits/balances'
     | '/credits/ledger'
     | '/credits/redemption-codes'

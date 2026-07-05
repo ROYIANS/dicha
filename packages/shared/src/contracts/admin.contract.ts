@@ -18,6 +18,7 @@ import {
 } from './ai.contract';
 import {
   CreditAccountSchema,
+  CreditCheckInCampaignSchema,
   CreditLedgerEntrySchema,
   CreditLedgerTypeSchema,
 } from './credit.contract';
@@ -779,6 +780,47 @@ export type AdminCreditRedemptionCodesOverview = z.infer<
   typeof AdminCreditRedemptionCodesOverviewSchema
 >;
 
+export const AdminCreditCheckInRecordSchema = z.object({
+  id: z.string(),
+  checkInDate: z.string(),
+  creditAmount: z.number().int().positive(),
+  ledgerEntryId: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+  }),
+});
+export type AdminCreditCheckInRecord = z.infer<typeof AdminCreditCheckInRecordSchema>;
+
+export const AdminCreditCheckInOverviewSchema = z.object({
+  generatedAt: z.string().datetime(),
+  campaign: CreditCheckInCampaignSchema,
+  stats: z.object({
+    totalCheckIns: z.number().int().min(0),
+    uniqueUsers: z.number().int().min(0),
+    creditsGranted: z.number().int().min(0),
+    todayCheckIns: z.number().int().min(0),
+  }),
+  recentCheckIns: z.array(AdminCreditCheckInRecordSchema),
+});
+export type AdminCreditCheckInOverview = z.infer<typeof AdminCreditCheckInOverviewSchema>;
+
+export const AdminCreditCheckInCampaignUpsertSchema = z.object({
+  campaignId: z.string().optional(),
+  name: z.string().trim().min(1).max(120),
+  enabled: z.boolean(),
+  dailyCreditAmount: z.number().int().positive().max(1_000_000),
+  timezone: z.string().trim().min(1).max(80).default('Asia/Shanghai'),
+  description: z.string().trim().max(500).nullable().optional(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+});
+export type AdminCreditCheckInCampaignUpsert = z.infer<
+  typeof AdminCreditCheckInCampaignUpsertSchema
+>;
+
 export const AdminCreditOperationsQuerySchema = z.object({
   window: AiUsageWindowSchema.default('7d'),
 });
@@ -1136,5 +1178,22 @@ export const adminContract = c.router({
       200: AdminCreditRedemptionCodeSchema,
     },
     summary: 'Create or update a credit redemption code',
+  },
+  getCreditCheckInCampaign: {
+    method: 'GET',
+    path: '/admin/credits/check-in',
+    responses: {
+      200: AdminCreditCheckInOverviewSchema,
+    },
+    summary: 'Get daily credit check-in campaign settings and activity',
+  },
+  upsertCreditCheckInCampaign: {
+    method: 'POST',
+    path: '/admin/credits/check-in',
+    body: AdminCreditCheckInCampaignUpsertSchema,
+    responses: {
+      200: AdminCreditCheckInOverviewSchema,
+    },
+    summary: 'Create or update the daily credit check-in campaign',
   },
 });

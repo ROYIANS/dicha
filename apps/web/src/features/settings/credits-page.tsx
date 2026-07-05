@@ -1,12 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Gift, History, Ticket, TrendingDown, WalletCards, type LucideIcon } from 'lucide-react';
+import {
+  CalendarCheck,
+  CheckCircle2,
+  CircleDashed,
+  Gift,
+  History,
+  Ticket,
+  TrendingDown,
+  WalletCards,
+  type LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { creditBalanceQueryOptions, creditLedgerQueryOptions, redeemCreditCode } from '@/api/credits';
+import {
+  checkInToday,
+  creditBalanceQueryOptions,
+  creditCheckInQueryOptions,
+  creditLedgerQueryOptions,
+  redeemCreditCode,
+} from '@/api/credits';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass } from '@/components/settings-ui';
-import type { CreditLedgerEntry } from '@dicha/shared';
+import type { CreditCheckInStatus, CreditLedgerEntry } from '@dicha/shared';
 
 export function CreditsSettingsPage() {
   const { t } = useTranslation();
@@ -14,6 +30,7 @@ export function CreditsSettingsPage() {
   const [code, setCode] = useState('');
   const balanceQuery = useQuery(creditBalanceQueryOptions());
   const ledgerQuery = useQuery(creditLedgerQueryOptions({ page: 1, pageSize: 30 }));
+  const checkInQuery = useQuery(creditCheckInQueryOptions());
   const redeemMutation = useMutation({
     mutationFn: redeemCreditCode,
     onSuccess: async () => {
@@ -26,6 +43,19 @@ export function CreditsSettingsPage() {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : t('settings.detail.credits.redeemFailed'));
+    },
+  });
+  const checkInMutation = useMutation({
+    mutationFn: checkInToday,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['credits'] }),
+        queryClient.invalidateQueries({ queryKey: ['ai', 'usage'] }),
+      ]);
+      toast.success(t('settings.detail.credits.checkInSuccess'));
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('settings.detail.credits.checkInFailed'));
     },
   });
 
@@ -61,6 +91,13 @@ export function CreditsSettingsPage() {
             tint="lavender"
           />
         </section>
+
+        <CheckInCard
+          status={checkInQuery.data}
+          loading={checkInQuery.isPending}
+          pending={checkInMutation.isPending}
+          onCheckIn={() => checkInMutation.mutate()}
+        />
 
         <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
           <div className="rounded-md border border-hairline bg-surface p-4">
@@ -130,6 +167,143 @@ export function CreditsSettingsPage() {
   );
 }
 
+function CheckInCard({
+  status,
+  loading,
+  pending,
+  onCheckIn,
+}: {
+  status?: CreditCheckInStatus;
+  loading: boolean;
+  pending: boolean;
+  onCheckIn: () => void;
+}) {
+  const { t } = useTranslation();
+  const campaign = status?.campaign;
+  const checkedIn = Boolean(status?.checkedInToday);
+  const canCheckIn = Boolean(campaign && !checkedIn && !pending);
+
+  return (
+    <section className="overflow-hidden rounded-md border border-hairline bg-surface">
+      <div className="grid gap-4 border-b border-hairline bg-surface-alt px-4 py-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className={`grid size-10 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass.peach}`}>
+            <CalendarCheck size={18} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-[15px] font-semibold text-ink">
+              {campaign?.name ?? t('settings.detail.credits.checkInTitle')}
+            </h2>
+            <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-ink-faint">
+              {loading
+                ? t('settings.detail.credits.checkInLoading')
+                : campaign?.description ?? t('settings.detail.credits.checkInClosed')}
+            </p>
+            {campaign ? (
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-ink-soft">
+                <span className="rounded-md border border-hairline bg-surface px-2 py-1">
+                  {t('settings.detail.credits.checkInReward', {
+                    value: formatCredits(campaign.dailyCreditAmount),
+                  })}
+                </span>
+                <span className="rounded-md border border-hairline bg-surface px-2 py-1">
+                  {campaign.timezone}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onCheckIn}
+          disabled={!canCheckIn}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[var(--sidebar-bg)] px-4 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {checkedIn ? <CheckCircle2 size={15} /> : <Gift size={15} />}
+          {pending
+            ? t('settings.detail.credits.checkingIn')
+            : checkedIn
+              ? t('settings.detail.credits.checkedIn')
+              : t('settings.detail.credits.checkInAction')}
+        </button>
+      </div>
+
+      {status ? (
+        <div className="p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-[13px] font-semibold text-ink">
+              {t('settings.detail.credits.checkInCalendar', {
+                year: status.month.year,
+                month: status.month.month,
+              })}
+            </p>
+            <p className="text-[11px] text-ink-faint">
+              {t('settings.detail.credits.checkInToday', { date: status.todayDate })}
+            </p>
+          </div>
+          <CheckInCalendar status={status} />
+        </div>
+      ) : (
+        <div className="px-4 py-8 text-center text-[12px] text-ink-faint">
+          {loading ? t('settings.detail.credits.checkInLoading') : t('settings.detail.credits.checkInClosed')}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CheckInCalendar({ status }: { status: CreditCheckInStatus }) {
+  const firstDay = status.month.days[0]?.date;
+  const leadingBlanks = firstDay ? new Date(`${firstDay}T00:00:00`).getDay() : 0;
+  const cells = [
+    ...Array.from({ length: leadingBlanks }, (_, index) => ({ type: 'blank' as const, key: `blank-${index}` })),
+    ...status.month.days.map((day) => ({ type: 'day' as const, key: day.date, day })),
+  ];
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-ink-faint">
+        {['日', '一', '二', '三', '四', '五', '六'].map((label) => (
+          <span key={label} className="py-1">
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="mt-1 grid grid-cols-7 gap-1">
+        {cells.map((cell) =>
+          cell.type === 'blank' ? (
+            <span key={cell.key} className="aspect-square" />
+          ) : (
+            <span
+              key={cell.key}
+              className={`grid aspect-square place-items-center rounded-md border text-[11px] tabular-nums ${
+                cell.day.checkedIn
+                  ? 'border-sage bg-chip-sage text-sage'
+                  : cell.day.date === status.todayDate
+                    ? 'border-peach bg-chip-peach text-peach'
+                    : 'border-hairline bg-surface-alt text-ink-faint'
+              }`}
+              title={cell.day.checkedIn ? `+${formatCredits(cell.day.creditAmount)}` : cell.day.date}
+            >
+              {cell.day.checkedIn ? <CheckCircle2 size={13} /> : dayOfMonth(cell.day.date)}
+            </span>
+          ),
+        )}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-ink-faint">
+        <span className="inline-flex items-center gap-1.5">
+          <CheckCircle2 size={12} className="text-sage" />
+          已签到
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <CircleDashed size={12} className="text-peach" />
+          今日
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function CreditMetric({
   icon: Icon,
   label,
@@ -188,4 +362,8 @@ function LedgerRow({ entry }: { entry: CreditLedgerEntry }) {
 
 function formatCredits(value: number) {
   return new Intl.NumberFormat('zh-CN').format(value);
+}
+
+function dayOfMonth(date: string): string {
+  return String(Number(date.slice(-2)));
 }

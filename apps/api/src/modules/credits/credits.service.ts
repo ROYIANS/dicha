@@ -4,6 +4,8 @@ import type {
   AdminCreditBalancesQuery,
   AdminCreditGrant,
   AdminCreditGrantResponse,
+  AdminCreditCheckInCampaignUpsert,
+  AdminCreditCheckInOverview,
   AdminCreditLedgerPage,
   AdminCreditLedgerQuery,
   AdminCreditOperationsQuery,
@@ -16,6 +18,9 @@ import type {
   AdminCreditRuleUpsert,
   CreditAccount,
   CreditBalanceReport,
+  CreditCheckInCampaign,
+  CreditCheckInResponse,
+  CreditCheckInStatus,
   CreditLedgerEntry,
   CreditLedgerType,
   CreditLedgerPage,
@@ -27,8 +32,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 type CreditAccountRecord = Prisma.CreditAccountGetPayload<Record<string, never>>;
 type CreditLedgerRecord = Prisma.CreditLedgerEntryGetPayload<Record<string, never>>;
+type CreditCheckInCampaignRecord = Prisma.CreditCheckInCampaignGetPayload<Record<string, never>>;
 type CreditRuleRecord = Prisma.CreditRuleGetPayload<Record<string, never>>;
 type CreditCodeRecord = Prisma.CreditRedemptionCodeGetPayload<Record<string, never>>;
+type CreditCheckInWithUserRecord = Prisma.CreditCheckInGetPayload<{
+  include: { owner: { select: { id: true; email: true; name: true } } };
+}>;
 type CreditLedgerWithUserRecord = Prisma.CreditLedgerEntryGetPayload<{
   include: { owner: { select: { id: true; email: true; name: true } } };
 }>;
@@ -147,6 +156,87 @@ export class CreditsService {
         ledgerEntry: toCreditLedgerEntry(ledger),
       };
     });
+  }
+
+  async getCheckInStatus(ownerId: string): Promise<CreditCheckInStatus> {
+    const campaign = await this.activeCheckInCampaign();
+    return this.buildCheckInStatus(ownerId, campaign, new Date());
+  }
+
+  async checkInToday(ownerId: string): Promise<CreditCheckInResponse> {
+    const now = new Date();
+    const campaign = await this.activeCheckInCampaign(now);
+    if (!campaign) {
+      throw new BadRequestException('签到活动暂未开启');
+    }
+    const checkInDate = checkInDateKey(now, campaign.timezone);
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.creditCheckIn.findUnique({
+          where: {
+            ownerId_campaignId_checkInDate: {
+              ownerId,
+              campaignId: campaign.id,
+              checkInDate,
+            },
+          },
+        });
+        if (existing) {
+          throw new BadRequestException('今天已经签到过了');
+        }
+
+        const checkIn = await tx.creditCheckIn.create({
+          data: {
+            ownerId,
+            campaignId: campaign.id,
+            checkInDate,
+            creditAmount: campaign.dailyCreditAmount,
+            metadata: { timezone: campaign.timezone },
+          },
+        });
+        const account = await this.ensureAccountTx(tx, ownerId);
+        const updated = await tx.creditAccount.update({
+          where: { id: account.id },
+          data: {
+            balance: { increment: campaign.dailyCreditAmount },
+            lifetimeGranted: { increment: campaign.dailyCreditAmount },
+          },
+        });
+        const ledger = await tx.creditLedgerEntry.create({
+          data: {
+            ownerId,
+            accountId: updated.id,
+            type: 'grant',
+            amount: campaign.dailyCreditAmount,
+            balanceAfter: updated.balance,
+            source: 'daily_checkin',
+            sourceId: checkIn.id,
+            description: `${campaign.name}签到奖励`,
+            metadata: {
+              campaignId: campaign.id,
+              checkInDate,
+              timezone: campaign.timezone,
+            },
+          },
+        });
+        await tx.creditCheckIn.update({
+          where: { id: checkIn.id },
+          data: { ledgerEntryId: ledger.id },
+        });
+
+        return {
+          account: toCreditAccount(updated),
+          ledgerEntry: toCreditLedgerEntry(ledger),
+          status: await this.buildCheckInStatus(ownerId, campaign, now, tx),
+        };
+      });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw new BadRequestException('今天已经签到过了');
+      }
+      throw error;
+    }
   }
 
   async getCreditRules(): Promise<AdminCreditRulesOverview> {
@@ -282,6 +372,49 @@ export class CreditsService {
     return toCreditRule(rule);
   }
 
+  async getCreditCheckInOverview(): Promise<AdminCreditCheckInOverview> {
+    const campaign = await this.ensureCheckInCampaign();
+    return this.buildAdminCheckInOverview(campaign);
+  }
+
+  async upsertCreditCheckInCampaign(
+    body: AdminCreditCheckInCampaignUpsert,
+  ): Promise<AdminCreditCheckInOverview> {
+    const startsAt = body.startsAt ? new Date(body.startsAt) : null;
+    const endsAt = body.endsAt ? new Date(body.endsAt) : null;
+    if (startsAt && endsAt && startsAt >= endsAt) {
+      throw new BadRequestException('活动结束时间必须晚于开始时间');
+    }
+    assertValidTimeZone(body.timezone);
+
+    const campaign = body.campaignId
+      ? await this.prisma.creditCheckInCampaign.update({
+          where: { id: body.campaignId },
+          data: {
+            name: body.name,
+            enabled: body.enabled,
+            dailyCreditAmount: body.dailyCreditAmount,
+            timezone: body.timezone,
+            description: body.description ?? null,
+            startsAt,
+            endsAt,
+          },
+        })
+      : await this.prisma.creditCheckInCampaign.create({
+          data: {
+            name: body.name,
+            enabled: body.enabled,
+            dailyCreditAmount: body.dailyCreditAmount,
+            timezone: body.timezone,
+            description: body.description ?? null,
+            startsAt,
+            endsAt,
+          },
+        });
+
+    return this.buildAdminCheckInOverview(campaign);
+  }
+
   async grantCredits(body: AdminCreditGrant): Promise<AdminCreditGrantResponse> {
     const user = await this.prisma.user.findUnique({ where: { id: body.ownerId }, select: { id: true } });
     if (!user) {
@@ -412,6 +545,116 @@ export class CreditsService {
     return toCreditCode(saved);
   }
 
+  private async activeCheckInCampaign(now = new Date()): Promise<CreditCheckInCampaignRecord | null> {
+    return this.prisma.creditCheckInCampaign.findFirst({
+      where: {
+        enabled: true,
+        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+        AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  private async ensureCheckInCampaign(): Promise<CreditCheckInCampaignRecord> {
+    const campaign = await this.prisma.creditCheckInCampaign.findFirst({
+      orderBy: { updatedAt: 'desc' },
+    });
+    if (campaign) return campaign;
+    return this.prisma.creditCheckInCampaign.create({
+      data: {
+        name: '每日签到',
+        enabled: false,
+        dailyCreditAmount: 20,
+        timezone: 'Asia/Shanghai',
+        description: '用户每日进入积分页完成签到后获得积分奖励。',
+      },
+    });
+  }
+
+  private async buildCheckInStatus(
+    ownerId: string,
+    campaign: CreditCheckInCampaignRecord | null,
+    now: Date,
+    db: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<CreditCheckInStatus> {
+    const timezone = campaign?.timezone ?? 'Asia/Shanghai';
+    const todayDate = checkInDateKey(now, timezone);
+    const monthRange = checkInMonthRange(now, timezone);
+    const records = campaign
+      ? await db.creditCheckIn.findMany({
+          where: {
+            ownerId,
+            campaignId: campaign.id,
+            checkInDate: { gte: monthRange.firstDate, lte: monthRange.lastDate },
+          },
+        })
+      : [];
+    const recordByDate = new Map(records.map((record) => [record.checkInDate, record]));
+
+    return {
+      generatedAt: new Date().toISOString(),
+      campaign: campaign ? toCreditCheckInCampaign(campaign) : null,
+      todayDate,
+      checkedInToday: recordByDate.has(todayDate),
+      todayCreditAmount: campaign?.dailyCreditAmount ?? 0,
+      month: {
+        year: monthRange.year,
+        month: monthRange.month,
+        days: monthRange.dates.map((date) => {
+          const record = recordByDate.get(date);
+          return {
+            date,
+            checkedIn: Boolean(record),
+            creditAmount: record?.creditAmount ?? 0,
+            ledgerEntryId: record?.ledgerEntryId ?? null,
+            createdAt: record?.createdAt.toISOString() ?? null,
+          };
+        }),
+      },
+    };
+  }
+
+  private async buildAdminCheckInOverview(
+    campaign: CreditCheckInCampaignRecord,
+  ): Promise<AdminCreditCheckInOverview> {
+    const todayDate = checkInDateKey(new Date(), campaign.timezone);
+    const [totalCheckIns, creditAggregate, userRows, todayCheckIns, recentCheckIns] =
+      await Promise.all([
+        this.prisma.creditCheckIn.count({ where: { campaignId: campaign.id } }),
+        this.prisma.creditCheckIn.aggregate({
+          where: { campaignId: campaign.id },
+          _sum: { creditAmount: true },
+        }),
+        this.prisma.creditCheckIn.findMany({
+          where: { campaignId: campaign.id },
+          distinct: ['ownerId'],
+          select: { ownerId: true },
+        }),
+        this.prisma.creditCheckIn.count({
+          where: { campaignId: campaign.id, checkInDate: todayDate },
+        }),
+        this.prisma.creditCheckIn.findMany({
+          where: { campaignId: campaign.id },
+          include: { owner: { select: { id: true, email: true, name: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        }),
+      ]);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      campaign: toCreditCheckInCampaign(campaign),
+      stats: {
+        totalCheckIns,
+        uniqueUsers: userRows.length,
+        creditsGranted: creditAggregate._sum.creditAmount ?? 0,
+        todayCheckIns,
+      },
+      recentCheckIns: recentCheckIns.map(toAdminCreditCheckInRecord),
+    };
+  }
+
   private ensureAccount(ownerId: string): Promise<CreditAccountRecord> {
     return this.prisma.creditAccount.upsert({
       where: { ownerId },
@@ -439,6 +682,36 @@ function toCreditAccount(account: CreditAccountRecord): CreditAccount {
     lifetimeGranted: account.lifetimeGranted,
     lifetimeSpent: account.lifetimeSpent,
     updatedAt: account.updatedAt.toISOString(),
+  };
+}
+
+function toCreditCheckInCampaign(campaign: CreditCheckInCampaignRecord): CreditCheckInCampaign {
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    enabled: campaign.enabled,
+    dailyCreditAmount: campaign.dailyCreditAmount,
+    timezone: campaign.timezone,
+    description: campaign.description,
+    startsAt: campaign.startsAt?.toISOString() ?? null,
+    endsAt: campaign.endsAt?.toISOString() ?? null,
+  };
+}
+
+function toAdminCreditCheckInRecord(
+  record: CreditCheckInWithUserRecord,
+): AdminCreditCheckInOverview['recentCheckIns'][number] {
+  return {
+    id: record.id,
+    checkInDate: record.checkInDate,
+    creditAmount: record.creditAmount,
+    ledgerEntryId: record.ledgerEntryId,
+    createdAt: record.createdAt.toISOString(),
+    user: {
+      id: record.owner.id,
+      email: record.owner.email,
+      name: record.owner.name,
+    },
   };
 }
 
@@ -841,6 +1114,63 @@ function toCreditCode(code: CreditCodeRecord): AdminCreditRedemptionCode {
 
 function normalizeCode(value: string): string {
   return value.trim().toUpperCase();
+}
+
+function assertValidTimeZone(value: string): void {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format(new Date());
+  } catch {
+    throw new BadRequestException('签到活动时区无效');
+  }
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}
+
+function checkInDateKey(date: Date, timezone: string): string {
+  const parts = localDateParts(date, timezone);
+  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
+}
+
+function checkInMonthRange(date: Date, timezone: string): {
+  year: number;
+  month: number;
+  firstDate: string;
+  lastDate: string;
+  dates: string[];
+} {
+  const { year, month } = localDateParts(date, timezone);
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const dates = Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  });
+  return {
+    year,
+    month,
+    firstDate: dates[0] ?? `${year}-${String(month).padStart(2, '0')}-01`,
+    lastDate: dates.at(-1) ?? `${year}-${String(month).padStart(2, '0')}-01`,
+    dates,
+  };
+}
+
+function localDateParts(
+  date: Date,
+  timezone: string,
+): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+  };
 }
 
 function userSearchWhere(search: string | undefined): Prisma.UserWhereInput {

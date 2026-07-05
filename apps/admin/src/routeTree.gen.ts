@@ -27,6 +27,7 @@ import { Route as AdminCreditsRedemptionCodesRouteImport } from './routes/_admin
 import { Route as AdminCreditsOperationsRouteImport } from './routes/_admin.credits.operations'
 import { Route as AdminCreditsLedgerRouteImport } from './routes/_admin.credits.ledger'
 import { Route as AdminCreditsGrantsRouteImport } from './routes/_admin.credits.grants'
+import { Route as AdminCreditsCheckInRouteImport } from './routes/_admin.credits.check-in'
 import { Route as AdminCreditsBalancesRouteImport } from './routes/_admin.credits.balances'
 
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
@@ -119,6 +120,11 @@ const AdminCreditsGrantsRoute = AdminCreditsGrantsRouteImport.update({
   path: '/credits/grants',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCreditsCheckInRoute = AdminCreditsCheckInRouteImport.update({
+  id: '/credits/check-in',
+  path: '/credits/check-in',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCreditsBalancesRoute = AdminCreditsBalancesRouteImport.update({
   id: '/credits/balances',
   path: '/credits/balances',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/roles': typeof AdminRolesRoute
   '/system': typeof AdminSystemRoute
   '/credits/balances': typeof AdminCreditsBalancesRoute
+  '/credits/check-in': typeof AdminCreditsCheckInRoute
   '/credits/grants': typeof AdminCreditsGrantsRoute
   '/credits/ledger': typeof AdminCreditsLedgerRoute
   '/credits/operations': typeof AdminCreditsOperationsRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/system': typeof AdminSystemRoute
   '/': typeof AdminIndexRoute
   '/credits/balances': typeof AdminCreditsBalancesRoute
+  '/credits/check-in': typeof AdminCreditsCheckInRoute
   '/credits/grants': typeof AdminCreditsGrantsRoute
   '/credits/ledger': typeof AdminCreditsLedgerRoute
   '/credits/operations': typeof AdminCreditsOperationsRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_admin/system': typeof AdminSystemRoute
   '/_admin/': typeof AdminIndexRoute
   '/_admin/credits/balances': typeof AdminCreditsBalancesRoute
+  '/_admin/credits/check-in': typeof AdminCreditsCheckInRoute
   '/_admin/credits/grants': typeof AdminCreditsGrantsRoute
   '/_admin/credits/ledger': typeof AdminCreditsLedgerRoute
   '/_admin/credits/operations': typeof AdminCreditsOperationsRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/system'
     | '/credits/balances'
+    | '/credits/check-in'
     | '/credits/grants'
     | '/credits/ledger'
     | '/credits/operations'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/system'
     | '/'
     | '/credits/balances'
+    | '/credits/check-in'
     | '/credits/grants'
     | '/credits/ledger'
     | '/credits/operations'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/_admin/system'
     | '/_admin/'
     | '/_admin/credits/balances'
+    | '/_admin/credits/check-in'
     | '/_admin/credits/grants'
     | '/_admin/credits/ledger'
     | '/_admin/credits/operations'
@@ -385,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCreditsGrantsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/credits/check-in': {
+      id: '/_admin/credits/check-in'
+      path: '/credits/check-in'
+      fullPath: '/credits/check-in'
+      preLoaderRoute: typeof AdminCreditsCheckInRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/credits/balances': {
       id: '/_admin/credits/balances'
       path: '/credits/balances'
@@ -407,6 +426,7 @@ interface AdminRouteChildren {
   AdminSystemRoute: typeof AdminSystemRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCreditsBalancesRoute: typeof AdminCreditsBalancesRoute
+  AdminCreditsCheckInRoute: typeof AdminCreditsCheckInRoute
   AdminCreditsGrantsRoute: typeof AdminCreditsGrantsRoute
   AdminCreditsLedgerRoute: typeof AdminCreditsLedgerRoute
   AdminCreditsOperationsRoute: typeof AdminCreditsOperationsRoute
@@ -426,6 +446,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSystemRoute: AdminSystemRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCreditsBalancesRoute: AdminCreditsBalancesRoute,
+  AdminCreditsCheckInRoute: AdminCreditsCheckInRoute,
   AdminCreditsGrantsRoute: AdminCreditsGrantsRoute,
   AdminCreditsLedgerRoute: AdminCreditsLedgerRoute,
   AdminCreditsOperationsRoute: AdminCreditsOperationsRoute,
