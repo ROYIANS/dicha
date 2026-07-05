@@ -364,6 +364,7 @@ await recordAuditLog(context, {
   - `DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND`: server-side command used by `restart_ai_gateway`.
   - `DICHA_ADMIN_CLEAR_CACHE_COMMAND`: server-side command used by `clear_runtime_cache`.
 - When these command env values are written in `.env` for `deploy.sh`/`deploy.ps1`, wrap the whole command in single quotes if it contains spaces, `$DATABASE_URL`, `$REDIS_URL`, or command substitution. This keeps the host deploy shell from expanding container-only variables before Docker Compose injects them.
+- The default Docker Compose deployment installs `postgresql-client` and `docker-cli` in the API image, mounts `/var/run/docker.sock`, and provides default commands for `run_backup`, `restart_api`, and `restart_ai_gateway`. This makes Web operations usable out of the box for self-hosted Docker deployments; custom deployments should replace these commands with their own platform runner or disable them.
 
 ### 3. Contracts
 
@@ -372,6 +373,7 @@ await recordAuditLog(context, {
 - The API may execute only bounded, request-safe actions. Current allowed mutation is pruning expired Better Auth sessions.
 - Dangerous or externally orchestrated operations, especially restarting the API process or AI Gateway, must only execute when an explicit server-side command env is configured. The command itself must never come from the browser request body.
 - If an ops command is not configured, return an action descriptor with `executable: false` and a clear `disabledReason`; do not pretend the action succeeded.
+- Mounting the Docker socket gives the API container host-level container control. This is acceptable only for the self-hosted super-admin deployment path; do not expose admin endpoints without `AuthGuard + SuperAdminGuard`, and prefer a dedicated ops runner for larger deployments.
 - Runtime responses may include Node version, platform, uptime, memory summary, host CPU/disk summary, service status, and counts. They must not expose raw env variables, connection strings, secrets, tokens, API keys, decrypted credentials, filesystem paths containing secrets, or process dumps.
 - System runtime logs are a separate concept from admin audit logs. The system operations console may read recent lines from configured log files and must sanitize obvious secrets before returning them.
 - Data backup controls may list files from `DICHA_ADMIN_BACKUP_DIR` and run `DICHA_ADMIN_BACKUP_COMMAND`. The admin API must not expose the expanded `DATABASE_URL` or raw command output.

@@ -28,6 +28,7 @@ RUN pnpm --filter @dicha/api build
 # ── Production runtime ────────────────────────────────────────────────────────
 FROM base AS runner
 ENV NODE_ENV=production
+RUN apk add --no-cache postgresql-client docker-cli
 
 # pnpm workspace: copy root + package node_modules so CLI bins (prisma) resolve
 COPY --from=build /app/node_modules ./node_modules

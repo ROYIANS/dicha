@@ -2099,6 +2099,7 @@ export class AdminService {
         operations: await this.getSystemOperations(),
       };
     } catch (error) {
+      const failureDetail = systemCommandFailureMessage(error);
       await this.recordAuditLog(audit, {
         action: `system.${actionId}`,
         resourceType: 'system',
@@ -2108,13 +2109,13 @@ export class AdminService {
         metadata: this.safeMetadata({
           actionId,
           commandConfigured: true,
-          error: error instanceof Error ? sanitizeLogLine(error.message).slice(0, 240) : 'unknown',
+          error: failureDetail,
         }),
       });
       return {
         actionId,
         status: 'failed',
-        message: `${action.title} 执行失败，请查看服务端运行日志。`,
+        message: `${action.title} 执行失败：${failureDetail}`,
         affectedCount: null,
         operations: await this.getSystemOperations(),
       };
@@ -2539,6 +2540,17 @@ function sanitizeLogLine(value: string): string {
     .replace(/(authorization:\s*bearer\s+)[^\s]+/gi, '$1[REDACTED]')
     .replace(/((api[_-]?key|token|secret|password)=)[^\s&]+/gi, '$1[REDACTED]')
     .replace(/(postgres(?:ql)?:\/\/)[^\s]+/gi, '$1[REDACTED]');
+}
+
+function systemCommandFailureMessage(error: unknown): string {
+  const maybeError = error as { message?: unknown; stderr?: unknown; stdout?: unknown };
+  const detail = [maybeError.stderr, maybeError.stdout, maybeError.message]
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => sanitizeLogLine(item).trim())
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return detail ? detail.slice(0, 240) : '未知错误，请查看运行日志。';
 }
 
 function slugify(value: string): string {
