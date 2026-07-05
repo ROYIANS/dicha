@@ -42,6 +42,23 @@ function Fail([string]$Message) {
     exit 1
 }
 
+function Test-EnvFile {
+    $lineNo = 0
+    foreach ($line in Get-Content '.env') {
+        $lineNo += 1
+        $trimmed = $line.Trim()
+        if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
+
+        if ($trimmed -match '^(DICHA_ADMIN_(BACKUP_COMMAND|RESTART_API_COMMAND|RESTART_AI_GATEWAY_COMMAND|CLEAR_CACHE_COMMAND))\s*=(.*)$') {
+            $key = $Matches[1]
+            $value = $Matches[3].Trim()
+            if ($value -and -not $value.StartsWith("'") -and ($value -match '\s|\$|\(')) {
+                Fail ".env line ${lineNo}: ${key} must wrap command values in single quotes."
+            }
+        }
+    }
+}
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     Fail "Docker is not installed. See https://docs.docker.com/get-docker/"
 }
@@ -72,12 +89,14 @@ if (-not (Test-Path '.env')) {
     }
 }
 
+Test-EnvFile
+
 # Load .env for display (docker compose reads it automatically)
 $envLines = Get-Content '.env' | Where-Object { $_ -match '^\s*[^#]' -and $_ -match '=' }
 foreach ($line in $envLines) {
     $parts = $line -split '=', 2
     if ($parts.Count -eq 2) {
-        Set-Item -Path "Env:$($parts[0].Trim())" -Value $parts[1].Trim().Trim('"')
+        Set-Item -Path "Env:$($parts[0].Trim())" -Value $parts[1].Trim().Trim('"').Trim("'")
     }
 }
 

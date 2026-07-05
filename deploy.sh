@@ -23,6 +23,29 @@ info()  { echo -e "${GREEN}▸${NC} $*"; }
 warn()  { echo -e "${YELLOW}▸${NC} $*"; }
 fail()  { echo -e "${RED}✗${NC} $*" >&2; exit 1; }
 
+validate_env_file() {
+  local line line_no key value
+  line_no=0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line_no=$((line_no + 1))
+    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+
+    if [[ "$line" =~ ^[[:space:]]*(DICHA_ADMIN_(BACKUP_COMMAND|RESTART_API_COMMAND|RESTART_AI_GATEWAY_COMMAND|CLEAR_CACHE_COMMAND))[[:space:]]*=(.*)$ ]]; then
+      key="${BASH_REMATCH[1]}"
+      value="${BASH_REMATCH[3]}"
+      value="${value#"${value%%[![:space:]]*}"}"
+      [[ -z "$value" ]] && continue
+
+      if [[ "$value" != \'* ]]; then
+        if [[ "$value" == *[[:space:]]* || "$value" == *'$'* || "$value" == *'('* ]]; then
+          fail ".env line ${line_no}: ${key} must wrap command values in single quotes, e.g. ${key}='command \"\$DATABASE_URL\"'"
+        fi
+      fi
+    fi
+  done < .env
+}
+
 FRESH=0
 DOWN=0
 LOGS=0
@@ -77,6 +100,8 @@ if [[ ! -f .env ]]; then
     fail "Missing .env and .env.example"
   fi
 fi
+
+validate_env_file
 
 # shellcheck disable=SC1091
 set -a && source .env && set +a

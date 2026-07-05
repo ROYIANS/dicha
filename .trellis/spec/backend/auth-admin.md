@@ -363,6 +363,7 @@ await recordAuditLog(context, {
   - `DICHA_ADMIN_RESTART_API_COMMAND`: server-side command used by `restart_api`.
   - `DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND`: server-side command used by `restart_ai_gateway`.
   - `DICHA_ADMIN_CLEAR_CACHE_COMMAND`: server-side command used by `clear_runtime_cache`.
+- When these command env values are written in `.env` for `deploy.sh`/`deploy.ps1`, wrap the whole command in single quotes if it contains spaces, `$DATABASE_URL`, `$REDIS_URL`, or command substitution. This keeps the host deploy shell from expanding container-only variables before Docker Compose injects them.
 
 ### 3. Contracts
 
