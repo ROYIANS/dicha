@@ -15,6 +15,7 @@
 - 走 **ts-rest**（`@ts-rest/core` client + 原生 `@tanstack/react-query` `queryOptions`），不手写 `fetch`。不用 `@ts-rest/react-query`（v5 无 `queryOptions`）。
 - **`api/` 必须导出 `xxxQueryOptions` 工厂**（如 `itemsQueryOptions(filters)`），返回可两处共用的 query 定义：
   - route `loader`：`queryClient.ensureQueryData(itemsQueryOptions(...))`（loader-first 预取）
+  - 慢速/重型 route `loader`：`void queryClient.prefetchQuery(itemsQueryOptions(...))`（不阻塞首屏，组件负责 loading/error）
   - 组件：`useQuery(itemsQueryOptions(...))`
 
   这是 loader-first 的核心约定（详见 [architecture.md §2](./architecture.md)）。

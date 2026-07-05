@@ -68,8 +68,9 @@ const ERROR_OPTIONS: Array<{ value: ''; label: string } | { value: AiInvokeError
 ];
 
 export const Route = createFileRoute('/_admin/ai-diagnostics')({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(adminDichaAiDiagnosticsQueryOptions()),
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(adminDichaAiDiagnosticsQueryOptions());
+  },
   component: AiDiagnosticsPage,
 });
 

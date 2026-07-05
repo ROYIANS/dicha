@@ -38,6 +38,7 @@
 ## §2 路由 + 数据加载：loader-first（branch 3）
 
 - 路由树是**数据编排层**。每个 route 的 `loader` 预取：`queryClient.ensureQueryData(xxxQueryOptions(...))`，渲染前数据就绪、切换无瀑布。
+- 对明显慢或重型的数据页（例如 AI 供应商目录、模型目录、统计/诊断看板），路由 `loader` 可以使用非阻塞 `void queryClient.prefetchQuery(xxxQueryOptions(...))`。这样仍会利用 hover/intent 预取和 Query 缓存，但首屏必须由组件自己的 `useQuery().isPending` 加载态先渲染，不能让整页白屏等待接口。
 - `createRouter({ context: { queryClient } })` 把 queryClient 注入 router context，loader 从 context 取。
 - `defaultPreload: 'intent'`（hover 预取）。
 - **`api/` 必须导出 `xxxQueryOptions` 工厂**（不只是 hook），loader 和组件共用同一份 query 定义——这是 loader-first 的核心约定。

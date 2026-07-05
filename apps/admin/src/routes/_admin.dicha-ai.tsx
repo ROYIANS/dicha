@@ -33,8 +33,9 @@ const NEW_INTERNAL_PROVIDER_ID = '__new_internal_provider__';
 const PRICING_CURRENCIES = ['CNY', 'USD'] as const;
 
 export const Route = createFileRoute('/_admin/dicha-ai')({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(adminDichaAiServiceQueryOptions()),
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(adminDichaAiServiceQueryOptions());
+  },
   component: DichaAiServicePage,
 });
 

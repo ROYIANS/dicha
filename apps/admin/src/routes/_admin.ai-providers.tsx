@@ -26,8 +26,9 @@ import type {
 type DirectoryModel = AdminAiProviderDirectoryOverview['models'][number];
 
 export const Route = createFileRoute('/_admin/ai-providers')({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(adminAiProviderDirectoryQueryOptions()),
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(adminAiProviderDirectoryQueryOptions());
+  },
   component: AiProviderDirectoryPage,
 });
 

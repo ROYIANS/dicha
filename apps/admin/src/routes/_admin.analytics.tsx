@@ -65,10 +65,11 @@ const TREND_METRICS: Array<{ value: TrendMetric; label: string; color: string }>
 ];
 
 export const Route = createFileRoute('/_admin/analytics')({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(
       adminDichaAiUsageQueryOptions({ window: '7d', logLimit: 500 }),
-    ),
+    );
+  },
   component: AnalyticsPage,
 });
 
