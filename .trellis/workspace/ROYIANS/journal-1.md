@@ -1396,3 +1396,36 @@ Added a DB-backed super-admin Dicha AI diagnostics page with request filters, de
 ### Next Steps
 
 - None - task complete
+
+
+## Session 40: Credit operations dashboard
+
+**Date**: 2026-07-05
+**Task**: Credit operations dashboard
+**Branch**: `main`
+
+### Summary
+
+Added the super-admin credit operations dashboard: shared admin contract, API aggregation endpoint, Prisma indexes, admin sidebar route, Recharts-based operations page, and backend spec notes for credit accounting boundaries.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6158e3c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
