@@ -375,7 +375,7 @@ await recordAuditLog(context, {
 - If an ops command is not configured, return an action descriptor with `executable: false` and a clear `disabledReason`; do not pretend the action succeeded.
 - Mounting the Docker socket gives the API container host-level container control. This is acceptable only for the self-hosted super-admin deployment path; do not expose admin endpoints without `AuthGuard + SuperAdminGuard`, and prefer a dedicated ops runner for larger deployments.
 - Runtime responses may include Node version, platform, uptime, memory summary, host CPU/disk summary, service status, and counts. They must not expose raw env variables, connection strings, secrets, tokens, API keys, decrypted credentials, filesystem paths containing secrets, or process dumps.
-- System runtime logs are a separate concept from admin audit logs. The system operations console may read recent lines from configured log files and must sanitize obvious secrets before returning them.
+- System runtime logs are a separate concept from admin audit logs. The system operations console may read recent lines from configured log files and must strip ANSI terminal control sequences and sanitize obvious secrets before returning them.
 - Data backup controls may list files from `DICHA_ADMIN_BACKUP_DIR` and run `DICHA_ADMIN_BACKUP_COMMAND`. The admin API must not expose the expanded `DATABASE_URL` or raw command output.
 - Cache management must distinguish "not configured", "external", and "ready" states. Destructive cache deletion requires `DICHA_ADMIN_CLEAR_CACHE_COMMAND`; no command means the UI disables the action.
 - System actions that mutate state or represent an operational check should write safe audit rows through the admin audit helper.
@@ -402,7 +402,7 @@ await recordAuditLog(context, {
 - Good: use short timeout probes for AI Gateway so the admin dashboard does not hang.
 - Good: make maintenance actions self-describing so the UI can render executable and disabled operations from the same response.
 - Good: execute only server-side configured commands for backup/restart/cache operations; never accept arbitrary command strings from the browser.
-- Good: make runtime logs explicit as configured log-file sources and sanitize obvious tokens before returning lines.
+- Good: make runtime logs explicit as configured log-file sources, strip ANSI color/control codes, and sanitize obvious tokens before returning lines.
 - Base: operational console shows system status, external services, backup files, runtime log lines, cache status, and maintenance actions.
 - Bad: calling `process.exit()` from an HTTP request or executing browser-provided shell commands.
 - Bad: accepting a command string in the request body.

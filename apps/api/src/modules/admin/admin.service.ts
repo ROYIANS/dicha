@@ -2535,8 +2535,19 @@ function normalizeLogTimestamp(value: string): string {
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
+const ANSI_CSI_SEQUENCE_PATTERN = new RegExp(
+  String.raw`(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]`,
+  'g',
+);
+const ANSI_OSC_SEQUENCE_PATTERN = new RegExp(
+  String.raw`\x1B\][^\x07]*(?:\x07|\x1B\\)`,
+  'g',
+);
+
 function sanitizeLogLine(value: string): string {
   return value
+    .replace(ANSI_OSC_SEQUENCE_PATTERN, '')
+    .replace(ANSI_CSI_SEQUENCE_PATTERN, '')
     .replace(/(authorization:\s*bearer\s+)[^\s]+/gi, '$1[REDACTED]')
     .replace(/((api[_-]?key|token|secret|password)=)[^\s&]+/gi, '$1[REDACTED]')
     .replace(/(postgres(?:ql)?:\/\/)[^\s]+/gi, '$1[REDACTED]');
