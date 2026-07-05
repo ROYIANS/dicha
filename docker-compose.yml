@@ -62,13 +62,15 @@ services:
       AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
       DICHA_ADMIN_BACKUP_DIR: ${DICHA_ADMIN_BACKUP_DIR:-/data/backups}
       DICHA_ADMIN_BACKUP_COMMAND: ${DICHA_ADMIN_BACKUP_COMMAND:-}
-      DICHA_ADMIN_LOG_FILES: ${DICHA_ADMIN_LOG_FILES:-}
+      DICHA_ADMIN_LOG_FILES: ${DICHA_ADMIN_LOG_FILES:-api=/data/logs/api.log,ai-gateway=/data/logs/ai-gateway.log}
       DICHA_ADMIN_RESTART_API_COMMAND: ${DICHA_ADMIN_RESTART_API_COMMAND:-}
       DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND: ${DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND:-}
       DICHA_ADMIN_CLEAR_CACHE_COMMAND: ${DICHA_ADMIN_CLEAR_CACHE_COMMAND:-}
+      DICHA_RUNTIME_LOG_FILE: /data/logs/api.log
     volumes:
       - dicha-uploads:/data/uploads
       - dicha-backups:/data/backups
+      - dicha-logs:/data/logs
     expose:
       - '3000'
     healthcheck:
@@ -97,6 +99,9 @@ services:
       PORT: '3100'
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
       AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
+      AI_GATEWAY_RUNTIME_LOG_FILE: /data/logs/ai-gateway.log
+    volumes:
+      - dicha-logs:/data/logs
     expose:
       - '3100'
     healthcheck:
@@ -158,3 +163,4 @@ volumes:
   dicha-pgdata:
   dicha-uploads:
   dicha-backups:
+  dicha-logs:

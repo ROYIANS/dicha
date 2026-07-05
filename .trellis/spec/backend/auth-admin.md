@@ -359,7 +359,7 @@ await recordAuditLog(context, {
 - Optional server env:
   - `DICHA_ADMIN_BACKUP_DIR`: server-side directory whose backup files can be listed.
   - `DICHA_ADMIN_BACKUP_COMMAND`: server-side command used by `run_backup`.
-  - `DICHA_ADMIN_LOG_FILES`: comma-separated `name=/path/to/file.log` entries for runtime log viewing.
+  - `DICHA_ADMIN_LOG_FILES`: comma-separated `name=/path/to/file.log` entries for runtime log viewing. The default Docker Compose deployment tees API and AI Gateway stdout to `/data/logs/api.log` and `/data/logs/ai-gateway.log`, mounted through the shared `dicha-logs` volume.
   - `DICHA_ADMIN_RESTART_API_COMMAND`: server-side command used by `restart_api`.
   - `DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND`: server-side command used by `restart_ai_gateway`.
   - `DICHA_ADMIN_CLEAR_CACHE_COMMAND`: server-side command used by `clear_runtime_cache`.
