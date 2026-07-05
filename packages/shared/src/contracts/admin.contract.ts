@@ -811,11 +811,15 @@ export const AdminCreditCheckInCampaignUpsertSchema = z.object({
   campaignId: z.string().optional(),
   name: z.string().trim().min(1).max(120),
   enabled: z.boolean(),
-  dailyCreditAmount: z.number().int().positive().max(1_000_000),
+  dailyCreditMinAmount: z.number().int().positive().max(1_000_000),
+  dailyCreditMaxAmount: z.number().int().positive().max(1_000_000),
   timezone: z.string().trim().min(1).max(80).default('Asia/Shanghai'),
   description: z.string().trim().max(500).nullable().optional(),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
+}).refine((value) => value.dailyCreditMinAmount <= value.dailyCreditMaxAmount, {
+  message: 'dailyCreditMinAmount must be less than or equal to dailyCreditMaxAmount',
+  path: ['dailyCreditMaxAmount'],
 });
 export type AdminCreditCheckInCampaignUpsert = z.infer<
   typeof AdminCreditCheckInCampaignUpsertSchema

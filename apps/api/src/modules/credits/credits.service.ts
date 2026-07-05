@@ -186,12 +186,16 @@ export class CreditsService {
           throw new BadRequestException('今天已经签到过了');
         }
 
+        const creditAmount = randomCreditAmount(
+          campaign.dailyCreditMinAmount,
+          campaign.dailyCreditMaxAmount,
+        );
         const checkIn = await tx.creditCheckIn.create({
           data: {
             ownerId,
             campaignId: campaign.id,
             checkInDate,
-            creditAmount: campaign.dailyCreditAmount,
+            creditAmount,
             metadata: { timezone: campaign.timezone },
           },
         });
@@ -199,8 +203,8 @@ export class CreditsService {
         const updated = await tx.creditAccount.update({
           where: { id: account.id },
           data: {
-            balance: { increment: campaign.dailyCreditAmount },
-            lifetimeGranted: { increment: campaign.dailyCreditAmount },
+            balance: { increment: creditAmount },
+            lifetimeGranted: { increment: creditAmount },
           },
         });
         const ledger = await tx.creditLedgerEntry.create({
@@ -208,7 +212,7 @@ export class CreditsService {
             ownerId,
             accountId: updated.id,
             type: 'grant',
-            amount: campaign.dailyCreditAmount,
+            amount: creditAmount,
             balanceAfter: updated.balance,
             source: 'daily_checkin',
             sourceId: checkIn.id,
@@ -216,6 +220,8 @@ export class CreditsService {
             metadata: {
               campaignId: campaign.id,
               checkInDate,
+              dailyCreditMinAmount: campaign.dailyCreditMinAmount,
+              dailyCreditMaxAmount: campaign.dailyCreditMaxAmount,
               timezone: campaign.timezone,
             },
           },
@@ -385,6 +391,9 @@ export class CreditsService {
     if (startsAt && endsAt && startsAt >= endsAt) {
       throw new BadRequestException('活动结束时间必须晚于开始时间');
     }
+    if (body.dailyCreditMinAmount > body.dailyCreditMaxAmount) {
+      throw new BadRequestException('每日奖励积分上限必须大于或等于下限');
+    }
     assertValidTimeZone(body.timezone);
 
     const campaign = body.campaignId
@@ -393,7 +402,8 @@ export class CreditsService {
           data: {
             name: body.name,
             enabled: body.enabled,
-            dailyCreditAmount: body.dailyCreditAmount,
+            dailyCreditMinAmount: body.dailyCreditMinAmount,
+            dailyCreditMaxAmount: body.dailyCreditMaxAmount,
             timezone: body.timezone,
             description: body.description ?? null,
             startsAt,
@@ -404,7 +414,8 @@ export class CreditsService {
           data: {
             name: body.name,
             enabled: body.enabled,
-            dailyCreditAmount: body.dailyCreditAmount,
+            dailyCreditMinAmount: body.dailyCreditMinAmount,
+            dailyCreditMaxAmount: body.dailyCreditMaxAmount,
             timezone: body.timezone,
             description: body.description ?? null,
             startsAt,
@@ -565,7 +576,8 @@ export class CreditsService {
       data: {
         name: '每日签到',
         enabled: false,
-        dailyCreditAmount: 20,
+        dailyCreditMinAmount: 10,
+        dailyCreditMaxAmount: 30,
         timezone: 'Asia/Shanghai',
         description: '用户每日进入积分页完成签到后获得积分奖励。',
       },
@@ -597,7 +609,8 @@ export class CreditsService {
       campaign: campaign ? toCreditCheckInCampaign(campaign) : null,
       todayDate,
       checkedInToday: recordByDate.has(todayDate),
-      todayCreditAmount: campaign?.dailyCreditAmount ?? 0,
+      todayCreditMinAmount: campaign?.dailyCreditMinAmount ?? 0,
+      todayCreditMaxAmount: campaign?.dailyCreditMaxAmount ?? 0,
       month: {
         year: monthRange.year,
         month: monthRange.month,
@@ -690,7 +703,8 @@ function toCreditCheckInCampaign(campaign: CreditCheckInCampaignRecord): CreditC
     id: campaign.id,
     name: campaign.name,
     enabled: campaign.enabled,
-    dailyCreditAmount: campaign.dailyCreditAmount,
+    dailyCreditMinAmount: campaign.dailyCreditMinAmount,
+    dailyCreditMaxAmount: campaign.dailyCreditMaxAmount,
     timezone: campaign.timezone,
     description: campaign.description,
     startsAt: campaign.startsAt?.toISOString() ?? null,
@@ -1126,6 +1140,12 @@ function assertValidTimeZone(value: string): void {
 
 function isUniqueConstraintError(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}
+
+function randomCreditAmount(minAmount: number, maxAmount: number): number {
+  const min = Math.ceil(minAmount);
+  const max = Math.floor(maxAmount);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function checkInDateKey(date: Date, timezone: string): string {

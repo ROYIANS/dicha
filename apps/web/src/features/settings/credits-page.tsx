@@ -182,72 +182,98 @@ function CheckInCard({
   const campaign = status?.campaign;
   const checkedIn = Boolean(status?.checkedInToday);
   const canCheckIn = Boolean(campaign && !checkedIn && !pending);
+  const checkedDays = status?.month.days.filter((day) => day.checkedIn).length ?? 0;
+  const rewardRange = campaign
+    ? formatCreditRange(campaign.dailyCreditMinAmount, campaign.dailyCreditMaxAmount)
+    : '';
 
   return (
-    <section className="overflow-hidden rounded-md border border-hairline bg-surface">
-      <div className="grid gap-4 border-b border-hairline bg-surface-alt px-4 py-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+    <section className="relative overflow-hidden rounded-md border border-hairline bg-surface">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-80 [background-image:radial-gradient(var(--hairline)_1px,transparent_1px),repeating-linear-gradient(135deg,transparent_0,transparent_18px,var(--hairline)_18px,var(--hairline)_19px)] [background-position:0_0,0_0] [background-size:14px_14px,26px_26px]"
+      />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-8 h-24 w-48 rounded-[50%] border border-peach/50" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-14 top-14 h-20 w-48 rounded-[50%] border border-sage/40" />
+      <div aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-1 w-full bg-[linear-gradient(90deg,var(--accent-peach),var(--accent-sage),var(--accent-mist))]" />
+
+      <div className="relative grid gap-5 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
         <div className="flex min-w-0 items-start gap-3">
           <span className={`grid size-10 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass.peach}`}>
             <CalendarCheck size={18} />
           </span>
           <div className="min-w-0">
-            <h2 className="text-[15px] font-semibold text-ink">
+            <p className="text-[11px] font-medium text-peach">
+              {t('settings.detail.credits.checkInEyebrow')}
+            </p>
+            <h2 className="mt-1 text-[16px] font-semibold text-ink">
               {campaign?.name ?? t('settings.detail.credits.checkInTitle')}
             </h2>
-            <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-ink-faint">
+            <p className="mt-2 max-w-2xl text-[12px] leading-relaxed text-ink-soft">
               {loading
                 ? t('settings.detail.credits.checkInLoading')
                 : campaign?.description ?? t('settings.detail.credits.checkInClosed')}
             </p>
             {campaign ? (
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-ink-soft">
-                <span className="rounded-md border border-hairline bg-surface px-2 py-1">
-                  {t('settings.detail.credits.checkInReward', {
-                    value: formatCredits(campaign.dailyCreditAmount),
-                  })}
+                <span className="rounded-md border border-hairline bg-surface/80 px-2 py-1">
+                  {t('settings.detail.credits.checkInReward', { value: rewardRange })}
                 </span>
-                <span className="rounded-md border border-hairline bg-surface px-2 py-1">
+                <span className="rounded-md border border-hairline bg-surface/80 px-2 py-1">
+                  {t('settings.detail.credits.checkInMonthCount', { count: checkedDays })}
+                </span>
+                <span className="rounded-md border border-hairline bg-surface/80 px-2 py-1">
                   {campaign.timezone}
                 </span>
               </div>
             ) : null}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onCheckIn}
-          disabled={!canCheckIn}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[var(--sidebar-bg)] px-4 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {checkedIn ? <CheckCircle2 size={15} /> : <Gift size={15} />}
-          {pending
-            ? t('settings.detail.credits.checkingIn')
-            : checkedIn
-              ? t('settings.detail.credits.checkedIn')
-              : t('settings.detail.credits.checkInAction')}
-        </button>
+
+        <div className="flex flex-col gap-3 lg:items-end">
+          <p className="text-[11px] text-ink-faint">
+            {status
+              ? t('settings.detail.credits.checkInToday', { date: status.todayDate })
+              : t('settings.detail.credits.checkInLoading')}
+          </p>
+          <button
+            type="button"
+            onClick={onCheckIn}
+            disabled={!canCheckIn}
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[var(--sidebar-bg)] px-4 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50 lg:w-[180px]"
+          >
+            {checkedIn ? <CheckCircle2 size={15} /> : <Gift size={15} />}
+            {pending
+              ? t('settings.detail.credits.checkingIn')
+              : checkedIn
+                ? t('settings.detail.credits.checkedIn')
+                : t('settings.detail.credits.checkInAction')}
+          </button>
+        </div>
       </div>
 
-      {status ? (
-        <div className="p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[13px] font-semibold text-ink">
-              {t('settings.detail.credits.checkInCalendar', {
-                year: status.month.year,
-                month: status.month.month,
-              })}
-            </p>
-            <p className="text-[11px] text-ink-faint">
-              {t('settings.detail.credits.checkInToday', { date: status.todayDate })}
-            </p>
+      <div className="relative border-t border-hairline bg-surface/80 px-4 py-4">
+        {status ? (
+          <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+            <div>
+              <p className="text-[13px] font-semibold text-ink">
+                {t('settings.detail.credits.checkInCalendar', {
+                  year: status.month.year,
+                  month: status.month.month,
+                })}
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
+                {t('settings.detail.credits.checkInCalendarDesc')}
+              </p>
+            </div>
+            <CheckInCalendar status={status} />
           </div>
-          <CheckInCalendar status={status} />
-        </div>
-      ) : (
-        <div className="px-4 py-8 text-center text-[12px] text-ink-faint">
-          {loading ? t('settings.detail.credits.checkInLoading') : t('settings.detail.credits.checkInClosed')}
-        </div>
-      )}
+        ) : (
+          <div className="px-4 py-8 text-center text-[12px] text-ink-faint">
+            {loading ? t('settings.detail.credits.checkInLoading') : t('settings.detail.credits.checkInClosed')}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -261,7 +287,7 @@ function CheckInCalendar({ status }: { status: CreditCheckInStatus }) {
   ];
 
   return (
-    <div>
+    <div className="w-full max-w-[252px] lg:justify-self-end">
       <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-ink-faint">
         {['日', '一', '二', '三', '四', '五', '六'].map((label) => (
           <span key={label} className="py-1">
@@ -272,11 +298,11 @@ function CheckInCalendar({ status }: { status: CreditCheckInStatus }) {
       <div className="mt-1 grid grid-cols-7 gap-1">
         {cells.map((cell) =>
           cell.type === 'blank' ? (
-            <span key={cell.key} className="aspect-square" />
+            <span key={cell.key} className="size-7" />
           ) : (
             <span
               key={cell.key}
-              className={`grid aspect-square place-items-center rounded-md border text-[11px] tabular-nums ${
+              className={`grid size-7 place-items-center rounded-md border text-[11px] tabular-nums transition-colors ${
                 cell.day.checkedIn
                   ? 'border-sage bg-chip-sage text-sage'
                   : cell.day.date === status.todayDate
@@ -362,6 +388,11 @@ function LedgerRow({ entry }: { entry: CreditLedgerEntry }) {
 
 function formatCredits(value: number) {
   return new Intl.NumberFormat('zh-CN').format(value);
+}
+
+function formatCreditRange(minAmount: number, maxAmount: number): string {
+  if (minAmount === maxAmount) return formatCredits(minAmount);
+  return `${formatCredits(minAmount)} - ${formatCredits(maxAmount)}`;
 }
 
 function dayOfMonth(date: string): string {

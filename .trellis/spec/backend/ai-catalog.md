@@ -533,7 +533,7 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
   - `CreditLedgerEntry(ownerId, accountId, type, amount, balanceAfter, source, sourceId, aiUsageEventId, metadata)`.
   - `CreditRule(name, active, cnyCreditsPerUnit, usdCreditsPerUnit, platformMarkup, minimumChargeCredits)`.
   - `CreditRedemptionCode(code, creditAmount, enabled, maxRedemptions, redeemedCount, expiresAt)`.
-  - `CreditCheckInCampaign(name, enabled, dailyCreditAmount, timezone, description, startsAt, endsAt)`.
+  - `CreditCheckInCampaign(name, enabled, dailyCreditMinAmount, dailyCreditMaxAmount, timezone, description, startsAt, endsAt)`.
   - `CreditCheckIn(ownerId, campaignId, checkInDate, creditAmount, ledgerEntryId, metadata)` with unique `(ownerId, campaignId, checkInDate)`.
   - `AiUsageEvent.creditAmount`, `billingMode`, `requestId`, `internalProviderId`, `internalProviderModelId`, `creditLedgerEntryId`, `usageEstimated`, `billingSnapshot`.
 - Shared contracts:
@@ -567,8 +567,9 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 - Admin Dicha AI analytics may show real CNY/USD cost and credits side by side for the official provider.
 - Balance updates and ledger writes must be atomic. Debit must use a conditional balance update (`balance >= amount`) rather than decrement-then-check.
 - Daily check-in is a grant source, not a separate balance store:
-  - Admin controls the activity through `CreditCheckInCampaign.enabled`, reward amount, timezone, and optional active window.
+  - Admin controls the activity through `CreditCheckInCampaign.enabled`, reward range, timezone, and optional active window.
   - User-facing status uses the campaign timezone to derive `todayDate` and the month calendar.
+  - The actual reward is a random integer in the inclusive `[dailyCreditMinAmount, dailyCreditMaxAmount]` range. The `CreditCheckIn.creditAmount` and grant ledger `amount` store the awarded fact; do not recompute historical rewards from later campaign configuration.
   - A successful check-in creates one `CreditCheckIn`, increments `CreditAccount.balance` and `lifetimeGranted`, creates one grant `CreditLedgerEntry` with `source: 'daily_checkin'`, and links the ledger row back through `CreditCheckIn.ledgerEntryId`.
   - The unique `(ownerId, campaignId, checkInDate)` constraint is the source of truth for daily idempotency. Service code must turn duplicate races into a user-facing "already checked in" error, not a 500.
 - The admin credit operations dashboard is an accounting dashboard, not an AI request diagnostics page:
@@ -599,6 +600,7 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 | Official Dicha usage has request diagnostics fields | Keep them out of the credit operations response; use the AI diagnostics surface instead. |
 | Check-in campaign disabled or outside active window | User status returns `campaign: null`; `POST /credits/check-in` returns a 400 business error. |
 | User checks in successfully | Transaction creates `CreditCheckIn`, grant ledger, and account increment atomically. |
+| Admin saves reward range with max below min | API rejects the campaign update as a 400 business/config error. |
 | User checks in twice on the same campaign date | Service returns a 400 business error; no second ledger row or balance increment is created. |
 | Admin changes campaign timezone | Future `todayDate` and calendar rendering use the new timezone; existing check-in rows remain ledger facts. |
 
@@ -634,6 +636,7 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
   - user usage report masks CNY/USD cost while admin Dicha report retains it.
   - credit operations report uses `CreditLedgerEntry` for accounting summaries and only filters official Dicha `AiUsageEvent` rows for lightweight AI rankings.
   - daily check-in creates exactly one grant ledger row and one account increment per `(ownerId, campaignId, checkInDate)`.
+  - check-in reward amount is within the configured inclusive range and is stored consistently on `CreditCheckIn.creditAmount` and the ledger `amount`.
 
 ### 7. Wrong vs Correct
 
@@ -698,6 +701,7 @@ This records the activity but bypasses the credit ledger, so balance reports and
 #### Correct
 
 ```typescript
+const creditAmount = randomCreditAmount(campaign.dailyCreditMinAmount, campaign.dailyCreditMaxAmount);
 const checkIn = await tx.creditCheckIn.create({ data: { ownerId, campaignId, checkInDate, creditAmount } });
 const updated = await tx.creditAccount.update({
   where: { id: account.id },

@@ -110,7 +110,8 @@ function CampaignForm({
 }) {
   const [name, setName] = useState(campaign.name);
   const [enabled, setEnabled] = useState(campaign.enabled);
-  const [dailyCreditAmount, setDailyCreditAmount] = useState(campaign.dailyCreditAmount);
+  const [dailyCreditMinAmount, setDailyCreditMinAmount] = useState(campaign.dailyCreditMinAmount);
+  const [dailyCreditMaxAmount, setDailyCreditMaxAmount] = useState(campaign.dailyCreditMaxAmount);
   const [timezone, setTimezone] = useState(campaign.timezone);
   const [description, setDescription] = useState(campaign.description ?? '');
   const [startsAt, setStartsAt] = useState(toDateTimeInput(campaign.startsAt));
@@ -125,7 +126,8 @@ function CampaignForm({
           campaignId: campaign.id,
           name,
           enabled,
-          dailyCreditAmount,
+          dailyCreditMinAmount,
+          dailyCreditMaxAmount,
           timezone,
           description: description.trim() || null,
           startsAt: startsAt ? new Date(startsAt).toISOString() : null,
@@ -160,7 +162,18 @@ function CampaignForm({
       </div>
 
       <Field label="活动名称" value={name} onChange={setName} />
-      <NumberField label="每日奖励积分" value={dailyCreditAmount} onChange={setDailyCreditAmount} />
+      <div className="grid gap-3 md:grid-cols-2">
+        <NumberField
+          label="每日奖励下限"
+          value={dailyCreditMinAmount}
+          onChange={setDailyCreditMinAmount}
+        />
+        <NumberField
+          label="每日奖励上限"
+          value={dailyCreditMaxAmount}
+          onChange={setDailyCreditMaxAmount}
+        />
+      </div>
       <Field label="活动时区" value={timezone} onChange={setTimezone} placeholder="Asia/Shanghai" />
       <label className="block space-y-1.5 text-xs text-ink-soft">
         <span>活动说明</span>
@@ -175,7 +188,13 @@ function CampaignForm({
         <Field label="结束时间" type="datetime-local" value={endsAt} onChange={setEndsAt} />
       </div>
       <button
-        disabled={!name.trim() || !timezone.trim() || dailyCreditAmount <= 0 || pending}
+        disabled={
+          !name.trim()
+          || !timezone.trim()
+          || dailyCreditMinAmount <= 0
+          || dailyCreditMaxAmount < dailyCreditMinAmount
+          || pending
+        }
         className="h-9 w-full rounded-md bg-sidebar-bg text-xs font-medium text-sidebar-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? '保存中...' : '保存签到活动'}

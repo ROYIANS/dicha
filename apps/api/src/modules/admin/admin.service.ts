@@ -1141,7 +1141,8 @@ export class AdminService {
       metadata: this.safeMetadata({
         campaignId: overview.campaign.id,
         enabled: overview.campaign.enabled,
-        dailyCreditAmount: overview.campaign.dailyCreditAmount,
+        dailyCreditMinAmount: overview.campaign.dailyCreditMinAmount,
+        dailyCreditMaxAmount: overview.campaign.dailyCreditMaxAmount,
         timezone: overview.campaign.timezone,
         startsAt: overview.campaign.startsAt,
         endsAt: overview.campaign.endsAt,

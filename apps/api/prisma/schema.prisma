@@ -542,7 +542,8 @@ model CreditCheckInCampaign {
 
   name              String
   enabled           Boolean @default(false)
-  dailyCreditAmount Int     @default(20)
+  dailyCreditMinAmount Int     @default(10)
+  dailyCreditMaxAmount Int     @default(30)
   timezone          String  @default("Asia/Shanghai")
   description       String?
   startsAt          DateTime?
