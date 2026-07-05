@@ -353,19 +353,30 @@ await recordAuditLog(context, {
   - `GET /api/admin/system/operations`.
   - `POST /api/admin/system/actions` with `{ actionId }`.
 - Supported action ids:
-  - executable: `refresh_health`, `prune_expired_sessions`, `inspect_audit_logs`.
-  - non-executable/externally orchestrated: `restart_api`, `restart_ai_gateway`, `clear_runtime_cache`.
-- Response includes runtime memory/uptime, database probe, service health cards, maintenance counters, action descriptors, and recent audit logs.
+  - always executable: `refresh_health`, `prune_expired_sessions`, `inspect_audit_logs`, `inspect_runtime_logs`, `inspect_cache`, `prepare_backup`.
+  - config-gated executable: `run_backup`, `restart_api`, `restart_ai_gateway`, `clear_runtime_cache`.
+- Response includes runtime memory/uptime, host CPU/disk summary, database probe, external service cards, backup files, runtime log lines, cache summaries, maintenance counters, action descriptors, and recent audit logs.
+- Optional server env:
+  - `DICHA_ADMIN_BACKUP_DIR`: server-side directory whose backup files can be listed.
+  - `DICHA_ADMIN_BACKUP_COMMAND`: server-side command used by `run_backup`.
+  - `DICHA_ADMIN_LOG_FILES`: comma-separated `name=/path/to/file.log` entries for runtime log viewing.
+  - `DICHA_ADMIN_RESTART_API_COMMAND`: server-side command used by `restart_api`.
+  - `DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND`: server-side command used by `restart_ai_gateway`.
+  - `DICHA_ADMIN_CLEAR_CACHE_COMMAND`: server-side command used by `clear_runtime_cache`.
 
 ### 3. Contracts
 
 - All system operations endpoints must remain protected by `AuthGuard + SuperAdminGuard`.
 - Health probes may call internal services with short timeouts and sanitized status details only.
 - The API may execute only bounded, request-safe actions. Current allowed mutation is pruning expired Better Auth sessions.
-- Dangerous or externally orchestrated operations, especially restarting the API process or AI Gateway, must not be executed directly by a web request. Return an action descriptor with `executable: false` and a clear `disabledReason`.
-- Runtime responses may include Node version, platform, uptime, memory summary, service status, and counts. They must not expose raw env variables, connection strings, secrets, tokens, API keys, decrypted credentials, filesystem paths containing secrets, or process dumps.
+- Dangerous or externally orchestrated operations, especially restarting the API process or AI Gateway, must only execute when an explicit server-side command env is configured. The command itself must never come from the browser request body.
+- If an ops command is not configured, return an action descriptor with `executable: false` and a clear `disabledReason`; do not pretend the action succeeded.
+- Runtime responses may include Node version, platform, uptime, memory summary, host CPU/disk summary, service status, and counts. They must not expose raw env variables, connection strings, secrets, tokens, API keys, decrypted credentials, filesystem paths containing secrets, or process dumps.
+- System runtime logs are a separate concept from admin audit logs. The system operations console may read recent lines from configured log files and must sanitize obvious secrets before returning them.
+- Data backup controls may list files from `DICHA_ADMIN_BACKUP_DIR` and run `DICHA_ADMIN_BACKUP_COMMAND`. The admin API must not expose the expanded `DATABASE_URL` or raw command output.
+- Cache management must distinguish "not configured", "external", and "ready" states. Destructive cache deletion requires `DICHA_ADMIN_CLEAR_CACHE_COMMAND`; no command means the UI disables the action.
 - System actions that mutate state or represent an operational check should write safe audit rows through the admin audit helper.
-- The admin dashboard situation report may reuse `GET /admin/system/operations`; do not duplicate service-probe logic in the frontend.
+- The admin dashboard situation report may reuse `GET /admin/system/operations`; do not duplicate service-probe logic in the frontend. Dashboard should show operational data, status cards, resource bars, and recent events rather than listing sidebar menus or module descriptions.
 
 ### 4. Validation & Error Matrix
 
@@ -375,18 +386,26 @@ await recordAuditLog(context, {
 | Database probe fails                              | Response reports database `down`; API should still return a sanitized operations payload when possible. |
 | AI Gateway is unreachable                         | Service status is `unknown` or `degraded`; do not throw the whole dashboard response.                   |
 | `prune_expired_sessions` runs                     | Expired sessions are deleted and an audit row records affected count.                                   |
-| Restart action requested                          | API returns skipped/non-executable guidance; it must not terminate the process.                         |
-| Runtime cache clear requested before cache exists | API returns skipped/non-executable guidance.                                                            |
+| Restart action requested with configured command   | API executes the configured server-side command and writes an audit row.                                |
+| Restart action requested without configured command| API returns skipped/non-executable guidance; it must not terminate the process directly.                 |
+| Runtime cache clear requested before command exists| API returns skipped/non-executable guidance.                                                            |
+| Runtime logs are configured                       | Response returns recent sanitized runtime lines from readable files.                                    |
+| Runtime logs are not configured                   | Response explains how to configure log files and returns no fake log entries.                           |
+| Backup action is configured                       | API executes the configured server-side command and refreshes backup file list.                         |
+| Backup action is not configured                   | API returns skipped/non-executable guidance and a sanitized recommended command.                         |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: use short timeout probes for AI Gateway so the admin dashboard does not hang.
 - Good: make maintenance actions self-describing so the UI can render executable and disabled operations from the same response.
-- Good: use audit logs as the first "view logs" surface until a server/container log pipeline exists.
-- Base: operational console shows health, runtime, expired sessions, recent audit, and troubleshooting guidance.
-- Bad: calling `process.exit()` or shelling out to restart services from an HTTP request.
+- Good: execute only server-side configured commands for backup/restart/cache operations; never accept arbitrary command strings from the browser.
+- Good: make runtime logs explicit as configured log-file sources and sanitize obvious tokens before returning lines.
+- Base: operational console shows system status, external services, backup files, runtime log lines, cache status, and maintenance actions.
+- Bad: calling `process.exit()` from an HTTP request or executing browser-provided shell commands.
+- Bad: accepting a command string in the request body.
 - Bad: rendering `.env` values or connection strings in the system settings page.
-- Bad: implementing cache clearing UI before a real server-side cache backend exists.
+- Bad: presenting admin audit logs as system runtime logs.
+- Bad: enabling cache clearing without either a configured command or a concrete namespace strategy.
 
 ### 6. Tests Required
 
@@ -397,7 +416,8 @@ await recordAuditLog(context, {
   - operations response stays sanitized;
   - AI Gateway probe failure degrades gracefully;
   - expired session pruning deletes only expired sessions;
-  - restart actions are not executable through the API;
+  - restart/cache/backup actions are executable only when server-side command env is configured;
+  - runtime logs and audit logs remain distinct in the UI;
   - dashboard and system page consume the shared operations contract.
 
 ### 7. Wrong vs Correct
@@ -418,7 +438,7 @@ This lets an HTTP request kill its own server process and can interrupt in-fligh
 return {
   actionId: 'restart_api',
   status: 'skipped',
-  message: 'Restart must be performed by Docker, systemd, PaaS, or deploy pipeline.',
+  message: 'Restart command is not configured.',
   affectedCount: null,
   operations: await getSystemOperations(),
 };

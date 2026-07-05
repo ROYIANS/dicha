@@ -89,6 +89,31 @@ class EnvVars {
   @IsString()
   @MinLength(32)
   AI_GATEWAY_SECRET_KEY?: string;
+
+  // ── Admin Ops（超级管理员系统工具，可选）────────────────
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_BACKUP_DIR?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_BACKUP_COMMAND?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_LOG_FILES?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_RESTART_API_COMMAND?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND?: string;
+
+  @IsOptional()
+  @IsString()
+  DICHA_ADMIN_CLEAR_CACHE_COMMAND?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvVars {

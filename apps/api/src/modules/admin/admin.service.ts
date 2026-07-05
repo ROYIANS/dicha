@@ -1,4 +1,9 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { exec } from 'node:child_process';
+import { constants as fsConstants } from 'node:fs';
+import { access, readdir, readFile, stat, statfs } from 'node:fs/promises';
+import * as os from 'node:os';
+import { promisify } from 'node:util';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
@@ -81,6 +86,12 @@ type AdminAuditContext = {
   userAgent?: string | null;
 };
 
+type AdminRuntimeLogFile = {
+  id: string;
+  name: string;
+  path: string;
+};
+
 type AdminDichaUsageRecord = Prisma.AiUsageEventGetPayload<{
   include: typeof adminUsageOwnerInclude;
 }>;
@@ -100,11 +111,22 @@ const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const MINUTE_MS = 60 * 1000;
 const MAX_HOURLY_BUCKETS = 24 * 7;
+const execAsync = promisify(exec);
 
 @Injectable()
 export class AdminService {
   private readonly aiEncryptionKey: Buffer;
   private readonly aiGatewayBaseUrl: string;
+  private readonly uploadDir: string;
+  private readonly smtpHost?: string;
+  private readonly redisUrl?: string;
+  private readonly clickHouseUrl?: string;
+  private readonly backupDir?: string;
+  private readonly backupCommand?: string;
+  private readonly restartApiCommand?: string;
+  private readonly restartAiGatewayCommand?: string;
+  private readonly clearCacheCommand?: string;
+  private readonly runtimeLogFiles: AdminRuntimeLogFile[];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -114,6 +136,16 @@ export class AdminService {
     const secret = config.get<string>('AI_GATEWAY_SECRET_KEY') ?? this.developmentAiSecret(config);
     this.aiEncryptionKey = createHash('sha256').update(secret).digest();
     this.aiGatewayBaseUrl = config.get<string>('AI_GATEWAY_BASE_URL', 'http://localhost:3100/ai');
+    this.uploadDir = config.get<string>('UPLOAD_DIR', './uploads');
+    this.smtpHost = config.get<string>('SMTP_HOST');
+    this.redisUrl = config.get<string>('REDIS_URL');
+    this.clickHouseUrl = config.get<string>('CLICKHOUSE_URL');
+    this.backupDir = config.get<string>('DICHA_ADMIN_BACKUP_DIR');
+    this.backupCommand = config.get<string>('DICHA_ADMIN_BACKUP_COMMAND');
+    this.restartApiCommand = config.get<string>('DICHA_ADMIN_RESTART_API_COMMAND');
+    this.restartAiGatewayCommand = config.get<string>('DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND');
+    this.clearCacheCommand = config.get<string>('DICHA_ADMIN_CLEAR_CACHE_COMMAND');
+    this.runtimeLogFiles = parseRuntimeLogFiles(config.get<string>('DICHA_ADMIN_LOG_FILES'));
   }
 
   async getOverview(user: AdminSessionUser): Promise<AdminOverview> {
@@ -268,10 +300,30 @@ export class AdminService {
 
   async getSystemOperations(): Promise<AdminSystemOperations> {
     const generatedAt = new Date();
-    const [database, aiGateway, expiredSessions, disabledUsers, recentFailures, recentAuditLogs] =
-      await Promise.all([
+    const [
+      database,
+      aiGateway,
+      localStorage,
+      mailService,
+      clickHouse,
+      redis,
+      hostDisk,
+      backup,
+      logsSummary,
+      expiredSessions,
+      disabledUsers,
+      recentFailures,
+      recentAuditLogs,
+    ] = await Promise.all([
         this.checkDatabase(),
         this.checkAiGateway(),
+        this.checkLocalStorage(),
+        this.checkMailService(),
+        this.checkConfiguredExternalService('clickhouse', 'ClickHouse', 'analytics', this.clickHouseUrl),
+        this.checkConfiguredExternalService('redis', 'Redis', 'cache', this.redisUrl),
+        this.checkDisk(),
+        this.backupSummary(),
+        this.runtimeLogsSummary(),
         this.prisma.session.count({ where: { expiresAt: { lt: generatedAt } } }),
         this.prisma.user.count({ where: { status: 'disabled' } }),
         this.prisma.adminAuditLog.count({
@@ -286,6 +338,24 @@ export class AdminService {
         }),
       ]);
     const memory = process.memoryUsage();
+    const externalServices = [
+      {
+        id: 'postgresql',
+        name: 'PostgreSQL',
+        category: 'database' as const,
+        configured: true,
+        status: database.status,
+        detail:
+          database.status === 'healthy' ? '主业务数据库可访问' : '主业务数据库探针异常',
+        checkedAt: generatedAt.toISOString(),
+        latencyMs: database.latencyMs,
+      },
+      localStorage,
+      mailService,
+      aiGateway,
+      redis,
+      clickHouse,
+    ];
 
     return {
       generatedAt: generatedAt.toISOString(),
@@ -299,11 +369,17 @@ export class AdminService {
           heapTotalMb: bytesToMb(memory.heapTotal),
         },
       },
+      host: {
+        cpu: hostCpuSummary(),
+        disk: hostDisk,
+      },
       database,
       services: [
         {
           id: 'api',
           name: 'Dicha API',
+          category: 'runtime',
+          configured: true,
           status: database.status === 'healthy' ? 'healthy' : 'degraded',
           detail:
             database.status === 'healthy'
@@ -314,12 +390,16 @@ export class AdminService {
         },
         aiGateway,
       ],
+      externalServices,
       maintenance: {
         expiredSessions,
         disabledUsers,
         recentFailures,
       },
-      actions: systemActions(),
+      backup,
+      logs: logsSummary,
+      cache: cacheSummary(this.redisUrl),
+      actions: this.systemActions(),
       recentAuditLogs: recentAuditLogs.map(toAdminAuditLog),
     };
   }
@@ -328,18 +408,29 @@ export class AdminService {
     body: AdminSystemActionRun,
     audit: AdminAuditContext,
   ): Promise<AdminSystemActionResult> {
-    if (body.actionId === 'refresh_health' || body.actionId === 'inspect_audit_logs') {
+    if (
+      body.actionId === 'refresh_health' ||
+      body.actionId === 'inspect_audit_logs' ||
+      body.actionId === 'inspect_runtime_logs' ||
+      body.actionId === 'inspect_cache'
+    ) {
+      const messages: Record<typeof body.actionId, string> = {
+        refresh_health: '健康检查已刷新',
+        inspect_audit_logs: '审计日志入口已确认',
+        inspect_runtime_logs: '运行日志入口已确认',
+        inspect_cache: '缓存状态已刷新',
+      };
       await this.recordAuditLog(audit, {
         action: `system.${body.actionId}`,
         resourceType: 'system',
         resourceId: body.actionId,
-        summary: body.actionId === 'refresh_health' ? '刷新系统健康检查' : '查看审计日志入口',
+        summary: messages[body.actionId],
         metadata: this.safeMetadata({ actionId: body.actionId }),
       });
       return {
         actionId: body.actionId,
         status: 'completed',
-        message: body.actionId === 'refresh_health' ? '健康检查已刷新' : '审计日志入口已确认',
+        message: messages[body.actionId],
         affectedCount: null,
         operations: await this.getSystemOperations(),
       };
@@ -365,10 +456,27 @@ export class AdminService {
       };
     }
 
-    const action = systemActions().find((item) => item.id === body.actionId);
+    const commandByAction: Partial<Record<AdminSystemActionRun['actionId'], string | undefined>> = {
+      run_backup: this.backupCommand,
+      restart_api: this.restartApiCommand,
+      restart_ai_gateway: this.restartAiGatewayCommand,
+      clear_runtime_cache: this.clearCacheCommand,
+    };
+    if (commandByAction[body.actionId]) {
+      return this.runConfiguredSystemCommand(body.actionId, commandByAction[body.actionId], audit);
+    }
+
+    const action = this.systemActions().find((item) => item.id === body.actionId);
     if (!action || action.executable) {
       throw new BadRequestException('Unknown system action');
     }
+    await this.recordAuditLog(audit, {
+      action: `system.${body.actionId}`,
+      resourceType: 'system',
+      resourceId: body.actionId,
+      summary: action.title,
+      metadata: this.safeMetadata({ actionId: body.actionId, executable: false }),
+    });
     return {
       actionId: body.actionId,
       status: 'skipped',
@@ -1708,6 +1816,8 @@ export class AdminService {
         return {
           id: 'ai-gateway',
           name: 'AI Gateway',
+          category: 'ai',
+          configured: Boolean(this.aiGatewayBaseUrl),
           status: 'degraded',
           detail: `AI Gateway 健康检查返回 ${response.status}`,
           checkedAt: checkedAt.toISOString(),
@@ -1717,6 +1827,8 @@ export class AdminService {
       return {
         id: 'ai-gateway',
         name: 'AI Gateway',
+        category: 'ai',
+        configured: Boolean(this.aiGatewayBaseUrl),
         status: 'healthy',
         detail: 'AI Gateway 正常响应',
         checkedAt: checkedAt.toISOString(),
@@ -1726,12 +1838,296 @@ export class AdminService {
       return {
         id: 'ai-gateway',
         name: 'AI Gateway',
+        category: 'ai',
+        configured: Boolean(this.aiGatewayBaseUrl),
         status: 'unknown',
         detail: 'AI Gateway 健康检查暂不可达',
         checkedAt: checkedAt.toISOString(),
         latencyMs: null,
       };
     }
+  }
+
+  private async checkLocalStorage(): Promise<AdminSystemService> {
+    const checkedAt = new Date();
+    try {
+      await access(this.uploadDir, fsConstants.R_OK | fsConstants.W_OK);
+      return {
+        id: 'local-storage',
+        name: '本地存储',
+        category: 'storage',
+        configured: true,
+        status: 'healthy',
+        detail: '上传目录可读写',
+        checkedAt: checkedAt.toISOString(),
+        latencyMs: null,
+      };
+    } catch {
+      return {
+        id: 'local-storage',
+        name: '本地存储',
+        category: 'storage',
+        configured: true,
+        status: 'down',
+        detail: '上传目录不可读写，请检查卷挂载与权限',
+        checkedAt: checkedAt.toISOString(),
+        latencyMs: null,
+      };
+    }
+  }
+
+  private checkMailService(): AdminSystemService {
+    const configured = Boolean(this.smtpHost);
+    return {
+      id: 'mail',
+      name: '邮件服务',
+      category: 'mail',
+      configured,
+      status: configured ? 'unknown' : 'unknown',
+      detail: configured ? 'SMTP 已配置，暂未执行发送探针' : '未配置 SMTP，邮件能力不可用',
+      checkedAt: new Date().toISOString(),
+      latencyMs: null,
+    };
+  }
+
+  private checkConfiguredExternalService(
+    id: string,
+    name: string,
+    category: AdminSystemService['category'],
+    url?: string,
+  ): AdminSystemService {
+    const configured = Boolean(url);
+    return {
+      id,
+      name,
+      category,
+      configured,
+      status: configured ? 'unknown' : 'unknown',
+      detail: configured ? '已配置，暂未接入运行时探针' : '未配置',
+      checkedAt: new Date().toISOString(),
+      latencyMs: null,
+    };
+  }
+
+  private async checkDisk(): Promise<AdminSystemOperations['host']['disk']> {
+    try {
+      const stats = await statfs(process.cwd());
+      const totalBytes = Number(stats.blocks) * Number(stats.bsize);
+      const freeBytes = Number(stats.bfree) * Number(stats.bsize);
+      const usedPercent =
+        totalBytes > 0 ? Math.round(((totalBytes - freeBytes) / totalBytes) * 1000) / 10 : null;
+      return {
+        status:
+          usedPercent === null ? 'unknown' : usedPercent >= 90 ? 'degraded' : 'healthy',
+        mount: '工作目录所在磁盘',
+        totalGb: bytesToGb(totalBytes),
+        freeGb: bytesToGb(freeBytes),
+        usedPercent,
+        detail:
+          usedPercent === null
+            ? '无法计算磁盘占用'
+            : usedPercent >= 90
+              ? '磁盘使用率偏高，请准备清理或扩容'
+              : '磁盘空间处于可用状态',
+      };
+    } catch {
+      return {
+        status: 'unknown',
+        mount: '工作目录所在磁盘',
+        totalGb: null,
+        freeGb: null,
+        usedPercent: null,
+        detail: '无法读取磁盘状态',
+      };
+    }
+  }
+
+  private async backupSummary(): Promise<AdminSystemOperations['backup']> {
+    if (!this.backupDir) {
+      return {
+        status: this.backupCommand ? 'external' : 'not_configured',
+        detail: this.backupCommand
+          ? '已配置备份命令，但未配置备份文件目录，无法展示历史备份文件。'
+          : '未配置备份目录或备份命令。',
+        lastBackupAt: null,
+        recommendedCommand: 'pg_dump "$DATABASE_URL" --format=custom --file=dicha-$(date +%F).dump',
+        files: [],
+      };
+    }
+
+    try {
+      const entries = await readdir(this.backupDir, { withFileTypes: true });
+      const files = await Promise.all(
+        entries
+          .filter((entry) => entry.isFile())
+          .filter((entry) => isBackupFile(entry.name))
+          .map(async (entry) => {
+            const fileStats = await stat(`${this.backupDir}/${entry.name}`);
+            return {
+              name: entry.name,
+              sizeBytes: fileStats.size,
+              sizeLabel: formatBytes(fileStats.size),
+              kind: backupKind(entry.name),
+              status: backupFileStatus(entry.name),
+              createdAt: fileStats.mtime.toISOString(),
+            };
+          }),
+      );
+      const sortedFiles = files.sort((left, right) => {
+        const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+        const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+        return rightTime - leftTime;
+      });
+      return {
+        status: 'ready',
+        detail: this.backupCommand
+          ? '已配置备份目录与备份命令，可查看历史备份并触发备份。'
+          : '已配置备份目录，可查看历史备份；未配置备份命令，暂不能从后台立即备份。',
+        lastBackupAt: sortedFiles[0]?.createdAt ?? null,
+        recommendedCommand: this.backupCommand
+          ? null
+          : 'pg_dump "$DATABASE_URL" --format=custom --file=dicha-$(date +%F).dump',
+        files: sortedFiles.slice(0, 50),
+      };
+    } catch {
+      return {
+        status: 'external',
+        detail: '备份目录暂不可读取，请检查目录挂载与权限。',
+        lastBackupAt: null,
+        recommendedCommand: this.backupCommand
+          ? null
+          : 'pg_dump "$DATABASE_URL" --format=custom --file=dicha-$(date +%F).dump',
+        files: [],
+      };
+    }
+  }
+
+  private async runtimeLogsSummary(): Promise<AdminSystemOperations['logs']> {
+    if (this.runtimeLogFiles.length === 0) {
+      return {
+        status: 'not_configured',
+        detail: '未配置运行日志文件。可通过 DICHA_ADMIN_LOG_FILES 接入 API、AI Gateway 或反向代理日志。',
+        sources: [
+          {
+            id: 'api',
+            name: 'Dicha API',
+            available: false,
+            detail: '配置 DICHA_ADMIN_LOG_FILES 后可从后台查看最近运行日志。',
+          },
+          {
+            id: 'ai-gateway',
+            name: 'AI Gateway',
+            available: false,
+            detail: '可接入 AI Gateway stdout 文件、容器日志导出文件或平台日志转储。',
+          },
+        ],
+        recent: [],
+      };
+    }
+
+    const sourceResults = await Promise.all(
+      this.runtimeLogFiles.map(async (file) => {
+        try {
+          await access(file.path, fsConstants.R_OK);
+          const content = await readFile(file.path, 'utf8');
+          return {
+            source: {
+              id: file.id,
+              name: file.name,
+              available: true,
+              detail: '日志文件可读取。',
+            },
+            lines: tailLines(content, 120).map((line) => parseRuntimeLogLine(file.name, line)),
+          };
+        } catch {
+          return {
+            source: {
+              id: file.id,
+              name: file.name,
+              available: false,
+              detail: '日志文件不可读取，请检查路径与权限。',
+            },
+            lines: [],
+          };
+        }
+      }),
+    );
+
+    const recent = sourceResults
+      .flatMap((result) => result.lines)
+      .sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime())
+      .slice(0, 100);
+
+    return {
+      status: recent.length > 0 ? 'ready' : 'external',
+      detail:
+        recent.length > 0
+          ? '已读取最近运行日志。'
+          : '日志来源已配置，但当前没有可展示的日志行。',
+      sources: sourceResults.map((result) => result.source),
+      recent,
+    };
+  }
+
+  private async runConfiguredSystemCommand(
+    actionId: AdminSystemActionRun['actionId'],
+    command: string | undefined,
+    audit: AdminAuditContext,
+  ): Promise<AdminSystemActionResult> {
+    const action = this.systemActions().find((item) => item.id === actionId);
+    if (!action || !command) {
+      throw new BadRequestException('Unknown system action');
+    }
+    try {
+      await execAsync(command, {
+        cwd: process.cwd(),
+        timeout: 120_000,
+        maxBuffer: 1024 * 1024,
+      });
+      await this.recordAuditLog(audit, {
+        action: `system.${actionId}`,
+        resourceType: 'system',
+        resourceId: actionId,
+        summary: `${action.title} 已执行`,
+        metadata: this.safeMetadata({ actionId, commandConfigured: true }),
+      });
+      return {
+        actionId,
+        status: 'completed',
+        message: `${action.title} 已执行`,
+        affectedCount: null,
+        operations: await this.getSystemOperations(),
+      };
+    } catch (error) {
+      await this.recordAuditLog(audit, {
+        action: `system.${actionId}`,
+        resourceType: 'system',
+        resourceId: actionId,
+        result: 'failure',
+        summary: `${action.title} 执行失败`,
+        metadata: this.safeMetadata({
+          actionId,
+          commandConfigured: true,
+          error: error instanceof Error ? sanitizeLogLine(error.message).slice(0, 240) : 'unknown',
+        }),
+      });
+      return {
+        actionId,
+        status: 'failed',
+        message: `${action.title} 执行失败，请查看服务端运行日志。`,
+        affectedCount: null,
+        operations: await this.getSystemOperations(),
+      };
+    }
+  }
+
+  private systemActions(): AdminSystemOperations['actions'] {
+    return systemActions({
+      backupCommand: this.backupCommand,
+      restartApiCommand: this.restartApiCommand,
+      restartAiGatewayCommand: this.restartAiGatewayCommand,
+      clearCacheCommand: this.clearCacheCommand,
+    });
   }
 
   private async recordAuditLog(
@@ -1924,7 +2320,49 @@ function bytesToMb(value: number): number {
   return Math.round((value / 1024 / 1024) * 10) / 10;
 }
 
-function systemActions(): AdminSystemOperations['actions'] {
+function bytesToGb(value: number): number {
+  return Math.round((value / 1024 / 1024 / 1024) * 10) / 10;
+}
+
+function hostCpuSummary(): AdminSystemOperations['host']['cpu'] {
+  const cpus = os.cpus();
+  const cores = Math.max(cpus.length, 1);
+  const loadAverage = os.loadavg().map((value) => roundOne(value)) as [number, number, number];
+  return {
+    cores,
+    model: cpus[0]?.model ?? 'unknown',
+    loadAverage,
+    loadPercent: roundOne((loadAverage[0] / cores) * 100),
+  };
+}
+
+function cacheSummary(redisUrl?: string): AdminSystemOperations['cache'] {
+  if (!redisUrl) {
+    return {
+      status: 'not_configured',
+      backend: 'none',
+      detail: '当前未配置 Redis 或集中式缓存，暂无可清理的服务端缓存。',
+      keysApprox: null,
+    };
+  }
+  return {
+    status: 'external',
+    backend: 'Redis',
+    detail: 'Redis 已配置；当前后台未接入 key 统计和清理探针，避免误删业务缓存。',
+    keysApprox: null,
+  };
+}
+
+function roundOne(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function systemActions(config: {
+  backupCommand?: string;
+  restartApiCommand?: string;
+  restartAiGatewayCommand?: string;
+  clearCacheCommand?: string;
+}): AdminSystemOperations['actions'] {
   return [
     {
       id: 'refresh_health',
@@ -1951,30 +2389,163 @@ function systemActions(): AdminSystemOperations['actions'] {
       disabledReason: null,
     },
     {
+      id: 'inspect_runtime_logs',
+      title: '查看运行日志',
+      description: '确认运行日志来源；当前日志由部署平台、容器或服务器终端承载。',
+      category: 'diagnostic',
+      executable: true,
+      disabledReason: null,
+    },
+    {
+      id: 'inspect_cache',
+      title: '检查缓存状态',
+      description: '刷新缓存后端摘要；未接入 Redis 探针前不会执行 key 扫描或删除。',
+      category: 'diagnostic',
+      executable: true,
+      disabledReason: null,
+    },
+    {
+      id: 'prepare_backup',
+      title: '准备数据备份',
+      description: '查看备份目录、最近备份和执行建议。',
+      category: 'diagnostic',
+      executable: true,
+      disabledReason: null,
+    },
+    {
+      id: 'run_backup',
+      title: '立即备份',
+      description: '执行服务端配置的备份命令，并刷新备份文件列表。',
+      category: 'maintenance',
+      executable: Boolean(config.backupCommand),
+      disabledReason: config.backupCommand ? null : '未配置 DICHA_ADMIN_BACKUP_COMMAND。',
+    },
+    {
       id: 'clear_runtime_cache',
       title: '清理运行时缓存',
-      description: '当前 API 没有集中式运行时缓存；后续接入 Redis/队列后再开放。',
+      description: '执行服务端配置的缓存清理命令。',
       category: 'maintenance',
-      executable: false,
-      disabledReason: '当前没有可清理的服务端缓存。',
+      executable: Boolean(config.clearCacheCommand),
+      disabledReason: config.clearCacheCommand ? null : '未配置 DICHA_ADMIN_CLEAR_CACHE_COMMAND。',
     },
     {
       id: 'restart_api',
       title: '重启 API 服务',
-      description: '重启应由 Docker、systemd、PaaS 或发布流水线执行，后台只展示操作入口。',
+      description: '执行服务端配置的 API 重启命令。',
       category: 'dangerous',
-      executable: false,
-      disabledReason: '需要通过部署平台或服务器终端执行，避免 Web 请求中断自身进程。',
+      executable: Boolean(config.restartApiCommand),
+      disabledReason: config.restartApiCommand
+        ? null
+        : '未配置 DICHA_ADMIN_RESTART_API_COMMAND。',
     },
     {
       id: 'restart_ai_gateway',
       title: '重启 AI Gateway',
-      description: 'AI Gateway 重启应由外部编排执行，避免中断正在进行的流式调用。',
+      description: '执行服务端配置的 AI Gateway 重启命令。',
       category: 'dangerous',
-      executable: false,
-      disabledReason: '需要通过部署平台或服务器终端执行。',
+      executable: Boolean(config.restartAiGatewayCommand),
+      disabledReason: config.restartAiGatewayCommand
+        ? null
+        : '未配置 DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND。',
     },
   ];
+}
+
+function parseRuntimeLogFiles(value?: string): AdminRuntimeLogFile[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((item, index) => {
+      const trimmed = item.trim();
+      if (!trimmed) return null;
+      const separatorIndex = trimmed.indexOf('=');
+      if (separatorIndex === -1) {
+        return {
+          id: `log-${index + 1}`,
+          name: `日志 ${index + 1}`,
+          path: trimmed,
+        };
+      }
+      const name = trimmed.slice(0, separatorIndex).trim();
+      const path = trimmed.slice(separatorIndex + 1).trim();
+      if (!path) return null;
+      return {
+        id: slugify(name || `log-${index + 1}`),
+        name: name || `日志 ${index + 1}`,
+        path,
+      };
+    })
+    .filter((item): item is AdminRuntimeLogFile => item !== null);
+}
+
+function isBackupFile(name: string): boolean {
+  return /\.(sql|dump|backup|bak|gz|zip)$/i.test(name);
+}
+
+function backupKind(name: string): 'automatic' | 'manual' | 'unknown' {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('auto')) return 'automatic';
+  if (lowerName.includes('manual') || lowerName.includes('backup')) return 'manual';
+  return 'unknown';
+}
+
+function backupFileStatus(name: string): 'success' | 'failed' | 'unknown' {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('fail') || lowerName.includes('error')) return 'failed';
+  return 'success';
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${roundOne(value / 1024)} KB`;
+  if (value < 1024 * 1024 * 1024) return `${roundOne(value / 1024 / 1024)} MB`;
+  return `${roundOne(value / 1024 / 1024 / 1024)} GB`;
+}
+
+function tailLines(content: string, limit: number): string[] {
+  return content
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .slice(-limit);
+}
+
+function parseRuntimeLogLine(
+  source: string,
+  line: string,
+): AdminSystemOperations['logs']['recent'][number] {
+  const sanitized = sanitizeLogLine(line);
+  const timestampMatch = sanitized.match(
+    /(\d{4}-\d{2}-\d{2}[T ][0-9:.]+(?:Z|[+-]\d{2}:?\d{2})?)/,
+  );
+  const levelMatch = sanitized.match(/\b(ERROR|WARN|WARNING|INFO|DEBUG|TRACE|LOG)\b/i);
+  const timestamp = timestampMatch?.[1]
+    ? normalizeLogTimestamp(timestampMatch[1])
+    : new Date().toISOString();
+  return {
+    timestamp,
+    level: (levelMatch?.[1] ?? 'INFO').toUpperCase(),
+    source,
+    message: sanitized.slice(0, 2000),
+  };
+}
+
+function normalizeLogTimestamp(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
+function sanitizeLogLine(value: string): string {
+  return value
+    .replace(/(authorization:\s*bearer\s+)[^\s]+/gi, '$1[REDACTED]')
+    .replace(/((api[_-]?key|token|secret|password)=)[^\s&]+/gi, '$1[REDACTED]')
+    .replace(/(postgres(?:ql)?:\/\/)[^\s]+/gi, '$1[REDACTED]');
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 type AiInternalProviderRecord = Prisma.AiInternalProviderGetPayload<Record<string, never>>;

@@ -240,6 +240,8 @@ export const AdminSystemServiceStatusSchema = z.enum(['healthy', 'degraded', 'do
 export const AdminSystemServiceSchema = z.object({
   id: z.string(),
   name: z.string(),
+  category: z.enum(['runtime', 'database', 'cache', 'storage', 'mail', 'ai', 'analytics']),
+  configured: z.boolean(),
   status: AdminSystemServiceStatusSchema,
   detail: z.string(),
   checkedAt: z.string(),
@@ -253,6 +255,10 @@ export const AdminSystemActionSchema = z.object({
     'refresh_health',
     'prune_expired_sessions',
     'inspect_audit_logs',
+    'inspect_runtime_logs',
+    'inspect_cache',
+    'prepare_backup',
+    'run_backup',
     'restart_api',
     'restart_ai_gateway',
     'clear_runtime_cache',
@@ -278,15 +284,74 @@ export const AdminSystemOperationsSchema = z.object({
       heapTotalMb: z.number(),
     }),
   }),
+  host: z.object({
+    cpu: z.object({
+      cores: z.number().int().min(1),
+      model: z.string(),
+      loadAverage: z.tuple([z.number(), z.number(), z.number()]),
+      loadPercent: z.number().min(0),
+    }),
+    disk: z.object({
+      status: AdminSystemServiceStatusSchema,
+      mount: z.string(),
+      totalGb: z.number().nullable(),
+      freeGb: z.number().nullable(),
+      usedPercent: z.number().nullable(),
+      detail: z.string(),
+    }),
+  }),
   database: z.object({
     status: AdminSystemServiceStatusSchema,
     latencyMs: z.number().int().min(0).nullable(),
   }),
   services: z.array(AdminSystemServiceSchema),
+  externalServices: z.array(AdminSystemServiceSchema),
   maintenance: z.object({
     expiredSessions: z.number().int().min(0),
     disabledUsers: z.number().int().min(0),
     recentFailures: z.number().int().min(0),
+  }),
+  backup: z.object({
+    status: z.enum(['not_configured', 'external', 'ready']),
+    detail: z.string(),
+    lastBackupAt: z.string().nullable(),
+    recommendedCommand: z.string().nullable(),
+    files: z.array(
+      z.object({
+        name: z.string(),
+        sizeBytes: z.number().int().min(0),
+        sizeLabel: z.string(),
+        kind: z.enum(['automatic', 'manual', 'unknown']),
+        status: z.enum(['success', 'failed', 'unknown']),
+        createdAt: z.string().nullable(),
+      }),
+    ),
+  }),
+  logs: z.object({
+    status: z.enum(['not_configured', 'external', 'ready']),
+    detail: z.string(),
+    sources: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        available: z.boolean(),
+        detail: z.string(),
+      }),
+    ),
+    recent: z.array(
+      z.object({
+        timestamp: z.string(),
+        level: z.string(),
+        source: z.string(),
+        message: z.string(),
+      }),
+    ),
+  }),
+  cache: z.object({
+    status: z.enum(['not_configured', 'external', 'ready']),
+    backend: z.string(),
+    detail: z.string(),
+    keysApprox: z.number().int().min(0).nullable(),
   }),
   actions: z.array(AdminSystemActionSchema),
   recentAuditLogs: z.array(AdminAuditLogSchema),
@@ -302,7 +367,7 @@ export type AdminSystemActionRun = z.infer<typeof AdminSystemActionRunSchema>;
 
 export const AdminSystemActionResultSchema = z.object({
   actionId: AdminSystemActionSchema.shape.id,
-  status: z.enum(['completed', 'skipped']),
+  status: z.enum(['completed', 'skipped', 'failed']),
   message: z.string(),
   affectedCount: z.number().int().min(0).nullable(),
   operations: AdminSystemOperationsSchema,

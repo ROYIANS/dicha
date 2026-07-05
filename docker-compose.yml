@@ -60,8 +60,15 @@ services:
       AI_GATEWAY_BASE_URL: ${AI_GATEWAY_BASE_URL:-http://ai-gateway:3100/ai}
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
       AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
+      DICHA_ADMIN_BACKUP_DIR: ${DICHA_ADMIN_BACKUP_DIR:-/data/backups}
+      DICHA_ADMIN_BACKUP_COMMAND: ${DICHA_ADMIN_BACKUP_COMMAND:-}
+      DICHA_ADMIN_LOG_FILES: ${DICHA_ADMIN_LOG_FILES:-}
+      DICHA_ADMIN_RESTART_API_COMMAND: ${DICHA_ADMIN_RESTART_API_COMMAND:-}
+      DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND: ${DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND:-}
+      DICHA_ADMIN_CLEAR_CACHE_COMMAND: ${DICHA_ADMIN_CLEAR_CACHE_COMMAND:-}
     volumes:
       - dicha-uploads:/data/uploads
+      - dicha-backups:/data/backups
     expose:
       - '3000'
     healthcheck:
@@ -150,3 +157,4 @@ services:
 volumes:
   dicha-pgdata:
   dicha-uploads:
+  dicha-backups:
