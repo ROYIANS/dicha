@@ -539,10 +539,13 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
   - `contract.credits.getLedger` -> `GET /credits/ledger`.
   - `contract.credits.redeemCode` -> `POST /credits/redeem`.
   - `contract.admin.getCreditRules`, `upsertCreditRule`, `grantCredits`, `listCreditBalances`, `listCreditLedger`, `getCreditRedemptionCodes`, `upsertCreditRedemptionCode`.
+  - `contract.admin.getCreditOperations` -> `GET /admin/credits/operations`.
 - Gateway entry:
   - `CreditStore.assertSufficientReserve(ownerId, model, request)`.
   - `CreditStore.calculateCharge(model, promptTokens, completionTokens)`.
   - `UsageStore.recordEvent(ownerId, record)` creates the debit ledger row for `billingMode: platform_credits`.
+- Admin API:
+  - `CreditsService.getCreditOperations(query)` returns the platform-wide credit operations report.
 
 ### 3. Contracts
 
@@ -558,6 +561,14 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 - User-facing AI usage and invoke responses must expose credits and usage diagnostics only. They must not expose official upstream `estimatedCostAmount`, `estimatedCostCurrency`, or `costByCurrency`.
 - Admin Dicha AI analytics may show real CNY/USD cost and credits side by side for the official provider.
 - Balance updates and ledger writes must be atomic. Debit must use a conditional balance update (`balance >= amount`) rather than decrement-then-check.
+- The admin credit operations dashboard is an accounting dashboard, not an AI request diagnostics page:
+  - `CreditAccount` is the source for global balance, lifetime granted, and lifetime spent.
+  - `CreditLedgerEntry` is the source of truth for windowed credit movement, trends, type distribution, and user rankings.
+  - `CreditRedemptionCode` is the source for redemption-code utilization and status distribution.
+  - `AiUsageEvent` may only add lightweight official Dicha rankings when filtered by `providerId: 'dicha'`, `kind: 'invoke'`, and positive `creditAmount`.
+  - Request-level diagnostics such as request ids, upstream ids, retry attempts, raw errors, prompts, and response bodies belong in AI diagnostics/log pages, not in this operations dashboard.
+- The operations endpoint query supports `range` (`24h | 7d | 30d | 90d`) and `bucket` (`hour | day`). Responses must include summary, trend buckets, ledger type distribution, user rankings, redemption summary, and lightweight Dicha AI model/use-case credit rankings.
+- Global operations windows require indexes on `CreditLedgerEntry.createdAt` and `CreditLedgerEntry(type, createdAt)`. Add narrower indexes before introducing heavier filters or high-cardinality rankings.
 
 ### 4. Validation & Error Matrix
 
@@ -572,17 +583,24 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 | BYOK/custom provider call | Records usage diagnostics with `creditAmount: 0`, no ledger debit, no Dicha cost. |
 | Normal user opens `/ai/usage` | Cost fields are masked to zero/null and `costByCurrency` is empty. |
 | Super admin opens Dicha usage | Admin report may aggregate real `estimatedCostAmount` by `CNY`/`USD`. |
+| Super admin opens `/admin/credits/operations` | API returns global credit accounting aggregates plus Dicha credit rankings. |
+| Normal user calls `/admin/credits/operations` | Auth guard/super-admin guard rejects the request. |
+| Operations report has no ledger rows in the selected window | Return zero-valued summaries and empty bucket/ranking arrays, not an error. |
+| Official Dicha usage has request diagnostics fields | Keep them out of the credit operations response; use the AI diagnostics surface instead. |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: store real official cost in `AiUsageEvent` for admin reconciliation while masking those fields in user-facing gateway reports.
 - Good: store `creditAmount` on both usage events and debit ledger entries so usage pages and balance ledgers can cross-check.
 - Good: append-only ledger rows with stored `balanceAfter`; account balance is a fast read model updated transactionally.
+- Good: aggregate credit operations from ledger/account tables and only join AI usage for small Dicha model/use-case rankings.
 - Base: redemption codes and admin grants are enough to fund accounts before payment integration exists.
 - Bad: exposing `estimatedCostAmount` for official Dicha calls to `apps/web`.
 - Bad: charging user-owned providers through Dicha credits.
 - Bad: using credits as a model pricing currency.
 - Bad: changing an active rule and recomputing old usage rows instead of preserving billing snapshots.
+- Bad: building the credit operations page from AI usage logs alone; ledger/account data is the accounting source of truth.
+- Bad: mixing request-level AI troubleshooting fields into the credit operations dashboard.
 
 ### 6. Tests Required
 
@@ -591,12 +609,14 @@ const where: Prisma.AiUsageEventWhereInput = { AND: andWhere };
 - `pnpm --filter @dicha/ai-gateway typecheck && pnpm --filter @dicha/ai-gateway lint && pnpm --filter @dicha/ai-gateway test && pnpm --filter @dicha/ai-gateway build`.
 - `pnpm --filter @dicha/web typecheck && pnpm --filter @dicha/web lint && pnpm --filter @dicha/web build`.
 - `pnpm --filter @dicha/admin typecheck && pnpm --filter @dicha/admin lint && pnpm --filter @dicha/admin build`.
+- For `GET /admin/credits/operations`, also run `@dicha/shared` build, API typecheck/lint/build, and admin typecheck/lint/build after contract/admin route changes.
 - Focused assertions:
   - insufficient credits do not call upstream;
   - successful official invoke creates a debit ledger entry and linked usage event;
   - concurrent debit cannot create negative balance;
   - BYOK/custom invoke records zero credits and no cost;
   - user usage report masks CNY/USD cost while admin Dicha report retains it.
+  - credit operations report uses `CreditLedgerEntry` for accounting summaries and only filters official Dicha `AiUsageEvent` rows for lightweight AI rankings.
 
 ### 7. Wrong vs Correct
 
@@ -624,6 +644,28 @@ const debit = await tx.creditAccount.updateMany({
   },
 });
 if (debit.count !== 1) throw new Error('Insufficient Dicha credits');
+```
+
+#### Wrong
+
+```typescript
+const rows = await prisma.aiUsageEvent.findMany({ where: { providerId: 'dicha' } });
+return buildCreditOperationsFromUsage(rows);
+```
+
+This turns request diagnostics into the accounting source and misses grants, redemptions, refunds, and manual adjustments.
+
+#### Correct
+
+```typescript
+const ledgerRows = await prisma.creditLedgerEntry.findMany({
+  where: { createdAt: { gte: windowStart, lte: windowEnd } },
+  orderBy: { createdAt: 'asc' },
+});
+const aiRows = await prisma.aiUsageEvent.findMany({
+  where: { providerId: 'dicha', kind: 'invoke', creditAmount: { gt: 0 } },
+});
+return buildCreditOperationsReport({ ledgerRows, aiRows });
 ```
 
 #### Wrong

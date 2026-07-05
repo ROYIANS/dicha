@@ -22,6 +22,7 @@ import { Route as AdminAiInvokeTestRouteImport } from './routes/_admin.ai-invoke
 import { Route as AdminAiDiagnosticsRouteImport } from './routes/_admin.ai-diagnostics'
 import { Route as AdminCreditsRulesRouteImport } from './routes/_admin.credits.rules'
 import { Route as AdminCreditsRedemptionCodesRouteImport } from './routes/_admin.credits.redemption-codes'
+import { Route as AdminCreditsOperationsRouteImport } from './routes/_admin.credits.operations'
 import { Route as AdminCreditsLedgerRouteImport } from './routes/_admin.credits.ledger'
 import { Route as AdminCreditsGrantsRouteImport } from './routes/_admin.credits.grants'
 import { Route as AdminCreditsBalancesRouteImport } from './routes/_admin.credits.balances'
@@ -91,6 +92,11 @@ const AdminCreditsRedemptionCodesRoute =
     path: '/credits/redemption-codes',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminCreditsOperationsRoute = AdminCreditsOperationsRouteImport.update({
+  id: '/credits/operations',
+  path: '/credits/operations',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCreditsLedgerRoute = AdminCreditsLedgerRouteImport.update({
   id: '/credits/ledger',
   path: '/credits/ledger',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/credits/balances': typeof AdminCreditsBalancesRoute
   '/credits/grants': typeof AdminCreditsGrantsRoute
   '/credits/ledger': typeof AdminCreditsLedgerRoute
+  '/credits/operations': typeof AdminCreditsOperationsRoute
   '/credits/redemption-codes': typeof AdminCreditsRedemptionCodesRoute
   '/credits/rules': typeof AdminCreditsRulesRoute
 }
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/credits/balances': typeof AdminCreditsBalancesRoute
   '/credits/grants': typeof AdminCreditsGrantsRoute
   '/credits/ledger': typeof AdminCreditsLedgerRoute
+  '/credits/operations': typeof AdminCreditsOperationsRoute
   '/credits/redemption-codes': typeof AdminCreditsRedemptionCodesRoute
   '/credits/rules': typeof AdminCreditsRulesRoute
 }
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/_admin/credits/balances': typeof AdminCreditsBalancesRoute
   '/_admin/credits/grants': typeof AdminCreditsGrantsRoute
   '/_admin/credits/ledger': typeof AdminCreditsLedgerRoute
+  '/_admin/credits/operations': typeof AdminCreditsOperationsRoute
   '/_admin/credits/redemption-codes': typeof AdminCreditsRedemptionCodesRoute
   '/_admin/credits/rules': typeof AdminCreditsRulesRoute
 }
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/credits/balances'
     | '/credits/grants'
     | '/credits/ledger'
+    | '/credits/operations'
     | '/credits/redemption-codes'
     | '/credits/rules'
   fileRoutesByTo: FileRoutesByTo
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/credits/balances'
     | '/credits/grants'
     | '/credits/ledger'
+    | '/credits/operations'
     | '/credits/redemption-codes'
     | '/credits/rules'
   id:
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/_admin/credits/balances'
     | '/_admin/credits/grants'
     | '/_admin/credits/ledger'
+    | '/_admin/credits/operations'
     | '/_admin/credits/redemption-codes'
     | '/_admin/credits/rules'
   fileRoutesById: FileRoutesById
@@ -314,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCreditsRedemptionCodesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/credits/operations': {
+      id: '/_admin/credits/operations'
+      path: '/credits/operations'
+      fullPath: '/credits/operations'
+      preLoaderRoute: typeof AdminCreditsOperationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/credits/ledger': {
       id: '/_admin/credits/ledger'
       path: '/credits/ledger'
@@ -350,6 +369,7 @@ interface AdminRouteChildren {
   AdminCreditsBalancesRoute: typeof AdminCreditsBalancesRoute
   AdminCreditsGrantsRoute: typeof AdminCreditsGrantsRoute
   AdminCreditsLedgerRoute: typeof AdminCreditsLedgerRoute
+  AdminCreditsOperationsRoute: typeof AdminCreditsOperationsRoute
   AdminCreditsRedemptionCodesRoute: typeof AdminCreditsRedemptionCodesRoute
   AdminCreditsRulesRoute: typeof AdminCreditsRulesRoute
 }
@@ -366,6 +386,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCreditsBalancesRoute: AdminCreditsBalancesRoute,
   AdminCreditsGrantsRoute: AdminCreditsGrantsRoute,
   AdminCreditsLedgerRoute: AdminCreditsLedgerRoute,
+  AdminCreditsOperationsRoute: AdminCreditsOperationsRoute,
   AdminCreditsRedemptionCodesRoute: AdminCreditsRedemptionCodesRoute,
   AdminCreditsRulesRoute: AdminCreditsRulesRoute,
 }

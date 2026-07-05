@@ -497,6 +497,8 @@ model CreditLedgerEntry {
 
   @@index([ownerId, createdAt])
   @@index([ownerId, type, createdAt])
+  @@index([createdAt])
+  @@index([type, createdAt])
   @@index([source, sourceId])
   @@index([aiUsageEventId])
 }

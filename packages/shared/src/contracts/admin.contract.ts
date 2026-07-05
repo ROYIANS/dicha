@@ -552,6 +552,126 @@ export type AdminCreditRedemptionCodesOverview = z.infer<
   typeof AdminCreditRedemptionCodesOverviewSchema
 >;
 
+export const AdminCreditOperationsQuerySchema = z.object({
+  window: AiUsageWindowSchema.default('7d'),
+});
+export type AdminCreditOperationsQuery = z.infer<
+  typeof AdminCreditOperationsQuerySchema
+>;
+
+export const AdminCreditOperationsSummarySchema = z.object({
+  totalBalance: z.number().int(),
+  lifetimeGranted: z.number().int().min(0),
+  lifetimeSpent: z.number().int().min(0),
+  activeAccounts: z.number().int().min(0),
+  ledgerEntries: z.number().int().min(0),
+  grantedCredits: z.number().int().min(0),
+  redeemedCredits: z.number().int().min(0),
+  spentCredits: z.number().int().min(0),
+  refundedCredits: z.number().int().min(0),
+  adjustedCredits: z.number().int(),
+  expiredCredits: z.number().int().min(0),
+  aiSpentCredits: z.number().int().min(0),
+  netChange: z.number().int(),
+});
+export type AdminCreditOperationsSummary = z.infer<
+  typeof AdminCreditOperationsSummarySchema
+>;
+
+export const AdminCreditOperationsBucketSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  grantedCredits: z.number().int().min(0),
+  redeemedCredits: z.number().int().min(0),
+  spentCredits: z.number().int().min(0),
+  refundedCredits: z.number().int().min(0),
+  adjustedCredits: z.number().int(),
+  expiredCredits: z.number().int().min(0),
+  aiSpentCredits: z.number().int().min(0),
+  netChange: z.number().int(),
+  entries: z.number().int().min(0),
+});
+export type AdminCreditOperationsBucket = z.infer<
+  typeof AdminCreditOperationsBucketSchema
+>;
+
+export const AdminCreditOperationsBreakdownSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  credits: z.number().int(),
+  entries: z.number().int().min(0),
+});
+export type AdminCreditOperationsBreakdown = z.infer<
+  typeof AdminCreditOperationsBreakdownSchema
+>;
+
+export const AdminCreditOperationsUserRankSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+  }),
+  balance: z.number().int(),
+  lifetimeGranted: z.number().int().min(0),
+  lifetimeSpent: z.number().int().min(0),
+  credits: z.number().int(),
+  lastActivityAt: z.string().datetime().nullable(),
+});
+export type AdminCreditOperationsUserRank = z.infer<
+  typeof AdminCreditOperationsUserRankSchema
+>;
+
+export const AdminCreditOperationsRedemptionSummarySchema = z.object({
+  totalCodes: z.number().int().min(0),
+  enabledCodes: z.number().int().min(0),
+  exhaustedCodes: z.number().int().min(0),
+  expiredCodes: z.number().int().min(0),
+  expiringSoonCodes: z.number().int().min(0),
+  totalPotentialCredits: z.number().int().min(0),
+  redeemedCredits: z.number().int().min(0),
+  remainingCredits: z.number().int().min(0),
+  totalRedemptions: z.number().int().min(0),
+  usageRate: z.number().min(0).max(1),
+});
+export type AdminCreditOperationsRedemptionSummary = z.infer<
+  typeof AdminCreditOperationsRedemptionSummarySchema
+>;
+
+export const AdminCreditOperationsAiBreakdownSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  credits: z.number().int().min(0),
+  calls: z.number().int().min(0),
+  tokens: z.number().int().min(0),
+});
+export type AdminCreditOperationsAiBreakdown = z.infer<
+  typeof AdminCreditOperationsAiBreakdownSchema
+>;
+
+export const AdminCreditOperationsReportSchema = z.object({
+  generatedAt: z.string().datetime(),
+  window: AiUsageWindowSchema,
+  from: z.string().datetime().nullable(),
+  to: z.string().datetime(),
+  summary: AdminCreditOperationsSummarySchema,
+  timeSeries: z.array(AdminCreditOperationsBucketSchema),
+  byType: z.array(AdminCreditOperationsBreakdownSchema),
+  userRanks: z.object({
+    byBalance: z.array(AdminCreditOperationsUserRankSchema),
+    bySpent: z.array(AdminCreditOperationsUserRankSchema),
+    byGranted: z.array(AdminCreditOperationsUserRankSchema),
+    byRecentActivity: z.array(AdminCreditOperationsUserRankSchema),
+  }),
+  redemption: AdminCreditOperationsRedemptionSummarySchema,
+  aiUsage: z.object({
+    byModel: z.array(AdminCreditOperationsAiBreakdownSchema),
+    byUseCase: z.array(AdminCreditOperationsAiBreakdownSchema),
+  }),
+});
+export type AdminCreditOperationsReport = z.infer<
+  typeof AdminCreditOperationsReportSchema
+>;
+
 export const adminContract = c.router({
   getOverview: {
     method: 'GET',
@@ -677,6 +797,15 @@ export const adminContract = c.router({
       200: AdminCreditRulesOverviewSchema,
     },
     summary: 'Super admin credit conversion rules',
+  },
+  getCreditOperations: {
+    method: 'GET',
+    path: '/admin/credits/operations',
+    query: AdminCreditOperationsQuerySchema,
+    responses: {
+      200: AdminCreditOperationsReportSchema,
+    },
+    summary: 'Super admin credit operations analytics',
   },
   upsertCreditRule: {
     method: 'POST',

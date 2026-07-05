@@ -6,6 +6,8 @@ import type {
   AdminCreditGrantResponse,
   AdminCreditLedgerPage,
   AdminCreditLedgerQuery,
+  AdminCreditOperationsQuery,
+  AdminCreditOperationsReport,
   AdminCreditRedemptionCode,
   AdminCreditRedemptionCodeUpsert,
   AdminCreditRedemptionCodesOverview,
@@ -15,6 +17,7 @@ import type {
   CreditAccount,
   CreditBalanceReport,
   CreditLedgerEntry,
+  CreditLedgerType,
   CreditLedgerPage,
   CreditLedgerQuery,
   CreditRedeemResponse,
@@ -32,6 +35,16 @@ type CreditLedgerWithUserRecord = Prisma.CreditLedgerEntryGetPayload<{
 type CreditAccountWithUserRecord = Prisma.CreditAccountGetPayload<{
   include: { owner: { select: { id: true; email: true; name: true } } };
 }>;
+type CreditLedgerWithUserAndAccountRecord = Prisma.CreditLedgerEntryGetPayload<{
+  include: {
+    owner: { select: { id: true; email: true; name: true } };
+    account: true;
+  };
+}>;
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const DICHA_PROVIDER_ID = 'dicha';
 
 @Injectable()
 export class CreditsService {
@@ -143,6 +156,95 @@ export class CreditsService {
     return {
       generatedAt: new Date().toISOString(),
       rules: rules.map(toCreditRule),
+    };
+  }
+
+  async getCreditOperations(
+    query: AdminCreditOperationsQuery,
+  ): Promise<AdminCreditOperationsReport> {
+    const now = new Date();
+    const from = creditWindowStart(now, query.window);
+    const ledgerWhere: Prisma.CreditLedgerEntryWhereInput = {
+      ...(from ? { createdAt: { gte: from } } : {}),
+    };
+    const aiUsageWhere: Prisma.AiUsageEventWhereInput = {
+      kind: 'invoke',
+      providerId: DICHA_PROVIDER_ID,
+      creditAmount: { gt: 0 },
+      ...(from ? { createdAt: { gte: from } } : {}),
+    };
+
+    const [
+      accountTotals,
+      activeAccounts,
+      ledgerEntries,
+      balanceAccounts,
+      redemptionCodes,
+      aiUsageEvents,
+    ] = await Promise.all([
+      this.prisma.creditAccount.aggregate({
+        _sum: { balance: true, lifetimeGranted: true, lifetimeSpent: true },
+      }),
+      this.prisma.creditAccount.count({ where: { balance: { gt: 0 } } }),
+      this.prisma.creditLedgerEntry.findMany({
+        where: ledgerWhere,
+        include: {
+          owner: { select: { id: true, email: true, name: true } },
+          account: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.creditAccount.findMany({
+        include: { owner: { select: { id: true, email: true, name: true } } },
+        orderBy: [{ balance: 'desc' }, { updatedAt: 'desc' }],
+        take: 8,
+      }),
+      this.prisma.creditRedemptionCode.findMany(),
+      this.prisma.aiUsageEvent.findMany({
+        where: aiUsageWhere,
+        select: {
+          modelId: true,
+          modelName: true,
+          useCase: true,
+          creditAmount: true,
+          totalTokens: true,
+        },
+      }),
+    ]);
+
+    const rangeFrom = creditReportRangeStart(ledgerEntries, from, now);
+
+    return {
+      generatedAt: now.toISOString(),
+      window: query.window,
+      from: from?.toISOString() ?? null,
+      to: now.toISOString(),
+      summary: creditOperationsSummary(accountTotals, activeAccounts, ledgerEntries),
+      timeSeries: creditOperationBuckets(ledgerEntries, rangeFrom, now, query.window),
+      byType: creditTypeBreakdown(ledgerEntries),
+      userRanks: {
+        byBalance: balanceAccounts.map((account) =>
+          creditAccountRankItem(account, account.balance, null),
+        ),
+        bySpent: creditLedgerUserRank(ledgerEntries, (entry) =>
+          entry.type === 'debit' && entry.amount < 0 ? Math.abs(entry.amount) : 0,
+        ),
+        byGranted: creditLedgerUserRank(ledgerEntries, (entry) =>
+          entry.amount > 0 ? entry.amount : 0,
+        ),
+        byRecentActivity: recentCreditUserRank(ledgerEntries),
+      },
+      redemption: creditRedemptionSummary(redemptionCodes, now),
+      aiUsage: {
+        byModel: creditAiBreakdown(aiUsageEvents, (event) => ({
+          key: event.modelId ?? 'unknown-model',
+          label: event.modelName ?? '未知模型',
+        })),
+        byUseCase: creditAiBreakdown(aiUsageEvents, (event) => ({
+          key: event.useCase ?? 'unknown-use-case',
+          label: event.useCase ?? 'unknown-use-case',
+        })),
+      },
     };
   }
 
@@ -338,6 +440,332 @@ function toCreditAccount(account: CreditAccountRecord): CreditAccount {
     lifetimeSpent: account.lifetimeSpent,
     updatedAt: account.updatedAt.toISOString(),
   };
+}
+
+function creditWindowStart(now: Date, window: AdminCreditOperationsQuery['window']): Date | null {
+  if (window === '24h') return new Date(now.getTime() - 24 * HOUR_MS);
+  if (window === '7d') return new Date(now.getTime() - 7 * DAY_MS);
+  if (window === '30d') return new Date(now.getTime() - 30 * DAY_MS);
+  return null;
+}
+
+function creditReportRangeStart(
+  entries: CreditLedgerWithUserAndAccountRecord[],
+  from: Date | null,
+  now: Date,
+): Date {
+  if (from) return from;
+  const oldest = entries.at(-1)?.createdAt;
+  return oldest ?? new Date(now.getTime() - 30 * DAY_MS);
+}
+
+function creditOperationsSummary(
+  accountTotals: {
+    _sum: {
+      balance: number | null;
+      lifetimeGranted: number | null;
+      lifetimeSpent: number | null;
+    };
+  },
+  activeAccounts: number,
+  entries: CreditLedgerWithUserAndAccountRecord[],
+): AdminCreditOperationsReport['summary'] {
+  const summary: AdminCreditOperationsReport['summary'] = {
+    totalBalance: accountTotals._sum.balance ?? 0,
+    lifetimeGranted: accountTotals._sum.lifetimeGranted ?? 0,
+    lifetimeSpent: accountTotals._sum.lifetimeSpent ?? 0,
+    activeAccounts,
+    ledgerEntries: entries.length,
+    grantedCredits: 0,
+    redeemedCredits: 0,
+    spentCredits: 0,
+    refundedCredits: 0,
+    adjustedCredits: 0,
+    expiredCredits: 0,
+    aiSpentCredits: 0,
+    netChange: 0,
+  };
+
+  for (const entry of entries) {
+    applyCreditEntry(summary, entry);
+  }
+  return summary;
+}
+
+function creditOperationBuckets(
+  entries: CreditLedgerWithUserAndAccountRecord[],
+  from: Date,
+  to: Date,
+  window: AdminCreditOperationsQuery['window'],
+): AdminCreditOperationsReport['timeSeries'] {
+  const granularity = window === '24h' ? 'hour' : 'day';
+  const bucketMs = granularity === 'hour' ? HOUR_MS : DAY_MS;
+  const buckets = new Map<string, AdminCreditOperationsReport['timeSeries'][number]>();
+  const cursor = alignCreditBucketStart(from, granularity);
+
+  while (cursor <= to) {
+    const key = creditBucketKey(cursor, granularity);
+    buckets.set(key, emptyCreditBucket(key, creditBucketLabel(cursor, granularity)));
+    cursor.setTime(cursor.getTime() + bucketMs);
+  }
+
+  for (const entry of entries) {
+    const key = creditBucketKey(entry.createdAt, granularity);
+    const bucket = buckets.get(key);
+    if (bucket) applyCreditEntry(bucket, entry);
+  }
+
+  return [...buckets.values()];
+}
+
+function emptyCreditBucket(
+  key: string,
+  label: string,
+): AdminCreditOperationsReport['timeSeries'][number] {
+  return {
+    key,
+    label,
+    grantedCredits: 0,
+    redeemedCredits: 0,
+    spentCredits: 0,
+    refundedCredits: 0,
+    adjustedCredits: 0,
+    expiredCredits: 0,
+    aiSpentCredits: 0,
+    netChange: 0,
+    entries: 0,
+  };
+}
+
+function applyCreditEntry(
+  target: AdminCreditOperationsReport['summary'] | AdminCreditOperationsReport['timeSeries'][number],
+  entry: Pick<CreditLedgerWithUserAndAccountRecord, 'amount' | 'type' | 'source'>,
+): void {
+  const amount = entry.amount;
+  if ('entries' in target) target.entries += 1;
+  target.netChange += amount;
+
+  if (entry.type === 'grant' && amount > 0) target.grantedCredits += amount;
+  if (entry.type === 'redeem' && amount > 0) target.redeemedCredits += amount;
+  if (entry.type === 'refund' && amount > 0) target.refundedCredits += amount;
+  if (entry.type === 'adjustment') target.adjustedCredits += amount;
+  if (entry.type === 'debit' && amount < 0) {
+    target.spentCredits += Math.abs(amount);
+    if (entry.source === 'ai_invoke') target.aiSpentCredits += Math.abs(amount);
+  }
+  if (entry.type === 'expiry' && amount < 0) target.expiredCredits += Math.abs(amount);
+}
+
+function creditTypeBreakdown(
+  entries: CreditLedgerWithUserAndAccountRecord[],
+): AdminCreditOperationsReport['byType'] {
+  const grouped = new Map<CreditLedgerType, { credits: number; entries: number }>();
+  for (const entry of entries) {
+    const type = entry.type as CreditLedgerType;
+    const current = grouped.get(type) ?? { credits: 0, entries: 0 };
+    current.credits += entry.amount;
+    current.entries += 1;
+    grouped.set(type, current);
+  }
+  return [...grouped.entries()]
+    .map(([key, value]) => ({
+      key,
+      label: creditLedgerTypeLabel(key),
+      credits: value.credits,
+      entries: value.entries,
+    }))
+    .sort((left, right) => Math.abs(right.credits) - Math.abs(left.credits));
+}
+
+function creditLedgerUserRank(
+  entries: CreditLedgerWithUserAndAccountRecord[],
+  amountForEntry: (entry: CreditLedgerWithUserAndAccountRecord) => number,
+): AdminCreditOperationsReport['userRanks']['bySpent'] {
+  const grouped = new Map<
+    string,
+    { entry: CreditLedgerWithUserAndAccountRecord; credits: number; lastActivityAt: Date }
+  >();
+  for (const entry of entries) {
+    const credits = amountForEntry(entry);
+    if (credits <= 0) continue;
+    const current = grouped.get(entry.ownerId);
+    if (current) {
+      current.credits += credits;
+      if (entry.createdAt > current.lastActivityAt) current.lastActivityAt = entry.createdAt;
+    } else {
+      grouped.set(entry.ownerId, { entry, credits, lastActivityAt: entry.createdAt });
+    }
+  }
+  return [...grouped.values()]
+    .sort((left, right) => right.credits - left.credits)
+    .slice(0, 8)
+    .map((item) => creditLedgerRankItem(item.entry, item.credits, item.lastActivityAt));
+}
+
+function recentCreditUserRank(
+  entries: CreditLedgerWithUserAndAccountRecord[],
+): AdminCreditOperationsReport['userRanks']['byRecentActivity'] {
+  const seen = new Set<string>();
+  const ranks: AdminCreditOperationsReport['userRanks']['byRecentActivity'] = [];
+  for (const entry of entries) {
+    if (seen.has(entry.ownerId)) continue;
+    seen.add(entry.ownerId);
+    ranks.push(creditLedgerRankItem(entry, entry.amount, entry.createdAt));
+    if (ranks.length >= 8) break;
+  }
+  return ranks;
+}
+
+function creditAccountRankItem(
+  account: CreditAccountWithUserRecord,
+  credits: number,
+  lastActivityAt: Date | null,
+): AdminCreditOperationsReport['userRanks']['byBalance'][number] {
+  return {
+    user: {
+      id: account.owner.id,
+      email: account.owner.email,
+      name: account.owner.name,
+    },
+    balance: account.balance,
+    lifetimeGranted: account.lifetimeGranted,
+    lifetimeSpent: account.lifetimeSpent,
+    credits,
+    lastActivityAt: lastActivityAt?.toISOString() ?? null,
+  };
+}
+
+function creditLedgerRankItem(
+  entry: CreditLedgerWithUserAndAccountRecord,
+  credits: number,
+  lastActivityAt: Date,
+): AdminCreditOperationsReport['userRanks']['byBalance'][number] {
+  return {
+    user: {
+      id: entry.owner.id,
+      email: entry.owner.email,
+      name: entry.owner.name,
+    },
+    balance: entry.account.balance,
+    lifetimeGranted: entry.account.lifetimeGranted,
+    lifetimeSpent: entry.account.lifetimeSpent,
+    credits,
+    lastActivityAt: lastActivityAt.toISOString(),
+  };
+}
+
+function creditRedemptionSummary(
+  codes: CreditCodeRecord[],
+  now: Date,
+): AdminCreditOperationsReport['redemption'] {
+  const soon = new Date(now.getTime() + 7 * DAY_MS);
+  let enabledCodes = 0;
+  let exhaustedCodes = 0;
+  let expiredCodes = 0;
+  let expiringSoonCodes = 0;
+  let totalPotentialCredits = 0;
+  let redeemedCredits = 0;
+  let totalRedemptions = 0;
+
+  for (const code of codes) {
+    const exhausted = code.redeemedCount >= code.maxRedemptions;
+    const expired = Boolean(code.expiresAt && code.expiresAt < now);
+    if (code.enabled) enabledCodes += 1;
+    if (exhausted) exhaustedCodes += 1;
+    if (expired) expiredCodes += 1;
+    if (code.enabled && code.expiresAt && code.expiresAt >= now && code.expiresAt <= soon) {
+      expiringSoonCodes += 1;
+    }
+    totalPotentialCredits += code.creditAmount * code.maxRedemptions;
+    redeemedCredits += code.creditAmount * code.redeemedCount;
+    totalRedemptions += code.redeemedCount;
+  }
+
+  return {
+    totalCodes: codes.length,
+    enabledCodes,
+    exhaustedCodes,
+    expiredCodes,
+    expiringSoonCodes,
+    totalPotentialCredits,
+    redeemedCredits,
+    remainingCredits: Math.max(totalPotentialCredits - redeemedCredits, 0),
+    totalRedemptions,
+    usageRate: totalPotentialCredits > 0 ? redeemedCredits / totalPotentialCredits : 0,
+  };
+}
+
+function creditAiBreakdown(
+  events: Array<{
+    creditAmount: number;
+    totalTokens: number;
+  }>,
+  group: (event: {
+    modelId?: string;
+    modelName?: string;
+    useCase?: string;
+    creditAmount: number;
+    totalTokens: number;
+  }) => { key: string; label: string },
+): AdminCreditOperationsReport['aiUsage']['byModel'] {
+  const grouped = new Map<string, { label: string; credits: number; calls: number; tokens: number }>();
+  for (const event of events) {
+    const option = group(event);
+    const current = grouped.get(option.key) ?? {
+      label: option.label,
+      credits: 0,
+      calls: 0,
+      tokens: 0,
+    };
+    current.credits += event.creditAmount;
+    current.calls += 1;
+    current.tokens += event.totalTokens;
+    grouped.set(option.key, current);
+  }
+  return [...grouped.entries()]
+    .map(([key, value]) => ({ key, ...value }))
+    .sort((left, right) => right.credits - left.credits)
+    .slice(0, 10);
+}
+
+function alignCreditBucketStart(date: Date, granularity: 'hour' | 'day'): Date {
+  const value = new Date(date);
+  value.setMinutes(0, 0, 0);
+  if (granularity === 'day') value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function creditBucketKey(date: Date, granularity: 'hour' | 'day'): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  if (granularity === 'day') return `${year}-${month}-${day}`;
+  const hour = String(date.getHours()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:00`;
+}
+
+function creditBucketLabel(date: Date, granularity: 'hour' | 'day'): string {
+  if (granularity === 'hour') {
+    return new Intl.DateTimeFormat('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+    }).format(date);
+  }
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function creditLedgerTypeLabel(type: CreditLedgerType): string {
+  if (type === 'grant') return '发放';
+  if (type === 'redeem') return '兑换';
+  if (type === 'debit') return '扣费';
+  if (type === 'refund') return '退款';
+  if (type === 'adjustment') return '调整';
+  if (type === 'expiry') return '过期';
+  return type;
 }
 
 function toCreditLedgerEntry(entry: CreditLedgerRecord): CreditLedgerEntry {

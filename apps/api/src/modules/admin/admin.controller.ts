@@ -152,6 +152,16 @@ export class AdminController {
     }));
   }
 
+  @TsRestHandler(contract.admin.getCreditOperations)
+  getCreditOperations(): ReturnType<
+    typeof tsRestHandler<typeof contract.admin.getCreditOperations>
+  > {
+    return tsRestHandler(contract.admin.getCreditOperations, async ({ query }) => ({
+      status: 200,
+      body: await this.admin.getCreditOperations(query),
+    }));
+  }
+
   @TsRestHandler(contract.admin.upsertCreditRule)
   upsertCreditRule(): ReturnType<typeof tsRestHandler<typeof contract.admin.upsertCreditRule>> {
     return tsRestHandler(contract.admin.upsertCreditRule, async ({ body }) => ({

@@ -10,6 +10,8 @@ import type {
   AdminCreditGrantResponse,
   AdminCreditLedgerPage,
   AdminCreditLedgerQuery,
+  AdminCreditOperationsQuery,
+  AdminCreditOperationsReport,
   AdminCreditRedemptionCode,
   AdminCreditRedemptionCodeUpsert,
   AdminCreditRedemptionCodesOverview,
@@ -627,6 +629,10 @@ export class AdminService {
 
   getCreditRules(): Promise<AdminCreditRulesOverview> {
     return this.credits.getCreditRules();
+  }
+
+  getCreditOperations(query: AdminCreditOperationsQuery): Promise<AdminCreditOperationsReport> {
+    return this.credits.getCreditOperations(query);
   }
 
   upsertCreditRule(body: AdminCreditRuleUpsert): Promise<AdminCreditRule> {

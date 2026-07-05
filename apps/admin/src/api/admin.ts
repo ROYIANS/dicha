@@ -8,6 +8,7 @@ import {
   AdminCreditBalancesPageSchema,
   AdminCreditGrantResponseSchema,
   AdminCreditLedgerPageSchema,
+  AdminCreditOperationsReportSchema,
   AdminCreditRedemptionCodeSchema,
   AdminCreditRedemptionCodesOverviewSchema,
   AdminCreditRuleSchema,
@@ -33,6 +34,8 @@ import {
   type AdminCreditGrantResponse,
   type AdminCreditLedgerPage,
   type AdminCreditLedgerQuery,
+  type AdminCreditOperationsQuery,
+  type AdminCreditOperationsReport,
   type AdminCreditRedemptionCode,
   type AdminCreditRedemptionCodeUpsert,
   type AdminCreditRedemptionCodesOverview,
@@ -69,6 +72,7 @@ export type AdminDichaAiDiagnosticsQueryInput = Partial<AdminDichaAiDiagnosticsQ
 
 export type AdminCreditBalancesQueryInput = Partial<AdminCreditBalancesQuery>;
 export type AdminCreditLedgerQueryInput = Partial<AdminCreditLedgerQuery>;
+export type AdminCreditOperationsQueryInput = Partial<AdminCreditOperationsQuery>;
 
 export async function invokeAdminAiStream(
   body: AiInvokeRequest,
@@ -277,6 +281,26 @@ export function adminCreditRulesQueryOptions() {
         throw new Error(`Admin credit rules request failed (${res.status})`);
       }
       return AdminCreditRulesOverviewSchema.parse(res.body);
+    },
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export function adminCreditOperationsQueryOptions(
+  query: AdminCreditOperationsQueryInput = {},
+) {
+  const normalizedQuery = {
+    window: query.window ?? '7d',
+  };
+  return queryOptions<AdminCreditOperationsReport>({
+    queryKey: ['admin', 'credits', 'operations', normalizedQuery] as const,
+    queryFn: async () => {
+      const res = await api.admin.getCreditOperations({ query: normalizedQuery });
+      if (res.status !== 200) {
+        throw new Error(`Admin credit operations request failed (${res.status})`);
+      }
+      return AdminCreditOperationsReportSchema.parse(res.body);
     },
     staleTime: 30 * 1000,
     retry: false,

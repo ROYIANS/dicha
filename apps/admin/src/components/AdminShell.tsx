@@ -57,6 +57,7 @@ const navSections = [
   {
     title: '积分与计费',
     items: [
+      { to: '/credits/operations', label: '积分看板', icon: BarChart3 },
       { to: '/credits/rules', label: '积分规则', icon: Coins },
       { to: '/credits/grants', label: '积分发放', icon: Gift },
       { to: '/credits/balances', label: '账户余额', icon: WalletCards },
@@ -86,6 +87,7 @@ type AdminNavItem = {
     | '/ai-invoke-test'
     | '/ai-diagnostics'
     | '/credits/rules'
+    | '/credits/operations'
     | '/credits/grants'
     | '/credits/balances'
     | '/credits/ledger'
