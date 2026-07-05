@@ -364,7 +364,7 @@ await recordAuditLog(context, {
   - `DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND`: server-side command used by `restart_ai_gateway`.
   - `DICHA_ADMIN_CLEAR_CACHE_COMMAND`: server-side command used by `clear_runtime_cache`.
 - When these command env values are written in `.env` for `deploy.sh`/`deploy.ps1`, wrap the whole command in single quotes if it contains spaces, `$DATABASE_URL`, `$REDIS_URL`, or command substitution. This keeps the host deploy shell from expanding container-only variables before Docker Compose injects them.
-- The default Docker Compose deployment installs `postgresql-client` and `docker-cli` in the API image, mounts `/var/run/docker.sock`, and provides default commands for `run_backup`, `restart_api`, and `restart_ai_gateway`. This makes Web operations usable out of the box for self-hosted Docker deployments; custom deployments should replace these commands with their own platform runner or disable them.
+- The default Docker Compose deployment installs `postgresql-client` and `docker-cli` in the API image, injects standard `PGHOST`/`PGPORT`/`PGUSER`/`PGPASSWORD`/`PGDATABASE` variables for `pg_dump`, mounts `/var/run/docker.sock`, and provides default commands for `run_backup`, `restart_api`, and `restart_ai_gateway`. Do not feed Prisma's `DATABASE_URL` directly to `pg_dump` because its `?schema=public` query parameter is Prisma-specific. This makes Web operations usable out of the box for self-hosted Docker deployments; custom deployments should replace these commands with their own platform runner or disable them.
 
 ### 3. Contracts
 

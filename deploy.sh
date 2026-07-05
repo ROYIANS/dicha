@@ -39,7 +39,7 @@ validate_env_file() {
 
       if [[ "$value" != \'* ]]; then
         if [[ "$value" == *[[:space:]]* || "$value" == *'$'* || "$value" == *'('* ]]; then
-          fail ".env line ${line_no}: ${key} must wrap command values in single quotes, e.g. ${key}='command \"\$DATABASE_URL\"'"
+          fail ".env line ${line_no}: ${key} must wrap command values in single quotes, e.g. ${key}='command with args'"
         fi
       fi
     fi

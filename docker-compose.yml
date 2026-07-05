@@ -41,6 +41,11 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-dicha}:${POSTGRES_PASSWORD:-dicha}@postgres:5432/${POSTGRES_DB:-dicha}?schema=public
+      PGHOST: postgres
+      PGPORT: '5432'
+      PGUSER: ${POSTGRES_USER:-dicha}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-dicha}
+      PGDATABASE: ${POSTGRES_DB:-dicha}
       PORT: '3000'
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
@@ -61,7 +66,7 @@ services:
       AI_GATEWAY_INTERNAL_TOKEN: ${AI_GATEWAY_INTERNAL_TOKEN:-}
       AI_GATEWAY_SECRET_KEY: ${AI_GATEWAY_SECRET_KEY}
       DICHA_ADMIN_BACKUP_DIR: ${DICHA_ADMIN_BACKUP_DIR:-/data/backups}
-      DICHA_ADMIN_BACKUP_COMMAND: '${DICHA_ADMIN_BACKUP_COMMAND:-pg_dump "$$DATABASE_URL" --format=custom --file=/data/backups/dicha-$$(date +%F-%H%M%S).dump}'
+      DICHA_ADMIN_BACKUP_COMMAND: '${DICHA_ADMIN_BACKUP_COMMAND:-pg_dump --format=custom --file=/data/backups/dicha-$$(date +%F-%H%M%S).dump}'
       DICHA_ADMIN_LOG_FILES: ${DICHA_ADMIN_LOG_FILES:-api=/data/logs/api.log,ai-gateway=/data/logs/ai-gateway.log}
       DICHA_ADMIN_RESTART_API_COMMAND: '${DICHA_ADMIN_RESTART_API_COMMAND:-(sleep 1; docker restart dicha-api >/data/logs/restart-api.log 2>&1) &}'
       DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND: ${DICHA_ADMIN_RESTART_AI_GATEWAY_COMMAND:-docker restart dicha-ai-gateway}
