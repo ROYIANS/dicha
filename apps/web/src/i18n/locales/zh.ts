@@ -259,6 +259,7 @@ export const zh = {
           creditPriority: 'AI 额度',
           baseUrlPlaceholder: 'API 代理地址，例如 https://api.openai.com/v1',
           toggleProvider: '启用或停用 {{name}}',
+          officialManaged: '官方托管',
           saveCredential: '保存 {{name}} 密钥',
           saveCredentialShort: '保存 API Key',
           saveEndpointConfig: '保存端点配置',
@@ -303,6 +304,28 @@ export const zh = {
           deleteModelConfirm: '确定删除 {{name}}？相关用途分配会自动清理。',
           manualModelSoon: '手动添加模型稍后接入',
           noProviderModels: '这个供应商下还没有模型。添加 API Key 后可以先同步模型列表。',
+          noProviderModelsForFilter: '没有符合当前筛选条件的模型。',
+          modelSearchPlaceholder: '搜索模型 ID、名称、能力或供应商',
+          modelSortLabel: '模型排序',
+          officialModelManaged: '官方只读',
+          modelMaxOutput: '输出 {{value}}',
+          modelReleasedAt: '发布 {{value}}',
+          modelFilters: {
+            all: '全部',
+            chat: '对话',
+            image: '图片',
+            video: '视频',
+            embedding: '向量',
+            audio: '音频',
+          },
+          modelSort: {
+            default: '默认排序',
+            name_asc: '名称升序',
+            name_desc: '名称降序',
+            context_desc: '上下文优先',
+            capabilities_desc: '能力更多优先',
+            release_desc: '发布时间优先',
+          },
           metadataUnknown: '元数据待补充',
           metadataUnknownDesc:
             '供应商只返回了模型 ID，暂未返回上下文窗口或能力信息；补充配置后才能启用。',
@@ -365,7 +388,8 @@ export const zh = {
         aiUsage: {
           title: 'AI 消费统计',
           subtitle: '查看经过网关的 AI 调用、Token 和积分消耗。',
-          scopeNote: '统计按当前登录用户隔离；官方 Dicha AI 显示积分消耗，自定义供应商只记录 token、延迟和状态。',
+          scopeNote:
+            '统计按当前登录用户隔离；官方 Dicha AI 显示积分消耗，自定义供应商只记录 token、延迟和状态。',
           windows: {
             '24h': '24 小时',
             '7d': '7 天',
@@ -491,7 +515,8 @@ export const zh = {
           failed: 'AI 调用失败',
           responseTitle: '模型响应',
           attemptsTitle: '调用尝试',
-          noResponse: '还没有响应。发送一次测试调用后，这里会实时展示文本、attempts、token 和积分消耗。',
+          noResponse:
+            '还没有响应。发送一次测试调用后，这里会实时展示文本、attempts、token 和积分消耗。',
           usage: 'Token / 费用',
           selected: '命中模型',
           latencyMetric: '延迟',

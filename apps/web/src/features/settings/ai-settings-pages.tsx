@@ -1,24 +1,32 @@
 import {
   Activity,
+  ArrowDownUp,
+  AudioLines,
   Bot,
+  Boxes,
   Brain,
   CheckCircle2,
   ChevronDown,
   CircleDashed,
+  ImageIcon,
   Trash2,
   KeyRound,
   Layers3,
+  MessageSquare,
   Plus,
   RefreshCw,
   Save,
+  Search,
   SlidersHorizontal,
   Server,
   Sparkles,
+  Video,
   X,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
+import { Button, Chip, Dropdown, Input, Tabs } from '@heroui/react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -121,6 +129,70 @@ const modelTypeOptions = [
   'realtime',
 ] satisfies AiModelType[];
 
+type ModelListFilterKey = 'all' | 'chat' | 'image' | 'video' | 'embedding' | 'audio';
+type ModelListSortMode =
+  'default' | 'name_asc' | 'name_desc' | 'context_desc' | 'capabilities_desc' | 'release_desc';
+
+const modelListFilters = [
+  {
+    key: 'all',
+    icon: Boxes,
+    matches: () => true,
+  },
+  {
+    key: 'chat',
+    icon: MessageSquare,
+    matches: (model: AiModel) => model.modelType === 'chat' || model.capabilities.includes('chat'),
+  },
+  {
+    key: 'image',
+    icon: ImageIcon,
+    matches: (model: AiModel) =>
+      model.modelType === 'image' ||
+      model.capabilities.includes('vision') ||
+      model.capabilities.includes('image_generation') ||
+      model.capabilities.includes('image_output'),
+  },
+  {
+    key: 'video',
+    icon: Video,
+    matches: (model: AiModel) =>
+      model.modelType === 'video' || model.capabilities.includes('video'),
+  },
+  {
+    key: 'embedding',
+    icon: Layers3,
+    matches: (model: AiModel) =>
+      model.modelType === 'embedding' ||
+      model.modelType === 'rerank' ||
+      model.capabilities.includes('embedding'),
+  },
+  {
+    key: 'audio',
+    icon: AudioLines,
+    matches: (model: AiModel) =>
+      model.modelType === 'audio' ||
+      model.modelType === 'tts' ||
+      model.modelType === 'asr' ||
+      model.modelType === 'realtime' ||
+      model.modelType === 'text2music' ||
+      model.capabilities.includes('audio'),
+  },
+] satisfies Array<{
+  key: ModelListFilterKey;
+  icon: LucideIcon;
+  matches: (model: AiModel) => boolean;
+}>;
+
+const modelListSortOptions = [
+  'default',
+  'name_asc',
+  'name_desc',
+  'context_desc',
+  'capabilities_desc',
+  'release_desc',
+] satisfies ModelListSortMode[];
+
 const requestFormatOptions = [
   { value: 'openai_compatible', label: 'OpenAI-compatible Chat Completions' },
   { value: 'openai_responses', label: 'OpenAI Responses API' },
@@ -139,7 +211,9 @@ export function AiProvidersSettingsPage() {
   const [syncingProviderId, setSyncingProviderId] = useState<string | null>(null);
   const [checkingProviderId, setCheckingProviderId] = useState<string | null>(null);
   const [providerModalOpen, setProviderModalOpen] = useState(false);
-  const [modelModal, setModelModal] = useState<{ provider: AiProvider; model?: AiModel } | null>(null);
+  const [modelModal, setModelModal] = useState<{ provider: AiProvider; model?: AiModel } | null>(
+    null,
+  );
   const providers = catalog?.providers.slice().sort(compareProvidersByEnabled);
   const autoSyncProvider = (providerId: string, nextCatalog: AiGatewayCatalog) => {
     const provider = nextCatalog.providers.find((item) => item.id === providerId);
@@ -393,10 +467,10 @@ function ProviderCard({
   const upstreamActionHint = !showUserMaintenanceActions
     ? ''
     : !supportsUpstreamSync
-    ? t('settings.detail.aiProviders.upstreamUnsupportedHint')
-    : hasConnectionCredential
-      ? t('settings.detail.aiProviders.upstreamReadyHint')
-      : t('settings.detail.aiProviders.upstreamPublicHint');
+      ? t('settings.detail.aiProviders.upstreamUnsupportedHint')
+      : hasConnectionCredential
+        ? t('settings.detail.aiProviders.upstreamReadyHint')
+        : t('settings.detail.aiProviders.upstreamPublicHint');
   const credentialTitle =
     provider.credentialMode === 'platform_managed'
       ? t('settings.detail.aiProviders.credentialPlatformManaged')
@@ -426,9 +500,13 @@ function ProviderCard({
             <ProviderMark provider={provider} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[18px] font-semibold leading-tight text-ink">{provider.name}</h2>
+                <h2 className="text-[18px] font-semibold leading-tight text-ink">
+                  {provider.name}
+                </h2>
                 <span className="rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[11px] font-medium text-ink-faint">
-                  {provider.custom ? t('settings.detail.aiProviders.customProvider') : `P${provider.priority}`}
+                  {provider.custom
+                    ? t('settings.detail.aiProviders.customProvider')
+                    : `P${provider.priority}`}
                 </span>
                 <StatusPill
                   icon={StatusIcon}
@@ -457,18 +535,24 @@ function ProviderCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[12px] font-semibold text-ink">{credentialTitle}</p>
-              <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
-                {credentialHint}
-              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">{credentialHint}</p>
             </div>
-            <SettingsSwitch
-              checked={isEnabled}
-              onChange={(enabled) =>
-                onUpdate({ providers: [{ providerId: provider.id, enabled }] })
-              }
-              label={t('settings.detail.aiProviders.toggleProvider', { name: provider.name })}
-              disabled={pending}
-            />
+            {isOfficialDicha ? (
+              <StatusPill
+                icon={Sparkles}
+                tint="mist"
+                label={t('settings.detail.aiProviders.officialManaged')}
+              />
+            ) : (
+              <SettingsSwitch
+                checked={isEnabled}
+                onChange={(enabled) =>
+                  onUpdate({ providers: [{ providerId: provider.id, enabled }] })
+                }
+                label={t('settings.detail.aiProviders.toggleProvider', { name: provider.name })}
+                disabled={pending}
+              />
+            )}
           </div>
           <ProviderCredentialPopover
             provider={provider}
@@ -500,7 +584,11 @@ function ProviderCard({
             <button
               type="button"
               onClick={() => {
-                if (window.confirm(t('settings.detail.aiProviders.deleteProviderConfirm', { name: provider.name }))) {
+                if (
+                  window.confirm(
+                    t('settings.detail.aiProviders.deleteProviderConfirm', { name: provider.name }),
+                  )
+                ) {
                   onUpdate({ providers: [{ providerId: provider.id, delete: true }] });
                 }
               }}
@@ -552,12 +640,15 @@ function ProviderCard({
           </p>
         ) : null}
       </div>
-      <div className={`grid transition-[grid-template-rows] duration-200 ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+      >
         <div className="min-h-0 overflow-hidden">
           <ProviderModelList
             models={providerModels}
             catalog={catalog}
             pending={pending}
+            readOnly={isOfficialDicha}
             onUpdate={onUpdate}
             onConfigure={onConfigureModel}
           />
@@ -707,7 +798,8 @@ function ProviderCredentialPopover({
   const requiresUserCredential = provider.credentialMode === 'user_api_key';
   const isPlatformManaged = provider.credentialMode === 'platform_managed';
   const configChanged =
-    trimmedBaseUrl !== provider.baseUrl || trimmedAvatar !== (provider.avatar ?? provider.shortName);
+    trimmedBaseUrl !== provider.baseUrl ||
+    trimmedAvatar !== (provider.avatar ?? provider.shortName);
   const canSave =
     trimmedBaseUrl.length > 0 &&
     (requiresUserCredential ? trimmedCredential.length > 0 || configChanged : configChanged);
@@ -759,7 +851,9 @@ function ProviderCredentialPopover({
               {t('settings.detail.aiProviders.creditPriority')}
             </span>
             <span className="rounded-md border border-mist bg-chip-mist px-2 py-1.5 text-center text-[12px] font-medium text-mist">
-              {requiresUserCredential ? 'API Key' : t('settings.detail.aiProviders.noApiKeyRequired')}
+              {requiresUserCredential
+                ? 'API Key'
+                : t('settings.detail.aiProviders.noApiKeyRequired')}
             </span>
           </div>
           <p className="mt-3 rounded-md bg-surface-alt px-3 py-2 text-[12px] font-medium text-ink">
@@ -839,16 +933,74 @@ function ProviderModelList({
   models,
   catalog,
   pending,
+  readOnly,
   onUpdate,
   onConfigure,
 }: {
   models: AiModel[];
   catalog: AiGatewayCatalog;
   pending: boolean;
+  readOnly: boolean;
   onUpdate: (body: AiConfigUpdate) => void;
   onConfigure: (model: AiModel) => void;
 }) {
   const { t } = useTranslation();
+  const [activeFilter, setActiveFilter] = useState<ModelListFilterKey>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<ModelListSortMode>('default');
+  const providerById = useMemo(
+    () => new Map(catalog.providers.map((provider) => [provider.id, provider])),
+    [catalog.providers],
+  );
+  const filterCounts = useMemo(
+    () =>
+      new Map(
+        modelListFilters.map((filter) => [
+          filter.key,
+          models.filter((model) => filter.matches(model)).length,
+        ]),
+      ),
+    [models],
+  );
+  const visibleFilters = useMemo(
+    () =>
+      modelListFilters.filter(
+        (filter) => filter.key === 'all' || (filterCounts.get(filter.key) ?? 0) > 0,
+      ),
+    [filterCounts],
+  );
+  const selectedFilter = visibleFilters.some((filter) => filter.key === activeFilter)
+    ? activeFilter
+    : 'all';
+
+  const visibleModels = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filter =
+      modelListFilters.find((item) => item.key === selectedFilter) ??
+      modelListFilters.find((item) => item.key === 'all');
+    if (!filter) return [];
+    return models
+      .filter((model) => filter.matches(model))
+      .filter((model) => {
+        if (!normalizedQuery) return true;
+        const provider = providerById.get(model.providerId);
+        return [
+          model.displayName,
+          model.name,
+          model.id,
+          model.modelType,
+          model.priceHint,
+          model.releasedAt,
+          provider?.name,
+          provider?.id,
+          ...model.capabilities,
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+      })
+      .sort((left, right) => compareProviderModels(left, right, sortMode));
+  }, [models, providerById, searchQuery, selectedFilter, sortMode]);
+  const activeSortLabel = t(`settings.detail.aiProviders.modelSort.${sortMode}`);
 
   if (models.length === 0) {
     return (
@@ -859,18 +1011,101 @@ function ProviderModelList({
   }
 
   return (
-    <div className="bg-canvas px-4 py-1">
-      {models.slice().sort(compareModelsByEnabled).map((model) => (
-        <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
-          <ProviderModelRow
-            model={model}
-            catalog={catalog}
-            pending={pending}
-            onConfigure={() => onConfigure(model)}
-            onUpdate={onUpdate}
-          />
+    <div className="bg-canvas px-4 py-3">
+      <div className="grid gap-3 rounded-md border border-hairline bg-surface p-3">
+        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="relative min-w-0">
+            <Search
+              size={15}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
+            />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
+              fullWidth
+              className="h-9 rounded-md border border-hairline bg-surface-alt pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+            />
+          </div>
+          <Dropdown>
+            <Dropdown.Trigger
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface-alt px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
+              aria-label={t('settings.detail.aiProviders.modelSortLabel')}
+            >
+              <ArrowDownUp size={14} />
+              <span className="max-w-[12rem] truncate">{activeSortLabel}</span>
+              <ChevronDown size={13} />
+            </Dropdown.Trigger>
+            <Dropdown.Popover className="min-w-48 rounded-md border border-hairline bg-surface p-1 shadow-float">
+              <Dropdown.Menu
+                aria-label={t('settings.detail.aiProviders.modelSortLabel')}
+                selectionMode="single"
+                selectedKeys={[sortMode]}
+                onAction={(key) => setSortMode(String(key) as ModelListSortMode)}
+              >
+                {modelListSortOptions.map((option) => (
+                  <Dropdown.Item
+                    key={option}
+                    id={option}
+                    className="rounded-md px-2.5 py-2 text-[12px] text-ink-soft outline-none data-[focused]:bg-surface-alt data-[focused]:text-ink"
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      {t(`settings.detail.aiProviders.modelSort.${option}`)}
+                      <Dropdown.ItemIndicator type="checkmark" className="text-sage" />
+                    </span>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
         </div>
-      ))}
+
+        <Tabs.Root
+          selectedKey={selectedFilter}
+          onSelectionChange={(key) => setActiveFilter(String(key) as ModelListFilterKey)}
+        >
+          <Tabs.List className="flex flex-wrap gap-1.5 rounded-md bg-canvas p-1">
+            {visibleFilters.map((filter) => {
+              const Icon = filter.icon;
+              const count = filterCounts.get(filter.key) ?? 0;
+              return (
+                <Tabs.Tab
+                  key={filter.key}
+                  id={filter.key}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium text-ink-faint outline-none transition-colors data-[selected]:bg-surface data-[selected]:text-ink"
+                >
+                  <Icon size={14} />
+                  {t(`settings.detail.aiProviders.modelFilters.${filter.key}`)}
+                  <span className="rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
+                    {count}
+                  </span>
+                </Tabs.Tab>
+              );
+            })}
+          </Tabs.List>
+        </Tabs.Root>
+      </div>
+
+      <div className="mt-2 overflow-hidden rounded-md border border-hairline bg-surface">
+        {visibleModels.length > 0 ? (
+          visibleModels.map((model) => (
+            <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
+              <ProviderModelRow
+                model={model}
+                catalog={catalog}
+                pending={pending}
+                readOnly={readOnly}
+                onConfigure={() => onConfigure(model)}
+                onUpdate={onUpdate}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="px-4 py-5 text-[12px] text-ink-faint">
+            {t('settings.detail.aiProviders.noProviderModelsForFilter')}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -879,12 +1114,14 @@ function ProviderModelRow({
   model,
   catalog,
   pending,
+  readOnly,
   onConfigure,
   onUpdate,
 }: {
   model: AiModel;
   catalog: AiGatewayCatalog;
   pending: boolean;
+  readOnly: boolean;
   onConfigure: () => void;
   onUpdate: (body: AiConfigUpdate) => void;
 }) {
@@ -896,87 +1133,128 @@ function ProviderModelRow({
     )
     .map((assignment) => t(`settings.aiUseCases.${assignment.useCase}`));
   const hasKnownMetadata = model.contextWindow !== null && model.capabilities.length > 0;
-  const canDeleteModel = model.custom === true || model.catalogSource === 'upstream_sync';
+  const canDeleteModel =
+    !readOnly && (model.custom === true || model.catalogSource === 'upstream_sync');
+  const visibleCapabilities = model.capabilities.slice(0, 5);
+  const hiddenCapabilityCount = Math.max(0, model.capabilities.length - visibleCapabilities.length);
 
   return (
-    <div className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+    <div className="grid gap-3 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <div className="flex min-w-0 gap-3">
         <ModelAvatar model={model} />
         <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[13px] font-medium text-ink">{model.displayName}</span>
-          <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
-            {model.name}
-          </span>
-          {model.recommended ? (
-            <span className="rounded-md border border-hairline bg-chip-sage px-1.5 py-0.5 text-[10px] font-medium text-sage">
-              {t('settings.detail.aiProviders.recommended')}
-            </span>
-          ) : null}
-          {model.contextWindow === null ? (
-            <span className="rounded-md border border-hairline bg-chip-peach px-1.5 py-0.5 text-[10px] font-medium text-peach">
-              {t('settings.detail.aiProviders.metadataUnknown')}
-            </span>
-          ) : (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[13px] font-medium text-ink">{model.displayName}</span>
             <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
-              {model.contextWindow.toLocaleString()}
+              {model.name}
             </span>
-          )}
-        </div>
-        {model.capabilities.length > 0 ? (
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {model.capabilities.map((capability) => (
-              <CapabilityChip key={capability} capability={capability} />
-            ))}
+            {model.recommended ? (
+              <span className="rounded-md border border-hairline bg-chip-sage px-1.5 py-0.5 text-[10px] font-medium text-sage">
+                {t('settings.detail.aiProviders.recommended')}
+              </span>
+            ) : null}
+            {model.contextWindow === null ? (
+              <span className="rounded-md border border-hairline bg-chip-peach px-1.5 py-0.5 text-[10px] font-medium text-peach">
+                {t('settings.detail.aiProviders.metadataUnknown')}
+              </span>
+            ) : (
+              <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
+                {model.contextWindow.toLocaleString()}
+              </span>
+            )}
           </div>
-        ) : (
-          <p className="mt-1 text-[11px] text-ink-faint">
-            {t('settings.detail.aiProviders.metadataUnknownDesc')}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-chip-mist px-1.5 py-0.5 text-[10px] font-medium text-mist">
+              {model.modelType.toUpperCase()}
+            </Chip>
+            {model.maxOutput ? (
+              <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
+                {t('settings.detail.aiProviders.modelMaxOutput', {
+                  value: model.maxOutput.toLocaleString(),
+                })}
+              </Chip>
+            ) : null}
+            {model.releasedAt ? (
+              <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
+                {t('settings.detail.aiProviders.modelReleasedAt', { value: model.releasedAt })}
+              </Chip>
+            ) : null}
+            <Chip className="inline-flex max-w-full items-center gap-1 rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
+              <span className="truncate">{model.priceHint}</span>
+            </Chip>
+            {readOnly ? (
+              <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-chip-lavender px-1.5 py-0.5 text-[10px] font-medium text-lavender">
+                {t('settings.detail.aiProviders.officialModelManaged')}
+              </Chip>
+            ) : null}
+          </div>
+          {model.capabilities.length > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {visibleCapabilities.map((capability) => (
+                <CapabilityChip key={capability} capability={capability} />
+              ))}
+              {hiddenCapabilityCount > 0 ? (
+                <span className="rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[11px] text-ink-faint">
+                  +{hiddenCapabilityCount}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-1 text-[11px] text-ink-faint">
+              {t('settings.detail.aiProviders.metadataUnknownDesc')}
+            </p>
+          )}
+          <p className="mt-1 truncate text-[11px] text-ink-faint">
+            {assignedUseCases.length > 0
+              ? assignedUseCases.join(' / ')
+              : t('settings.detail.aiModels.noAssignment')}
           </p>
-        )}
-        <p className="mt-1 truncate text-[11px] text-ink-faint">
-          {assignedUseCases.length > 0
-            ? assignedUseCases.join(' / ')
-            : t('settings.detail.aiModels.noAssignment')}
-        </p>
         </div>
       </div>
       <div className="flex items-center justify-end gap-3">
         {canDeleteModel ? (
-          <button
+          <Button
             type="button"
             onClick={() => {
-              if (window.confirm(t('settings.detail.aiProviders.deleteModelConfirm', { name: model.displayName }))) {
+              if (
+                window.confirm(
+                  t('settings.detail.aiProviders.deleteModelConfirm', { name: model.displayName }),
+                )
+              ) {
                 onUpdate({ models: [{ modelId: model.id, delete: true }] });
               }
             }}
-            disabled={pending}
+            isDisabled={pending}
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-pink transition-colors hover:border-pink disabled:cursor-not-allowed disabled:opacity-50"
-            title={t('settings.detail.aiProviders.deleteModel')}
+            aria-label={t('settings.detail.aiProviders.deleteModel')}
           >
             <Trash2 size={14} />
             {t('settings.detail.aiProviders.deleteModel')}
-          </button>
+          </Button>
         ) : null}
-        <button
-          type="button"
-          onClick={onConfigure}
-          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
-        >
-          <SlidersHorizontal size={14} />
-          {t('settings.detail.aiProviders.configureModel')}
-        </button>
+        {readOnly ? null : (
+          <Button
+            type="button"
+            onClick={onConfigure}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
+          >
+            <SlidersHorizontal size={14} />
+            {t('settings.detail.aiProviders.configureModel')}
+          </Button>
+        )}
         <StatusPill
           icon={model.enabled ? CheckCircle2 : CircleDashed}
           tint={availabilityTone[model.availability]}
           label={t(`settings.aiAvailability.${model.availability}`)}
         />
-        <SettingsSwitch
-          checked={model.enabled}
-          onChange={(enabled) => onUpdate({ models: [{ modelId: model.id, enabled }] })}
-          label={t('settings.detail.aiModels.toggleModel', { name: model.displayName })}
-          disabled={pending || !hasKnownMetadata}
-        />
+        {readOnly ? null : (
+          <SettingsSwitch
+            checked={model.enabled}
+            onChange={(enabled) => onUpdate({ models: [{ modelId: model.id, enabled }] })}
+            label={t('settings.detail.aiModels.toggleModel', { name: model.displayName })}
+            disabled={pending || !hasKnownMetadata}
+          />
+        )}
       </div>
     </div>
   );
@@ -989,7 +1267,12 @@ function ModelAvatar({ model }: { model: AiModel }) {
   if (isImageUrl(avatar)) {
     return (
       <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-surface-alt">
-        <img src={avatar} alt="" className="size-full object-contain p-1.5" referrerPolicy="no-referrer" />
+        <img
+          src={avatar}
+          alt=""
+          className="size-full object-contain p-1.5"
+          referrerPolicy="no-referrer"
+        />
       </span>
     );
   }
@@ -1029,7 +1312,12 @@ function ProviderAvatar({
       <span
         className={`grid shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-surface-alt ${className}`}
       >
-        <img src={avatar} alt="" className="size-full object-contain p-1.5" referrerPolicy="no-referrer" />
+        <img
+          src={avatar}
+          alt=""
+          className="size-full object-contain p-1.5"
+          referrerPolicy="no-referrer"
+        />
       </span>
     );
   }
@@ -1148,7 +1436,11 @@ function ProviderFormModal({
           description={t('settings.detail.aiProviders.providerAvatarDesc')}
         >
           <div className="flex items-center gap-3">
-            <ProviderAvatar avatar={avatarValue} fallback={shortName} className="size-9 text-[11px]" />
+            <ProviderAvatar
+              avatar={avatarValue}
+              fallback={shortName}
+              className="size-9 text-[11px]"
+            />
             <TextField
               value={avatar}
               onChange={setAvatar}
@@ -1240,7 +1532,9 @@ function ModelFormModal({
   );
   const parsedContextWindow = Number(contextWindow);
   const contextWindowInvalid =
-    !Number.isFinite(parsedContextWindow) || !Number.isInteger(parsedContextWindow) || parsedContextWindow <= 0;
+    !Number.isFinite(parsedContextWindow) ||
+    !Number.isInteger(parsedContextWindow) ||
+    parsedContextWindow <= 0;
   const canSubmit =
     Boolean(provider) &&
     modelId.trim().length > 0 &&
@@ -1598,7 +1892,9 @@ function ConfigLabel({
         {required ? <span className="text-pink">* </span> : null}
         {title}
       </p>
-      {description ? <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">{description}</p> : null}
+      {description ? (
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">{description}</p>
+      ) : null}
     </div>
   );
 }
@@ -1677,11 +1973,38 @@ function formatContextWindowPreset(value: number) {
   return String(value);
 }
 
+function compareProviderModels(left: AiModel, right: AiModel, sortMode: ModelListSortMode) {
+  const enabledOrder = compareModelsByEnabled(left, right);
+  if (enabledOrder !== 0) return enabledOrder;
+  switch (sortMode) {
+    case 'name_asc':
+      return left.displayName.localeCompare(right.displayName, 'zh-Hans');
+    case 'name_desc':
+      return right.displayName.localeCompare(left.displayName, 'zh-Hans');
+    case 'context_desc':
+      return (right.contextWindow ?? 0) - (left.contextWindow ?? 0);
+    case 'capabilities_desc':
+      return right.capabilities.length - left.capabilities.length;
+    case 'release_desc':
+      return releaseRank(right) - releaseRank(left);
+    case 'default':
+      return 0;
+  }
+}
+
+function releaseRank(model: AiModel) {
+  if (!model.releasedAt) return 0;
+  const timestamp = Date.parse(model.releasedAt);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
 function providerTagLabels(models: AiModel[]) {
   const tags = new Set<string>();
   models.forEach((model) => {
     tags.add(model.modelType.toUpperCase());
-    model.capabilities.forEach((capability) => tags.add(capability.replace('_', ' ').toUpperCase()));
+    model.capabilities.forEach((capability) =>
+      tags.add(capability.replace('_', ' ').toUpperCase()),
+    );
   });
   return Array.from(tags).slice(0, 5);
 }
@@ -1707,7 +2030,9 @@ function isImageUrl(value: string) {
 }
 
 function SectionLabel({ children }: { children: string }) {
-  return <h2 className="px-1 text-[11px] font-semibold tracking-wider text-ink-faint">{children}</h2>;
+  return (
+    <h2 className="px-1 text-[11px] font-semibold tracking-wider text-ink-faint">{children}</h2>
+  );
 }
 
 function EmptyProvidersPanel({ onAddProvider }: { onAddProvider: () => void }) {
@@ -1750,7 +2075,9 @@ function LoadingPanel() {
           <CircleDashed size={16} />
         </span>
         <div>
-          <p className="text-[14px] font-medium text-ink">{t('settings.detail.aiCommon.loading')}</p>
+          <p className="text-[14px] font-medium text-ink">
+            {t('settings.detail.aiCommon.loading')}
+          </p>
           <p className="mt-0.5 text-[11px] text-ink-faint">
             {t('settings.detail.aiCommon.loadingDesc')}
           </p>
@@ -1826,7 +2153,9 @@ function assignmentUpdate({
     useCase,
     primaryModelId,
     fallbackModelIds:
-      fallbackModelIds ?? current?.fallbackModelIds.filter((modelId) => modelId !== primaryModelId) ?? [],
+      fallbackModelIds ??
+      current?.fallbackModelIds.filter((modelId) => modelId !== primaryModelId) ??
+      [],
   };
 }
 

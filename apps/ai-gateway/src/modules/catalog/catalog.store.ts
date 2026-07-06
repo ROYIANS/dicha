@@ -39,9 +39,15 @@ type PersistedConfig = {
 
 type AiProviderConfigRecord = Prisma.AiProviderConfigGetPayload<Record<string, never>>;
 type AiModelConfigRecord = Prisma.AiModelConfigGetPayload<Record<string, never>>;
-type AiModelAssignmentConfigRecord = Prisma.AiModelAssignmentConfigGetPayload<Record<string, never>>;
-type AiProviderDirectorySettingRecord = Prisma.AiProviderDirectorySettingGetPayload<Record<string, never>>;
-type AiProviderDirectoryModelRecord = Prisma.AiProviderDirectoryModelGetPayload<Record<string, never>>;
+type AiModelAssignmentConfigRecord = Prisma.AiModelAssignmentConfigGetPayload<
+  Record<string, never>
+>;
+type AiProviderDirectorySettingRecord = Prisma.AiProviderDirectorySettingGetPayload<
+  Record<string, never>
+>;
+type AiProviderDirectoryModelRecord = Prisma.AiProviderDirectoryModelGetPayload<
+  Record<string, never>
+>;
 type AiInternalProviderModelRecord = Prisma.AiInternalProviderModelGetPayload<{
   include: { internalProvider: true };
 }>;
@@ -95,20 +101,18 @@ export class CatalogStore {
     const providerPatches = update.providers ?? [];
     const modelPatches = update.models ?? [];
     const providerDeletes = new Set(
-      providerPatches
-        .filter((patch) => patch.delete)
-        .map((patch) => patch.providerId),
+      providerPatches.filter((patch) => patch.delete).map((patch) => patch.providerId),
     );
     const modelDeletes = new Set(
-      modelPatches
-        .filter((patch) => patch.delete)
-        .map((patch) => patch.modelId),
+      modelPatches.filter((patch) => patch.delete).map((patch) => patch.modelId),
     );
 
     const providers = current.providers
       .filter((provider) => !providerDeletes.has(provider.id))
       .map((provider) => {
-        const patch = providerPatches.find((item) => item.providerId === provider.id && !item.delete);
+        const patch = providerPatches.find(
+          (item) => item.providerId === provider.id && !item.delete,
+        );
         if (!patch) return provider;
         const credential = patch.credential ? this.encrypt(patch.credential) : provider.credential;
         const enabled =
@@ -183,7 +187,11 @@ export class CatalogStore {
     const { credential: _credential, ...publicProvider } = provider;
     return {
       ...publicProvider,
-      credentialState: this.credentialState(publicProvider.credentialState, _credential, publicProvider),
+      credentialState: this.credentialState(
+        publicProvider.credentialState,
+        _credential,
+        publicProvider,
+      ),
     };
   }
 
@@ -196,7 +204,11 @@ export class CatalogStore {
     return {
       provider: {
         ...publicProvider,
-        credentialState: this.credentialState(publicProvider.credentialState, _credential, publicProvider),
+        credentialState: this.credentialState(
+          publicProvider.credentialState,
+          _credential,
+          publicProvider,
+        ),
       },
       secret: provider.credential ? this.decrypt(provider.credential) : '',
     };
@@ -237,7 +249,8 @@ export class CatalogStore {
           name: internalModel.dxDisplayName ?? internalModel.upstreamDisplayName,
           upstreamBaseUrl: internalModel.internalProvider.baseUrl,
           upstreamModelName: internalModel.upstreamModelName,
-          requestFormat: internalModel.internalProvider.requestFormat as AiProvider['requestFormat'],
+          requestFormat: internalModel.internalProvider
+            .requestFormat as AiProvider['requestFormat'],
           authType: internalModel.internalProvider.authType as AiProvider['authType'],
           secret: internalModel.internalProvider.credential
             ? this.decrypt(internalModel.internalProvider.credential as PersistedCredential)
@@ -251,17 +264,19 @@ export class CatalogStore {
       where: { providerId, modelId, enabled: true },
       orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
     });
-    channels.push(...legacyChannels.map((channel) => ({
-      id: channel.id,
-      providerId: channel.providerId,
-      modelId: channel.modelId,
-      name: channel.name,
-      upstreamBaseUrl: channel.upstreamBaseUrl,
-      upstreamModelName: channel.upstreamModelName,
-      requestFormat: channel.requestFormat as AiProvider['requestFormat'],
-      authType: channel.authType as AiProvider['authType'],
-      secret: channel.credential ? this.decrypt(channel.credential as PersistedCredential) : '',
-    })));
+    channels.push(
+      ...legacyChannels.map((channel) => ({
+        id: channel.id,
+        providerId: channel.providerId,
+        modelId: channel.modelId,
+        name: channel.name,
+        upstreamBaseUrl: channel.upstreamBaseUrl,
+        upstreamModelName: channel.upstreamModelName,
+        requestFormat: channel.requestFormat as AiProvider['requestFormat'],
+        authType: channel.authType as AiProvider['authType'],
+        secret: channel.credential ? this.decrypt(channel.credential as PersistedCredential) : '',
+      })),
+    );
     return channels;
   }
 
@@ -397,9 +412,7 @@ export class CatalogStore {
     );
     const normalizedProviders = config.providers
       .filter((provider) => !legacySeedProviderIds.has(provider.id))
-      .filter((provider) =>
-        this.isProviderDirectoryVisible(provider, enabledDirectoryProviderIds),
-      )
+      .filter((provider) => this.isProviderDirectoryVisible(provider, enabledDirectoryProviderIds))
       .map((provider) => this.normalizeProvider(provider, settingsByProvider.get(provider.id)));
     const providerIds = new Set(normalizedProviders.map((provider) => provider.id));
     const seededProviders = aiCatalogSeed.providers
@@ -410,12 +423,17 @@ export class CatalogStore {
       (left, right) => left.priority - right.priority,
     );
     const knownProviderIds = new Set(providers.map((provider) => provider.id));
+    const modelSeedById = new Map(modelSeed.map((model) => [model.id, model]));
 
     const normalizedModels = config.models
       .filter((model) => !legacySeedModelIds.has(model.id))
       .filter((model) => model.custom || !deprecatedSeedModelIds.has(model.id))
+      .filter(
+        (model) =>
+          model.providerId !== DICHA_PROVIDER_ID || model.custom || modelSeedById.has(model.id),
+      )
       .filter((model) => knownProviderIds.has(model.providerId))
-      .map((model) => this.normalizeModel(model));
+      .map((model) => this.normalizeModel(model, modelSeedById.get(model.id)));
     const normalizedModelIds = new Set(normalizedModels.map((model) => model.id));
     const seededModels = modelSeed
       .filter((model) => !normalizedModelIds.has(model.id))
@@ -462,7 +480,9 @@ export class CatalogStore {
     const syncedDirectoryModels = directoryModels.map((model) =>
       this.modelFromDirectoryModelRecord(model),
     );
-    const dichaModels = internalDichaModels.map((model) => this.modelFromInternalModelRecord(model));
+    const dichaModels = internalDichaModels.map((model) =>
+      this.modelFromInternalModelRecord(model),
+    );
     const byId = new Map<string, AiModel>();
     for (const model of [...builtInModels, ...syncedDirectoryModels, ...dichaModels]) {
       byId.set(model.id, model);
@@ -479,7 +499,9 @@ export class CatalogStore {
       avatar: record.avatar ?? undefined,
       contextWindow: record.contextWindow,
       modelType: record.modelType as AiModelType,
-      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(record.extensionParameters),
+      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(
+        record.extensionParameters,
+      ),
       capabilities: this.arrayFromJson<AiModel['capabilities'][number]>(record.capabilities),
       maxOutput: record.maxOutput ?? undefined,
       enabled: record.enabled,
@@ -572,7 +594,9 @@ export class CatalogStore {
     provider: PersistedConfig['providers'][number],
     setting?: AiProviderDirectorySettingRecord,
   ): PersistedConfig['providers'][number] {
-    const seed = provider.custom ? undefined : aiCatalogSeed.providers.find((item) => item.id === provider.id);
+    const seed = provider.custom
+      ? undefined
+      : aiCatalogSeed.providers.find((item) => item.id === provider.id);
     const legacyProvider = provider as PersistedConfig['providers'][number] & {
       avatar?: string;
       billingMode?: AiProvider['billingMode'];
@@ -640,19 +664,23 @@ export class CatalogStore {
     return currentBaseUrl;
   }
 
-  private normalizeModel(model: AiModel): AiModel {
+  private normalizeModel(model: AiModel, modelSeed?: AiModel): AiModel {
     const legacyModel = model as AiModel & {
       avatar?: string;
       catalogSource?: AiModel['catalogSource'];
       modelType?: AiModelType;
       extensionParameters?: AiModelExtensionParameter[];
     };
-    const seed = model.custom ? undefined : aiModelBank.find((item) => item.id === model.id);
+    const seed = model.custom
+      ? undefined
+      : (modelSeed ?? aiModelBank.find((item) => item.id === model.id));
     if (seed) {
+      const platformOwnedModel =
+        seed.providerId === DICHA_PROVIDER_ID || seed.catalogSource === 'dicha_catalog';
       return {
         ...seed,
-        enabled: model.enabled,
-        availability: model.availability,
+        enabled: platformOwnedModel ? seed.enabled : model.enabled,
+        availability: platformOwnedModel ? seed.availability : model.availability,
         lastLatencyMs: model.lastLatencyMs,
         custom: model.custom ?? seed.custom,
       };
@@ -819,7 +847,9 @@ export class CatalogStore {
       avatar: record.avatar ?? undefined,
       contextWindow: record.contextWindow,
       modelType: record.modelType as AiModelType,
-      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(record.extensionParameters),
+      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(
+        record.extensionParameters,
+      ),
       capabilities: this.arrayFromJson<AiModel['capabilities'][number]>(record.capabilities),
       maxOutput: record.maxOutput ?? undefined,
       enabled: record.enabled,
@@ -1075,13 +1105,15 @@ export class CatalogStore {
   }
 
   private modelAvatar(value: string): string {
-    return value
-      .trim()
-      .split(/[-_\\s:/.]+/)
-      .filter(Boolean)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 4) || 'AI';
+    return (
+      value
+        .trim()
+        .split(/[-_\\s:/.]+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 4) || 'AI'
+    );
   }
 }
