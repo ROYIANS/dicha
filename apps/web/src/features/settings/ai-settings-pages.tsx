@@ -49,6 +49,13 @@ import {
   type AiProvider,
   type AiProviderRequestFormat,
   type AiProviderStatus,
+  aiModelCommonParameterControls,
+  aiModelExtensionParameterDefinitionByKey,
+  aiModelExtensionParameterOptions,
+  buildAiModelParameterConfig,
+  createAiModelParameterDraft,
+  type AiModelParameterControlDefinition,
+  type AiModelParameterDraft,
 } from '@dicha/shared';
 import {
   aiCatalogQueryOptions,
@@ -130,13 +137,7 @@ const modelCapabilityOptions = [
 ] satisfies AiModelCapability[];
 type ConfigurableModelCapability = (typeof modelCapabilityOptions)[number];
 
-const extensionParameterOptions = [
-  'gpt5_2ReasoningEffort',
-  'deepseekV4ReasoningEffort',
-  'enableReasoning',
-  'reasoningEffort',
-  'textVerbosity',
-] satisfies AiModelExtensionParameter[];
+const extensionParameterOptions = aiModelExtensionParameterOptions;
 
 const modelTypeOptions = [
   'chat',
@@ -1560,13 +1561,21 @@ function ModelFormModal({
   const [extensionParameters, setExtensionParameters] = useState<AiModelExtensionParameter[]>(
     model?.extensionParameters ?? [],
   );
-  const [parameterConfig, setParameterConfig] = useState(
-    JSON.stringify(model?.parameterConfig ?? {}, null, 2),
+  const initialParameterConfig = {
+    ...(model?.defaultParameterConfig ?? {}),
+    ...(model?.parameterConfig ?? {}),
+  };
+  const [parameterDraft, setParameterDraft] = useState<AiModelParameterDraft>(() =>
+    createAiModelParameterDraft(
+      initialParameterConfig,
+      modelParameterControlsForExtensions(model?.extensionParameters ?? []),
+    ),
   );
-  const defaultParameterConfig =
-    model?.defaultParameterConfig && Object.keys(model.defaultParameterConfig).length > 0
-      ? JSON.stringify(model.defaultParameterConfig, null, 2)
-      : '';
+  const parameterControls = useMemo(
+    () => modelParameterControlsForExtensions(extensionParameters),
+    [extensionParameters],
+  );
+  const defaultParameterConfig = model?.defaultParameterConfig ?? {};
   const parsedContextWindow = Number(contextWindow);
   const contextWindowInvalid =
     !Number.isFinite(parsedContextWindow) ||
@@ -1587,12 +1596,15 @@ function ModelFormModal({
         : [...current, capability],
     );
   };
-  const toggleExtension = (parameter: AiModelExtensionParameter) => {
-    setExtensionParameters((current) =>
-      current.includes(parameter)
-        ? current.filter((item) => item !== parameter)
-        : [...current, parameter],
-    );
+  const updateExtensionParameters = (parameters: AiModelExtensionParameter[]) => {
+    setExtensionParameters(parameters);
+    setParameterDraft((current) => ({
+      ...createAiModelParameterDraft(
+        initialParameterConfig,
+        modelParameterControlsForExtensions(parameters),
+      ),
+      ...current,
+    }));
   };
 
   if (!state || !provider) return null;
@@ -1612,11 +1624,12 @@ function ModelFormModal({
           submitLabel={t('settings.detail.aiProviders.saveModelConfig')}
           onClose={onClose}
           onSubmit={() => {
-            let parsedParameterConfig: Record<string, unknown>;
-            try {
-              parsedParameterConfig = JSON.parse(parameterConfig || '{}') as Record<string, unknown>;
-            } catch {
-              toast.error(t('settings.detail.aiProviders.parameterConfigInvalid'));
+            const parsedParameterConfig = buildAiModelParameterConfig(
+              parameterDraft,
+              parameterControls,
+            );
+            if (parsedParameterConfig.error) {
+              toast.error(parsedParameterConfig.error);
               return;
             }
             onSubmit({
@@ -1625,7 +1638,7 @@ function ModelFormModal({
                   ? backendManagedModel
                     ? {
                         modelId: model.id,
-                        parameterConfig: parsedParameterConfig,
+                        parameterConfig: parsedParameterConfig.config,
                       }
                     : {
                         modelId: model.id,
@@ -1635,7 +1648,7 @@ function ModelFormModal({
                         modelType,
                         extensionParameters,
                         capabilities,
-                        parameterConfig: parsedParameterConfig,
+                        parameterConfig: parsedParameterConfig.config,
                       }
                   : {
                       modelId: `${provider.id}:${modelId.trim()}`,
@@ -1648,11 +1661,11 @@ function ModelFormModal({
                       extensionParameters,
                       capabilities,
                       enabled: true,
-                      parameterConfig: parsedParameterConfig,
+                      parameterConfig: parsedParameterConfig.config,
                       custom: true,
                     },
               ],
-            })
+            });
           }}
         />
       }
@@ -1700,13 +1713,13 @@ function ModelFormModal({
               {avatar.trim() || providerShortName(displayName || modelId || 'AI')}
             </span>
           )}
-            <TextField
-              value={avatar}
-              onChange={setAvatar}
-              disabled={pending || backendManagedModel}
-              maxLength={12}
-              placeholder={t('settings.detail.aiProviders.modelAvatarPlaceholder')}
-            />
+          <TextField
+            value={avatar}
+            onChange={setAvatar}
+            disabled={pending || backendManagedModel}
+            maxLength={12}
+            placeholder={t('settings.detail.aiProviders.modelAvatarPlaceholder')}
+          />
         </div>
 
         <ConfigLabel
@@ -1748,17 +1761,11 @@ function ModelFormModal({
           title={t('settings.detail.aiProviders.extensionParameters')}
           description={t('settings.detail.aiProviders.extensionParametersDesc')}
         />
-        <ToggleGrid>
-          {extensionParameterOptions.map((parameter) => (
-            <ToggleChip
-              key={parameter}
-              selected={extensionParameters.includes(parameter)}
-              label={t(`settings.aiExtensionParameters.${parameter}`)}
-              onClick={() => toggleExtension(parameter)}
-              disabled={pending || backendManagedModel}
-            />
-          ))}
-        </ToggleGrid>
+        <ExtensionParameterPicker
+          value={extensionParameters}
+          onChange={updateExtensionParameters}
+          disabled={pending || backendManagedModel}
+        />
 
         {modelCapabilityOptions.map((capability) => (
           <CapabilityToggleRow
@@ -1791,22 +1798,20 @@ function ModelFormModal({
           title={t('settings.detail.aiProviders.defaultParameterConfig')}
           description={t('settings.detail.aiProviders.defaultParameterConfigDesc')}
         />
-        <textarea
-          value={defaultParameterConfig || '{}'}
-          readOnly
-          className="min-h-24 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[12px] text-ink-faint outline-none"
+        <ParameterConfigSummary
+          config={defaultParameterConfig}
+          emptyText={t('settings.detail.aiProviders.defaultParameterConfigEmpty')}
         />
 
         <ConfigLabel
           title={t('settings.detail.aiProviders.parameterConfig')}
           description={t('settings.detail.aiProviders.parameterConfigDesc')}
         />
-        <textarea
-          value={parameterConfig}
-          onChange={(event) => setParameterConfig(event.target.value)}
+        <ModelParameterConfigFields
+          controls={parameterControls}
+          draft={parameterDraft}
+          onChange={setParameterDraft}
           disabled={pending}
-          className="min-h-28 resize-none rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-          placeholder='{"temperature":0.7}'
         />
       </div>
     </ModalShell>
@@ -2013,35 +2018,222 @@ function TextField({
   );
 }
 
-function ToggleGrid({ children }: { children: ReactNode }) {
-  return <div className="flex flex-wrap gap-2">{children}</div>;
+function ExtensionParameterPicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: AiModelExtensionParameter[];
+  onChange: (value: AiModelExtensionParameter[]) => void;
+  disabled: boolean;
+}) {
+  const selected = new Set(value);
+  const available = extensionParameterOptions.filter((parameter) => !selected.has(parameter));
+  return (
+    <div className="space-y-2">
+      <select
+        value=""
+        disabled={disabled || available.length === 0}
+        onChange={(event) => {
+          const next = event.target.value as AiModelExtensionParameter;
+          if (!next) return;
+          onChange([...value, next]);
+        }}
+        className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <option value="">添加扩展参数</option>
+        {available.map((parameter) => {
+          const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
+          return (
+            <option key={parameter} value={parameter}>
+              {definition?.label ?? parameter}
+            </option>
+          );
+        })}
+      </select>
+      {value.length > 0 ? (
+        <div className="grid gap-2">
+          {value.map((parameter) => {
+            const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
+            return (
+              <Tooltip key={parameter}>
+                <Tooltip.Trigger>
+                  <div className="flex items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[12px] font-semibold text-ink">
+                        {definition?.label ?? parameter}
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-ink-faint">
+                        {definition?.parameterTag ?? definition?.key ?? parameter}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => onChange(value.filter((item) => item !== parameter))}
+                      className="grid size-7 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="移除扩展参数"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="max-w-80 rounded-md border border-hairline bg-surface px-3 py-2 text-[11px] leading-5 text-ink shadow-float">
+                  {definition?.hint ?? parameter}
+                </Tooltip.Content>
+              </Tooltip>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed border-hairline bg-canvas px-3 py-2 text-[12px] text-ink-faint">
+          未启用扩展参数
+        </div>
+      )}
+    </div>
+  );
 }
 
-function ToggleChip({
-  selected,
-  label,
-  onClick,
-  disabled = false,
+function ModelParameterConfigFields({
+  controls,
+  draft,
+  onChange,
+  disabled,
 }: {
-  selected: boolean;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
+  controls: readonly AiModelParameterControlDefinition[];
+  draft: AiModelParameterDraft;
+  onChange: (value: AiModelParameterDraft) => void;
+  disabled: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`rounded-md border px-2.5 py-1.5 text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-        selected
-          ? 'border-mist bg-chip-mist text-mist'
-          : 'border-hairline bg-surface text-ink-soft hover:text-ink'
-      }`}
-    >
-      {label}
-    </button>
+    <div className="space-y-2">
+      {controls.map((control) => (
+        <div
+          key={control.key}
+          className="grid gap-2 rounded-md border border-hairline bg-surface-alt p-3 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-center"
+        >
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <p className="text-[12px] font-semibold text-ink">{control.label}</p>
+              <span className="rounded border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
+                {control.key}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">{control.description}</p>
+          </div>
+          <ParameterControlInput
+            control={control}
+            value={draft[control.key]}
+            disabled={disabled}
+            onChange={(value) => onChange({ ...draft, [control.key]: value })}
+          />
+        </div>
+      ))}
+    </div>
   );
+}
+
+function ParameterControlInput({
+  control,
+  value,
+  disabled,
+  onChange,
+}: {
+  control: AiModelParameterControlDefinition;
+  value: string | boolean | undefined;
+  disabled: boolean;
+  onChange: (value: string | boolean) => void;
+}) {
+  if (control.kind === 'switch') {
+    return (
+      <SettingsSwitch
+        checked={value === true}
+        onChange={() => onChange(value !== true)}
+        label={control.label}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (control.kind === 'select') {
+    return (
+      <select
+        value={typeof value === 'string' ? value : ''}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <option value="">沿用默认</option>
+        {control.options?.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <input
+      value={typeof value === 'string' ? value : ''}
+      onChange={(event) => onChange(event.target.value)}
+      inputMode="decimal"
+      disabled={disabled}
+      placeholder={control.placeholder}
+      className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+    />
+  );
+}
+
+function ParameterConfigSummary({
+  config,
+  emptyText,
+}: {
+  config: Record<string, unknown>;
+  emptyText: string;
+}) {
+  const entries = Object.entries(config);
+  if (entries.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-hairline bg-canvas px-3 py-2 text-[12px] text-ink-faint">
+        {emptyText}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5 rounded-md border border-hairline bg-canvas p-2">
+      {entries.map(([key, value]) => (
+        <span
+          key={key}
+          className="rounded border border-hairline bg-surface px-2 py-1 text-[11px] text-ink-soft"
+        >
+          {key}: {String(value)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function modelParameterControlsForExtensions(
+  extensions: readonly AiModelExtensionParameter[],
+): AiModelParameterControlDefinition[] {
+  const controls: AiModelParameterControlDefinition[] = [...aiModelCommonParameterControls];
+  extensions.forEach((extension) => {
+    const control = aiModelExtensionParameterDefinitionByKey.get(extension);
+    if (control) controls.push(control);
+  });
+  return uniqueParameterControls(controls);
+}
+
+function uniqueParameterControls(
+  controls: readonly AiModelParameterControlDefinition[],
+): AiModelParameterControlDefinition[] {
+  const seen = new Set<string>();
+  return controls.filter((control) => {
+    if (seen.has(control.key)) return false;
+    seen.add(control.key);
+    return true;
+  });
 }
 
 function formatContextWindowPreset(value: number) {

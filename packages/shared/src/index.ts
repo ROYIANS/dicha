@@ -4,4 +4,5 @@ export * from './contracts/auth.contract';
 export * from './contracts/ai.contract';
 export * from './contracts/credit.contract';
 export * from './contracts/admin.contract';
+export * from './ai-model-parameter-config';
 export * from './fixtures/ai-catalog';

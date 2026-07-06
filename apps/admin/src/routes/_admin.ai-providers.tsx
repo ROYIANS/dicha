@@ -1,13 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  CheckCircle2,
-  CircleDashed,
-  RefreshCw,
-  Save,
-  Search,
-  Server,
-} from 'lucide-react';
+import { CheckCircle2, CircleDashed, RefreshCw, Save, Search, Server } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
@@ -17,11 +10,20 @@ import {
   updateAdminAiProviderDirectoryModel,
 } from '@/api/admin';
 import { PageHeader } from '@/components/PageHeader';
+import {
+  aiModelCommonParameterControls,
+  aiModelExtensionParameterDefinitionByKey,
+  buildAiModelParameterConfig,
+  createAiModelParameterDraft,
+} from '@dicha/shared';
 import type {
   AdminAiProviderDirectoryItem,
   AdminAiProviderDirectoryModelUpdate,
   AdminAiProviderDirectoryOverview,
   AdminAiProviderDirectoryUpdate,
+  AiModelExtensionParameter,
+  AiModelParameterControlDefinition,
+  AiModelParameterDraft,
 } from '@dicha/shared';
 
 type DirectoryModel = AdminAiProviderDirectoryOverview['models'][number];
@@ -305,23 +307,22 @@ function ModelDefaultConfigForm({
   pending: boolean;
   onSave: (body: AdminAiProviderDirectoryModelUpdate) => void;
 }) {
-  const [parameterConfig, setParameterConfig] = useState(
-    JSON.stringify(model.parameterConfig ?? {}, null, 2),
+  const parameterControls = modelParameterControlsForExtensions(model.extensionParameters ?? []);
+  const [parameterDraft, setParameterDraft] = useState<AiModelParameterDraft>(() =>
+    createAiModelParameterDraft(model.parameterConfig ?? {}, parameterControls),
   );
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(parameterConfig || '{}') as Record<string, unknown>;
-    } catch {
-      toast.error('参数配置不是合法 JSON');
+    const parsed = buildAiModelParameterConfig(parameterDraft, parameterControls);
+    if (parsed.error) {
+      toast.error(parsed.error);
       return;
     }
     onSave({
       providerId: model.providerId,
       modelId: model.modelId,
-      parameterConfig: parsed,
+      parameterConfig: parsed.config,
     });
   };
 
@@ -331,14 +332,37 @@ function ModelDefaultConfigForm({
         <p className="text-sm font-semibold text-ink">模型默认参数</p>
         <p className="mt-1 truncate text-xs text-ink-soft">{model.displayName}</p>
       </div>
-      <Field label="参数配置 JSON">
-        <textarea
-          value={parameterConfig}
-          onChange={(event) => setParameterConfig(event.target.value)}
-          className="admin-input min-h-36 resize-none py-2 text-xs"
-          placeholder='{"temperature":0.7}'
-        />
-      </Field>
+      <ModelParameterConfigFields
+        controls={parameterControls}
+        draft={parameterDraft}
+        disabled={pending}
+        onChange={setParameterDraft}
+      />
+      {model.extensionParameters.length > 0 ? (
+        <div className="rounded-md border border-hairline bg-surface-alt p-3">
+          <p className="text-xs font-medium text-ink-soft">已启用扩展参数</p>
+          <div className="mt-2 grid gap-1.5">
+            {model.extensionParameters.map((parameter) => {
+              const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
+              return (
+                <div
+                  key={parameter}
+                  className="rounded border border-hairline bg-surface px-2 py-1.5"
+                >
+                  <p className="text-xs font-semibold text-ink">{definition?.label ?? parameter}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-ink-faint">
+                    {definition?.hint ?? '扩展参数'}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed border-hairline bg-canvas px-3 py-2 text-xs text-ink-faint">
+          该模型暂未启用扩展参数，默认参数只显示通用调用项。
+        </div>
+      )}
       <button
         type="submit"
         disabled={pending}
@@ -349,6 +373,112 @@ function ModelDefaultConfigForm({
       </button>
     </form>
   );
+}
+
+function ModelParameterConfigFields({
+  controls,
+  draft,
+  disabled,
+  onChange,
+}: {
+  controls: readonly AiModelParameterControlDefinition[];
+  draft: AiModelParameterDraft;
+  disabled: boolean;
+  onChange: (value: AiModelParameterDraft) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {controls.map((control) => (
+        <div key={control.key} className="rounded-md border border-hairline bg-surface-alt p-3">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <p className="text-xs font-semibold text-ink">{control.label}</p>
+            <span className="rounded border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
+              {control.key}
+            </span>
+          </div>
+          <p className="mb-2 text-[11px] leading-4 text-ink-faint">{control.description}</p>
+          <ParameterControlInput
+            control={control}
+            value={draft[control.key]}
+            disabled={disabled}
+            onChange={(value) => onChange({ ...draft, [control.key]: value })}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ParameterControlInput({
+  control,
+  value,
+  disabled,
+  onChange,
+}: {
+  control: AiModelParameterControlDefinition;
+  value: string | boolean | undefined;
+  disabled: boolean;
+  onChange: (value: string | boolean) => void;
+}) {
+  if (control.kind === 'switch') {
+    return (
+      <label className="flex items-center justify-between rounded-md border border-hairline bg-surface px-3 py-2 text-xs text-ink-soft">
+        <span>{value === true ? '已开启' : '未开启'}</span>
+        <input
+          type="checkbox"
+          checked={value === true}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          className="size-4"
+        />
+      </label>
+    );
+  }
+
+  if (control.kind === 'select') {
+    return (
+      <select
+        value={typeof value === 'string' ? value : ''}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        className="admin-input"
+      >
+        <option value="">不设置</option>
+        {control.options?.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <input
+      value={typeof value === 'string' ? value : ''}
+      onChange={(event) => onChange(event.target.value)}
+      inputMode="decimal"
+      disabled={disabled}
+      placeholder={control.placeholder}
+      className="admin-input"
+    />
+  );
+}
+
+function modelParameterControlsForExtensions(
+  extensions: readonly AiModelExtensionParameter[],
+): AiModelParameterControlDefinition[] {
+  const controls: AiModelParameterControlDefinition[] = [...aiModelCommonParameterControls];
+  extensions.forEach((extension) => {
+    const definition = aiModelExtensionParameterDefinitionByKey.get(extension);
+    if (definition) controls.push(definition);
+  });
+  const seen = new Set<string>();
+  return controls.filter((control) => {
+    if (seen.has(control.key)) return false;
+    seen.add(control.key);
+    return true;
+  });
 }
 
 function ProviderConfigForm({
@@ -391,7 +521,9 @@ function ProviderConfigForm({
         <input
           type="checkbox"
           checked={form.enabled}
-          onChange={(event) => setForm((current) => ({ ...current, enabled: event.target.checked }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, enabled: event.target.checked }))
+          }
           className="size-4"
         />
       </label>
@@ -541,7 +673,9 @@ function Badge({ children }: { children: ReactNode }) {
 }
 
 function EmptyState({ text, tone = 'muted' }: { text: string; tone?: 'muted' | 'error' }) {
-  return <div className={`p-6 text-sm ${tone === 'error' ? 'text-pink' : 'text-ink-soft'}`}>{text}</div>;
+  return (
+    <div className={`p-6 text-sm ${tone === 'error' ? 'text-pink' : 'text-ink-soft'}`}>{text}</div>
+  );
 }
 
 function directoryModelMatchesSearch(model: DirectoryModel, query: string): boolean {

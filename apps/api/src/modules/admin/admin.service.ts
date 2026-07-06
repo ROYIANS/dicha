@@ -1420,6 +1420,9 @@ export class AdminService {
       displayName: record.displayName,
       modelType: record.modelType as AiModelType,
       capabilities: this.arrayFromJson<AiModelCapability>(record.capabilities),
+      extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(
+        record.extensionParameters,
+      ),
       contextWindow: record.contextWindow,
       enabled: record.enabled,
       recommended: record.recommended,
@@ -1439,6 +1442,7 @@ export class AdminService {
       displayName: model.displayName,
       modelType: model.modelType,
       capabilities: model.capabilities,
+      extensionParameters: model.extensionParameters,
       contextWindow: model.contextWindow,
       enabled: model.enabled,
       recommended: model.recommended,
