@@ -19,6 +19,7 @@ import {
 import { PageHeader } from '@/components/PageHeader';
 import type {
   AdminAiProviderDirectoryItem,
+  AdminAiProviderDirectoryModelUpdate,
   AdminAiProviderDirectoryOverview,
   AdminAiProviderDirectoryUpdate,
 } from '@dicha/shared';
@@ -37,6 +38,7 @@ function AiProviderDirectoryPage() {
   const directory = useQuery(adminAiProviderDirectoryQueryOptions());
   const providers = directory.data?.providers ?? [];
   const [selectedProviderId, setSelectedProviderId] = useState('');
+  const [selectedModelId, setSelectedModelId] = useState('');
   const [modelSearch, setModelSearch] = useState('');
   const selectedProvider =
     providers.find((provider) => provider.providerId === selectedProviderId) ?? providers[0];
@@ -51,6 +53,8 @@ function AiProviderDirectoryPage() {
     () => models.filter((model) => directoryModelMatchesSearch(model, modelSearch)),
     [models, modelSearch],
   );
+  const selectedModel =
+    models.find((model) => model.modelId === selectedModelId) ?? filteredModels[0];
 
   const updateDirectory = useMutation({
     mutationFn: updateAdminAiProviderDirectory,
@@ -72,6 +76,7 @@ function AiProviderDirectoryPage() {
     mutationFn: updateAdminAiProviderDirectoryModel,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'ai', 'provider-directory'] });
+      toast.success('模型配置已保存');
     },
     onError: () => toast.error('模型状态更新失败'),
   });
@@ -128,7 +133,9 @@ function AiProviderDirectoryPage() {
                     <ModelRow
                       key={model.modelId}
                       model={model}
+                      selected={model.modelId === selectedModel?.modelId}
                       pending={updateModel.isPending}
+                      onSelect={() => setSelectedModelId(model.modelId)}
                       onToggle={(enabled) =>
                         updateModel.mutate({
                           providerId: model.providerId,
@@ -158,14 +165,26 @@ function AiProviderDirectoryPage() {
         <section className="rounded-md border border-hairline bg-surface">
           <PanelHeader title="渠道配置" description="平台默认值，不保存用户 API Key。" />
           {selectedProvider ? (
-            <ProviderConfigForm
-              key={selectedProvider.providerId}
-              provider={selectedProvider}
-              pending={updateDirectory.isPending}
-              syncing={syncModels.isPending}
-              onSave={(body) => updateDirectory.mutate(body)}
-              onSync={() => syncModels.mutate(selectedProvider.providerId)}
-            />
+            <>
+              <ProviderConfigForm
+                key={selectedProvider.providerId}
+                provider={selectedProvider}
+                pending={updateDirectory.isPending}
+                syncing={syncModels.isPending}
+                onSave={(body) => updateDirectory.mutate(body)}
+                onSync={() => syncModels.mutate(selectedProvider.providerId)}
+              />
+              {selectedModel ? (
+                <div className="border-t border-hairline">
+                  <ModelDefaultConfigForm
+                    key={`${selectedModel.providerId}:${selectedModel.modelId}`}
+                    model={selectedModel}
+                    pending={updateModel.isPending}
+                    onSave={(body) => updateModel.mutate(body)}
+                  />
+                </div>
+              ) : null}
+            </>
           ) : (
             <EmptyState text="请选择供应商" />
           )}
@@ -212,17 +231,26 @@ function ProviderButton({
 
 function ModelRow({
   model,
+  selected,
   pending,
+  onSelect,
   onToggle,
   onRecommend,
 }: {
   model: DirectoryModel;
+  selected: boolean;
   pending: boolean;
+  onSelect: () => void;
   onToggle: (enabled: boolean) => void;
   onRecommend: (recommended: boolean) => void;
 }) {
   return (
-    <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_180px] md:items-center">
+    <div
+      onClick={onSelect}
+      className={`grid w-full gap-3 p-4 text-left transition-colors md:grid-cols-[minmax(0,1fr)_180px] md:items-center ${
+        selected ? 'bg-surface-alt' : 'hover:bg-surface-alt'
+      }`}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-semibold text-ink">{model.displayName}</p>
@@ -233,28 +261,93 @@ function ModelRow({
         <p className="mt-1 text-xs text-ink-faint">{model.priceHint}</p>
       </div>
       <div className="flex items-center justify-end gap-3">
-        <label className="flex items-center gap-2 text-xs text-ink-soft">
+        <label
+          className="flex items-center gap-2 text-xs text-ink-soft"
+          onClick={(event) => event.stopPropagation()}
+        >
           <input
             type="checkbox"
             checked={model.recommended}
             disabled={pending}
-            onChange={(event) => onRecommend(event.target.checked)}
+            onChange={(event) => {
+              onRecommend(event.target.checked);
+            }}
             className="size-4"
           />
           推荐
         </label>
-        <label className="flex items-center gap-2 text-xs text-ink-soft">
+        <label
+          className="flex items-center gap-2 text-xs text-ink-soft"
+          onClick={(event) => event.stopPropagation()}
+        >
           <input
             type="checkbox"
             checked={model.enabled}
             disabled={pending}
-            onChange={(event) => onToggle(event.target.checked)}
+            onChange={(event) => {
+              onToggle(event.target.checked);
+            }}
             className="size-4"
           />
           启用
         </label>
       </div>
     </div>
+  );
+}
+
+function ModelDefaultConfigForm({
+  model,
+  pending,
+  onSave,
+}: {
+  model: DirectoryModel;
+  pending: boolean;
+  onSave: (body: AdminAiProviderDirectoryModelUpdate) => void;
+}) {
+  const [parameterConfig, setParameterConfig] = useState(
+    JSON.stringify(model.parameterConfig ?? {}, null, 2),
+  );
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(parameterConfig || '{}') as Record<string, unknown>;
+    } catch {
+      toast.error('参数配置不是合法 JSON');
+      return;
+    }
+    onSave({
+      providerId: model.providerId,
+      modelId: model.modelId,
+      parameterConfig: parsed,
+    });
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4 p-4">
+      <div>
+        <p className="text-sm font-semibold text-ink">模型默认参数</p>
+        <p className="mt-1 truncate text-xs text-ink-soft">{model.displayName}</p>
+      </div>
+      <Field label="参数配置 JSON">
+        <textarea
+          value={parameterConfig}
+          onChange={(event) => setParameterConfig(event.target.value)}
+          className="admin-input min-h-36 resize-none py-2 text-xs"
+          placeholder='{"temperature":0.7}'
+        />
+      </Field>
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        <Save className="size-4" strokeWidth={1.8} />
+        {pending ? '保存中' : '保存模型默认参数'}
+      </button>
+    </form>
   );
 }
 

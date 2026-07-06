@@ -339,6 +339,7 @@ model AiProviderDirectoryModel {
   pricing             Json?
   releasedAt          String?
   lobeMetadata        Json?
+  parameterConfig     Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -391,24 +392,26 @@ model AiModelConfig {
   provider   AiProviderConfig @relation(fields: [ownerId, providerId], references: [ownerId, providerId], onDelete: Cascade)
   providerId String
 
-  name                String
-  displayName         String
-  avatar              String?
-  contextWindow       Int?
-  modelType           String
-  extensionParameters Json
-  capabilities        Json
-  maxOutput           Int?
-  enabled             Boolean
-  recommended         Boolean
-  availability        String
-  lastLatencyMs       Int?
-  priceHint           String
-  catalogSource       String?
-  pricing             Json?
-  releasedAt          String?
-  lobeMetadata        Json?
-  custom              Boolean?
+  name                   String
+  displayName            String
+  avatar                 String?
+  contextWindow          Int?
+  modelType              String
+  extensionParameters    Json
+  capabilities           Json
+  maxOutput              Int?
+  enabled                Boolean
+  recommended            Boolean
+  availability           String
+  lastLatencyMs          Int?
+  priceHint              String
+  catalogSource          String?
+  pricing                Json?
+  releasedAt             String?
+  lobeMetadata           Json?
+  defaultParameterConfig Json?
+  parameterConfig        Json?
+  custom                 Boolean?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

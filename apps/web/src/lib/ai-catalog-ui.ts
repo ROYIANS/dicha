@@ -17,6 +17,17 @@ export function isOfficialDichaProvider(provider: Pick<AiProvider, 'id'>) {
   return provider.id === officialDichaProviderId;
 }
 
+export function isUserManagedProvider(provider: Pick<AiProvider, 'custom' | 'id'>) {
+  return provider.custom === true && !isOfficialDichaProvider(provider);
+}
+
+export function isUserOwnedModel(
+  model: Pick<AiModel, 'custom' | 'providerId'>,
+  provider?: Pick<AiProvider, 'custom' | 'id'>,
+) {
+  return model.custom === true || provider?.custom === true;
+}
+
 export function compareProvidersByEnabled(left: AiProvider, right: AiProvider) {
   const officialDelta =
     Number(isOfficialDichaProvider(right)) - Number(isOfficialDichaProvider(left));

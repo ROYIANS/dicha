@@ -480,7 +480,7 @@ export class InvokeService {
         model,
         request,
         secret,
-        parameterConfig: target.channel?.parameterConfig ?? {},
+        parameterConfig: this.parameterConfigForTarget(target),
         signal: controller.signal,
       });
       return {
@@ -542,7 +542,7 @@ export class InvokeService {
           model,
           request,
           secret,
-          parameterConfig: target.channel?.parameterConfig ?? {},
+          parameterConfig: this.parameterConfigForTarget(target),
           signal: controller.signal,
         },
         onDelta,
@@ -570,6 +570,14 @@ export class InvokeService {
     retryable: boolean,
   ): InvokeFailure {
     return { category, message: sanitizedAiMessage(message), retryable };
+  }
+
+  private parameterConfigForTarget(target: AttemptTarget): Record<string, unknown> {
+    if (target.channel?.parameterConfig) return target.channel.parameterConfig;
+    return {
+      ...(target.model.defaultParameterConfig ?? {}),
+      ...(target.model.parameterConfig ?? {}),
+    };
   }
 
   private classifyError(error: unknown): InvokeFailure {

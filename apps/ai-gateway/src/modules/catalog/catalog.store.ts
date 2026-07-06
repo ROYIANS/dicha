@@ -106,6 +106,21 @@ export class CatalogStore {
     const modelDeletes = new Set(
       modelPatches.filter((patch) => patch.delete).map((patch) => patch.modelId),
     );
+    const currentProvidersById = new Map(
+      current.providers.map((provider) => [provider.id, provider] as const),
+    );
+    for (const providerId of providerDeletes) {
+      const provider = currentProvidersById.get(providerId);
+      if (provider && provider.custom !== true) {
+        throw new BadRequestException('Only custom AI providers can be deleted');
+      }
+    }
+    for (const modelId of modelDeletes) {
+      const model = current.models.find((item) => item.id === modelId);
+      if (model && !this.isUserOwnedModel(model, currentProvidersById)) {
+        throw new BadRequestException('Only user-owned AI models can be deleted');
+      }
+    }
 
     const providers = current.providers
       .filter((provider) => !providerDeletes.has(provider.id))
@@ -150,6 +165,10 @@ export class CatalogStore {
               modelType: patch.modelType ?? model.modelType,
               extensionParameters: patch.extensionParameters ?? model.extensionParameters,
               capabilities: patch.capabilities ?? model.capabilities,
+              parameterConfig:
+                patch.parameterConfig === null
+                  ? undefined
+                  : (patch.parameterConfig ?? model.parameterConfig),
             }
           : model;
       });
@@ -423,16 +442,14 @@ export class CatalogStore {
       (left, right) => left.priority - right.priority,
     );
     const knownProviderIds = new Set(providers.map((provider) => provider.id));
+    const providersById = new Map(providers.map((provider) => [provider.id, provider] as const));
     const modelSeedById = new Map(modelSeed.map((model) => [model.id, model]));
 
     const normalizedModels = config.models
       .filter((model) => !legacySeedModelIds.has(model.id))
       .filter((model) => model.custom || !deprecatedSeedModelIds.has(model.id))
-      .filter(
-        (model) =>
-          model.providerId !== DICHA_PROVIDER_ID || model.custom || modelSeedById.has(model.id),
-      )
       .filter((model) => knownProviderIds.has(model.providerId))
+      .filter((model) => this.isUserOwnedModel(model, providersById) || modelSeedById.has(model.id))
       .map((model) => this.normalizeModel(model, modelSeedById.get(model.id)));
     const normalizedModelIds = new Set(normalizedModels.map((model) => model.id));
     const seededModels = modelSeed
@@ -513,6 +530,7 @@ export class CatalogStore {
       pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
       releasedAt: record.releasedAt ?? undefined,
       lobeMetadata: this.optionalJson<AiModel['lobeMetadata']>(record.lobeMetadata),
+      defaultParameterConfig: this.recordFromJson(record.parameterConfig),
     };
   }
 
@@ -538,6 +556,7 @@ export class CatalogStore {
       catalogSource: 'dicha_catalog',
       pricing: this.optionalJson<AiModel['pricing']>(record.dxPricing),
       releasedAt: record.releasedAt ?? undefined,
+      defaultParameterConfig: this.recordFromJson(record.parameterConfig),
     };
   }
 
@@ -682,6 +701,7 @@ export class CatalogStore {
         enabled: platformOwnedModel ? seed.enabled : model.enabled,
         availability: platformOwnedModel ? seed.availability : model.availability,
         lastLatencyMs: model.lastLatencyMs,
+        parameterConfig: model.parameterConfig,
         custom: model.custom ?? seed.custom,
       };
     }
@@ -692,6 +712,13 @@ export class CatalogStore {
       modelType: legacyModel.modelType ?? 'chat',
       extensionParameters: legacyModel.extensionParameters ?? [],
     };
+  }
+
+  private isUserOwnedModel(
+    model: AiModel,
+    providersById: ReadonlyMap<string, PersistedConfig['providers'][number]>,
+  ): boolean {
+    return model.custom === true || providersById.get(model.providerId)?.custom === true;
   }
 
   private isProviderCreate(patch: AiProviderUpdate): patch is AiProviderUpdate & {
@@ -793,6 +820,7 @@ export class CatalogStore {
       lastLatencyMs: null,
       priceHint: '自定义模型',
       catalogSource: 'custom',
+      parameterConfig: patch.parameterConfig ?? undefined,
       custom: true,
     };
   }
@@ -861,6 +889,8 @@ export class CatalogStore {
       pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
       releasedAt: record.releasedAt ?? undefined,
       lobeMetadata: this.optionalJson<AiModel['lobeMetadata']>(record.lobeMetadata),
+      defaultParameterConfig: this.recordFromJson(record.defaultParameterConfig),
+      parameterConfig: this.recordFromJson(record.parameterConfig),
       custom: record.custom ?? undefined,
     };
   }
@@ -921,6 +951,8 @@ export class CatalogStore {
       pricing: this.jsonOrUndefined(model.pricing),
       releasedAt: model.releasedAt,
       lobeMetadata: this.jsonOrUndefined(model.lobeMetadata),
+      defaultParameterConfig: this.jsonOrUndefined(model.defaultParameterConfig),
+      parameterConfig: this.jsonOrUndefined(model.parameterConfig),
       custom: model.custom,
     };
   }

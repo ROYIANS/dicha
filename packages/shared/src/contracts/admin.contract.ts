@@ -417,6 +417,7 @@ export const AdminAiProviderDirectoryOverviewSchema = z.object({
       recommended: z.boolean(),
       availability: z.string(),
       priceHint: z.string(),
+      parameterConfig: z.record(z.string(), z.unknown()).nullable(),
     }),
   ),
 });
@@ -442,6 +443,7 @@ export const AdminAiProviderDirectoryModelUpdateSchema = z.object({
   enabled: z.boolean().optional(),
   recommended: z.boolean().optional(),
   displayName: z.string().min(1).max(160).optional(),
+  parameterConfig: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export type AdminAiProviderDirectoryModelUpdate = z.infer<

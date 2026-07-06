@@ -180,6 +180,82 @@ describe('InvokeService official channel degradation', () => {
   });
 });
 
+describe('InvokeService model parameter config', () => {
+  test('merges admin defaults with user overrides for user-provider models', async () => {
+    const byokProvider: AiProvider = {
+      ...provider,
+      id: 'openai',
+      name: 'OpenAI',
+      shortName: 'OpenAI',
+      category: 'global',
+      authType: 'api_key',
+      credentialMode: 'user_api_key',
+      billingMode: 'user_provider',
+      modelSyncMode: 'openai_models_endpoint',
+      credentialState: 'configured',
+    };
+    const byokModel: AiModel = {
+      ...model,
+      id: 'openai:gpt-4o',
+      providerId: 'openai',
+      name: 'gpt-4o',
+      displayName: 'GPT-4o',
+      catalogSource: 'upstream_sync',
+      defaultParameterConfig: { temperature: 0.3, top_p: 0.8 },
+      parameterConfig: { temperature: 0.7, response_format: { type: 'json_object' } },
+    };
+    const byokCatalog: AiGatewayCatalog = {
+      generatedAt: catalog.generatedAt,
+      providers: [byokProvider],
+      models: [byokModel],
+      assignments: [
+        {
+          useCase: 'assistant',
+          primaryModelId: byokModel.id,
+          fallbackModelIds: [],
+        },
+      ],
+    };
+    const catalogStore = {
+      getCatalog: vi.fn(async () => byokCatalog),
+      getSystemProviderChannels: vi.fn(async () => []),
+      getProviderSecret: vi.fn(async () => ({ provider: byokProvider, secret: 'user-secret' })),
+    } as unknown as CatalogStore;
+    const creditStore = {
+      assertSufficientReserve: vi.fn(),
+      calculateCharge: vi.fn(),
+    } as unknown as CreditStore;
+    const usageStore = {
+      recordEvent: vi.fn(async (_ownerId: string, record: unknown) => record),
+    } as unknown as UsageStore;
+    const invoke = vi.fn(async () => ({
+      text: 'ok',
+      promptTokens: 10,
+      completionTokens: 5,
+      upstreamRequestId: 'upstream-1',
+    }));
+    const adapterRegistry = {
+      adapterFor: vi.fn(() => ({ invoke })),
+    } as unknown as InvokeAdapterRegistry;
+
+    const { InvokeService } = await import('./invoke.service');
+    await new InvokeService(catalogStore, creditStore, usageStore, adapterRegistry).invoke(
+      'user-1',
+      request,
+    );
+
+    expect(invoke).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parameterConfig: {
+          temperature: 0.7,
+          top_p: 0.8,
+          response_format: { type: 'json_object' },
+        },
+      }),
+    );
+  });
+});
+
 const provider: AiProvider = {
   id: 'dicha',
   name: 'Dicha AI',

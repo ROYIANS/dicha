@@ -239,6 +239,8 @@ export const AiModelSchema = z.object({
   catalogSource: AiModelCatalogSourceSchema.optional(),
   pricing: AiModelPricingSchema.optional(),
   releasedAt: z.string().min(1).max(32).optional(),
+  defaultParameterConfig: z.record(z.string(), z.unknown()).optional(),
+  parameterConfig: z.record(z.string(), z.unknown()).optional(),
   lobeMetadata: z
     .object({
       abilities: z.record(z.string(), z.boolean()).optional(),
@@ -335,6 +337,7 @@ const AiModelPatchSchema = z.object({
   modelType: AiModelTypeSchema.optional(),
   extensionParameters: z.array(AiModelExtensionParameterSchema).optional(),
   capabilities: z.array(AiModelCapabilitySchema).optional(),
+  parameterConfig: z.record(z.string(), z.unknown()).nullable().optional(),
   delete: z.literal(true).optional(),
 });
 
@@ -348,6 +351,7 @@ const AiModelCreateSchema = AiModelPatchSchema.extend({
   extensionParameters: z.array(AiModelExtensionParameterSchema).default([]),
   capabilities: z.array(AiModelCapabilitySchema).min(1),
   enabled: z.boolean().optional(),
+  parameterConfig: z.record(z.string(), z.unknown()).optional(),
   custom: z.boolean().optional(),
 });
 

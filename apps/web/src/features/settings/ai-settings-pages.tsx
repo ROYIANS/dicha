@@ -71,6 +71,8 @@ import {
   firstAssignableModelId,
   getAssignableModelMap,
   isOfficialDichaProvider,
+  isUserManagedProvider,
+  isUserOwnedModel,
   lobeProviderKey,
 } from '@/lib/ai-catalog-ui';
 import { type SettingsTint } from '@/components/settings-ui';
@@ -483,8 +485,10 @@ function ProviderCard({
   const canRunUpstreamProbe = supportsUpstreamSync;
   const canDeleteProvider = provider.custom === true;
   const isOfficialDicha = isOfficialDichaProvider(provider);
-  const showUserMaintenanceActions = !isOfficialDicha;
-  const upstreamActionHint = !showUserMaintenanceActions
+  const showProviderRuntimeActions = !isOfficialDicha;
+  const showUpstreamSyncActions = isUserManagedProvider(provider);
+  const canAddCustomModel = !isOfficialDicha;
+  const upstreamActionHint = !showUpstreamSyncActions
     ? ''
     : !supportsUpstreamSync
       ? t('settings.detail.aiProviders.upstreamUnsupportedHint')
@@ -620,7 +624,7 @@ function ProviderCard({
               {t('settings.detail.aiProviders.deleteProvider')}
             </button>
           ) : null}
-          {showUserMaintenanceActions ? (
+          {showProviderRuntimeActions ? (
             <>
               <button
                 type="button"
@@ -632,6 +636,10 @@ function ProviderCard({
                 <Activity size={14} className={checking ? 'animate-pulse' : ''} />
                 {t('settings.detail.aiProviders.checkConnection')}
               </button>
+            </>
+          ) : null}
+          {showUpstreamSyncActions ? (
+            <>
               <button
                 type="button"
                 onClick={() => onSyncModels(provider.id)}
@@ -642,6 +650,10 @@ function ProviderCard({
                 <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
                 {t('settings.detail.aiProviders.syncModels')}
               </button>
+            </>
+          ) : null}
+          {canAddCustomModel ? (
+            <>
               <button
                 type="button"
                 onClick={onAddModel}
@@ -666,6 +678,7 @@ function ProviderCard({
         <div className="min-h-0 overflow-hidden">
           <ProviderModelList
             models={providerModels}
+            provider={provider}
             catalog={catalog}
             pending={pending}
             readOnly={isOfficialDicha}
@@ -951,6 +964,7 @@ function ProviderCredentialPopover({
 
 function ProviderModelList({
   models,
+  provider,
   catalog,
   pending,
   readOnly,
@@ -958,6 +972,7 @@ function ProviderModelList({
   onConfigure,
 }: {
   models: AiModel[];
+  provider: AiProvider;
   catalog: AiGatewayCatalog;
   pending: boolean;
   readOnly: boolean;
@@ -1115,6 +1130,7 @@ function ProviderModelList({
             <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
               <ProviderModelRow
                 model={model}
+                provider={provider}
                 catalog={catalog}
                 pending={pending}
                 readOnly={readOnly}
@@ -1135,6 +1151,7 @@ function ProviderModelList({
 
 function ProviderModelRow({
   model,
+  provider,
   catalog,
   pending,
   readOnly,
@@ -1142,6 +1159,7 @@ function ProviderModelRow({
   onUpdate,
 }: {
   model: AiModel;
+  provider: AiProvider;
   catalog: AiGatewayCatalog;
   pending: boolean;
   readOnly: boolean;
@@ -1156,8 +1174,7 @@ function ProviderModelRow({
     )
     .map((assignment) => t(`settings.aiUseCases.${assignment.useCase}`));
   const hasKnownMetadata = model.contextWindow !== null && model.capabilities.length > 0;
-  const canDeleteModel =
-    !readOnly && (model.custom === true || model.catalogSource === 'upstream_sync');
+  const canDeleteModel = !readOnly && isUserOwnedModel(model, provider);
   const compactMetadata = modelCompactMetadata(model, {
     maxOutput: (value) => String(t('settings.detail.aiProviders.modelMaxOutput', { value })),
     releasedAt: (value) => String(t('settings.detail.aiProviders.modelReleasedAt', { value })),
@@ -1529,6 +1546,7 @@ function ModelFormModal({
   const { t } = useTranslation();
   const model = state?.model;
   const provider = state?.provider;
+  const backendManagedModel = Boolean(model && provider && !isUserOwnedModel(model, provider));
   const [modelId, setModelId] = useState(model?.name ?? '');
   const [displayName, setDisplayName] = useState(model?.displayName ?? '');
   const [avatar, setAvatar] = useState(
@@ -1542,6 +1560,13 @@ function ModelFormModal({
   const [extensionParameters, setExtensionParameters] = useState<AiModelExtensionParameter[]>(
     model?.extensionParameters ?? [],
   );
+  const [parameterConfig, setParameterConfig] = useState(
+    JSON.stringify(model?.parameterConfig ?? {}, null, 2),
+  );
+  const defaultParameterConfig =
+    model?.defaultParameterConfig && Object.keys(model.defaultParameterConfig).length > 0
+      ? JSON.stringify(model.defaultParameterConfig, null, 2)
+      : '';
   const parsedContextWindow = Number(contextWindow);
   const contextWindowInvalid =
     !Number.isFinite(parsedContextWindow) ||
@@ -1549,10 +1574,11 @@ function ModelFormModal({
     parsedContextWindow <= 0;
   const canSubmit =
     Boolean(provider) &&
-    modelId.trim().length > 0 &&
-    displayName.trim().length > 0 &&
-    capabilities.length > 0 &&
-    !contextWindowInvalid;
+    (backendManagedModel ||
+      (modelId.trim().length > 0 &&
+        displayName.trim().length > 0 &&
+        capabilities.length > 0 &&
+        !contextWindowInvalid));
 
   const toggleCapability = (capability: AiModelCapability) => {
     setCapabilities((current) =>
@@ -1585,19 +1611,32 @@ function ModelFormModal({
           canSubmit={canSubmit}
           submitLabel={t('settings.detail.aiProviders.saveModelConfig')}
           onClose={onClose}
-          onSubmit={() =>
+          onSubmit={() => {
+            let parsedParameterConfig: Record<string, unknown>;
+            try {
+              parsedParameterConfig = JSON.parse(parameterConfig || '{}') as Record<string, unknown>;
+            } catch {
+              toast.error(t('settings.detail.aiProviders.parameterConfigInvalid'));
+              return;
+            }
             onSubmit({
               models: [
                 model
-                  ? {
-                      modelId: model.id,
-                      displayName: displayName.trim(),
-                      avatar: avatar.trim() || providerShortName(displayName || modelId || 'AI'),
-                      contextWindow: parsedContextWindow,
-                      modelType,
-                      extensionParameters,
-                      capabilities,
-                    }
+                  ? backendManagedModel
+                    ? {
+                        modelId: model.id,
+                        parameterConfig: parsedParameterConfig,
+                      }
+                    : {
+                        modelId: model.id,
+                        displayName: displayName.trim(),
+                        avatar: avatar.trim() || providerShortName(displayName || modelId || 'AI'),
+                        contextWindow: parsedContextWindow,
+                        modelType,
+                        extensionParameters,
+                        capabilities,
+                        parameterConfig: parsedParameterConfig,
+                      }
                   : {
                       modelId: `${provider.id}:${modelId.trim()}`,
                       providerId: provider.id,
@@ -1609,11 +1648,12 @@ function ModelFormModal({
                       extensionParameters,
                       capabilities,
                       enabled: true,
+                      parameterConfig: parsedParameterConfig,
                       custom: true,
                     },
               ],
             })
-          }
+          }}
         />
       }
     >
@@ -1635,7 +1675,11 @@ function ModelFormModal({
         )}
 
         <ConfigLabel title={t('settings.detail.aiProviders.modelDisplayName')} required />
-        <TextField value={displayName} onChange={setDisplayName} disabled={pending} />
+        <TextField
+          value={displayName}
+          onChange={setDisplayName}
+          disabled={pending || backendManagedModel}
+        />
 
         <ConfigLabel
           title={t('settings.detail.aiProviders.modelAvatar')}
@@ -1656,13 +1700,13 @@ function ModelFormModal({
               {avatar.trim() || providerShortName(displayName || modelId || 'AI')}
             </span>
           )}
-          <TextField
-            value={avatar}
-            onChange={setAvatar}
-            disabled={pending}
-            maxLength={12}
-            placeholder={t('settings.detail.aiProviders.modelAvatarPlaceholder')}
-          />
+            <TextField
+              value={avatar}
+              onChange={setAvatar}
+              disabled={pending || backendManagedModel}
+              maxLength={12}
+              placeholder={t('settings.detail.aiProviders.modelAvatarPlaceholder')}
+            />
         </div>
 
         <ConfigLabel
@@ -1675,7 +1719,7 @@ function ModelFormModal({
               <button
                 key={preset}
                 type="button"
-                disabled={pending || preset === 0}
+                disabled={pending || backendManagedModel || preset === 0}
                 onClick={() => setContextWindow(String(preset))}
                 className={`h-7 rounded-md border px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
                   parsedContextWindow === preset
@@ -1691,7 +1735,7 @@ function ModelFormModal({
             value={contextWindow}
             onChange={setContextWindow}
             inputMode="numeric"
-            disabled={pending}
+            disabled={pending || backendManagedModel}
           />
           {contextWindowInvalid ? (
             <p className="text-[11px] text-pink">
@@ -1711,7 +1755,7 @@ function ModelFormModal({
               selected={extensionParameters.includes(parameter)}
               label={t(`settings.aiExtensionParameters.${parameter}`)}
               onClick={() => toggleExtension(parameter)}
-              disabled={pending}
+              disabled={pending || backendManagedModel}
             />
           ))}
         </ToggleGrid>
@@ -1722,7 +1766,7 @@ function ModelFormModal({
             capability={capability}
             selected={capabilities.includes(capability)}
             onToggle={() => toggleCapability(capability)}
-            disabled={pending}
+            disabled={pending || backendManagedModel}
           />
         ))}
 
@@ -1733,7 +1777,7 @@ function ModelFormModal({
         <select
           value={modelType}
           onChange={(event) => setModelType(event.target.value as AiModelType)}
-          disabled={pending}
+          disabled={pending || backendManagedModel}
           className="h-9 rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
         >
           {modelTypeOptions.map((type) => (
@@ -1742,6 +1786,28 @@ function ModelFormModal({
             </option>
           ))}
         </select>
+
+        <ConfigLabel
+          title={t('settings.detail.aiProviders.defaultParameterConfig')}
+          description={t('settings.detail.aiProviders.defaultParameterConfigDesc')}
+        />
+        <textarea
+          value={defaultParameterConfig || '{}'}
+          readOnly
+          className="min-h-24 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[12px] text-ink-faint outline-none"
+        />
+
+        <ConfigLabel
+          title={t('settings.detail.aiProviders.parameterConfig')}
+          description={t('settings.detail.aiProviders.parameterConfigDesc')}
+        />
+        <textarea
+          value={parameterConfig}
+          onChange={(event) => setParameterConfig(event.target.value)}
+          disabled={pending}
+          className="min-h-28 resize-none rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+          placeholder='{"temperature":0.7}'
+        />
       </div>
     </ModalShell>
   );

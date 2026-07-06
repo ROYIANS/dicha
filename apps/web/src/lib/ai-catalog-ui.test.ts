@@ -7,6 +7,8 @@ import {
   getAssignableModelGroups,
   getAssignableModelMap,
   isOfficialDichaProvider,
+  isUserManagedProvider,
+  isUserOwnedModel,
   lobeProviderKey,
 } from './ai-catalog-ui';
 
@@ -35,6 +37,21 @@ describe('AI catalog UI helpers', () => {
   test('identifies the official Dicha provider for platform-managed UI branches', () => {
     expect(isOfficialDichaProvider({ id: 'dicha' })).toBe(true);
     expect(isOfficialDichaProvider({ id: 'openai' })).toBe(false);
+  });
+
+  test('separates user-managed providers from admin-maintained providers', () => {
+    expect(isUserManagedProvider(provider({ id: 'custom', name: 'Custom', priority: 1, custom: true }))).toBe(true);
+    expect(isUserManagedProvider(provider({ id: 'openai', name: 'OpenAI', priority: 2 }))).toBe(false);
+    expect(isUserManagedProvider(provider({ id: 'dicha', name: 'Dicha AI', priority: 3, custom: true }))).toBe(false);
+  });
+
+  test('treats only custom-provider or custom models as user-owned', () => {
+    const adminProvider = provider({ id: 'openai', name: 'OpenAI', priority: 1 });
+    const customProvider = provider({ id: 'local', name: 'Local', priority: 2, custom: true });
+
+    expect(isUserOwnedModel(model({ id: 'openai:gpt-4o', providerId: 'openai', name: 'gpt-4o' }), adminProvider)).toBe(false);
+    expect(isUserOwnedModel(model({ id: 'openai:mine', providerId: 'openai', name: 'mine', custom: true }), adminProvider)).toBe(true);
+    expect(isUserOwnedModel(model({ id: 'local:llama', providerId: 'local', name: 'llama' }), customProvider)).toBe(true);
   });
 
   test('groups assignment model options by enabled providers and enabled models', () => {
@@ -111,11 +128,13 @@ function provider({
   name,
   priority,
   status = 'enabled',
+  custom,
 }: {
   id: string;
   name: string;
   priority: number;
   status?: AiProvider['status'];
+  custom?: boolean;
 }) {
   return {
     id,
@@ -132,6 +151,7 @@ function provider({
     modelSyncMode: 'openai_models_endpoint',
     credentialState: 'configured',
     priority,
+    custom,
   } satisfies AiProvider;
 }
 
@@ -140,11 +160,13 @@ function model({
   providerId,
   name,
   enabled = true,
+  custom,
 }: {
   id: string;
   providerId: string;
   name: string;
   enabled?: boolean;
+  custom?: boolean;
 }) {
   return {
     id,
@@ -160,5 +182,6 @@ function model({
     availability: 'healthy',
     lastLatencyMs: null,
     priceHint: '$0',
+    custom,
   } satisfies AiModel;
 }

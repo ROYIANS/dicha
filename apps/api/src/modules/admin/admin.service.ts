@@ -681,12 +681,22 @@ export class AdminService {
         enabled: body.enabled,
         recommended: body.recommended,
         displayName: body.displayName,
+        parameterConfig:
+          body.parameterConfig === undefined
+            ? undefined
+            : body.parameterConfig === null
+              ? Prisma.JsonNull
+              : (body.parameterConfig as Prisma.InputJsonValue),
       },
       create: this.directoryModelCreateInput({
         ...model,
         enabled: body.enabled ?? model.enabled,
         recommended: body.recommended ?? model.recommended,
         displayName: body.displayName ?? model.displayName,
+        defaultParameterConfig:
+          body.parameterConfig === undefined
+            ? model.defaultParameterConfig
+            : (body.parameterConfig ?? undefined),
       }),
     });
     const overview = await this.getAiProviderDirectory();
@@ -701,6 +711,7 @@ export class AdminService {
         enabled: body.enabled,
         recommended: body.recommended,
         displayNameChanged: body.displayName !== undefined,
+        parameterConfigChanged: body.parameterConfig !== undefined,
       }),
     });
     return overview;
@@ -1414,6 +1425,7 @@ export class AdminService {
       recommended: record.recommended,
       availability: record.availability,
       priceHint: record.priceHint,
+      parameterConfig: this.recordFromJson(record.parameterConfig),
     };
   }
 
@@ -1432,6 +1444,7 @@ export class AdminService {
       recommended: model.recommended,
       availability: model.availability,
       priceHint: model.priceHint,
+      parameterConfig: model.defaultParameterConfig ?? null,
     };
   }
 
@@ -1460,6 +1473,7 @@ export class AdminService {
       pricing: this.optionalJson<AiModel['pricing']>(record.pricing),
       releasedAt: record.releasedAt ?? undefined,
       lobeMetadata: this.optionalJson<AiModel['lobeMetadata']>(record.lobeMetadata),
+      defaultParameterConfig: this.recordFromJson(record.parameterConfig) ?? undefined,
     };
   }
 
@@ -1483,6 +1497,7 @@ export class AdminService {
       pricing: this.jsonOrUndefined(model.pricing),
       releasedAt: model.releasedAt,
       lobeMetadata: this.jsonOrUndefined(model.lobeMetadata),
+      parameterConfig: this.jsonOrUndefined(model.defaultParameterConfig),
     };
   }
 
