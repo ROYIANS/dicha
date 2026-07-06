@@ -318,6 +318,18 @@ export const zh = {
             embedding: '向量',
             audio: '音频',
           },
+          modelTypeLabels: {
+            chat: '对话',
+            embedding: '向量',
+            rerank: '重排',
+            image: '图片',
+            audio: '音频',
+            video: '视频',
+            tts: '语音合成',
+            asr: '语音识别',
+            text2music: '音乐',
+            realtime: '实时',
+          },
           modelSort: {
             default: '默认排序',
             name_asc: '名称升序',

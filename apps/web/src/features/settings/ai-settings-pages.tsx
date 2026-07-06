@@ -4,10 +4,13 @@ import {
   AudioLines,
   Bot,
   Boxes,
+  Braces,
   Brain,
   CheckCircle2,
   ChevronDown,
   CircleDashed,
+  Eye,
+  FileText,
   ImageIcon,
   Trash2,
   KeyRound,
@@ -21,12 +24,13 @@ import {
   Server,
   Sparkles,
   Video,
+  Wrench,
   X,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
-import { Button, Chip, Dropdown, Input, Tabs } from '@heroui/react';
+import { Dropdown, Input, Tooltip } from '@heroui/react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -94,6 +98,22 @@ const useCaseIcon = {
   tagging: Zap,
   summarization: Brain,
 } satisfies Record<AiModelUseCase, LucideIcon>;
+
+const capabilityIcon = {
+  chat: MessageSquare,
+  vision: Eye,
+  tool_use: Wrench,
+  json: Braces,
+  embedding: Layers3,
+  reasoning: Brain,
+  fast: Zap,
+  web_search: Search,
+  image_generation: ImageIcon,
+  audio: AudioLines,
+  files: FileText,
+  image_output: ImageIcon,
+  video: Video,
+} satisfies Record<AiModelCapability, LucideIcon>;
 
 const modelCapabilityOptions = [
   'tool_use',
@@ -1012,7 +1032,7 @@ function ProviderModelList({
 
   return (
     <div className="bg-canvas px-4 py-3">
-      <div className="grid gap-3 rounded-md border border-hairline bg-surface p-3">
+      <div className="grid gap-3 rounded-md border border-hairline bg-surface px-3 py-3">
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="relative min-w-0">
             <Search
@@ -1024,12 +1044,12 @@ function ProviderModelList({
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
               fullWidth
-              className="h-9 rounded-md border border-hairline bg-surface-alt pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+              className="h-9 rounded-md border border-hairline bg-surface pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
             />
           </div>
           <Dropdown>
             <Dropdown.Trigger
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface-alt px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
               aria-label={t('settings.detail.aiProviders.modelSortLabel')}
             >
               <ArrowDownUp size={14} />
@@ -1060,33 +1080,36 @@ function ProviderModelList({
           </Dropdown>
         </div>
 
-        <Tabs.Root
-          selectedKey={selectedFilter}
-          onSelectionChange={(key) => setActiveFilter(String(key) as ModelListFilterKey)}
-        >
-          <Tabs.List className="flex flex-wrap gap-1.5 rounded-md bg-canvas p-1">
+        <div className="overflow-x-auto border-b border-hairline" role="tablist">
+          <div className="flex min-w-max flex-row flex-nowrap items-center gap-7 px-1">
             {visibleFilters.map((filter) => {
               const Icon = filter.icon;
               const count = filterCounts.get(filter.key) ?? 0;
+              const selected = filter.key === selectedFilter;
               return (
-                <Tabs.Tab
+                <button
                   key={filter.key}
-                  id={filter.key}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium text-ink-faint outline-none transition-colors data-[selected]:bg-surface data-[selected]:text-ink"
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={`inline-flex h-10 items-center gap-1.5 border-b-2 px-0 text-[12px] font-semibold outline-none transition-colors ${
+                    selected
+                      ? 'border-[var(--ink)] text-ink'
+                      : 'border-transparent text-ink-faint hover:text-ink-soft'
+                  }`}
                 >
-                  <Icon size={14} />
+                  <Icon size={15} />
                   {t(`settings.detail.aiProviders.modelFilters.${filter.key}`)}
-                  <span className="rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
-                    {count}
-                  </span>
-                </Tabs.Tab>
+                  <span className="text-[11px] font-medium text-ink-faint">{count}</span>
+                </button>
               );
             })}
-          </Tabs.List>
-        </Tabs.Root>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-2 overflow-hidden rounded-md border border-hairline bg-surface">
+      <div className="mt-3 overflow-hidden rounded-md border border-hairline bg-surface">
         {visibleModels.length > 0 ? (
           visibleModels.map((model) => (
             <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
@@ -1135,118 +1158,107 @@ function ProviderModelRow({
   const hasKnownMetadata = model.contextWindow !== null && model.capabilities.length > 0;
   const canDeleteModel =
     !readOnly && (model.custom === true || model.catalogSource === 'upstream_sync');
-  const visibleCapabilities = model.capabilities.slice(0, 5);
-  const hiddenCapabilityCount = Math.max(0, model.capabilities.length - visibleCapabilities.length);
+  const compactMetadata = modelCompactMetadata(model, {
+    maxOutput: (value) => String(t('settings.detail.aiProviders.modelMaxOutput', { value })),
+    releasedAt: (value) => String(t('settings.detail.aiProviders.modelReleasedAt', { value })),
+  });
 
   return (
     <div className="grid gap-3 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-      <div className="flex min-w-0 gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <ModelAvatar model={model} />
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[13px] font-medium text-ink">{model.displayName}</span>
-            <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
+        <div className="min-w-0 space-y-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="truncate text-[14px] font-semibold text-ink">{model.displayName}</span>
+            <span className="max-w-[18rem] truncate rounded-md bg-surface-alt px-1.5 py-0.5 text-[11px] text-ink-faint">
               {model.name}
             </span>
             {model.recommended ? (
-              <span className="rounded-md border border-hairline bg-chip-sage px-1.5 py-0.5 text-[10px] font-medium text-sage">
+              <span className="rounded-md bg-surface-alt px-1.5 py-0.5 text-[11px] font-medium text-ink-soft">
                 {t('settings.detail.aiProviders.recommended')}
               </span>
             ) : null}
-            {model.contextWindow === null ? (
-              <span className="rounded-md border border-hairline bg-chip-peach px-1.5 py-0.5 text-[10px] font-medium text-peach">
-                {t('settings.detail.aiProviders.metadataUnknown')}
-              </span>
-            ) : (
-              <span className="rounded-md border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-faint">
-                {model.contextWindow.toLocaleString()}
-              </span>
-            )}
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-chip-mist px-1.5 py-0.5 text-[10px] font-medium text-mist">
-              {model.modelType.toUpperCase()}
-            </Chip>
-            {model.maxOutput ? (
-              <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
-                {t('settings.detail.aiProviders.modelMaxOutput', {
-                  value: model.maxOutput.toLocaleString(),
-                })}
-              </Chip>
-            ) : null}
-            {model.releasedAt ? (
-              <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
-                {t('settings.detail.aiProviders.modelReleasedAt', { value: model.releasedAt })}
-              </Chip>
-            ) : null}
-            <Chip className="inline-flex max-w-full items-center gap-1 rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[10px] text-ink-faint">
-              <span className="truncate">{model.priceHint}</span>
-            </Chip>
-            {readOnly ? (
-              <Chip className="inline-flex items-center gap-1 rounded-md border border-hairline bg-chip-lavender px-1.5 py-0.5 text-[10px] font-medium text-lavender">
-                {t('settings.detail.aiProviders.officialModelManaged')}
-              </Chip>
-            ) : null}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-soft">
+            <span>{t(`settings.detail.aiProviders.modelTypeLabels.${model.modelType}`)}</span>
+            {compactMetadata.map((item) => (
+              <span key={item} className="truncate">
+                {item}
+              </span>
+            ))}
           </div>
-          {model.capabilities.length > 0 ? (
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {visibleCapabilities.map((capability) => (
-                <CapabilityChip key={capability} capability={capability} />
-              ))}
-              {hiddenCapabilityCount > 0 ? (
-                <span className="rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[11px] text-ink-faint">
-                  +{hiddenCapabilityCount}
-                </span>
-              ) : null}
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <CapabilityIconRail capabilities={model.capabilities} />
+            <span className="truncate text-[11px] text-ink-faint">
+              {assignedUseCases.length > 0
+                ? assignedUseCases.join(' / ')
+                : t('settings.detail.aiModels.noAssignment')}
+            </span>
+          </div>
+          {!hasKnownMetadata && !readOnly ? (
+            <div className="text-[11px] text-ink-faint">
+              {t('settings.detail.aiProviders.metadataUnknown')}
             </div>
-          ) : (
-            <p className="mt-1 text-[11px] text-ink-faint">
-              {t('settings.detail.aiProviders.metadataUnknownDesc')}
-            </p>
-          )}
-          <p className="mt-1 truncate text-[11px] text-ink-faint">
-            {assignedUseCases.length > 0
-              ? assignedUseCases.join(' / ')
-              : t('settings.detail.aiModels.noAssignment')}
-          </p>
+          ) : null}
         </div>
       </div>
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex min-w-[180px] items-center justify-end gap-2">
         {canDeleteModel ? (
-          <Button
-            type="button"
-            onClick={() => {
-              if (
-                window.confirm(
-                  t('settings.detail.aiProviders.deleteModelConfirm', { name: model.displayName }),
-                )
-              ) {
-                onUpdate({ models: [{ modelId: model.id, delete: true }] });
-              }
-            }}
-            isDisabled={pending}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-pink transition-colors hover:border-pink disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label={t('settings.detail.aiProviders.deleteModel')}
-          >
-            <Trash2 size={14} />
-            {t('settings.detail.aiProviders.deleteModel')}
-          </Button>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      t('settings.detail.aiProviders.deleteModelConfirm', {
+                        name: model.displayName,
+                      }),
+                    )
+                  ) {
+                    onUpdate({ models: [{ modelId: model.id, delete: true }] });
+                  }
+                }}
+                disabled={pending}
+                className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-pink disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={t('settings.detail.aiProviders.deleteModel')}
+              >
+                <Trash2 size={15} />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
+              {t('settings.detail.aiProviders.deleteModel')}
+            </Tooltip.Content>
+          </Tooltip>
         ) : null}
         {readOnly ? null : (
-          <Button
-            type="button"
-            onClick={onConfigure}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
-          >
-            <SlidersHorizontal size={14} />
-            {t('settings.detail.aiProviders.configureModel')}
-          </Button>
+          <Tooltip>
+            <Tooltip.Trigger>
+              <button
+                type="button"
+                onClick={onConfigure}
+                className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
+                aria-label={t('settings.detail.aiProviders.configureModel')}
+              >
+                <SlidersHorizontal size={15} />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
+              {t('settings.detail.aiProviders.configureModel')}
+            </Tooltip.Content>
+          </Tooltip>
         )}
-        <StatusPill
-          icon={model.enabled ? CheckCircle2 : CircleDashed}
-          tint={availabilityTone[model.availability]}
-          label={t(`settings.aiAvailability.${model.availability}`)}
-        />
+        {readOnly ? null : (
+          <StatusDot
+            tint={availabilityTone[model.availability]}
+            label={t(`settings.aiAvailability.${model.availability}`)}
+          />
+        )}
+        {model.contextWindow !== null ? (
+          <span className="inline-flex h-8 min-w-14 items-center justify-center rounded-md bg-surface-alt px-2 text-[12px] font-medium text-ink-soft">
+            {formatContextWindowPreset(model.contextWindow)}
+          </span>
+        ) : null}
         {readOnly ? null : (
           <SettingsSwitch
             checked={model.enabled}
@@ -1998,6 +2010,30 @@ function releaseRank(model: AiModel) {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
+function modelCompactMetadata(
+  model: AiModel,
+  labels: { maxOutput: (value: string) => string; releasedAt: (value: string) => string },
+) {
+  const metadata: string[] = [];
+  if (model.releasedAt) {
+    metadata.push(labels.releasedAt(model.releasedAt));
+  }
+  if (model.maxOutput) {
+    metadata.push(labels.maxOutput(formatContextWindowPreset(model.maxOutput)));
+  }
+  const priceHint = usefulPriceHint(model.priceHint);
+  if (priceHint) metadata.push(priceHint);
+  return metadata.slice(0, 3);
+}
+
+function usefulPriceHint(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return '';
+  if (normalized.includes('元数据')) return '';
+  if (normalized === 'Dicha AI 模型' || normalized === '自定义模型') return '';
+  return normalized;
+}
+
 function providerTagLabels(models: AiModel[]) {
   const tags = new Set<string>();
   models.forEach((model) => {
@@ -2159,12 +2195,64 @@ function assignmentUpdate({
   };
 }
 
-function CapabilityChip({ capability }: { capability: AiModelCapability }) {
+function CapabilityIconRail({ capabilities }: { capabilities: AiModelCapability[] }) {
   const { t } = useTranslation();
+  const visibleCapabilities = capabilities.slice(0, 5);
+  const hiddenCapabilityCount = Math.max(0, capabilities.length - visibleCapabilities.length);
+  if (capabilities.length === 0) return null;
+
   return (
-    <span className="rounded-md border border-hairline bg-surface-alt px-1.5 py-0.5 text-[11px] text-ink-faint">
-      {t(`settings.aiCapabilities.${capability}`)}
+    <span className="inline-flex items-center gap-1">
+      {visibleCapabilities.map((capability) => {
+        const Icon = capabilityIcon[capability];
+        const label = t(`settings.aiCapabilities.${capability}`);
+        return (
+          <Tooltip key={capability}>
+            <Tooltip.Trigger>
+              <span
+                className="grid size-6 place-items-center rounded-md bg-surface-alt text-ink-faint"
+                aria-label={label}
+              >
+                <Icon size={13} />
+              </span>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
+              {label}
+            </Tooltip.Content>
+          </Tooltip>
+        );
+      })}
+      {hiddenCapabilityCount > 0 ? (
+        <span className="grid h-6 min-w-6 place-items-center rounded-md bg-surface-alt px-1.5 text-[10px] font-medium text-ink-faint">
+          +{hiddenCapabilityCount}
+        </span>
+      ) : null}
     </span>
+  );
+}
+
+function StatusDot({ tint, label }: { tint: SettingsTint; label: string }) {
+  const tintClass = {
+    peach: 'bg-[var(--accent-peach)]',
+    lavender: 'bg-[var(--accent-lavender)]',
+    sage: 'bg-[var(--accent-sage)]',
+    mist: 'bg-[var(--accent-mist)]',
+    pink: 'bg-[var(--accent-pink)]',
+  } satisfies Record<SettingsTint, string>;
+
+  return (
+    <Tooltip>
+      <Tooltip.Trigger>
+        <span
+          className={`size-2.5 rounded-full ${tintClass[tint]}`}
+          aria-label={label}
+          role="img"
+        />
+      </Tooltip.Trigger>
+      <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
+        {label}
+      </Tooltip.Content>
+    </Tooltip>
   );
 }
 
