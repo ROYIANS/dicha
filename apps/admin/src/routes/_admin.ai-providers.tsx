@@ -1,6 +1,26 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, CircleDashed, RefreshCw, Save, Search, Server } from 'lucide-react';
+import {
+  AudioLines,
+  Brain,
+  Braces,
+  CheckCircle2,
+  CircleDashed,
+  Eye,
+  FileText,
+  ImageIcon,
+  Layers3,
+  MessageSquare,
+  RefreshCw,
+  Save,
+  Search,
+  Server,
+  Video,
+  Wrench,
+  X,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
@@ -13,6 +33,7 @@ import { PageHeader } from '@/components/PageHeader';
 import {
   aiModelCommonParameterControls,
   aiModelExtensionParameterDefinitionByKey,
+  aiModelExtensionParameterOptions,
   buildAiModelParameterConfig,
   createAiModelParameterDraft,
 } from '@dicha/shared';
@@ -21,12 +42,58 @@ import type {
   AdminAiProviderDirectoryModelUpdate,
   AdminAiProviderDirectoryOverview,
   AdminAiProviderDirectoryUpdate,
+  AiModelCapability,
   AiModelExtensionParameter,
   AiModelParameterControlDefinition,
   AiModelParameterDraft,
+  AiModelType,
 } from '@dicha/shared';
 
 type DirectoryModel = AdminAiProviderDirectoryOverview['models'][number];
+
+const contextWindowPresets = [4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000];
+
+const modelTypeOptions = [
+  'chat',
+  'embedding',
+  'rerank',
+  'image',
+  'audio',
+  'video',
+  'tts',
+  'asr',
+  'text2music',
+  'realtime',
+] satisfies AiModelType[];
+
+const modelTypeLabels = {
+  chat: '对话',
+  embedding: '向量',
+  rerank: '重排',
+  image: '图片',
+  audio: '音频',
+  video: '视频',
+  tts: '语音合成',
+  asr: '语音识别',
+  text2music: '音乐',
+  realtime: '实时',
+} satisfies Record<AiModelType, string>;
+
+const modelCapabilityOptions = [
+  { key: 'chat', label: '对话', icon: MessageSquare },
+  { key: 'tool_use', label: '技能调用', icon: Wrench },
+  { key: 'vision', label: '视觉识别', icon: Eye },
+  { key: 'reasoning', label: '深度思考', icon: Brain },
+  { key: 'web_search', label: '联网搜索', icon: Search },
+  { key: 'image_generation', label: '图片生成', icon: ImageIcon },
+  { key: 'image_output', label: '图片输出', icon: ImageIcon },
+  { key: 'video', label: '视频', icon: Video },
+  { key: 'audio', label: '音频', icon: AudioLines },
+  { key: 'files', label: '文件', icon: FileText },
+  { key: 'json', label: 'JSON', icon: Braces },
+  { key: 'embedding', label: '向量', icon: Layers3 },
+  { key: 'fast', label: '快速', icon: Zap },
+] satisfies Array<{ key: AiModelCapability; label: string; icon: LucideIcon }>;
 
 export const Route = createFileRoute('/_admin/ai-providers')({
   loader: ({ context }) => {
@@ -307,13 +374,59 @@ function ModelDefaultConfigForm({
   pending: boolean;
   onSave: (body: AdminAiProviderDirectoryModelUpdate) => void;
 }) {
-  const parameterControls = modelParameterControlsForExtensions(model.extensionParameters ?? []);
+  const [form, setForm] = useState({
+    displayName: model.displayName,
+    avatar: model.avatar ?? '',
+    contextWindow: model.contextWindow === null ? '' : String(model.contextWindow),
+    modelType: model.modelType,
+  });
+  const [capabilities, setCapabilities] = useState<AiModelCapability[]>(model.capabilities);
+  const [extensionParameters, setExtensionParameters] = useState<AiModelExtensionParameter[]>(
+    model.extensionParameters ?? [],
+  );
+  const parameterControls = useMemo(
+    () => modelParameterControlsForExtensions(extensionParameters),
+    [extensionParameters],
+  );
   const [parameterDraft, setParameterDraft] = useState<AiModelParameterDraft>(() =>
     createAiModelParameterDraft(model.parameterConfig ?? {}, parameterControls),
   );
+  const parsedContextWindow = form.contextWindow.trim() ? Number(form.contextWindow) : null;
+  const contextWindowInvalid =
+    parsedContextWindow !== null &&
+    (!Number.isFinite(parsedContextWindow) ||
+      !Number.isInteger(parsedContextWindow) ||
+      parsedContextWindow <= 0);
+
+  const toggleCapability = (capability: AiModelCapability) => {
+    setCapabilities((current) =>
+      current.includes(capability)
+        ? current.filter((item) => item !== capability)
+        : [...current, capability],
+    );
+  };
+
+  const updateExtensionParameters = (parameters: AiModelExtensionParameter[]) => {
+    setExtensionParameters(parameters);
+    setParameterDraft((current) => ({
+      ...createAiModelParameterDraft(
+        model.parameterConfig ?? {},
+        modelParameterControlsForExtensions(parameters),
+      ),
+      ...current,
+    }));
+  };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
+    if (!form.displayName.trim()) {
+      toast.error('模型展示名称不能为空');
+      return;
+    }
+    if (contextWindowInvalid) {
+      toast.error('上下文窗口需要填写正整数');
+      return;
+    }
     const parsed = buildAiModelParameterConfig(parameterDraft, parameterControls);
     if (parsed.error) {
       toast.error(parsed.error);
@@ -322,54 +435,149 @@ function ModelDefaultConfigForm({
     onSave({
       providerId: model.providerId,
       modelId: model.modelId,
+      displayName: form.displayName.trim(),
+      avatar: form.avatar.trim() || null,
+      contextWindow: parsedContextWindow,
+      modelType: form.modelType,
+      extensionParameters,
+      capabilities,
       parameterConfig: parsed.config,
     });
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 p-4">
+    <form onSubmit={submit} className="space-y-5 p-4">
       <div>
-        <p className="text-sm font-semibold text-ink">模型默认参数</p>
-        <p className="mt-1 truncate text-xs text-ink-soft">{model.displayName}</p>
+        <p className="text-sm font-semibold text-ink">模型信息配置</p>
+        <p className="mt-1 truncate text-xs text-ink-soft">{model.name}</p>
       </div>
+
+      <div className="space-y-3">
+        <Field label="模型展示名称">
+          <input
+            value={form.displayName}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, displayName: event.target.value }))
+            }
+            disabled={pending}
+            className="admin-input"
+          />
+        </Field>
+        <Field label="模型头像">
+          <div className="flex items-center gap-2">
+            <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-xs font-semibold text-mist">
+              {form.avatar.trim() || model.avatar || model.displayName.slice(0, 2).toUpperCase()}
+            </span>
+            <input
+              value={form.avatar}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, avatar: event.target.value }))
+              }
+              disabled={pending}
+              maxLength={12}
+              placeholder="例如 GPT"
+              className="admin-input"
+            />
+          </div>
+        </Field>
+        <Field label="最大上下文窗口">
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {contextWindowPresets.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    setForm((current) => ({ ...current, contextWindow: String(preset) }))
+                  }
+                  className={`h-7 rounded-md border px-2 text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                    parsedContextWindow === preset
+                      ? 'border-ink bg-surface-alt text-ink'
+                      : 'border-hairline bg-surface text-ink-soft hover:text-ink'
+                  }`}
+                >
+                  {formatContextWindowPreset(preset)}
+                </button>
+              ))}
+            </div>
+            <input
+              value={form.contextWindow}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, contextWindow: event.target.value }))
+              }
+              inputMode="numeric"
+              disabled={pending}
+              placeholder="未知则留空"
+              className="admin-input"
+            />
+            {contextWindowInvalid ? (
+              <p className="text-[11px] text-pink">请输入大于 0 的整数 Token 数。</p>
+            ) : null}
+          </div>
+        </Field>
+        <Field label="模型类型">
+          <select
+            value={form.modelType}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                modelType: event.target.value as AiModelType,
+              }))
+            }
+            disabled={pending}
+            className="admin-input"
+          >
+            {modelTypeOptions.map((type) => (
+              <option key={type} value={type}>
+                {modelTypeLabels[type]}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle
+          title="模型能力"
+          description="这些能力会在前台列表展示，并用于后续路由筛选。"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          {modelCapabilityOptions.map((option) => (
+            <CapabilityToggle
+              key={option.key}
+              option={option}
+              selected={capabilities.includes(option.key)}
+              disabled={pending}
+              onToggle={() => toggleCapability(option.key)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <SectionTitle title="扩展参数" description="选择模型支持的 LobeHub 风格扩展参数。" />
+        <ExtensionParameterPicker
+          value={extensionParameters}
+          disabled={pending}
+          onChange={updateExtensionParameters}
+        />
+      </div>
+
+      <SectionTitle title="默认调用参数" description="作为用户侧模型参数覆盖前的默认值。" />
       <ModelParameterConfigFields
         controls={parameterControls}
         draft={parameterDraft}
         disabled={pending}
         onChange={setParameterDraft}
       />
-      {model.extensionParameters.length > 0 ? (
-        <div className="rounded-md border border-hairline bg-surface-alt p-3">
-          <p className="text-xs font-medium text-ink-soft">已启用扩展参数</p>
-          <div className="mt-2 grid gap-1.5">
-            {model.extensionParameters.map((parameter) => {
-              const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
-              return (
-                <div
-                  key={parameter}
-                  className="rounded border border-hairline bg-surface px-2 py-1.5"
-                >
-                  <p className="text-xs font-semibold text-ink">{definition?.label ?? parameter}</p>
-                  <p className="mt-0.5 text-[11px] leading-4 text-ink-faint">
-                    {definition?.hint ?? '扩展参数'}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-md border border-dashed border-hairline bg-canvas px-3 py-2 text-xs text-ink-faint">
-          该模型暂未启用扩展参数，默认参数只显示通用调用项。
-        </div>
-      )}
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || contextWindowInvalid}
         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         <Save className="size-4" strokeWidth={1.8} />
-        {pending ? '保存中' : '保存模型默认参数'}
+        {pending ? '保存中' : '保存模型配置'}
       </button>
     </form>
   );
@@ -465,6 +673,118 @@ function ParameterControlInput({
   );
 }
 
+function CapabilityToggle({
+  option,
+  selected,
+  disabled,
+  onToggle,
+}: {
+  option: (typeof modelCapabilityOptions)[number];
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  const Icon = option.icon;
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onToggle}
+      className={`flex h-9 items-center gap-2 rounded-md border px-2.5 text-left text-xs transition-colors disabled:opacity-50 ${
+        selected
+          ? 'border-ink bg-surface-alt text-ink'
+          : 'border-hairline bg-surface text-ink-soft hover:text-ink'
+      }`}
+    >
+      <Icon className="size-3.5 shrink-0" strokeWidth={1.8} />
+      <span className="min-w-0 truncate">{option.label}</span>
+    </button>
+  );
+}
+
+function ExtensionParameterPicker({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: AiModelExtensionParameter[];
+  disabled: boolean;
+  onChange: (value: AiModelExtensionParameter[]) => void;
+}) {
+  const selected = new Set(value);
+  const available = aiModelExtensionParameterOptions.filter(
+    (parameter) => !selected.has(parameter),
+  );
+  return (
+    <div className="space-y-2">
+      <select
+        value=""
+        disabled={disabled || available.length === 0}
+        onChange={(event) => {
+          const next = event.target.value as AiModelExtensionParameter;
+          if (!next) return;
+          onChange([...value, next]);
+        }}
+        className="admin-input"
+      >
+        <option value="">添加扩展参数</option>
+        {available.map((parameter) => {
+          const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
+          return (
+            <option key={parameter} value={parameter}>
+              {definition?.label ?? parameter}
+            </option>
+          );
+        })}
+      </select>
+      {value.length > 0 ? (
+        <div className="grid gap-2">
+          {value.map((parameter) => {
+            const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
+            return (
+              <div
+                key={parameter}
+                className="flex items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-ink">
+                    {definition?.label ?? parameter}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-ink-faint">
+                    {definition?.parameterTag ?? definition?.key ?? parameter}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onChange(value.filter((item) => item !== parameter))}
+                  className="grid size-7 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface hover:text-ink disabled:opacity-50"
+                  aria-label="移除扩展参数"
+                >
+                  <X className="size-3.5" strokeWidth={1.8} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed border-hairline bg-canvas px-3 py-2 text-xs text-ink-faint">
+          未启用扩展参数
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionTitle({ title, description }: { title: string; description: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-ink">{title}</p>
+      <p className="mt-0.5 text-[11px] leading-4 text-ink-faint">{description}</p>
+    </div>
+  );
+}
+
 function modelParameterControlsForExtensions(
   extensions: readonly AiModelExtensionParameter[],
 ): AiModelParameterControlDefinition[] {
@@ -479,6 +799,12 @@ function modelParameterControlsForExtensions(
     seen.add(control.key);
     return true;
   });
+}
+
+function formatContextWindowPreset(value: number) {
+  if (value >= 1000000) return `${value / 1000000}M`;
+  if (value >= 1000) return `${value / 1000}K`;
+  return String(value);
 }
 
 function ProviderConfigForm({

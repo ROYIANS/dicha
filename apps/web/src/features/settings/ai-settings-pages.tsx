@@ -1176,6 +1176,7 @@ function ProviderModelRow({
     .map((assignment) => t(`settings.aiUseCases.${assignment.useCase}`));
   const hasKnownMetadata = model.contextWindow !== null && model.capabilities.length > 0;
   const canDeleteModel = !readOnly && isUserOwnedModel(model, provider);
+  const canConfigureModel = !readOnly && isUserOwnedModel(model, provider);
   const compactMetadata = modelCompactMetadata(model, {
     maxOutput: (value) => String(t('settings.detail.aiProviders.modelMaxOutput', { value })),
     releasedAt: (value) => String(t('settings.detail.aiProviders.modelReleasedAt', { value })),
@@ -1249,7 +1250,7 @@ function ProviderModelRow({
             </Tooltip.Content>
           </Tooltip>
         ) : null}
-        {readOnly ? null : (
+        {canConfigureModel ? (
           <Tooltip>
             <Tooltip.Trigger>
               <button
@@ -1265,7 +1266,7 @@ function ProviderModelRow({
               {t('settings.detail.aiProviders.configureModel')}
             </Tooltip.Content>
           </Tooltip>
-        )}
+        ) : null}
         {readOnly ? null : (
           <StatusDot
             tint={availabilityTone[model.availability]}
@@ -1583,11 +1584,11 @@ function ModelFormModal({
     parsedContextWindow <= 0;
   const canSubmit =
     Boolean(provider) &&
-    (backendManagedModel ||
-      (modelId.trim().length > 0 &&
-        displayName.trim().length > 0 &&
-        capabilities.length > 0 &&
-        !contextWindowInvalid));
+    !backendManagedModel &&
+    modelId.trim().length > 0 &&
+    displayName.trim().length > 0 &&
+    capabilities.length > 0 &&
+    !contextWindowInvalid;
 
   const toggleCapability = (capability: AiModelCapability) => {
     setCapabilities((current) =>
@@ -1635,21 +1636,16 @@ function ModelFormModal({
             onSubmit({
               models: [
                 model
-                  ? backendManagedModel
-                    ? {
-                        modelId: model.id,
-                        parameterConfig: parsedParameterConfig.config,
-                      }
-                    : {
-                        modelId: model.id,
-                        displayName: displayName.trim(),
-                        avatar: avatar.trim() || providerShortName(displayName || modelId || 'AI'),
-                        contextWindow: parsedContextWindow,
-                        modelType,
-                        extensionParameters,
-                        capabilities,
-                        parameterConfig: parsedParameterConfig.config,
-                      }
+                  ? {
+                      modelId: model.id,
+                      displayName: displayName.trim(),
+                      avatar: avatar.trim() || providerShortName(displayName || modelId || 'AI'),
+                      contextWindow: parsedContextWindow,
+                      modelType,
+                      extensionParameters,
+                      capabilities,
+                      parameterConfig: parsedParameterConfig.config,
+                    }
                   : {
                       modelId: `${provider.id}:${modelId.trim()}`,
                       providerId: provider.id,

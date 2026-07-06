@@ -681,6 +681,17 @@ export class AdminService {
         enabled: body.enabled,
         recommended: body.recommended,
         displayName: body.displayName,
+        avatar: body.avatar,
+        contextWindow: body.contextWindow,
+        modelType: body.modelType,
+        extensionParameters:
+          body.extensionParameters === undefined
+            ? undefined
+            : (body.extensionParameters as Prisma.InputJsonValue),
+        capabilities:
+          body.capabilities === undefined
+            ? undefined
+            : (body.capabilities as Prisma.InputJsonValue),
         parameterConfig:
           body.parameterConfig === undefined
             ? undefined
@@ -693,6 +704,11 @@ export class AdminService {
         enabled: body.enabled ?? model.enabled,
         recommended: body.recommended ?? model.recommended,
         displayName: body.displayName ?? model.displayName,
+        avatar: body.avatar === undefined ? model.avatar : (body.avatar ?? undefined),
+        contextWindow: body.contextWindow === undefined ? model.contextWindow : body.contextWindow,
+        modelType: body.modelType ?? model.modelType,
+        extensionParameters: body.extensionParameters ?? model.extensionParameters,
+        capabilities: body.capabilities ?? model.capabilities,
         defaultParameterConfig:
           body.parameterConfig === undefined
             ? model.defaultParameterConfig
@@ -711,6 +727,12 @@ export class AdminService {
         enabled: body.enabled,
         recommended: body.recommended,
         displayNameChanged: body.displayName !== undefined,
+        metadataChanged:
+          body.avatar !== undefined ||
+          body.contextWindow !== undefined ||
+          body.modelType !== undefined ||
+          body.extensionParameters !== undefined ||
+          body.capabilities !== undefined,
         parameterConfigChanged: body.parameterConfig !== undefined,
       }),
     });
@@ -1418,6 +1440,7 @@ export class AdminService {
       modelId: record.modelId,
       name: record.name,
       displayName: record.displayName,
+      avatar: record.avatar,
       modelType: record.modelType as AiModelType,
       capabilities: this.arrayFromJson<AiModelCapability>(record.capabilities),
       extensionParameters: this.arrayFromJson<AiModelExtensionParameter>(
@@ -1440,6 +1463,7 @@ export class AdminService {
       modelId: model.id,
       name: model.name,
       displayName: model.displayName,
+      avatar: model.avatar ?? null,
       modelType: model.modelType,
       capabilities: model.capabilities,
       extensionParameters: model.extensionParameters,

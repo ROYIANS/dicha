@@ -411,6 +411,7 @@ export const AdminAiProviderDirectoryOverviewSchema = z.object({
       modelId: z.string(),
       name: z.string(),
       displayName: z.string(),
+      avatar: z.string().min(1).max(12).nullable(),
       modelType: AiModelTypeSchema,
       capabilities: z.array(AiModelCapabilitySchema),
       extensionParameters: z.array(AiModelExtensionParameterSchema),
@@ -445,6 +446,11 @@ export const AdminAiProviderDirectoryModelUpdateSchema = z.object({
   enabled: z.boolean().optional(),
   recommended: z.boolean().optional(),
   displayName: z.string().min(1).max(160).optional(),
+  avatar: z.string().min(1).max(12).nullable().optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
+  modelType: AiModelTypeSchema.optional(),
+  extensionParameters: z.array(AiModelExtensionParameterSchema).optional(),
+  capabilities: z.array(AiModelCapabilitySchema).optional(),
   parameterConfig: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
