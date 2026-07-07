@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { InputOPT } from '@lobehub/ui';
 import { useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
-import { InputOTP } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { BrandMark } from '@/components/AppBrand';
@@ -242,7 +242,7 @@ function LoginPage() {
   };
 
   // 第二步：用验证码登录（未注册会自动注册）。
-  // 支持表单提交与 InputOTP onComplete 自动提交（传入 6 位码）。
+  // 支持表单提交与 OTP 填满自动提交（传入 6 位码）。
   const verifyOtp = async (code: string) => {
     if (pending) return;
     resetFeedback();
@@ -434,22 +434,20 @@ function LoginPage() {
                     <span className="block text-[11px] tracking-wider text-ink-soft">
                       验证码（已发送至 {email}）
                     </span>
-                    <InputOTP
-                      maxLength={6}
+                    <InputOPT
+                      length={6}
                       value={otp}
-                      onChange={setOtp}
-                      onComplete={(code) => void verifyOtp(code)}
+                      onInput={(values) => setOtp(values.join(''))}
+                      onChange={(code) => {
+                        setOtp(code);
+                        void verifyOtp(code);
+                      }}
                       autoFocus
-                    >
-                      <InputOTP.Group>
-                        <InputOTP.Slot index={0} />
-                        <InputOTP.Slot index={1} />
-                        <InputOTP.Slot index={2} />
-                        <InputOTP.Slot index={3} />
-                        <InputOTP.Slot index={4} />
-                        <InputOTP.Slot index={5} />
-                      </InputOTP.Group>
-                    </InputOTP>
+                      autoComplete="one-time-code"
+                      className="dicha-otp"
+                      disabled={pending}
+                      variant="outlined"
+                    />
                   </div>
                   <button
                     type="submit"

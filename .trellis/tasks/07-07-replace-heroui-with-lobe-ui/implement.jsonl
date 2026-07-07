@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端规范索引，定位本任务相关设计与组件约定"}
+{"file": ".trellis/spec/frontend/architecture.md", "reason": "前端架构与依赖边界"}
+{"file": ".trellis/spec/frontend/design-system.md", "reason": "现有主题 token 与暖白哑光视觉系统"}
+{"file": ".trellis/spec/frontend/blueprint-aesthetic.md", "reason": "工程纸结构与落地页视觉范式"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件库和基础组件迁移约定"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端质量检查要求"}
+{"file": ".trellis/tasks/07-07-replace-heroui-with-lobe-ui/research/lobe-ui-migration.md", "reason": "Lobe UI 迁移研究与 API 差异"}

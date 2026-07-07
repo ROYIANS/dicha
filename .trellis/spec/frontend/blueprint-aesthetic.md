@@ -376,18 +376,18 @@ app-shell 特有：
 
 ## 9. 落地页 → 组件库（封装路线，当前任务的前置）
 
-> 用户目标：基于 HeroUI / 原生，对齐 zed 风格，二次封装 dicha 专用组件库。**当前任务只提取设计风格**，封装另开 task。以下为对照表，供后续封装参考。
+> 用户目标：基于 Lobe UI / AntD / 原生，对齐 zed 风格，二次封装 dicha 专用组件库。以下为对照表，供后续封装参考。
 
-| dicha 原子                       | HeroUI 对照                              | 封装方向                                                                |
+| dicha 原子                       | Lobe UI / AntD 对照                      | 封装方向                                                                |
 | -------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
-| 节点 / 标尺 / 条码 / 网格 / 斜纹 | （无对应，纯 bespoke）                   | 纯原生 SVG 组件，HeroUI 不碰                                            |
-| `lp-btn` primary/ghost           | HeroUI `Button`（`variant=solid/ghost`） | 用 `--accent`/`--default` token 对齐；inset 底边阴影靠 `index.css` 覆盖 |
-| `dash-card`                      | HeroUI `Card`                            | variant=flat + 覆盖 `box-shadow` 为 inset                               |
-| kbd 徽标                         | HeroUI `Kbd`                             | 覆盖 border/bg 为 `--hairline`                                          |
-| nav link / icon btn              | HeroUI `Button variant=light`            |                                                                         |
-| 搜索框 / input                   | HeroUI `Input`                           | `--field-*` token 已对齐 rounded-md 奇纸底                              |
+| 节点 / 标尺 / 条码 / 网格 / 斜纹 | （无对应，纯 bespoke）                   | 纯原生 SVG 组件，组件库不碰                                             |
+| `lp-btn` primary/ghost           | Lobe/AntD `Button`                       | 用 `--accent`/`--default` token 对齐；inset 底边阴影靠 `index.css` 覆盖 |
+| `dash-card`                      | Lobe/AntD `Card` 或项目 `Surface`        | 覆盖 `box-shadow` 为 inset 或直接复用 `Surface`                         |
+| kbd 徽标                         | 原生 / AntD 轻封装                       | 覆盖 border/bg 为 `--hairline`                                          |
+| nav link / icon btn              | Lobe/AntD `Button` / `ActionIcon`        |                                                                         |
+| 搜索框 / input                   | Lobe `Input` / AntD `Input`              | `--field-*` token 已对齐 rounded-md 奇纸底                              |
 
-**HeroUI token 对齐已在 `index.css` 完成**（`--background`/`--surface`/`--accent`/`--border`/`--radius:0.375rem`/`--field-*` 全部映射到 dicha 暖色结构系统）。封装时优先复用这些 seam，不要另起炉灶（见 design-system.md §实现约束）。
+**Lobe/AntD token 对齐在 `DichaLobeProvider` + `index.css` bridge 完成**（`--background`/`--surface`/`--accent`/`--border`/`--radius:0.375rem`/`--field-*` 全部映射到 dicha 暖色结构系统）。封装时优先复用这些 seam，不要另起炉灶（见 design-system.md §实现约束）。
 
 ---
 
@@ -409,11 +409,11 @@ app-shell 特有：
   <DotsBackdrop visible={open} className="pointer-events-none absolute inset-0 size-full" />
 </button>
 
-// 弹窗（HeroUI Modal）：Backdrop 内放 DotsBackdrop
-<Modal.Backdrop className="lp-drawer-backdrop backdrop-blur-[14px] backdrop-saturate-150">
+// 弹窗：Backdrop 内放 DotsBackdrop
+<ModalBackdrop className="lp-drawer-backdrop backdrop-blur-[14px] backdrop-saturate-150">
   <DotsBackdrop visible={isOpen} className="pointer-events-none absolute inset-0 size-full" />
-  <Modal.Container>...</Modal.Container>
-</Modal.Backdrop>
+  <ModalPanel>...</ModalPanel>
+</ModalBackdrop>
 ```
 
 已用此规则的组件：`LandingNavDrawer`、`AppNavDrawer`、`AccountModal`。**新增任何浮层都照此办理**，不得另造遮罩。

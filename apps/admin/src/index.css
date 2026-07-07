@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
-@import '@heroui/styles';
 
 @font-face {
   font-family: 'Sarasa UI SC';
@@ -109,6 +108,40 @@ body {
   font-family:
     'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
     system-ui, sans-serif;
+}
+
+.dicha-lobe-provider {
+  min-height: inherit;
+  background: transparent;
+  color: var(--ink);
+  font-family:
+    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
+    system-ui, sans-serif;
+}
+
+.dicha-lobe-provider .ant-input,
+.dicha-lobe-provider .ant-otp .ant-otp-input {
+  border-color: var(--hairline);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  box-shadow: none;
+}
+
+.dicha-lobe-provider .ant-input::placeholder,
+.dicha-lobe-provider .ant-otp .ant-otp-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.dicha-lobe-provider .ant-input:hover,
+.dicha-lobe-provider .ant-otp .ant-otp-input:hover,
+.dicha-lobe-provider .ant-input:focus,
+.dicha-lobe-provider .ant-input:focus-within,
+.dicha-lobe-provider .ant-otp .ant-otp-input:focus,
+.dicha-lobe-provider .ant-otp .ant-otp-input:focus-within {
+  border-color: var(--ink-soft);
+  box-shadow: none;
 }
 
 * {

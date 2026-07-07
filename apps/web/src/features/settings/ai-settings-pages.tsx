@@ -30,7 +30,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
-import { Dropdown, Input, Tooltip } from '@heroui/react';
+import { DropdownMenu, Input, Tooltip as LobeTooltip } from '@lobehub/ui';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -223,6 +223,22 @@ const requestFormatOptions = [
 ] satisfies Array<{ value: AiProviderRequestFormat; label: string }>;
 
 const contextWindowPresets = [0, 4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000];
+
+function DichaTooltip({
+  children,
+  title,
+  className = 'rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float',
+}: {
+  children: ReactNode;
+  title: ReactNode;
+  className?: string;
+}) {
+  return (
+    <LobeTooltip className={className} mouseEnterDelay={0.2} title={title}>
+      {children}
+    </LobeTooltip>
+  );
+}
 
 export function AiProvidersSettingsPage() {
   const { t } = useTranslation();
@@ -1059,41 +1075,35 @@ function ProviderModelList({
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
-              fullWidth
-              className="h-9 rounded-md border border-hairline bg-surface pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+              className="h-9 w-full rounded-md border border-hairline bg-surface pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
             />
           </div>
-          <Dropdown>
-            <Dropdown.Trigger
+          <DropdownMenu
+            items={modelListSortOptions.map((option) => ({
+              key: option,
+              label: (
+                <span className="flex items-center justify-between gap-3 text-[12px]">
+                  {t(`settings.detail.aiProviders.modelSort.${option}`)}
+                  {sortMode === option ? <CheckCircle2 size={13} className="text-sage" /> : null}
+                </span>
+              ),
+              onClick: () => setSortMode(option),
+            }))}
+            placement="bottomRight"
+            popupProps={{
+              className: 'min-w-48 rounded-md border border-hairline bg-surface p-1 shadow-float',
+            }}
+          >
+            <button
+              type="button"
               className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
               aria-label={t('settings.detail.aiProviders.modelSortLabel')}
             >
               <ArrowDownUp size={14} />
               <span className="max-w-[12rem] truncate">{activeSortLabel}</span>
               <ChevronDown size={13} />
-            </Dropdown.Trigger>
-            <Dropdown.Popover className="min-w-48 rounded-md border border-hairline bg-surface p-1 shadow-float">
-              <Dropdown.Menu
-                aria-label={t('settings.detail.aiProviders.modelSortLabel')}
-                selectionMode="single"
-                selectedKeys={[sortMode]}
-                onAction={(key) => setSortMode(String(key) as ModelListSortMode)}
-              >
-                {modelListSortOptions.map((option) => (
-                  <Dropdown.Item
-                    key={option}
-                    id={option}
-                    className="rounded-md px-2.5 py-2 text-[12px] text-ink-soft outline-none data-[focused]:bg-surface-alt data-[focused]:text-ink"
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      {t(`settings.detail.aiProviders.modelSort.${option}`)}
-                      <Dropdown.ItemIndicator type="checkmark" className="text-sage" />
-                    </span>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
+            </button>
+          </DropdownMenu>
         </div>
 
         <div className="overflow-x-auto border-b border-hairline" role="tablist">
@@ -1223,49 +1233,39 @@ function ProviderModelRow({
       </div>
       <div className="flex min-w-[180px] items-center justify-end gap-2">
         {canDeleteModel ? (
-          <Tooltip>
-            <Tooltip.Trigger>
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      t('settings.detail.aiProviders.deleteModelConfirm', {
-                        name: model.displayName,
-                      }),
-                    )
-                  ) {
-                    onUpdate({ models: [{ modelId: model.id, delete: true }] });
-                  }
-                }}
-                disabled={pending}
-                className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-pink disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label={t('settings.detail.aiProviders.deleteModel')}
-              >
-                <Trash2 size={15} />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
-              {t('settings.detail.aiProviders.deleteModel')}
-            </Tooltip.Content>
-          </Tooltip>
+          <DichaTooltip title={t('settings.detail.aiProviders.deleteModel')}>
+            <button
+              type="button"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    t('settings.detail.aiProviders.deleteModelConfirm', {
+                      name: model.displayName,
+                    }),
+                  )
+                ) {
+                  onUpdate({ models: [{ modelId: model.id, delete: true }] });
+                }
+              }}
+              disabled={pending}
+              className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-pink disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label={t('settings.detail.aiProviders.deleteModel')}
+            >
+              <Trash2 size={15} />
+            </button>
+          </DichaTooltip>
         ) : null}
         {canConfigureModel ? (
-          <Tooltip>
-            <Tooltip.Trigger>
-              <button
-                type="button"
-                onClick={onConfigure}
-                className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
-                aria-label={t('settings.detail.aiProviders.configureModel')}
-              >
-                <SlidersHorizontal size={15} />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
-              {t('settings.detail.aiProviders.configureModel')}
-            </Tooltip.Content>
-          </Tooltip>
+          <DichaTooltip title={t('settings.detail.aiProviders.configureModel')}>
+            <button
+              type="button"
+              onClick={onConfigure}
+              className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
+              aria-label={t('settings.detail.aiProviders.configureModel')}
+            >
+              <SlidersHorizontal size={15} />
+            </button>
+          </DichaTooltip>
         ) : null}
         {readOnly ? null : (
           <StatusDot
@@ -2052,32 +2052,31 @@ function ExtensionParameterPicker({
           {value.map((parameter) => {
             const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
             return (
-              <Tooltip key={parameter}>
-                <Tooltip.Trigger>
-                  <div className="flex items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12px] font-semibold text-ink">
-                        {definition?.label ?? parameter}
-                      </p>
-                      <p className="mt-0.5 truncate text-[11px] text-ink-faint">
-                        {definition?.parameterTag ?? definition?.key ?? parameter}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => onChange(value.filter((item) => item !== parameter))}
-                      className="grid size-7 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="移除扩展参数"
-                    >
-                      <X size={13} />
-                    </button>
+              <DichaTooltip
+                key={parameter}
+                className="max-w-80 rounded-md border border-hairline bg-surface px-3 py-2 text-[11px] leading-5 text-ink shadow-float"
+                title={definition?.hint ?? parameter}
+              >
+                <div className="flex items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-semibold text-ink">
+                      {definition?.label ?? parameter}
+                    </p>
+                    <p className="mt-0.5 truncate text-[11px] text-ink-faint">
+                      {definition?.parameterTag ?? definition?.key ?? parameter}
+                    </p>
                   </div>
-                </Tooltip.Trigger>
-                <Tooltip.Content className="max-w-80 rounded-md border border-hairline bg-surface px-3 py-2 text-[11px] leading-5 text-ink shadow-float">
-                  {definition?.hint ?? parameter}
-                </Tooltip.Content>
-              </Tooltip>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onChange(value.filter((item) => item !== parameter))}
+                    className="grid size-7 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="移除扩展参数"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              </DichaTooltip>
             );
           })}
         </div>
@@ -2461,19 +2460,14 @@ function CapabilityIconRail({ capabilities }: { capabilities: AiModelCapability[
         const Icon = capabilityIcon[capability];
         const label = t(`settings.aiCapabilities.${capability}`);
         return (
-          <Tooltip key={capability}>
-            <Tooltip.Trigger>
-              <span
-                className="grid size-6 place-items-center rounded-md bg-surface-alt text-ink-faint"
-                aria-label={label}
-              >
-                <Icon size={13} />
-              </span>
-            </Tooltip.Trigger>
-            <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
-              {label}
-            </Tooltip.Content>
-          </Tooltip>
+          <DichaTooltip key={capability} title={label}>
+            <span
+              className="grid size-6 place-items-center rounded-md bg-surface-alt text-ink-faint"
+              aria-label={label}
+            >
+              <Icon size={13} />
+            </span>
+          </DichaTooltip>
         );
       })}
       {hiddenCapabilityCount > 0 ? (
@@ -2495,18 +2489,9 @@ function StatusDot({ tint, label }: { tint: SettingsTint; label: string }) {
   } satisfies Record<SettingsTint, string>;
 
   return (
-    <Tooltip>
-      <Tooltip.Trigger>
-        <span
-          className={`size-2.5 rounded-full ${tintClass[tint]}`}
-          aria-label={label}
-          role="img"
-        />
-      </Tooltip.Trigger>
-      <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
-        {label}
-      </Tooltip.Content>
-    </Tooltip>
+    <DichaTooltip title={label}>
+      <span className={`size-2.5 rounded-full ${tintClass[tint]}`} aria-label={label} role="img" />
+    </DichaTooltip>
   );
 }
 

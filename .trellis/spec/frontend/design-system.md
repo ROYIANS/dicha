@@ -99,7 +99,7 @@
 ## 2. 字体
 
 - **UI sans-first**：全局 UI 正文、表单、导航、密集信息默认使用 **Sarasa UI SC**（本地静态资源 `apps/web/public/assets/fonts/SarasaUiSC.ttf`），fallback 为 `Sarasa Gothic SC` / `Microsoft YaHei UI` / `PingFang SC` / 系统 sans。Sarasa 的字面更适合界面扫描，避免正文全部衬线造成操作界面过软。
-- 双保险落地：`html, body` 与 `@theme --font-sans` 都指向 Sarasa UI SC，使 Tailwind 默认 `font-sans` 和 HeroUI 基础文本一致。
+- 双保险落地：`html, body` 与 `@theme --font-sans` 都指向 Sarasa UI SC，使 Tailwind 默认 `font-sans` 和 Lobe UI / AntD 基础文本一致。
 - **Noto Serif SC 用于装饰 / 叙事**：品牌字标「滴茶」、落地页宣言、大金句、blockquote、section H2、情感引文、旁白角色齐默默的叙事发言，显式使用 `font-serif` 工具类（由 `@theme --font-serif` 生成）。功能 / 操作性标题（如特性卡名称）走 sans，不要用 serif。不要把普通 UI 正文改回全局衬线。
 - **不要重新引入本地 `SERIF` 常量**：历史代码里曾用各文件 `const SERIF` 内联字体栈，已统一收口为 `font-serif` 类。新增 serif 用法一律用 `font-serif`，不要再定义 `SERIF` 常量——常量分散会绕开 `@theme` 的 fallback 栈并制造重复。
 - **页面 UI 不引入 mono**：落地页、登录页、app shell 和业务页都不再使用 `Mono` 组件、`app-mono`、`font-mono` 或内联 monospace 字体栈。百分比、编号、kbd、技术符号等读数仍走 Sarasa UI SC；需要数字对齐时只加 `tabular-nums`，不要重新引入 IBM Plex Mono / `ui-monospace`。
@@ -187,7 +187,7 @@
   - props：`children` · `className?` · `orientation?: 'vertical' | 'horizontal'`（默认 vertical）。
   - 渲染单个可滚 `div` + `no-scrollbar`；vertical → `overflow-y-auto`，horizontal → `overflow-x-auto overflow-y-hidden`。
   - **horizontal 时把鼠标滚轮纵向滚动转成横向滚动**：用 `useRef` + `useEffect` 挂非被动（`{ passive: false }`）原生 `wheel` 监听，`preventDefault` 后 `el.scrollLeft += e.deltaY`；无可横向滚（`scrollWidth <= clientWidth`）则放过。effect 依赖 `orientation`，vertical 不挂监听，清理时 `removeEventListener`。
-- HeroUI `ScrollShadow` **已弃用移除**（横向滚动一律走 `ScrollArea`）。
+- 第三方组件库的滚动阴影组件不要直接引入；横向滚动一律走 `ScrollArea`。
 
 ---
 
@@ -206,4 +206,4 @@
 ## 实现约束
 
 - **无 legacy 双套**：仓库内不得同时存在玻璃 + 哑光两套视觉语言（铁律 no-legacy-compat）。
-- **HeroUI v3**：oklch theme 变量仍是底座；本系统语义 token 覆盖其表面/背景表现，不另起炉灶。
+- **Lobe UI / Ant Design**：通过 `DichaLobeProvider` 接入，关闭 Lobe 默认字体/global style；本系统语义 token 覆盖其表面/背景表现，不另起炉灶。
