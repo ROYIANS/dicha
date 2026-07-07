@@ -129,8 +129,3 @@ Scanned project usage under:
 * Admin pages may rely on dense layout; Lobe default spacing may need local size overrides.
 * `InputOPT` previously had border/focus visual regressions; preserve the latest fix while touching shared input styles.
 * Theme changes must be checked in both light and dark Web themes; Admin currently appears light-only.
-* Avoid top-level dynamic imports from `@lobehub/icons` such as `ModelIcon`, `ProviderIcon`, and `modelMappings` in route chunks. They pull a large icon registry into the page bundle. Prefer a small explicit icon whitelist or lightweight fallbacks.
-
-## Bundle Notes
-
-`apps/web/src/features/settings/ai-settings-pages.tsx` was previously emitted as a ~3.2 MB route chunk because the page imported `ModelIcon`, `ProviderIcon`, and `modelMappings` from `@lobehub/icons`, which caused the dynamic model/provider SVG registry to be bundled with the route. Replacing that usage with explicit subpath icon imports for common providers/models reduced the route chunk to ~452 KB in a local Vite production build. Lobe/AntD control code is now emitted as a shared `DichaControls` chunk instead of being embedded in the AI settings route.
