@@ -431,10 +431,10 @@ body {
     system-ui, sans-serif;
 }
 .dicha-lobe-provider .lp-btn-primary {
-  color: var(--sidebar-ink) !important;
+  color: var(--sidebar-ink);
 }
 .dicha-lobe-provider .lp-btn-primary:hover {
-  color: var(--sidebar-ink) !important;
+  color: var(--sidebar-ink);
 }
 .dicha-lobe-provider .lp-btn-ghost {
   color: var(--ink);
@@ -463,12 +463,6 @@ body {
 .dicha-lobe-provider .app-sidebar-link:hover,
 .dicha-lobe-provider .app-sidebar-link-active {
   color: var(--sidebar-ink);
-}
-.dicha-lobe-provider .app-sidebar-world-btn {
-  color: var(--sidebar-ink) !important;
-}
-.dicha-lobe-provider .app-sidebar-world-btn:hover {
-  color: var(--sidebar-ink) !important;
 }
 .dicha-lobe-provider .app-icon-btn {
   color: var(--ink-soft);
@@ -516,29 +510,21 @@ body {
 }
 .dicha-otp.ant-otp {
   gap: 0.5rem;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .dicha-otp.ant-otp .ant-otp-input {
   width: 2.45rem;
   height: 2.75rem;
-  border: 1px solid var(--hairline) !important;
+  border: 1px solid var(--hairline);
   border-radius: 0.375rem;
-  background: var(--canvas) !important;
+  background: var(--canvas);
   font-size: 1rem;
   font-weight: 600;
   text-align: center;
-  outline: none !important;
-  box-shadow: none !important;
-}
-.dicha-otp.ant-otp .ant-otp-input:hover {
-  border-color: color-mix(in oklab, var(--ink) 24%, transparent) !important;
-}
-.dicha-otp.ant-otp .ant-otp-input:focus,
-.dicha-otp.ant-otp .ant-otp-input:focus-within {
-  border-color: var(--accent-warm) !important;
-  box-shadow: none !important;
+  outline: none;
+  box-shadow: none;
 }
 @media (max-width: 420px) {
   .dicha-otp.ant-otp {
