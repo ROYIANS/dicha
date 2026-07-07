@@ -33,3 +33,15 @@
 * `apps/api` 继续作为 BFF 代理，复用 Better Auth session 并转发 `x-dicha-user-id`。
 * `apps/web` 在设置页新增 `/settings/ai-usage`，通过 TanStack Query 的 `aiUsageQueryOptions` loader-first 查询当前用户统计。
 
+## Closure Decision
+
+2026-07-07 review: this original task is no longer worth continuing as a single broad PRD.
+The user-facing usage dashboard, shared usage contract, owner-scoped invoke usage storage,
+and admin AI diagnostics console already cover the useful MVP value of consumption tracking
+and request-level troubleshooting. The remaining part is true scheduled provider/model probing
+and a health matrix, which should be a future narrower task if SLA-style monitoring becomes
+necessary.
+
+Archived as superseded by the shipped usage analytics and diagnostics work, not as a signal to
+implement the original broad scope.
+
