@@ -39,36 +39,33 @@ function createDichaAntdTheme(appearance: keyof typeof tokenPalette): ThemeConfi
   const color = tokenPalette[appearance];
 
   return {
-    token: {
-      borderRadius: 6,
-      colorBgBase: color.canvas,
-      colorBgContainer: color.surface,
-      colorBgElevated: color.surface,
-      colorBgLayout: color.canvas,
-      colorBorder: color.hairline,
-      colorBorderSecondary: color.hairline,
-      colorError: color.accentPink,
-      colorFillSecondary: color.surfaceAlt,
-      colorInfo: color.accentMist,
-      colorLink: color.accentWarm,
-      colorLinkActive: color.inkSoft,
-      colorLinkHover: color.inkSoft,
-      colorPrimary: color.accentWarm,
-      colorSuccess: color.accentSage,
-      colorText: color.ink,
-      colorTextDescription: color.inkSoft,
-      colorTextPlaceholder: color.inkFaint,
-      colorWarning: color.accentPeach,
-      fontFamily:
-        "'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui, sans-serif",
+  token: {
+    borderRadius: 6,
+    colorBgBase: color.canvas,
+    colorBgContainer: color.surface,
+    colorBgElevated: color.surface,
+    colorBgLayout: color.canvas,
+    colorBorder: color.hairline,
+    colorBorderSecondary: color.hairline,
+    colorError: color.accentPink,
+    colorFillSecondary: color.surfaceAlt,
+    colorInfo: color.accentMist,
+    colorPrimary: color.accentWarm,
+    colorSuccess: color.accentSage,
+    colorText: color.ink,
+    colorTextDescription: color.inkSoft,
+    colorTextPlaceholder: color.inkFaint,
+    colorWarning: color.accentPeach,
+    fontFamily:
+      "'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui, sans-serif",
+  },
+  components: {
+    Input: {
+      activeBorderColor: color.accentWarm,
+      activeShadow: 'none',
+      hoverBorderColor: color.inkSoft,
     },
-    components: {
-      Input: {
-        activeBorderColor: color.accentWarm,
-        activeShadow: 'none',
-        hoverBorderColor: color.inkSoft,
-      },
-    },
+  },
   };
 }
 

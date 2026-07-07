@@ -119,32 +119,6 @@ body {
     system-ui, sans-serif;
 }
 
-.dicha-lobe-provider .lp-btn-primary {
-  color: var(--sidebar-ink);
-}
-
-.dicha-lobe-provider .lp-btn-primary:hover {
-  color: var(--sidebar-ink);
-}
-
-.dicha-lobe-provider .lp-btn-ghost {
-  color: var(--ink);
-}
-
-.dicha-lobe-provider .lp-btn-ghost:hover {
-  color: var(--ink);
-}
-
-.dicha-lobe-provider .lp-nav-link,
-.dicha-lobe-provider .admin-sidebar-link {
-  color: var(--ink-soft);
-}
-
-.dicha-lobe-provider .lp-nav-link:hover,
-.dicha-lobe-provider .admin-sidebar-link:hover {
-  color: var(--ink);
-}
-
 .dicha-lobe-provider .ant-input,
 .dicha-lobe-provider .ant-otp .ant-otp-input {
   border-color: var(--hairline);

@@ -446,7 +446,7 @@ function LoginPage() {
                       autoComplete="one-time-code"
                       className="dicha-otp"
                       disabled={pending}
-                      variant="borderless"
+                      variant="outlined"
                     />
                   </div>
                   <button
@@ -512,14 +512,14 @@ function LoginPage() {
                 <br />
                 <a
                   href="#"
-                  className="login-footer-link underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
+                  className="underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
                 >
                   服务条款
                 </a>
                 {' · '}
                 <a
                   href="#"
-                  className="login-footer-link underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
+                  className="underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
                 >
                   隐私政策
                 </a>
