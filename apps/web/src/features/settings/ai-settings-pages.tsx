@@ -29,10 +29,28 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
-import { DropdownMenu, Input, Tooltip as LobeTooltip } from '@lobehub/ui';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import AnthropicIcon from '@lobehub/icons/es/Anthropic';
+import AzureIcon from '@lobehub/icons/es/Azure';
+import BailianIcon from '@lobehub/icons/es/Bailian';
+import BedrockIcon from '@lobehub/icons/es/Bedrock';
+import ClaudeIcon from '@lobehub/icons/es/Claude';
+import DeepSeekIcon from '@lobehub/icons/es/DeepSeek';
+import DoubaoIcon from '@lobehub/icons/es/Doubao';
+import GeminiIcon from '@lobehub/icons/es/Gemini';
+import GoogleIcon from '@lobehub/icons/es/Google';
+import GroqIcon from '@lobehub/icons/es/Groq';
+import HunyuanIcon from '@lobehub/icons/es/Hunyuan';
+import KimiIcon from '@lobehub/icons/es/Kimi';
+import MinimaxIcon from '@lobehub/icons/es/Minimax';
+import MistralIcon from '@lobehub/icons/es/Mistral';
+import MoonshotIcon from '@lobehub/icons/es/Moonshot';
+import OllamaIcon from '@lobehub/icons/es/Ollama';
+import OpenAIIcon from '@lobehub/icons/es/OpenAI';
+import OpenRouterIcon from '@lobehub/icons/es/OpenRouter';
+import PerplexityIcon from '@lobehub/icons/es/Perplexity';
+import QwenIcon from '@lobehub/icons/es/Qwen';
+import { DropdownMenu, Modal, Tooltip as LobeTooltip } from '@lobehub/ui';
+import { type ComponentType, type ReactNode, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -65,12 +83,18 @@ import {
 } from '@/api/ai';
 import { ModelSelect } from '@/components/ModelSelect';
 import {
+  DichaInput,
+  DichaInputPassword,
+  DichaSelect,
+  DichaTextArea,
+  type SelectOptions,
+} from '@/components/base/DichaControls';
+import {
   SettingsDetailShell,
   SettingsPanel,
   SettingsSwitch,
   SettingsValueRow,
 } from '@/components/SettingsScaffold';
-import { DotsBackdrop } from '@/components/DotsBackdrop';
 import {
   compareModelsByEnabled,
   compareProvidersByEnabled,
@@ -223,6 +247,31 @@ const requestFormatOptions = [
 ] satisfies Array<{ value: AiProviderRequestFormat; label: string }>;
 
 const contextWindowPresets = [0, 4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000];
+
+type LobeIconComponent = ComponentType<{ size?: number | string }>;
+
+const lobeIconByKey: Record<string, LobeIconComponent> = {
+  anthropic: AnthropicIcon,
+  azure: AzureIcon,
+  bailian: BailianIcon,
+  bedrock: BedrockIcon,
+  claude: ClaudeIcon,
+  deepseek: DeepSeekIcon,
+  doubao: DoubaoIcon,
+  gemini: GeminiIcon,
+  google: GoogleIcon,
+  groq: GroqIcon,
+  hunyuan: HunyuanIcon,
+  kimi: KimiIcon,
+  minimax: MinimaxIcon,
+  mistral: MistralIcon,
+  moonshot: MoonshotIcon,
+  ollama: OllamaIcon,
+  openai: OpenAIIcon,
+  openrouter: OpenRouterIcon,
+  perplexity: PerplexityIcon,
+  qwen: QwenIcon,
+};
 
 function DichaTooltip({
   children,
@@ -936,14 +985,13 @@ function ProviderCredentialPopover({
               placeholder={t('settings.detail.aiProviders.baseUrlPlaceholder')}
             />
             {requiresUserCredential ? (
-              <input
+              <DichaInputPassword
                 value={credential}
                 onChange={(event) => setCredential(event.target.value)}
-                type="password"
                 autoComplete="off"
                 placeholder={t('settings.detail.aiProviders.apiKeyPlaceholder')}
                 disabled={pending}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-9 w-full text-[12px]"
               />
             ) : null}
             <button
@@ -1071,11 +1119,11 @@ function ProviderModelList({
               size={15}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
             />
-            <Input
+            <DichaInput
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
-              className="h-9 w-full rounded-md border border-hairline bg-surface pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+              className="h-9 w-full pl-9 text-[12px]"
             />
           </div>
           <DropdownMenu
@@ -1293,7 +1341,7 @@ function ProviderModelRow({
 
 function ModelAvatar({ model }: { model: AiModel }) {
   const avatar = model.avatar ?? providerShortName(model.displayName || model.name);
-  const hasModelIcon = hasLobeModelIcon(model.name);
+  const icon = renderLobeModelIcon(model.name);
 
   if (isImageUrl(avatar)) {
     return (
@@ -1310,21 +1358,34 @@ function ModelAvatar({ model }: { model: AiModel }) {
 
   return (
     <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-mist">
-      {hasModelIcon ? (
-        <ModelIcon model={model.name} size={22} type="color" />
-      ) : (
-        <Brain size={18} strokeWidth={1.8} aria-hidden="true" />
-      )}
+      {icon ?? <Brain size={18} strokeWidth={1.8} aria-hidden="true" />}
       <span className="sr-only">{avatar}</span>
     </span>
   );
 }
 
-function hasLobeModelIcon(modelName: string) {
+function renderLobeModelIcon(modelName: string) {
   const normalizedModelName = modelName.toLowerCase();
-  return modelMappings.some((item) =>
-    item.keywords.some((keyword) => new RegExp(keyword, 'i').test(normalizedModelName)),
-  );
+  const Icon = lobeIconForModelName(normalizedModelName);
+  return Icon ? <Icon size={22} /> : null;
+}
+
+function lobeIconForModelName(normalizedModelName: string): LobeIconComponent | undefined {
+  if (normalizedModelName.includes('claude')) return ClaudeIcon;
+  if (normalizedModelName.includes('gemini') || normalizedModelName.includes('gemma')) {
+    return GeminiIcon;
+  }
+  if (normalizedModelName.includes('deepseek')) return DeepSeekIcon;
+  if (normalizedModelName.includes('qwen')) return QwenIcon;
+  if (normalizedModelName.includes('kimi') || normalizedModelName.includes('moonshot')) {
+    return KimiIcon;
+  }
+  if (normalizedModelName.includes('doubao')) return DoubaoIcon;
+  if (normalizedModelName.includes('hunyuan')) return HunyuanIcon;
+  if (normalizedModelName.includes('mistral')) return MistralIcon;
+  if (normalizedModelName.includes('llama')) return OllamaIcon;
+  if (normalizedModelName.includes('gpt') || normalizedModelName.includes('o1')) return OpenAIIcon;
+  return undefined;
 }
 
 function ProviderAvatar({
@@ -1354,12 +1415,13 @@ function ProviderAvatar({
   }
 
   const providerKey = provider ? lobeProviderKey(provider) : undefined;
-  if (providerKey) {
+  const icon = renderLobeProviderIcon(providerKey);
+  if (icon) {
     return (
       <span
         className={`grid shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-ink ${className}`}
       >
-        <ProviderIcon provider={providerKey} size={22} type="color" />
+        {icon}
         <span className="sr-only">{avatar || fallback}</span>
       </span>
     );
@@ -1372,6 +1434,12 @@ function ProviderAvatar({
       {avatar || fallback}
     </span>
   );
+}
+
+function renderLobeProviderIcon(providerKey: string | undefined) {
+  if (!providerKey) return null;
+  const Icon = lobeIconByKey[providerKey];
+  return Icon ? <Icon size={22} /> : null;
 }
 
 function ProviderFormModal({
@@ -1482,33 +1550,28 @@ function ProviderFormModal({
           </div>
         </FormField>
         <FormField title={t('settings.detail.aiProviders.providerDescription')} required>
-          <textarea
+          <DichaTextArea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             disabled={pending}
             placeholder={t('settings.detail.aiProviders.providerDescriptionPlaceholder')}
-            className="min-h-20 w-full rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-20 w-full text-[12px]"
           />
         </FormField>
         <FormSectionTitle>{t('settings.detail.aiProviders.configInfo')}</FormSectionTitle>
         <FormField title={t('settings.detail.aiProviders.requestFormat')} required>
-          <select
+          <DichaSelect<AiProviderRequestFormat>
             value={requestFormat}
-            onChange={(event) => {
+            onChange={(nextValue) => {
               const next =
-                requestFormatOptions.find((option) => option.value === event.target.value)?.value ??
+                requestFormatOptions.find((option) => option.value === nextValue)?.value ??
                 'openai_compatible';
               setRequestFormat(next);
             }}
             disabled={pending}
-            className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {requestFormatOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={requestFormatOptions}
+            className="w-full text-[12px]"
+          />
         </FormField>
         <FormField title={t('settings.detail.aiProviders.baseUrl')} required>
           <TextField
@@ -1519,14 +1582,13 @@ function ProviderFormModal({
           />
         </FormField>
         <FormField title="API Key">
-          <input
+          <DichaInputPassword
             value={credential}
             onChange={(event) => setCredential(event.target.value)}
-            type="password"
             autoComplete="off"
             disabled={pending}
             placeholder={t('settings.detail.aiProviders.apiKeyPlaceholder')}
-            className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-9 w-full text-[12px]"
           />
         </FormField>
       </div>
@@ -1777,18 +1839,15 @@ function ModelFormModal({
           title={t('settings.detail.aiProviders.modelType')}
           description={t('settings.detail.aiProviders.modelTypeDesc')}
         />
-        <select
+        <DichaSelect<AiModelType>
           value={modelType}
-          onChange={(event) => setModelType(event.target.value as AiModelType)}
+          onChange={(nextValue) => {
+            if (typeof nextValue === 'string') setModelType(nextValue as AiModelType);
+          }}
           disabled={pending || backendManagedModel}
-          className="h-9 rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {modelTypeOptions.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+          options={modelTypeOptions.map((type) => ({ label: type, value: type }))}
+          className="w-full text-[12px]"
+        />
 
         <ConfigLabel
           title={t('settings.detail.aiProviders.defaultParameterConfig')}
@@ -1825,36 +1884,21 @@ function ModalShell({
   footer: ReactNode;
   onClose: () => void;
 }) {
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
-
-  return createPortal(
-    <div className="fixed inset-0 z-[300] flex items-end justify-center overflow-hidden sm:items-center sm:px-4 sm:py-8">
-      <DotsBackdrop visible scrim={false} className="absolute inset-0" />
-      <div className="absolute inset-0 bg-sidebar-bg/50" aria-hidden />
-      <section className="relative z-10 flex h-dvh w-full flex-col overflow-hidden border-0 bg-surface shadow-float sm:h-auto sm:max-h-[min(760px,calc(100dvh-72px))] sm:max-w-3xl sm:rounded-card sm:border sm:border-hairline">
-        <header className="flex items-center justify-between gap-4 border-b border-hairline px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
-          <h2 className="text-[18px] font-semibold text-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-8 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
-          >
-            <X size={16} />
-          </button>
-        </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
-        <footer className="border-t border-hairline bg-surface-alt px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
-          {footer}
-        </footer>
-      </section>
-    </div>,
-    document.body,
+  return (
+    <Modal
+      destroyOnHidden
+      enableResponsive
+      footer={footer}
+      open
+      title={title}
+      width={760}
+      className="dicha-ai-config-modal"
+      height="min(760px, calc(100dvh - 72px))"
+      paddings={{ desktop: 20, mobile: 16 }}
+      onCancel={onClose}
+    >
+      {children}
+    </Modal>
   );
 }
 
@@ -2002,14 +2046,14 @@ function TextField({
   maxLength?: number;
 }) {
   return (
-    <input
+    <DichaInput
       value={value}
       onChange={(event) => onChange(event.target.value)}
       inputMode={inputMode}
       disabled={disabled}
       placeholder={placeholder}
       maxLength={maxLength}
-      className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+      className="h-9 w-full text-[12px]"
     />
   );
 }
@@ -2025,28 +2069,30 @@ function ExtensionParameterPicker({
 }) {
   const selected = new Set(value);
   const available = extensionParameterOptions.filter((parameter) => !selected.has(parameter));
+  const options = useMemo<SelectOptions<AiModelExtensionParameter>>(
+    () =>
+      available.map((parameter) => {
+        const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
+        return {
+          label: definition?.label ?? parameter,
+          value: parameter,
+        };
+      }),
+    [available],
+  );
   return (
     <div className="space-y-2">
-      <select
-        value=""
+      <DichaSelect<AiModelExtensionParameter>
+        value={null}
         disabled={disabled || available.length === 0}
-        onChange={(event) => {
-          const next = event.target.value as AiModelExtensionParameter;
-          if (!next) return;
+        placeholder="添加扩展参数"
+        options={options}
+        onChange={(next) => {
+          if (typeof next !== 'string') return;
           onChange([...value, next]);
         }}
-        className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <option value="">添加扩展参数</option>
-        {available.map((parameter) => {
-          const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
-          return (
-            <option key={parameter} value={parameter}>
-              {definition?.label ?? parameter}
-            </option>
-          );
-        })}
-      </select>
+        className="w-full text-[12px]"
+      />
       {value.length > 0 ? (
         <div className="grid gap-2">
           {value.map((parameter) => {
@@ -2152,30 +2198,30 @@ function ParameterControlInput({
 
   if (control.kind === 'select') {
     return (
-      <select
+      <DichaSelect<string>
         value={typeof value === 'string' ? value : ''}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <option value="">沿用默认</option>
-        {control.options?.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        options={[
+          { label: '沿用默认', value: '' },
+          ...(control.options?.map((option) => ({
+            label: option.label,
+            value: option.value,
+          })) ?? []),
+        ]}
+        onChange={(nextValue) => onChange(typeof nextValue === 'string' ? nextValue : '')}
+        className="w-full text-[12px]"
+      />
     );
   }
 
   return (
-    <input
+    <DichaInput
       value={typeof value === 'string' ? value : ''}
       onChange={(event) => onChange(event.target.value)}
       inputMode="decimal"
       disabled={disabled}
       placeholder={control.placeholder}
-      className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+      className="h-9 w-full text-[12px]"
     />
   );
 }
