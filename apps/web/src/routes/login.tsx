@@ -5,7 +5,6 @@ import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { BrandMark } from '@/components/AppBrand';
-import { DichaInput } from '@/components/base/DichaControls';
 import { authClient } from '@/lib/auth-client';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import { suggestEmailCompletions } from '@/lib/email-suggestions';
@@ -122,7 +121,7 @@ function EmailField({
       <label htmlFor={id}>
         <span className="block text-[11px] tracking-wider text-ink-soft">{label}</span>
       </label>
-      <DichaInput
+      <input
         id={id}
         type="email"
         value={value}
@@ -135,7 +134,8 @@ function EmailField({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
-        className="w-full text-[14px]"
+        className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+        style={{ borderColor: 'var(--hairline)' }}
       />
       {open ? (
         <div

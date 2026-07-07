@@ -28,41 +28,10 @@ const dichaAntdTheme = {
       "'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', ui-sans-serif, system-ui, sans-serif",
   },
   components: {
-    Checkbox: {
-      colorPrimary: '#7a6248',
-      colorPrimaryHover: '#8a8178',
-    },
-    Drawer: {
-      colorBgElevated: '#ffffff',
-    },
-    Form: {
-      labelColor: '#8a8178',
-    },
     Input: {
       activeBorderColor: '#7a6248',
       activeShadow: 'none',
       hoverBorderColor: '#8a8178',
-    },
-    InputNumber: {
-      activeBorderColor: '#7a6248',
-      activeShadow: 'none',
-      hoverBorderColor: '#8a8178',
-    },
-    Modal: {
-      contentBg: '#ffffff',
-      headerBg: '#ffffff',
-    },
-    Select: {
-      activeBorderColor: '#7a6248',
-      activeOutlineColor: 'transparent',
-      hoverBorderColor: '#8a8178',
-      optionSelectedBg: '#fcfaf6',
-      selectorBg: '#ffffff',
-    },
-    Switch: {
-      colorPrimary: '#7a6248',
-      colorPrimaryHover: '#8a8178',
-      handleBg: '#ffffff',
     },
   },
 } satisfies ThemeConfig;
