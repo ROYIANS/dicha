@@ -538,6 +538,64 @@ body {
 .dicha-lobe-provider .ant-select-selection-placeholder {
   color: var(--ink-faint) !important;
 }
+.dicha-context-window-control .ant-slider,
+.dicha-parameter-slider.ant-slider {
+  margin-block: 0.25rem 1.65rem;
+}
+.dicha-context-window-control .ant-slider-rail,
+.dicha-parameter-slider .ant-slider-rail {
+  background: color-mix(in oklab, var(--ink) 10%, transparent) !important;
+}
+.dicha-context-window-control .ant-slider-track,
+.dicha-parameter-slider .ant-slider-track {
+  background: var(--accent-warm) !important;
+}
+.dicha-context-window-control .ant-slider-handle::after,
+.dicha-parameter-slider .ant-slider-handle::after {
+  box-shadow: 0 0 0 2px var(--accent-warm) !important;
+}
+.dicha-context-window-control .ant-slider-handle:hover::after,
+.dicha-context-window-control .ant-slider-handle:focus::after,
+.dicha-parameter-slider .ant-slider-handle:hover::after,
+.dicha-parameter-slider .ant-slider-handle:focus::after {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent-warm) 26%, transparent) !important;
+}
+.dicha-context-window-control .ant-slider-dot,
+.dicha-parameter-slider .ant-slider-dot {
+  border-color: var(--accent-warm) !important;
+}
+.dicha-context-window-control .ant-slider-mark-text,
+.dicha-parameter-slider .ant-slider-mark-text {
+  color: var(--ink-soft) !important;
+  font-size: 11px;
+}
+.dicha-select-popup {
+  z-index: 2400 !important;
+}
+body :has(> .dicha-select-popup) {
+  z-index: 2400 !important;
+}
+@media (max-width: 767px) {
+  .dicha-ai-config-modal.ant-drawer,
+  .dicha-ai-config-modal .ant-drawer-content-wrapper {
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+  .dicha-ai-config-modal .ant-drawer-content {
+    height: 100dvh;
+    border-radius: 0 !important;
+  }
+  .dicha-ai-config-modal .ant-drawer-body {
+    min-height: 0;
+    overflow: hidden auto;
+    padding: 16px !important;
+  }
+  .dicha-ai-config-modal .ant-drawer-footer {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+}
 .dicha-otp.ant-otp {
   gap: 0.5rem;
   border: 0 !important;
