@@ -430,6 +430,55 @@ body {
     'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,
     system-ui, sans-serif;
 }
+.dicha-lobe-provider .lp-btn-primary {
+  color: var(--sidebar-ink);
+}
+.dicha-lobe-provider .lp-btn-primary:hover {
+  color: var(--sidebar-ink);
+}
+.dicha-lobe-provider .lp-btn-ghost {
+  color: var(--ink);
+}
+.dicha-lobe-provider .lp-btn-ghost:hover {
+  color: var(--ink);
+}
+.dicha-lobe-provider .lp-nav-link {
+  color: var(--ink-soft);
+}
+.dicha-lobe-provider .lp-nav-link:hover {
+  color: var(--ink);
+}
+.dicha-lobe-provider .lp-foot-link {
+  color: var(--lp-footer-fg-muted);
+}
+.dicha-lobe-provider .lp-foot-link:hover {
+  color: var(--sidebar-ink);
+}
+.dicha-lobe-provider .lp-drawer-link {
+  color: var(--ink);
+}
+.dicha-lobe-provider .app-sidebar-link {
+  color: var(--sidebar-ink-soft);
+}
+.dicha-lobe-provider .app-sidebar-link:hover,
+.dicha-lobe-provider .app-sidebar-link-active {
+  color: var(--sidebar-ink);
+}
+.dicha-lobe-provider .app-icon-btn {
+  color: var(--ink-soft);
+}
+.dicha-lobe-provider .app-icon-btn:hover {
+  color: var(--ink);
+}
+.dicha-lobe-provider .login-footer-link {
+  color: inherit;
+}
+.dicha-lobe-provider .login-footer-link:hover {
+  color: var(--ink-soft);
+}
+.dicha-lobe-provider a.dash-card {
+  color: inherit;
+}
 .dicha-lobe-provider .ant-input,
 .dicha-lobe-provider .ant-otp .ant-otp-input {
   border-color: var(--hairline);
@@ -461,15 +510,21 @@ body {
 }
 .dicha-otp.ant-otp {
   gap: 0.5rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .dicha-otp.ant-otp .ant-otp-input {
   width: 2.45rem;
   height: 2.75rem;
+  border: 1px solid var(--hairline);
   border-radius: 0.375rem;
   background: var(--canvas);
   font-size: 1rem;
   font-weight: 600;
   text-align: center;
+  outline: none;
+  box-shadow: none;
 }
 @media (max-width: 420px) {
   .dicha-otp.ant-otp {
