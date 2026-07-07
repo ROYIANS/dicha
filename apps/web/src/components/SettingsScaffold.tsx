@@ -3,6 +3,7 @@ import { ChevronLeft, type LucideIcon } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrandMark } from '@/components/AppBrand';
+import { DichaSwitch } from '@/components/base/DichaControls';
 import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
@@ -146,22 +147,12 @@ export function SettingsSwitch({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
+    <DichaSwitch
+      title={label}
       aria-label={label}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full border border-hairline transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-        checked ? 'bg-[var(--sidebar-bg)]' : 'bg-canvas'
-      }`}
-    >
-      <span
-        className={`absolute left-1 top-1/2 size-5 -translate-y-1/2 rounded-full border border-hairline bg-surface transition-transform ${
-          checked ? 'translate-x-5' : 'translate-x-0'
-        }`}
-      />
-    </button>
+      checked={checked}
+      onChange={(next) => onChange(next)}
+    />
   );
 }

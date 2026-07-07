@@ -20,6 +20,7 @@ import {
   creditLedgerQueryOptions,
   redeemCreditCode,
 } from '@/api/credits';
+import { DichaInput } from '@/components/base/DichaControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass } from '@/components/settings-ui';
 import type { CreditCheckInStatus, CreditLedgerEntry } from '@dicha/shared';
@@ -121,11 +122,11 @@ export function CreditsSettingsPage() {
                 redeemMutation.mutate(code);
               }}
             >
-              <input
+              <DichaInput
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
                 placeholder={t('settings.detail.credits.codePlaceholder')}
-                className="h-10 w-full rounded-md border border-hairline bg-surface-alt px-3 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
+                className="h-10 w-full text-[13px]"
               />
               <button
                 type="submit"

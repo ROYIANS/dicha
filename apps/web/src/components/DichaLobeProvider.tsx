@@ -63,10 +63,41 @@ function createDichaAntdTheme(appearance: keyof typeof tokenPalette): ThemeConfi
         "'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif, system-ui, sans-serif",
     },
     components: {
+      Checkbox: {
+        colorPrimary: color.accentWarm,
+        colorPrimaryHover: color.inkSoft,
+      },
+      Drawer: {
+        colorBgElevated: color.surface,
+      },
+      Form: {
+        labelColor: color.inkSoft,
+      },
       Input: {
         activeBorderColor: color.accentWarm,
         activeShadow: 'none',
         hoverBorderColor: color.inkSoft,
+      },
+      InputNumber: {
+        activeBorderColor: color.accentWarm,
+        activeShadow: 'none',
+        hoverBorderColor: color.inkSoft,
+      },
+      Modal: {
+        contentBg: color.surface,
+        headerBg: color.surface,
+      },
+      Select: {
+        activeBorderColor: color.accentWarm,
+        activeOutlineColor: 'transparent',
+        hoverBorderColor: color.inkSoft,
+        optionSelectedBg: color.surfaceAlt,
+        selectorBg: color.surface,
+      },
+      Switch: {
+        colorPrimary: color.accentWarm,
+        colorPrimaryHover: color.inkSoft,
+        handleBg: color.surface,
       },
     },
   };

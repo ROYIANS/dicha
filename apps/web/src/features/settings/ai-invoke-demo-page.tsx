@@ -20,6 +20,7 @@ import type {
   AiUsageStatus,
 } from '@dicha/shared';
 import { invokeAiStream } from '@/api/ai';
+import { DichaInput, DichaSelect, DichaTextArea } from '@/components/base/DichaControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
@@ -119,30 +120,30 @@ export function AiInvokeDemoPage() {
               <span className="text-[12px] font-medium text-ink-faint">
                 {t('settings.detail.aiInvokeDemo.useCase')}
               </span>
-              <select
+              <DichaSelect<AiModelUseCase>
                 value={useCase}
-                onChange={(event) => setUseCase(event.target.value as AiModelUseCase)}
+                onChange={(next) => {
+                  if (typeof next === 'string') setUseCase(next as AiModelUseCase);
+                }}
                 disabled={isRunning}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {useCaseOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {t(`settings.aiUseCases.${item}`)}
-                  </option>
-                ))}
-              </select>
+                options={useCaseOptions.map((item) => ({
+                  label: t(`settings.aiUseCases.${item}`),
+                  value: item,
+                }))}
+                className="w-full text-[12px]"
+              />
             </label>
 
             <label className="block space-y-1.5">
               <span className="text-[12px] font-medium text-ink-faint">
                 {t('settings.detail.aiInvokeDemo.modelId')}
               </span>
-              <input
+              <DichaInput
                 value={modelId}
                 onChange={(event) => setModelId(event.target.value)}
                 disabled={isRunning}
                 placeholder={t('settings.detail.aiInvokeDemo.modelIdPlaceholder')}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full text-[12px]"
               />
             </label>
 
@@ -150,12 +151,12 @@ export function AiInvokeDemoPage() {
               <span className="text-[12px] font-medium text-ink-faint">
                 {t('settings.detail.aiInvokeDemo.prompt')}
               </span>
-              <textarea
+              <DichaTextArea
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 disabled={isRunning}
                 placeholder={t('settings.detail.aiInvokeDemo.promptPlaceholder')}
-                className="min-h-40 w-full resize-y rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] leading-relaxed text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-40 w-full text-[12px] leading-relaxed"
               />
             </label>
 
