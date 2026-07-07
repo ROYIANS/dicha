@@ -65,10 +65,17 @@ Integration:
 
 ## Parent Acceptance Criteria
 
-* [ ] 长期服务边界和路线图明确。
-* [ ] 子任务全部建立并关联到父任务。
-* [ ] 每个子任务有可独立交付的 PRD。
-* [ ] 当前代码改动归属到第一个可交付子任务，不继续扩大父任务范围。
+* [x] 长期服务边界和路线图明确。
+* [x] 子任务全部建立并关联到父任务。
+* [x] 每个子任务有可独立交付的 PRD。
+* [x] 当前代码改动归属到第一个可交付子任务，不继续扩大父任务范围。
+
+## Closure Decision
+
+2026-07-07 review: the roadmap parent has served its purpose. All child work has either shipped
+and been archived, or in the case of the availability dashboard, has been closed as superseded by
+the existing usage analytics and admin diagnostics surface. If true scheduled probe monitoring is
+needed later, create a narrower task focused only on provider/model health probing and matrix UI.
 
 ## Out of Scope
 
