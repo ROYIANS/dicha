@@ -29,9 +29,28 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import AnthropicIcon from '@lobehub/icons/es/Anthropic';
+import AzureIcon from '@lobehub/icons/es/Azure';
+import BailianIcon from '@lobehub/icons/es/Bailian';
+import BedrockIcon from '@lobehub/icons/es/Bedrock';
+import ClaudeIcon from '@lobehub/icons/es/Claude';
+import DeepSeekIcon from '@lobehub/icons/es/DeepSeek';
+import DoubaoIcon from '@lobehub/icons/es/Doubao';
+import GeminiIcon from '@lobehub/icons/es/Gemini';
+import GoogleIcon from '@lobehub/icons/es/Google';
+import GroqIcon from '@lobehub/icons/es/Groq';
+import HunyuanIcon from '@lobehub/icons/es/Hunyuan';
+import KimiIcon from '@lobehub/icons/es/Kimi';
+import MinimaxIcon from '@lobehub/icons/es/Minimax';
+import MistralIcon from '@lobehub/icons/es/Mistral';
+import MoonshotIcon from '@lobehub/icons/es/Moonshot';
+import OllamaIcon from '@lobehub/icons/es/Ollama';
+import OpenAIIcon from '@lobehub/icons/es/OpenAI';
+import OpenRouterIcon from '@lobehub/icons/es/OpenRouter';
+import PerplexityIcon from '@lobehub/icons/es/Perplexity';
+import QwenIcon from '@lobehub/icons/es/Qwen';
 import { DropdownMenu, Modal, Tooltip as LobeTooltip } from '@lobehub/ui';
-import { Slider } from 'antd';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ComponentType, type ReactNode, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -65,13 +84,11 @@ import {
 import { ModelSelect } from '@/components/ModelSelect';
 import {
   DichaInput,
-  DichaInputNumber,
   DichaInputPassword,
   DichaSelect,
   DichaTextArea,
   type SelectOptions,
 } from '@/components/base/DichaControls';
-import { LobeIcon } from '@/components/base/LobeIcon';
 import {
   SettingsDetailShell,
   SettingsPanel,
@@ -89,7 +106,6 @@ import {
   isUserOwnedModel,
   lobeProviderKey,
 } from '@/lib/ai-catalog-ui';
-import { resolveLobeIconName, resolveLobeModelIconName } from '@/lib/lobe-icon-resolver';
 import { type SettingsTint } from '@/components/settings-ui';
 
 const providerStatusTone = {
@@ -230,10 +246,32 @@ const requestFormatOptions = [
   { value: 'anthropic_messages', label: 'Anthropic Messages API' },
 ] satisfies Array<{ value: AiProviderRequestFormat; label: string }>;
 
-const contextWindowScale = [4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000, 2000000];
-const contextWindowMarks = Object.fromEntries(
-  contextWindowScale.map((value, index) => [index, formatContextWindowPreset(value)]),
-);
+const contextWindowPresets = [0, 4000, 8000, 16000, 32000, 64000, 200000, 400000, 1000000];
+
+type LobeIconComponent = ComponentType<{ size?: number | string }>;
+
+const lobeIconByKey: Record<string, LobeIconComponent> = {
+  anthropic: AnthropicIcon,
+  azure: AzureIcon,
+  bailian: BailianIcon,
+  bedrock: BedrockIcon,
+  claude: ClaudeIcon,
+  deepseek: DeepSeekIcon,
+  doubao: DoubaoIcon,
+  gemini: GeminiIcon,
+  google: GoogleIcon,
+  groq: GroqIcon,
+  hunyuan: HunyuanIcon,
+  kimi: KimiIcon,
+  minimax: MinimaxIcon,
+  mistral: MistralIcon,
+  moonshot: MoonshotIcon,
+  ollama: OllamaIcon,
+  openai: OpenAIIcon,
+  openrouter: OpenRouterIcon,
+  perplexity: PerplexityIcon,
+  qwen: QwenIcon,
+};
 
 function DichaTooltip({
   children,
@@ -1327,8 +1365,27 @@ function ModelAvatar({ model }: { model: AiModel }) {
 }
 
 function renderLobeModelIcon(modelName: string) {
-  const iconName = resolveLobeModelIconName(modelName);
-  return iconName ? <LobeIcon iconName={iconName} size={22} /> : null;
+  const normalizedModelName = modelName.toLowerCase();
+  const Icon = lobeIconForModelName(normalizedModelName);
+  return Icon ? <Icon size={22} /> : null;
+}
+
+function lobeIconForModelName(normalizedModelName: string): LobeIconComponent | undefined {
+  if (normalizedModelName.includes('claude')) return ClaudeIcon;
+  if (normalizedModelName.includes('gemini') || normalizedModelName.includes('gemma')) {
+    return GeminiIcon;
+  }
+  if (normalizedModelName.includes('deepseek')) return DeepSeekIcon;
+  if (normalizedModelName.includes('qwen')) return QwenIcon;
+  if (normalizedModelName.includes('kimi') || normalizedModelName.includes('moonshot')) {
+    return KimiIcon;
+  }
+  if (normalizedModelName.includes('doubao')) return DoubaoIcon;
+  if (normalizedModelName.includes('hunyuan')) return HunyuanIcon;
+  if (normalizedModelName.includes('mistral')) return MistralIcon;
+  if (normalizedModelName.includes('llama')) return OllamaIcon;
+  if (normalizedModelName.includes('gpt') || normalizedModelName.includes('o1')) return OpenAIIcon;
+  return undefined;
 }
 
 function ProviderAvatar({
@@ -1381,8 +1438,8 @@ function ProviderAvatar({
 
 function renderLobeProviderIcon(providerKey: string | undefined) {
   if (!providerKey) return null;
-  const iconName = resolveLobeIconName(providerKey);
-  return iconName ? <LobeIcon iconName={iconName} size={22} /> : null;
+  const Icon = lobeIconByKey[providerKey];
+  return Icon ? <Icon size={22} /> : null;
 }
 
 function ProviderFormModal({
@@ -1727,13 +1784,36 @@ function ModelFormModal({
           title={t('settings.detail.aiProviders.contextWindow')}
           description={t('settings.detail.aiProviders.contextWindowDesc')}
         />
-        <ContextWindowControl
-          value={contextWindow}
-          invalid={contextWindowInvalid}
-          disabled={pending || backendManagedModel}
-          errorText={t('settings.detail.aiProviders.contextWindowInvalid')}
-          onChange={setContextWindow}
-        />
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {contextWindowPresets.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                disabled={pending || backendManagedModel || preset === 0}
+                onClick={() => setContextWindow(String(preset))}
+                className={`h-7 rounded-md border px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+                  parsedContextWindow === preset
+                    ? 'border-mist bg-chip-mist text-mist'
+                    : 'border-hairline bg-surface text-ink-soft hover:text-ink'
+                }`}
+              >
+                {formatContextWindowPreset(preset)}
+              </button>
+            ))}
+          </div>
+          <TextField
+            value={contextWindow}
+            onChange={setContextWindow}
+            inputMode="numeric"
+            disabled={pending || backendManagedModel}
+          />
+          {contextWindowInvalid ? (
+            <p className="text-[11px] text-pink">
+              {t('settings.detail.aiProviders.contextWindowInvalid')}
+            </p>
+          ) : null}
+        </div>
 
         <ConfigLabel
           title={t('settings.detail.aiProviders.extensionParameters')}
@@ -1978,55 +2058,6 @@ function TextField({
   );
 }
 
-function ContextWindowControl({
-  value,
-  invalid,
-  disabled,
-  errorText,
-  onChange,
-}: {
-  value: string;
-  invalid: boolean;
-  disabled: boolean;
-  errorText: string;
-  onChange: (value: string) => void;
-}) {
-  const numericValue = Number(value);
-  const sliderValue =
-    Number.isFinite(numericValue) && numericValue > 0
-      ? nearestContextWindowScaleIndex(numericValue)
-      : 0;
-
-  return (
-    <div className="dicha-context-window-control">
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_132px] sm:items-start">
-        <Slider
-          min={0}
-          max={contextWindowScale.length - 1}
-          step={1}
-          marks={contextWindowMarks}
-          value={sliderValue}
-          disabled={disabled}
-          tooltip={{ formatter: (position) => formatContextWindowPreset(contextWindowForPosition(position)) }}
-          className="dicha-context-window-slider"
-          onChange={(position) => onChange(String(contextWindowForPosition(position)))}
-        />
-        <DichaInputNumber
-          value={Number.isFinite(numericValue) ? numericValue : undefined}
-          min={1}
-          step={1000}
-          controls={false}
-          changeOnWheel={false}
-          disabled={disabled}
-          className="h-9 w-full text-[12px]"
-          onChange={(nextValue) => onChange(nextValue == null ? '' : String(nextValue))}
-        />
-      </div>
-      {invalid ? <p className="mt-2 text-[11px] text-pink">{errorText}</p> : null}
-    </div>
-  );
-}
-
 function ExtensionParameterPicker({
   value,
   onChange,
@@ -2183,78 +2214,14 @@ function ParameterControlInput({
     );
   }
 
-  if (control.kind === 'number') {
-    return (
-      <ParameterNumberControlInput
-        control={control}
-        value={typeof value === 'string' ? value : ''}
-        disabled={disabled}
-        onChange={onChange}
-      />
-    );
-  }
-
-  return null;
-}
-
-function ParameterNumberControlInput({
-  control,
-  value,
-  disabled,
-  onChange,
-}: {
-  control: AiModelParameterControlDefinition;
-  value: string;
-  disabled: boolean;
-  onChange: (value: string) => void;
-}) {
-  const numericValue = Number(value);
-  const hasNumericValue = value !== '' && Number.isFinite(numericValue);
-  const hasSliderRange =
-    typeof control.min === 'number' && typeof control.max === 'number' && control.max > control.min;
-  const step = control.step ?? 1;
-
-  if (hasSliderRange) {
-    return (
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px] sm:items-center">
-        <Slider
-          min={control.min}
-          max={control.max}
-          step={step}
-          value={hasNumericValue ? numericValue : control.min}
-          disabled={disabled}
-          tooltip={{ open: false }}
-          className="dicha-parameter-slider"
-          onChange={(nextValue) => onChange(String(nextValue))}
-        />
-        <DichaInputNumber
-          value={hasNumericValue ? numericValue : undefined}
-          min={control.min}
-          max={control.max}
-          step={step}
-          controls={false}
-          changeOnWheel={false}
-          disabled={disabled}
-          placeholder={control.placeholder}
-          className="h-9 w-full text-[12px]"
-          onChange={(nextValue) => onChange(nextValue == null ? '' : String(nextValue))}
-        />
-      </div>
-    );
-  }
-
   return (
-    <DichaInputNumber
-      value={hasNumericValue ? numericValue : undefined}
-      min={control.min}
-      max={control.max}
-      step={step}
-      controls={false}
-      changeOnWheel={false}
+    <DichaInput
+      value={typeof value === 'string' ? value : ''}
+      onChange={(event) => onChange(event.target.value)}
+      inputMode="decimal"
       disabled={disabled}
       placeholder={control.placeholder}
       className="h-9 w-full text-[12px]"
-      onChange={(nextValue) => onChange(nextValue == null ? '' : String(nextValue))}
     />
   );
 }
@@ -2315,24 +2282,6 @@ function formatContextWindowPreset(value: number) {
   if (value >= 1000000) return `${value / 1000000}M`;
   if (value >= 1000) return `${value / 1000}K`;
   return String(value);
-}
-
-function contextWindowForPosition(position: number | null | undefined) {
-  const index = Math.round(position ?? 0);
-  return contextWindowScale[Math.min(Math.max(index, 0), contextWindowScale.length - 1)] ?? 4000;
-}
-
-function nearestContextWindowScaleIndex(value: number) {
-  let nearestIndex = 0;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  contextWindowScale.forEach((scaleValue, index) => {
-    const distance = Math.abs(Math.log(value) - Math.log(scaleValue));
-    if (distance < nearestDistance) {
-      nearestIndex = index;
-      nearestDistance = distance;
-    }
-  });
-  return nearestIndex;
 }
 
 function compareProviderModels(left: AiModel, right: AiModel, sortMode: ModelListSortMode) {
