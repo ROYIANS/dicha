@@ -37,7 +37,7 @@
 - **ESLint flat config + Prettier**（root 共享、前后端 extend）：`typescript-eslint` + `eslint-plugin-react-hooks`（严格）+ `eslint-plugin-react-refresh`。
   - `eslint-plugin-react-hooks@7` 的 flat 预设在 `configs.flat['recommended-latest']`——顶层 `configs['recommended-latest']` 仍是 legacy eslintrc 形状，**会让 ESLint 10 崩**。
   - `react-refresh/only-export-components` 与 TanStack Router file-route 冲突（route 文件导出 `Route` 对象而非组件）→ 仅对 `src/routes/**` 关掉该规则（HMR 由 router 插件管）。
-- **Tailwind v4 + Lobe UI / Ant Design** 是前端样式/组件基建；CSS Modules 仅作 bespoke 逃生口。详见 [architecture.md §4](./architecture.md)。
+- **Tailwind v4 + HeroUI v3** 是 M1 样式/组件基建（不再推迟 M3）；CSS Modules 仅作 bespoke 逃生口。详见 [architecture.md §4](./architecture.md)。
 - i18n：`react-i18next`（**不是** plan 误写的 next-intl）。
 - **禁用清单（check 阶段会查）**：组件 / i18n / 文案内不得出现 `text-gray-*`、`violet`、`glass-*`、`GlassPanel`，以及 **emoji 字符**（杂项符号 / emoji 区，如 ☀ 🌿 ✅ 等）。需要图形符号时用 `lucide-react` 图标组件。见 [design-system.md §4/§8](./design-system.md)。
 
@@ -71,4 +71,4 @@
 ## TODO（M1 起跑后回填）
 
 - [ ] 视觉回归测试（M2 sprite 上来后再考虑）
-- [ ] a11y 基线（Lobe UI / Ant Design 已带基础可访问性，确认补充项）
+- [ ] a11y 基线（HeroUI/React Aria 已带基础可访问性，确认补充项）

@@ -16,7 +16,7 @@
 | 位置                       | 性质                                                   | 例子                      |
 | -------------------------- | ------------------------------------------------------ | ------------------------- |
 | `features/<x>/components/` | 业务组件，可直连 store / query                         | `ItemDraftCard`           |
-| `components/`              | 跨 feature 复用件：**优先用 Lobe UI / AntD**，必要时在此薄封装 | `Button`、`Modal` |
+| `components/`              | 跨 feature 复用件：**优先用 HeroUI**，必要时在此薄封装 | `Button`(HeroUI)、`Modal` |
 | `pixi/scenes/`             | PixiJS 场景（不是 React 组件，M2）                     | `StorageRoomScene`        |
 
 ## 设置二级页
@@ -57,15 +57,12 @@
 
 ---
 
-## 组件库：Lobe UI / Ant Design
+## 组件库：HeroUI v3
 
-- **基建优先用 Lobe UI / Ant Design**（按钮 / 输入 / 弹窗 / 下拉等），再用项目 token 和薄封装对齐 warm matte / blueprint 风格。不重复造轮子。
-- 根入口必须通过 `DichaLobeProvider` 接入 `@lobehub/ui` 的 `ConfigProvider` / `ThemeProvider`，并把 AntD token 对齐到 `--canvas`、`--surface`、`--ink`、`--hairline`、`--accent-warm` 等项目语义变量。
-- `DichaLobeProvider` 传给 Lobe/AntD 的 `theme.token` 必须使用可被 JS 颜色库解析的真实颜色（hex/rgb/hsl）。不要直接传 `var(--surface)` 这类 CSS 变量：Lobe 内部会用 `polished.mix()` 派生 token，`var(...)` 会在运行时抛 `Couldn't parse the color string`。具体控件视觉再通过 `.dicha-lobe-provider` CSS bridge 读取项目语义 token 覆盖。
-- `DichaLobeProvider` 应关闭 Lobe 默认字体和 global style，避免覆盖 Sarasa UI SC 与项目全局材质。
-- `components/` 只在需要统一封装时薄包 Lobe UI / AntD；有业务逻辑的留 feature 内。
-- 表单：Lobe/AntD 输入是受控组件，用 RHF `<Controller>` 接（详见 [architecture.md §5](./architecture.md)）。
-- `sonner` 继续作为 toast 基础库；toast 视觉优化另起任务，不切换到 Lobe UI Toast。
+- **基建优先用 HeroUI**（按钮 / 输入 / 弹窗 / 表格等），底层 React Aria（可访问性）+ Tailwind v4。不重复造轮子。
+- `components/` 只在需要统一封装时薄包 HeroUI；有业务逻辑的留 feature 内。
+- 表单：HeroUI 输入是受控组件，用 RHF `<Controller>` 接（详见 [architecture.md §5](./architecture.md)）。
+- 美学：M1 接受 HeroUI 现代观感，像素皮 = M2 soul 层。
 
 ---
 

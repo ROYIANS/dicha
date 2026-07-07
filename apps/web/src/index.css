@@ -1,6 +1,8 @@
 /* Font imports must come before all other @import (CSS spec). */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
+/* Tailwind v4 first, then HeroUI v3 styles. Import order matters. */
 @import 'tailwindcss';
+@import '@heroui/styles';
 
 @font-face {
   font-family: 'Sarasa UI SC';
@@ -80,10 +82,11 @@
   --lp-drawer-scrim-a: 0.38;
   --lp-drawer-dot-rgb: 46, 42, 38;
 
-  /* ── Base component tokens → 对齐 dicha 暖色 blueprint（日间）──────────── */
+  /* ── HeroUI v3 语义 token → 对齐 dicha 暖色 blueprint（日间）──────────── */
   /* 结构即装饰：rounded-md 基准、hairline 描边、暖中性主色、无渐变。 */
   --background: var(--canvas);
   --foreground: var(--ink);
+  /* --surface 已由 dicha 系统定义（#ffffff），HeroUI 直接复用 */
   --surface-foreground: var(--ink);
   --overlay: var(--surface);
   --overlay-foreground: var(--ink);
@@ -107,7 +110,7 @@
   --separator: var(--hairline);
   --focus: var(--accent-warm);
   --link: var(--accent-warm);
-  /* 表单字段：奇纸底 + hairline 边 + rounded-md（呼应登录页 OTP） */
+  /* 表单字段：奇纸底 + hairline 边 + rounded-md（呼应登录页 Field/InputOTP） */
   --field-background: var(--canvas);
   --field-foreground: var(--ink);
   --field-placeholder: var(--ink-faint);
@@ -313,9 +316,10 @@
   --lp-drawer-scrim-a: 0.55;
   --lp-drawer-dot-rgb: 243, 239, 232;
 
-  /* ── Base component tokens → dicha 暖色 blueprint（夜间）──────────────── */
+  /* ── HeroUI v3 语义 token → dicha 暖色 blueprint（夜间）──────────────── */
   --background: var(--canvas);
   --foreground: var(--ink);
+  /* --surface 已由 dicha 系统定义（#212121），HeroUI 直接复用 */
   --surface-foreground: var(--ink);
   --overlay: var(--surface);
   --overlay-foreground: var(--ink);
@@ -416,68 +420,12 @@ body {
   display: none;
 }
 
-/* ─── 重新启用根元素过渡捕获 ───────────────────────────────────────────── */
+/* ─── 覆盖 HeroUI 的 view-transition-name: none，重新启用根元素过渡捕获 ── */
+/* HeroUI @layer base 里把 :root { view-transition-name: none } 导致      */
+/* ::view-transition-new/old(root) 伪元素根本不存在，动画完全失效。          */
+/* 此规则在 @layer 外，优先级高于 @layer base，可以覆盖它。                 */
 :root {
   view-transition-name: root;
-}
-
-/* ─── Lobe UI / AntD bridge：只借组件能力，视觉继续服从 dicha token ─────── */
-.dicha-lobe-provider {
-  min-height: inherit;
-  background: transparent;
-  color: var(--ink);
-  font-family:
-    'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,
-    system-ui, sans-serif;
-}
-.dicha-lobe-provider .ant-input,
-.dicha-lobe-provider .ant-otp .ant-otp-input {
-  border-color: var(--hairline);
-  border-radius: 0.375rem;
-  background: var(--surface);
-  color: var(--ink);
-  font-family: inherit;
-  box-shadow: none;
-}
-.dicha-lobe-provider .ant-input::placeholder,
-.dicha-lobe-provider .ant-otp .ant-otp-input::placeholder {
-  color: var(--ink-faint);
-}
-.dicha-lobe-provider .ant-input:hover,
-.dicha-lobe-provider .ant-otp .ant-otp-input:hover {
-  border-color: color-mix(in oklab, var(--ink) 24%, transparent);
-}
-.dicha-lobe-provider .ant-input:focus,
-.dicha-lobe-provider .ant-input:focus-within,
-.dicha-lobe-provider .ant-otp .ant-otp-input:focus,
-.dicha-lobe-provider .ant-otp .ant-otp-input:focus-within {
-  border-color: var(--accent-warm);
-  box-shadow: none;
-}
-.dicha-lobe-provider .ant-input[disabled],
-.dicha-lobe-provider .ant-otp .ant-otp-input[disabled] {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-.dicha-otp.ant-otp {
-  gap: 0.5rem;
-}
-.dicha-otp.ant-otp .ant-otp-input {
-  width: 2.45rem;
-  height: 2.75rem;
-  border-radius: 0.375rem;
-  background: var(--canvas);
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: center;
-}
-@media (max-width: 420px) {
-  .dicha-otp.ant-otp {
-    gap: 0.38rem;
-  }
-  .dicha-otp.ant-otp .ant-otp-input {
-    width: 2.08rem;
-  }
 }
 
 /* ─── 主题切换过渡动画（移植自 TDesign，8° 斜向扫过）──────────────────── */

@@ -1,6 +1,0 @@
-{"file": ".trellis/spec/frontend/index.md", "reason": "前端规范索引"}
-{"file": ".trellis/spec/frontend/design-system.md", "reason": "主题适配检查"}
-{"file": ".trellis/spec/frontend/blueprint-aesthetic.md", "reason": "视觉一致性检查"}
-{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件迁移检查"}
-{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "质量检查要求"}
-{"file": ".trellis/tasks/07-07-replace-heroui-with-lobe-ui/research/lobe-ui-migration.md", "reason": "Lobe UI 迁移研究与验收重点"}

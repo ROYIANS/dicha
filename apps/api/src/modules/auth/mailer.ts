@@ -54,7 +54,7 @@ function cornerNode(top: boolean, left: boolean): string {
   return `<span style="position:absolute;${v}${h}width:7px;height:7px;background:${C.surface};border:1px solid ${C.border};"></span>`;
 }
 
-  // OTP 6 格分隔显示（呼应登录页验证码输入）。
+// OTP 6 格分隔显示（呼应登录页 InputOTP）。
 function otpCells(otp: string): string {
   const cells = otp
     .split('')

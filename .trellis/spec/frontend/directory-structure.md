@@ -1,6 +1,6 @@
 # Frontend Directory Structure
 
-> React 19 + Vite + TanStack Router(loader-first) + TanStack Query + ts-rest + Zustand + Lobe UI / Ant Design + Tailwind v4。PixiJS M2 才上。
+> React 19 + Vite + TanStack Router(loader-first) + TanStack Query + ts-rest + Zustand + HeroUI(Tailwind v4)。PixiJS M2 才上。
 > Monorepo 中 `apps/web/`。完整架构见 [architecture.md](./architecture.md)。
 
 ---

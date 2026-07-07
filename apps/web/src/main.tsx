@@ -5,7 +5,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import './i18n';
 import './index.css';
-import { DichaLobeProvider } from './components/DichaLobeProvider';
 import { queryClient, router } from './router';
 
 const rootEl = document.getElementById('root');
@@ -16,10 +15,8 @@ if (!rootEl) {
 createRoot(rootEl).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <DichaLobeProvider>
-        <RouterProvider router={router} />
-        <Toaster richColors position="top-center" />
-      </DichaLobeProvider>
+      <RouterProvider router={router} />
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   </StrictMode>,
 );
