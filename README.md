@@ -1,215 +1,135 @@
 # dicha · 滴茶
 
-> dicha（西语：幸福） · 你的安逸小窝
+> 一个把个人物品、生活空间和一点点叙事感放在一起的生活管理应用。
 
-**`pre-alpha · 设计完成 · v1.0 预计 2027 早春`**
+dicha 在西班牙语里是“幸福”。
 
----
+滴茶来自潮汕语境里的“有闲好滴茶”：不是赶着完成什么，而是在日子里留一点从容。
 
-每件物品 = 一份数据 + 一张 sprite + 一句诗 = **一份重量**。
+这个项目想做的事情很简单：帮人把生活里的东西收进一个可管理、可回看、也有一点温度的数字空间里。
 
-dicha 是一个像素风、2.5D 等距视角、承认生活有重量的个人物品管理 OS。
-你录入一件衣服，它不会变成清单里第 137 行；它会变成衣橱地板上一块新的颜色，
-你的小狗会跑过去看一眼，然后回头看你。
+它不是任务软件，不是库存表，也不是为了制造焦虑的提醒机器。它更像一个会慢慢长出来的小屋：衣服、书、杂物、纪念品、临时放下的东西，都有自己的位置，也可以留下它们为什么在这里。
 
 ---
 
-## 它不是什么
+## 现在的 dicha
 
-dicha 不是一个**冷感清单工具**——它拒绝把你的物品压成行与列。
-dicha 不是一个**注意力经济红点游戏**——它永远不会在你的手机上点亮一颗未读小圆点，告诉你"8 件衣服在等你的注意"。
-dicha 不是**无菌的可爱**——它允许蜘蛛网积下来，允许一本书在书架上落灰三年，允许你删掉一支用空的牙膏而不必先哀悼它。
-dicha 不是**情绪代理**——它不会代替你和你的物品建立关系，它只是把灯打开，把椅子摆好，然后退到旁边。
+dicha 还在 pre-alpha。当前重点不是把功能堆满，而是先把一个能长期自用的核心循环跑通：
 
-我们不靠引用别人来立人设。dicha 想长成自己的样子。
+1. 记录一个物品。
+2. 放进一个房间。
+3. 补充必要的信息和照片。
+4. 之后能找得到、看得懂、想得起。
 
----
-
-## 它是什么
-
-> dicha = 录入即装饰，不发红点，不发内疚提醒。
-> dicha = 系统永远在低声说话，但从不抓你的袖子。
-> dicha = 你的小窝里有蛛网，也有光。
-
-### 四个核心机制
-
-**1. 录入即装饰**
-拍一张照、说一句话、扫一个 ISBN——AI 帮你识别、推荐 sticker、选好房间。
-你按下确认，sprite 从屏幕中心飞向它该去的房间，小狗跑过去看一眼。
-录入这个动作本身就是奖励。没有打卡，没有签到，没有连续 N 天的焦虑。
-
-**2. 物品有诗**
-每一件物品都带一句话。可能是你写的，可能是品类的默认池兜底——
-**诗永不为空，dicha 永远在低声说话**。
-诗不会在 hover 时跳出来——它的力量来自稀缺。
-它会在详情卡里安静地待着、在角色路过时偶尔被念出、在月报里被引用、
-在很久没有被打开的物品上轻轻浮现。
-
-**3. 落灰**
-长时间未互动的物品会落上蛛网贴纸。你可以擦掉它（24 小时临时清洁），
-也可以让它继续落下去。落灰只发生在物品 sprite 上，不会蔓延到房间，
-不会变成扣分项——它只是承认"时间真的过去了"这件事。
-
-**4. 齐默默——作者在场**
-齐默默 (Qí Mòmò) 是 dicha 的引导角色，也是作者 ROYIANS 的化身。
-她会出现在 onboarding、版本更新、节日、新功能首次解锁的时刻。
-她说的每一句话都由作者本人审过——AI 不替她开口。
-你在用一个有人在家的软件。
+M1 阶段先做“能记录”。像素房间、sprite、落灰、角色对白这些会在后续阶段逐步补上；现在不会假装它们已经完成。
 
 ---
 
-## 房间速览
+## 房间，而不是分类表
 
-> 以下是 ASCII 占位剖面，**M2 sprite 上线后替换为真实房间渲染**。
-> 现在还没有真图。这一点 dicha 不撒谎。
+dicha 用“房间”组织生活。
 
-```
-        ┌──────────────────────────┐
-        │   衣 橱  ·  Wardrobe     │
-        │                          │
-        │   ╔═══╗  ╔═══╗   🧥      │
-        │   ║   ║  ║   ║  ╱        │
-        │   ║   ║  ║   ║ ╱  季节   │
-        │   ╚═══╝  ╚═══╝╱  上次穿  │
-        │   ─────────────         │
-        │      🐕                  │
-        └──────────────────────────┘
-        装饰灵魂 · MVP 深度模块
-```
+第一批会聚焦三个房间：
 
-```
-        ┌──────────────────────────┐
-        │   书 房  ·  Library      │
-        │                          │
-        │   ▤ ▤ ▤ ▤   📖           │
-        │   ▤ ▤ ▤ ▤  ╱             │
-        │   ▤ ▤ ▤ ▤ ╱  想读 / 在读 │
-        │   ────────  已读 / 落灰  │
-        │              ✦ 一句诗    │
-        └──────────────────────────┘
-        内容灵魂 · MVP 深度模块
-```
+- **杂物间**：最先落地。用来收纳那些暂时不知道该放哪、但又确实需要被记住的东西。
+- **衣橱**：管理衣物、季节、穿着记录和搭配线索。
+- **书房**：记录书、阅读状态、笔记，以及一本书留在生活里的位置。
 
-```
-        ┌──────────────────────────┐
-        │   杂物间 · Storage Room  │
-        │                          │
-        │   ▣  ▢  ▤   🥄          │
-        │   ▢  ▣  ▢                │
-        │   ▤  ▢  ▣   兜底一切     │
-        │   ─────────             │
-        │      🐕  💤              │
-        └──────────────────────────┘
-        浅模块 · MVP 兜底
-```
-
-调色板：**128 色主调色板 · 32 个基色族 · 4 套昼夜 palette 跟随真实时间**。
-风格一致性来自代码（rembg 抠白底 → 量化到主 palette → 按 45° 光源 ramp 映射 shade），
-温暖感来自调色板设计本身。
+冰箱、药箱、厨房、工具箱、唱片架这类房间都很适合 dicha，但它们不是第一阶段的重点。这个项目会克制一点，先把少数房间做扎实。
 
 ---
 
-## 路线图
+## 设计原则
 
-完整作战计划见 [`plan.md`](./plan.md) 第八节。这里只放骨架：
+**不靠红点驱动。**
 
-### M1 「能记录」 · 2026-06 → 2026-08
-搭骨架、跑通录入闭环、自己每天用它。
-Monorepo + NestJS + Prisma + Postgres + Better Auth，简陋 UI，但**循环必须真的转起来**。
-M1 验收：dicha 在作者自己电脑上活起来，每天用它管理杂物。
+dicha 不会用“你还有多少事没做”来逼你回来。提醒可以有，但它应该帮你减少负担，而不是制造亏欠感。
 
-### M2 「会说话」 · 2026-09 → 2026-11
-主调色板上线、Python image worker（rembg → quantize → ramp）、100 张基础 sticker、
-PixiJS v8 像素引擎、落灰系统、角色 + 宠物 sprite。
-M2 验收：朋友看一眼就能感受到 dicha 是个有灵魂的地方。
+**记录要轻，但不空。**
 
-### M3 「活起来」 · 2026-12 → 2027-02
-衣橱深度模块、书房深度模块、齐默默 onboarding 30s ceremony、
-昼夜 palette swap、飞行动画、全景视图、性能调到 1000+ sprite 不卡。
-**v1.0 预计 2027 早春发布。**
+录入可以从一句话、一张照片、一个 ISBN 或一次 AI 辅助识别开始。信息不必一次填满，但以后回看时要有用。
 
-v2+ 候选：冰箱 / 药盒 / 唱片架 / 季节 palette / 诗的考古层 / 纪念角 / 创意市集 / 长期记忆。
-详见 [`plan.md`](./plan.md) 第十一节。
+**物品不是表格里的行。**
+
+每个物品都有数据，也可以有照片、标签、故事和一句简短的描述。它们首先属于生活，其次才属于数据库。
+
+**作者在场。**
+
+齐默默是 dicha 里的引导角色，也是这个项目的声音。她不会被随便交给 AI 生成。dicha 可以使用 AI，但不会让 AI 代替项目本身说话。
 
 ---
 
-## 技术栈
+## 项目状态
 
-```
-前端    React · Vite · TanStack Router/Query · Zustand · HeroUI (Tailwind v4) · PixiJS v8 (@pixi/react, M2)
-契约    ts-rest + zod · 端到端类型 · 合约住 packages/shared
-后端    NestJS · Prisma · Postgres
-图像    Python · FastAPI · Pillow · rembg（独立 service）
-AI      OpenRouter + 自建 proxy + budget guard（用户级日限额）
-Auth    Casdoor（开源、自托管、原生微信支持）
-存储    S3 SDK 抽象 · COS+CDN（云端）/ MinIO（自托管）
-结构    Monorepo · pnpm workspaces · Turborepo
-部署    Docker compose · 单台 VPS · 一键自托管
+当前仓库已经有真实代码，不再是纯设计稿阶段。
+
+- Web app：React + Vite + TanStack Router/Query
+- Admin app：独立后台入口
+- API：NestJS + Prisma
+- Auth：Better Auth
+- Contract：ts-rest + zod，共享在 `packages/shared`
+- UI：HeroUI + Tailwind v4
+- i18n：中文优先，react-i18next
+
+像素引擎和图像处理流水线会在后续阶段进入主线。
+
+---
+
+## 本地开发
+
+项目使用 pnpm workspace。仓库声明的包管理器版本是 `pnpm@9.12.0`。
+
+```bash
+corepack pnpm dev
 ```
 
-更细的层级规范见 [`.trellis/spec/`](./.trellis/spec/)。
+常用命令：
+
+```bash
+corepack pnpm build
+corepack pnpm typecheck
+corepack pnpm lint
+```
+
+开发约定和分层规范在 [`.trellis/spec/`](./.trellis/spec/)。
+
+---
+
+## 路线
+
+### M1：能记录
+
+搭好 Web/API/Admin 骨架，跑通登录、录入、房间、物品详情和基础 AI 辅助。目标是作者自己能每天用它记录杂物。
+
+### M2：会说话
+
+补上像素房间、sprite、图像处理、落灰和更完整的视觉反馈。目标是让 dicha 不只是能用，而是开始有自己的气质。
+
+### M3：活起来
+
+深化衣橱和书房，补齐 onboarding、齐默默、昼夜变化和发布所需的完整体验。
+
+更细的计划见 [`plan.md`](./plan.md)。
 
 ---
 
 ## 开源承诺
 
-- **License: MIT** ——商业友好，无 Enterprise Tier，无 Community/Pro 切分。
-- **dicha 永远不会变质** ——所有代码、所有功能、所有 module 全开源，一份代码两种部署。
-- **自托管一键 docker compose** ——用户配自己的 AI API key 即可白嫖云端所有 AI 功能。
-- **云端版只卖"接入网络的入场券"** ——AI 积分转售、theme/sticker pack、创意市集（v2+）。
-  云端版能做的，自托管版本质上都能做。
+dicha 使用 MIT License。
 
-承诺的反面是：dicha 不会有"dicha Pro 解锁高级房间"，不会有"团队版加密"，
-不会有"自托管阉割模块"。这些选择都是在仓库创立之初就锁死的，不会因为后期商业压力反悔。
+这个项目不会做“高级房间只给 Pro”“自托管阉割功能”这一类切分。云端版可以卖托管、算力、网络和便利性，但代码和核心能力应该对自托管用户完整开放。
 
 ---
 
-## 参与
+## 深度阅读
 
-dicha 现在是 **pre-alpha**——设计已锁定，但代码还没开始。你能做的：
-
-- 💬 **来 GitHub Discussions 聊设计** ——任何关于产品、美学、机制的讨论都欢迎。
-  现在是 dicha 最柔软的时候，你的看法可能真的会影响 v1.0。
-- 🐛 **Issues 暂只收设计层面的问题** ——代码相关的 issue 等 M1 Week 12 之后再开放。
-- 🛠️ **Contribution guide** 会在 **M1 Week 12 真代码跑起来之后补**。
-  现阶段 PR 暂不开放，因为没有可以贡献的代码骨架。
-  dicha 信奉一条铁律：**部分实现 + 不一致体验 = 比不做更糟**。
-  这条铁律也适用于参与流程本身。
-
-深度阅读：
-- [`plan.md`](./plan.md) ——开发圣经，所有"做什么 + 怎么做 + 何时做"
-- [`discuss.md`](./discuss.md) ——2026-06-04 与 Claude 头脑风暴 15 轮 grill-me 的完整推理过程
-- [`AGENTS.md`](./AGENTS.md) ——AI 协作者入口
-- [`.trellis/spec/`](./.trellis/spec/) ——分层编码规范
-
----
-
-## 致谢
-
-dicha 站在很多温柔作品的肩膀上，但它要长成自己的样子。
-具体感谢哪些灵感，等 v1.0 launch 的时候再认真写一封信。
+- [`plan.md`](./plan.md)：产品和阶段计划
+- [`AGENTS.md`](./AGENTS.md)：AI 协作约定
+- [`.trellis/spec/`](./.trellis/spec/)：工程规范
+- [`apps/web/README.md`](./apps/web/README.md)：Web 前端说明
 
 ---
 
 ## License
 
 [MIT](./LICENSE) © 2026 ROYIANS
-
----
-
-<details>
-<summary><strong>English (elevator pitch)</strong></summary>
-
-**dicha** (Spanish for "happiness") is a pixel-art, 2.5D isometric personal-belongings OS that treats your stuff as having weight.
-
-Every item = data + a sprite + a single line of verse. You log a sweater, it doesn't become row 137 of a spreadsheet — it becomes a new patch of color on the wardrobe floor, and the little dog walks over to look at it.
-
-It is **not** a cold checklist tool, **not** an attention-economy game with red-dot guilt, **not** sterile cuteness, **not** an emotional proxy. It lets dust gather. It speaks softly but never tugs your sleeve. The author, Qí Mòmò, lives inside the software.
-
-Status: **pre-alpha**, design locked, code not yet started. v1.0 targeted for **early spring 2027**. MIT licensed, fully open source, one-command self-host via Docker Compose. No Enterprise Tier, ever.
-
-Code-level contributions open after M1 Week 12 (~late August 2026). Design discussions welcome now via GitHub Discussions.
-
-Full master plan (in Chinese): [`plan.md`](./plan.md).
-
-</details>
