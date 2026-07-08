@@ -3,6 +3,9 @@ import {
 } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ListBox,
+} from '@heroui/react';
+import {
   Ban,
   ChevronLeft,
   ChevronRight,
@@ -26,7 +29,12 @@ import {
   type AdminUsersQueryInput,
   updateAdminUserStatus,
 } from '@/api/admin';
-import { HeroButton, HeroSelect, HeroTextInput } from '@/components/HeroControls';
+import {
+  HeroButton,
+  HeroSelect,
+  HeroTextInput,
+} from '@/components/HeroControls';
+import { heroSelectionToValue } from '@/components/heroSelection';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminUserDetail, AdminUserSummary } from '@dicha/shared';
 
@@ -157,16 +165,25 @@ function BasicPage() {
           ) : users.data.users.length === 0 ? (
             <div className="p-6 text-sm text-ink-soft">没有匹配的用户</div>
           ) : (
-            <div className="divide-y divide-hairline">
+            <ListBox
+              aria-label="用户列表"
+              className="divide-y divide-hairline"
+              selectionMode="single"
+              selectedKeys={effectiveSelectedUserId ? new Set([effectiveSelectedUserId]) : new Set()}
+              onSelectionChange={(selection) => {
+                const userId = heroSelectionToValue(selection);
+                if (userId) setSelectedUserId(userId);
+              }}
+            >
               {users.data.users.map((user) => (
                 <UserRow
                   key={user.id}
+                  id={user.id}
                   user={user}
                   selected={user.id === effectiveSelectedUserId}
-                  onSelect={() => setSelectedUserId(user.id)}
                 />
               ))}
-            </div>
+            </ListBox>
           )}
 
           <div className="flex items-center justify-between border-t border-hairline p-4">
@@ -201,22 +218,21 @@ function BasicPage() {
 }
 
 function UserRow({
+  id,
   user,
   selected,
-  onSelect,
 }: {
+  id: string;
   user: AdminUserSummary;
   selected: boolean;
-  onSelect: () => void;
 }) {
   return (
-    <HeroButton
-      type="button"
-      onClick={onSelect}
+    <ListBox.Item
+      id={id}
+      textValue={`${user.displayName || user.name} ${user.email}`}
       className={`grid w-full gap-3 px-4 py-4 text-left transition-colors hover:bg-surface-alt md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1fr)] ${
         selected ? 'bg-surface-alt shadow-[inset_3px_0_0_var(--color-mist)]' : ''
       }`}
-      aria-pressed={selected}
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-md bg-chip-mist text-mist">
@@ -240,7 +256,7 @@ function UserRow({
         <MiniCount label="绑定" value={user.counts.accounts} />
         <MiniCount label="密钥" value={user.counts.passkeys} />
       </div>
-    </HeroButton>
+    </ListBox.Item>
   );
 }
 

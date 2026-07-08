@@ -3,6 +3,9 @@ import {
 } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ListBox,
+} from '@heroui/react';
+import {
   CheckCircle2,
   CircleDashed,
   Plus,
@@ -32,6 +35,7 @@ import {
   HeroTextArea,
   HeroTextInput,
 } from '@/components/HeroControls';
+import { heroSelectionToValue } from '@/components/heroSelection';
 import { PageHeader } from '@/components/PageHeader';
 import { AiModelPricingSchema } from '@dicha/shared';
 import type {
@@ -134,17 +138,26 @@ function DichaAiServicePage() {
             <EmptyState tone="error" text="Dicha AI 服务加载失败" />
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto">
-              <div className="divide-y divide-hairline">
+              <ListBox
+                aria-label="内部供应商"
+                className="divide-y divide-hairline"
+                selectionMode="single"
+                selectedKeys={selectedProvider ? new Set([selectedProvider.id]) : new Set()}
+                onSelectionChange={(selection) => {
+                  const providerId = heroSelectionToValue(selection);
+                  if (providerId) setSelectedProviderId(providerId);
+                }}
+              >
                 {providers.map((provider) => (
-                  <ProviderButton
+                  <ProviderListItem
                     key={provider.id}
+                    id={provider.id}
                     provider={provider}
                     selected={provider.id === selectedProvider?.id}
-                    onClick={() => setSelectedProviderId(provider.id)}
                   />
                 ))}
-                {providers.length === 0 ? <EmptyState text="还没有内部供应商" /> : null}
-              </div>
+              </ListBox>
+              {providers.length === 0 ? <EmptyState text="还没有内部供应商" /> : null}
             </div>
           )}
           <div className="shrink-0 border-t border-hairline">
@@ -186,20 +199,29 @@ function DichaAiServicePage() {
             onClear={() => setModelSearch('')}
           />
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="divide-y divide-hairline">
-              {filteredProviderModels.length > 0 ? (
-                filteredProviderModels.map((model) => (
-                  <ModelButton
+            {filteredProviderModels.length > 0 ? (
+              <ListBox
+                aria-label="上游模型"
+                className="divide-y divide-hairline"
+                selectionMode="single"
+                selectedKeys={selectedModel ? new Set([selectedModel.modelRecordId]) : new Set()}
+                onSelectionChange={(selection) => {
+                  const modelRecordId = heroSelectionToValue(selection);
+                  if (modelRecordId) setSelectedModelRecordId(modelRecordId);
+                }}
+              >
+                {filteredProviderModels.map((model) => (
+                  <ModelListItem
                     key={model.modelRecordId}
+                    id={model.modelRecordId}
                     model={model}
                     selected={model.modelRecordId === selectedModel?.modelRecordId}
-                    onClick={() => setSelectedModelRecordId(model.modelRecordId)}
                   />
-                ))
-              ) : (
-                <EmptyState text={providerModels.length > 0 ? '没有匹配的模型' : '还没有同步模型'} />
-              )}
-            </div>
+                ))}
+              </ListBox>
+            ) : (
+              <EmptyState text={providerModels.length > 0 ? '没有匹配的模型' : '还没有同步模型'} />
+            )}
           </div>
         </section>
 
@@ -221,19 +243,19 @@ function DichaAiServicePage() {
   );
 }
 
-function ProviderButton({
+function ProviderListItem({
+  id,
   provider,
   selected,
-  onClick,
 }: {
+  id: string;
   provider: AdminAiInternalProvider;
   selected: boolean;
-  onClick: () => void;
 }) {
   return (
-    <HeroButton
-      type="button"
-      onClick={onClick}
+    <ListBox.Item
+      id={id}
+      textValue={`${provider.name} ${provider.baseUrl}`}
       className={`flex w-full items-start gap-3 p-3 text-left transition-colors ${
         selected ? 'bg-surface-alt' : 'hover:bg-surface-alt'
       }`}
@@ -250,23 +272,23 @@ function ProviderButton({
       ) : (
         <CircleDashed className="mt-1 size-4 shrink-0 text-ink-faint" strokeWidth={1.8} />
       )}
-    </HeroButton>
+    </ListBox.Item>
   );
 }
 
-function ModelButton({
+function ModelListItem({
+  id,
   model,
   selected,
-  onClick,
 }: {
+  id: string;
   model: AdminDichaAiModel;
   selected: boolean;
-  onClick: () => void;
 }) {
   return (
-    <HeroButton
-      type="button"
-      onClick={onClick}
+    <ListBox.Item
+      id={id}
+      textValue={`${model.displayName} ${model.upstreamModelName} ${model.modelId}`}
       className={`grid w-full gap-3 p-4 text-left transition-colors md:grid-cols-[minmax(0,1fr)_140px] md:items-center ${
         selected ? 'bg-surface-alt' : 'hover:bg-surface-alt'
       }`}
@@ -287,7 +309,7 @@ function ModelButton({
         )}
         {model.enabled ? 'DX 启用' : '未启用'}
       </span>
-    </HeroButton>
+    </ListBox.Item>
   );
 }
 

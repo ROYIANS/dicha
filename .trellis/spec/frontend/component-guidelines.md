@@ -121,6 +121,32 @@
 
 ---
 
+### Convention: 可选择对象行使用 ListBox
+
+**What**: 供应商、模型、用户、主题色板等“从一组对象中选择当前项”的整行交互，使用 HeroUI `ListBox` / `ListBox.Item`；不要用 `HeroButton` 加 `aria-pressed` 或把整行伪装成按钮。行内如果还有启用开关、复选框、删除/配置等嵌套操作，不要盲目包进 `ListBox.Item`，应保留静态行容器并让具体子控件承担交互。
+
+**Why**: `HeroButton` 只表达执行命令，批量替换成大按钮会让列表选择、导航和真实操作混在一起，视觉上也会把对象列表误读成一排排 action button。`ListBox` 保留单选/多选语义、键盘选择和当前项状态，更符合这类 UI。
+
+**Example**:
+
+```tsx
+// Good: 单选对象列表
+<ListBox selectionMode="single" selectedKeys={new Set([selectedId])}>
+  <ListBox.Item id={provider.id} textValue={provider.name}>
+    {provider.name}
+  </ListBox.Item>
+</ListBox>
+
+// Bad: 单选列表项伪装成 action button
+<HeroButton aria-pressed={provider.id === selectedId} onClick={() => setSelectedId(provider.id)}>
+  {provider.name}
+</HeroButton>
+```
+
+**Related**: 真实保存、同步、删除、清空等命令仍使用 `HeroButton`。
+
+---
+
 ## Web Component（自定义元素）集成
 
 接入非 React 的 Web Component（如 ALTCHA `<altcha-widget>`）时：

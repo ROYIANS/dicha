@@ -21,6 +21,7 @@
 * 表格和弹窗暂时保持原样，不在本轮迁移 HeroUI `Table` / `Modal`。
 * 优先迁移表单与基础输入组件，同时覆盖标签页，而不是重做整站视觉。
 * 替换后尽量使用 HeroUI 组件作为交互底座；按钮允许统一覆写为项目的 warm matte physical button 样式。
+* 选择当前对象的整行列表不视为按钮：供应商、模型、用户、主题色板等单选对象列表使用 HeroUI `ListBox` / `ListBox.Item`；真实保存、同步、删除、清空等命令才使用 `HeroButton`。
 * 保留现有业务行为、状态逻辑、路由与 API 调用。
 * ALTCHA 自定义元素必须继续放在 `<form>` 外，避免内部 required input 拦截提交。
 * 虽然按一个任务全量完成，内部实现仍按文件/区域小步推进，每个区域完成后跑局部检查，最终统一 lint/typecheck。
@@ -35,6 +36,7 @@
 * [x] 后台自写 tabs 至少在 `_admin.system.tsx` 迁移到 HeroUI `Tabs`。
 * [x] 前台和后台普通按钮迁移到 HeroUI `Button` 薄封装，并保留现有业务行为、disabled/loading、表单提交与路由语义。
 * [x] HeroUI `Button` 的默认项目样式尽量还原落地页 hero section `lp-btn` / `lp-btn-primary` / `lp-btn-ghost` 的物理按钮效果。
+* [x] 纠正大交互选择行的按钮误用：后台 `/dicha-ai`、AI 供应商目录、用户列表与前台主题色板使用 HeroUI `ListBox`，不再用大块 `HeroButton` 表示单选项。
 * [x] 本轮不迁移 HeroUI `Modal` / `Table`，相关原有结构保持稳定。
 * [x] `apps/web` 和 `apps/admin` 的 typecheck/lint 通过。
 

@@ -3,6 +3,9 @@ import {
 } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ListBox,
+} from '@heroui/react';
+import {
   AudioLines,
   Brain,
   Braces,
@@ -44,6 +47,7 @@ import {
   HeroTextArea,
   HeroTextInput,
 } from '@/components/HeroControls';
+import { heroSelectionToValue } from '@/components/heroSelection';
 import { PageHeader } from '@/components/PageHeader';
 import {
   aiModelCommonParameterControls,
@@ -182,16 +186,27 @@ function AiProviderDirectoryPage() {
             <EmptyState tone="error" text="供应商目录加载失败" />
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto">
-              <div className="divide-y divide-hairline">
+              <ListBox
+                aria-label="AI 供应商"
+                className="divide-y divide-hairline"
+                selectionMode="single"
+                selectedKeys={
+                  selectedProvider ? new Set([selectedProvider.providerId]) : new Set()
+                }
+                onSelectionChange={(selection) => {
+                  const providerId = heroSelectionToValue(selection);
+                  if (providerId) setSelectedProviderId(providerId);
+                }}
+              >
                 {providers.map((provider) => (
-                  <ProviderButton
+                  <ProviderListItem
                     key={provider.providerId}
+                    id={provider.providerId}
                     provider={provider}
                     selected={provider.providerId === selectedProvider?.providerId}
-                    onClick={() => setSelectedProviderId(provider.providerId)}
                   />
                 ))}
-              </div>
+              </ListBox>
             </div>
           )}
         </section>
@@ -278,19 +293,19 @@ function AiProviderDirectoryPage() {
   );
 }
 
-function ProviderButton({
+function ProviderListItem({
+  id,
   provider,
   selected,
-  onClick,
 }: {
+  id: string;
   provider: AdminAiProviderDirectoryItem;
   selected: boolean;
-  onClick: () => void;
 }) {
   return (
-    <HeroButton
-      type="button"
-      onClick={onClick}
+    <ListBox.Item
+      id={id}
+      textValue={`${provider.name} ${provider.providerId}`}
       className={`flex w-full items-start gap-3 p-3 text-left transition-colors ${
         selected ? 'bg-surface-alt' : 'hover:bg-surface-alt'
       }`}
@@ -309,7 +324,7 @@ function ProviderButton({
       ) : (
         <CircleDashed className="mt-1 size-4 shrink-0 text-ink-faint" strokeWidth={1.8} />
       )}
-    </HeroButton>
+    </ListBox.Item>
   );
 }
 

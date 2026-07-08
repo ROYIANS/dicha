@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Sun,
 } from 'lucide-react';
+import { ListBox } from '@heroui/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -30,7 +31,7 @@ import {
 } from '@/components/SettingsScaffold';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { THEME_PALETTES, themePaletteById, type ThemePalette } from '@/lib/theme-palettes';
-import { HeroButton } from '@/components/HeroControls';
+import { heroSelectionToValue } from '@/components/heroSelection';
 
 type SettingsDetailPageKey =
   | 'privacy'
@@ -127,14 +128,23 @@ export function AppearanceSettingsPage() {
             : t('settings.detail.appearance.footer')
         }
       >
-        {THEME_PALETTES.map((item) => (
-          <ThemePaletteOption
-            key={item.id}
-            palette={item}
-            selected={item.id === selectedPalette.id}
-            onSelect={() => setPalette(item.id)}
-          />
-        ))}
+        <ListBox
+          aria-label={t('settings.detail.appearance.panelPalette')}
+          selectionMode="single"
+          selectedKeys={new Set([selectedPalette.id])}
+          onSelectionChange={(selection) => {
+            const paletteId = heroSelectionToValue(selection);
+            if (paletteId) setPalette(paletteId as ThemePalette['id']);
+          }}
+        >
+          {THEME_PALETTES.map((item) => (
+            <ThemePaletteOption
+              key={item.id}
+              palette={item}
+              selected={item.id === selectedPalette.id}
+            />
+          ))}
+        </ListBox>
       </SettingsPanel>
 
       <SettingsPanel title={t('settings.detail.appearance.panelSurface')}>
@@ -153,19 +163,16 @@ export function AppearanceSettingsPage() {
 function ThemePaletteOption({
   palette,
   selected,
-  onSelect,
 }: {
   palette: ThemePalette;
   selected: boolean;
-  onSelect: () => void;
 }) {
   const { t } = useTranslation();
 
   return (
-    <HeroButton
-      type="button"
-      aria-pressed={selected}
-      onClick={onSelect}
+    <ListBox.Item
+      id={palette.id}
+      textValue={t(`settings.themePalettes.${palette.id}.name`)}
       className={`grid min-h-[76px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-hairline/70 px-3.5 py-3 text-left transition-colors last:border-b-0 hover:bg-surface-alt ${
         selected ? 'bg-surface-alt' : ''
       }`}
@@ -186,7 +193,7 @@ function ThemePaletteOption({
       <span className="grid size-7 shrink-0 place-items-center rounded-md border border-hairline bg-canvas text-ink-soft">
         {selected ? <Check size={15} strokeWidth={2} /> : null}
       </span>
-    </HeroButton>
+    </ListBox.Item>
   );
 }
 
