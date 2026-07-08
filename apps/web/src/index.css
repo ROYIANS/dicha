@@ -105,21 +105,16 @@
   --warning-foreground: var(--ink);
   --danger: var(--accent-pink);
   --danger-foreground: var(--ink);
-  /* 描边 / 分隔 / 焦点 / 链接 */
+  /* 描边 / 分隔 / 焦点 */
   --border: var(--hairline);
   --separator: var(--hairline);
   --focus: var(--accent-warm);
-  --link: var(--accent-warm);
-  /* 表单字段：奇纸底 + hairline 边 + rounded-md（呼应登录页 Field/InputOTP） */
+  /* 表单字段：保留 HeroUI 默认无 field border，只换主题颜色 */
   --field-background: var(--canvas);
   --field-foreground: var(--ink);
   --field-placeholder: var(--ink-faint);
-  --field-border: color-mix(in oklab, var(--ink) 20%, transparent);
-  /* 舒适小圆角基准：按钮、输入框、选择项统一 rounded-md */
-  --radius: 0.375rem;
+  --field-border: transparent;
   --field-radius: var(--radius);
-  --border-width: 1px;
-  --field-border-width: 1px;
 }
 
 /* ─── 日间主题色 preset — 默认暖纸 + 马卡龙柔彩 ───────────────────────── */
@@ -340,7 +335,6 @@
   --border: var(--hairline);
   --separator: var(--hairline);
   --focus: var(--ink-soft);
-  --link: var(--ink-soft);
   --field-background: color-mix(in oklab, var(--surface) 70%, var(--canvas));
   --field-foreground: var(--ink);
   --field-placeholder: var(--ink-faint);
@@ -1771,7 +1765,7 @@ a.dash-card:active {
   --surface-tertiary-foreground: oklch(21.03% 0.0092 67.46);
   --warning: oklch(78.19% 0.1614 49.97);
   --warning-foreground: oklch(21.03% 0.0059 49.97);
-  --radius: 0.375rem;
+  --radius: 0.125rem;
   --field-radius: var(--radius);
   --font-sans:
     'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,

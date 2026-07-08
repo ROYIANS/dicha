@@ -67,7 +67,7 @@
 - **默认主题**：`warm-matte` 等于本文 §1.1 的暖白柔面哑光，是默认值。
 - **注册表单一出处**：主题 id、设置页 tint 与 swatch 预览放在 `apps/web/src/lib/theme-palettes.ts`，不要在页面组件里重复定义。
 - **DOM 契约**：`useTheme()` 同时维护 `data-theme="light|dark"` 和 `data-theme-palette="<preset>"`；palette 持久化到本机 `localStorage`。
-- **CSS 契约**：主题色 preset 以 HeroUI v3 token 为源头，亮色用 `:root[data-theme-palette='<id>']` 覆盖 `--background`、`--foreground`、`--surface`、`--surface-secondary`、`--accent`、`--warning`、`--success`、`--danger`、`--border`、`--field-*` 等 HeroUI token。旧的 `--canvas`、`--ink`、`--hairline`、`--accent-*`、`--chip-*` 只能作为过渡别名映射到 HeroUI token，不再承载独立色值。`--sidebar-*` 是 chrome 语义别名：亮色可由 `--accent` / `--accent-foreground` 派生，暗色必须派生为独立深色侧栏，不可直接绑定到暗色 palette 的 `--accent`。
+- **CSS 契约**：主题色 preset 以 HeroUI v3 token 为源头，亮色用 `:root[data-theme-palette='<id>']` 覆盖颜色 token（`--background`、`--foreground`、`--surface*`、`--accent`、`--warning`、`--success`、`--danger`、`--border`、`--field-background`、`--field-border`、`--field-foreground`、`--field-placeholder` 等）以及已确认的 `--radius` / `--field-radius` / `--font-sans`。不要覆盖 HeroUI 结构 token（如 `--border-width`、`--field-border-width`、`--disabled-opacity`、`--link`），这些保持 HeroUI 默认值。旧的 `--canvas`、`--ink`、`--hairline`、`--accent-*`、`--chip-*` 只能作为过渡别名映射到 HeroUI token，不再承载独立色值。`--sidebar-*` 是 chrome 语义别名：亮色可由 `--accent` / `--accent-foreground` 派生，暗色必须派生为独立深色侧栏，不可直接绑定到暗色 palette 的 `--accent`。
 - **暗色契约**：`:root[data-theme='dark'][data-theme-palette='<id>']` 定义每个 preset 的暗色 HeroUI token；自动/手动暗色只切 `data-theme`，不改写 `data-theme-palette`。暗色 neutral base（`--background` / `--surface*` / `--border` / `--field-*`）低 chroma，避免整体背景和表面强烈染上主题色；主题辨识主要留给 `--accent` / `--focus` / 功能色。
 - **文案契约**：设置页显示名和说明放在 `settings.themePalettes.<id>`，设置首页当前值也读取同一 palette。
 

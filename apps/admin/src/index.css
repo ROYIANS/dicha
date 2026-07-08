@@ -58,7 +58,7 @@
   --border: var(--hairline);
   --separator: var(--hairline);
   --focus: #7a6248;
-  --radius: 0.375rem;
+  --radius: 0.125rem;
   --node-vertical-offset: 3.5px;
   --node-horizontal-offset: 4.5px;
 }
