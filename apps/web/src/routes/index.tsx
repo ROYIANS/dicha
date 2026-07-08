@@ -926,7 +926,7 @@ function Marquee() {
   );
 }
 
-// ─── 功能：纵向交互 Tab（Zed AI section 的结构）──────────────────────────────────
+// ─── 功能：纵向折叠面板（Zed AI section 的结构）──────────────────────────────────
 
 function FeatureTabs() {
   const [active, setActive] = useState(0);
@@ -957,47 +957,64 @@ function FeatureTabs() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12">
-        {/* 左列：tab 列表，选中行展开并铺圆点纹理 */}
-        <div role="tablist" aria-orientation="vertical" className="flex flex-col lg:col-span-5">
+        {/* 左列：accordion 列表，选中行展开并铺圆点纹理 */}
+        <div className="flex flex-col lg:col-span-5">
           {FEATURES.map((f, i) => {
             const Icon = f.icon;
             const selected = i === active;
+            const triggerId = `feature-trigger-${f.id}`;
+            const panelId = `feature-panel-${f.id}`;
             return (
-              <HeroButton
+              <div
                 key={f.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                onClick={() => setActive(i)}
-                className="relative isolate px-6 text-left transition-colors sm:px-10"
+                className="relative isolate"
                 style={{
                   borderBottom: i !== FEATURES.length - 1 ? `1px dashed ${LINE}` : 'none',
-                  backgroundColor: selected ? 'transparent' : undefined,
                 }}
               >
                 {selected ? (
-                  <div
-                    className="relative py-7"
-                    style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}
-                  >
+                  <>
                     <DotPattern />
-                    <div className="relative">
-                      <h3 className="text-[20px] font-semibold text-ink">{f.title}</h3>
+                    <button
+                      id={triggerId}
+                      type="button"
+                      aria-expanded="true"
+                      aria-controls={panelId}
+                      onClick={() => setActive(i)}
+                      className="relative z-10 w-full appearance-none bg-transparent px-6 pt-7 pb-2 text-left text-inherit transition-colors sm:px-10"
+                      style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}
+                    >
+                      <span className="block text-[20px] font-semibold text-ink">{f.title}</span>
+                    </button>
+                    <div
+                      id={panelId}
+                      role="region"
+                      aria-labelledby={triggerId}
+                      className="relative z-10 px-6 pb-7 sm:px-10"
+                      style={{ animation: 'lp-fade 0.35s var(--ease-soft)' }}
+                    >
                       <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-soft">
                         {f.body}
                       </p>
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex items-center justify-between py-4 text-ink-soft transition-colors hover:text-ink">
+                  <button
+                    type="button"
+                    id={triggerId}
+                    aria-expanded="false"
+                    aria-controls={panelId}
+                    onClick={() => setActive(i)}
+                    className="flex w-full appearance-none items-center justify-between bg-transparent px-6 py-4 text-left text-ink-soft transition-colors hover:text-ink sm:px-10"
+                  >
                     <span className="flex items-center gap-2.5">
                       <Icon size={15} className="text-lp-brand" />
                       <span className="text-[14px]">{f.title}</span>
                     </span>
                     <PlusIcon size={14} className="opacity-50" />
-                  </div>
+                  </button>
                 )}
-              </HeroButton>
+              </div>
             );
           })}
         </div>

@@ -287,7 +287,7 @@ lavender / peach / sage / pink / mist——**仅**用于图标圆片、数据点
 
 1. **居中宣言**（Hero）——大字 + 副标 + 双按钮，几何水印衬底。
 2. **跑马灯物件流**（Marquee）——`border-y` 包夹的横向滚动带，两端 `mask` 渐隐；内容渲染两份、`translateX(-50%)` 无缝循环（`lp-marquee 56s linear`）。
-3. **左列表右画布**（FeatureTabs）——纵向 tab，选中行**展开**（铺 DotPattern + 显示正文）+ 右侧 CSS 小景随 tab 切换淡入（`lp-fade 0.4s`）。
+3. **左列表右画布**（FeatureTabs）——纵向 accordion 折叠面板，选中行**展开**（铺 DotPattern + 显示正文）+ 右侧 CSS 小景随展开项切换淡入（`lp-fade 0.4s`）。这是落地页叙事结构，不使用 HeroUI Button / Tabs / ListBox。
 4. **读数条**（SpecPanel）——横排 `flex-wrap`，项间虚线竖隔。
 5. **编目网格**（Rooms）——`grid-cols-2 lg:grid-cols-3`，每格虚线十字分隔 + hover `bg-surface-alt`。
 6. **大金句拼格**（Principles）——`gap-px` 网格用 `background:--line` 当分隔线（1px 缝隙显线）；左列跨两行大金句 + 右上四格小原则 + 右下斜纹填充格（HatchCell 补齐 3×3）。
