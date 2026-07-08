@@ -35,9 +35,9 @@ import { toast } from 'sonner';
 import { logout } from '@/api/auth';
 import { BrandMark } from '@/components/AppBrand';
 import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
-import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
+import { settingsHeaderClassName, settingsTitleClassName } from '@/components/settings-ui';
 import { useTheme } from '@/lib/hooks/useTheme';
-import { HeroButton, HeroTextInput } from '@/components/HeroControls';
+import { HeroTextInput } from '@/components/HeroControls';
 
 export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
@@ -45,7 +45,6 @@ export const Route = createFileRoute('/_app/settings')({
 
 type SettingsItem = {
   icon: LucideIcon;
-  tint: SettingsTint;
   label: string;
   description?: string;
   value?: string;
@@ -82,21 +81,18 @@ const sections = [
     items: [
       {
         icon: User,
-        tint: 'peach',
         labelKey: 'profile',
         descKey: 'profileDesc',
         to: '/settings/profile',
       },
       {
         icon: KeyRound,
-        tint: 'lavender',
         labelKey: 'security',
         descKey: 'securityDesc',
         to: '/settings/security',
       },
       {
         icon: ShieldCheck,
-        tint: 'sage',
         labelKey: 'privacy',
         descKey: 'privacyDesc',
         to: '/settings/privacy',
@@ -108,7 +104,6 @@ const sections = [
     items: [
       {
         icon: Palette,
-        tint: 'mist',
         labelKey: 'appearance',
         descKey: 'appearanceDesc',
         valueKey: 'warmMatte',
@@ -116,7 +111,6 @@ const sections = [
       },
       {
         icon: Moon,
-        tint: 'lavender',
         labelKey: 'theme',
         descKey: 'themeDesc',
         valueKey: 'autoTheme',
@@ -124,14 +118,12 @@ const sections = [
       },
       {
         icon: Bell,
-        tint: 'pink',
         labelKey: 'notifications',
         descKey: 'notificationsDesc',
         to: '/settings/notifications',
       },
       {
         icon: Languages,
-        tint: 'sage',
         labelKey: 'language',
         descKey: 'languageDesc',
         valueKey: 'chinese',
@@ -144,7 +136,6 @@ const sections = [
     items: [
       {
         icon: Database,
-        tint: 'peach',
         labelKey: 'storage',
         descKey: 'storageDesc',
         valueKey: 'localFirst',
@@ -152,7 +143,6 @@ const sections = [
       },
       {
         icon: Download,
-        tint: 'mist',
         labelKey: 'export',
         descKey: 'exportDesc',
         to: '/settings/export',
@@ -164,7 +154,6 @@ const sections = [
     items: [
       {
         icon: Server,
-        tint: 'mist',
         labelKey: 'aiProviders',
         descKey: 'aiProvidersDesc',
         valueKey: 'catalog',
@@ -172,7 +161,6 @@ const sections = [
       },
       {
         icon: Bot,
-        tint: 'lavender',
         labelKey: 'aiModels',
         descKey: 'aiModelsDesc',
         valueKey: 'mockCatalog',
@@ -180,7 +168,6 @@ const sections = [
       },
       {
         icon: ReceiptText,
-        tint: 'sage',
         labelKey: 'aiUsage',
         descKey: 'aiUsageDesc',
         valueKey: 'usage',
@@ -188,7 +175,6 @@ const sections = [
       },
       {
         icon: WalletCards,
-        tint: 'peach',
         labelKey: 'credits',
         descKey: 'creditsDesc',
         valueKey: 'credits',
@@ -196,7 +182,6 @@ const sections = [
       },
       {
         icon: FlaskConical,
-        tint: 'peach',
         labelKey: 'aiInvokeDemo',
         descKey: 'aiInvokeDemoDesc',
         valueKey: 'internal',
@@ -208,10 +193,9 @@ const sections = [
   {
     key: 'about',
     items: [
-      { icon: LifeBuoy, tint: 'mist', labelKey: 'help', descKey: 'helpDesc', to: '/settings/help' },
+      { icon: LifeBuoy, labelKey: 'help', descKey: 'helpDesc', to: '/settings/help' },
       {
         icon: FlaskConical,
-        tint: 'lavender',
         labelKey: 'labs',
         descKey: 'labsDesc',
         valueKey: 'soon',
@@ -219,7 +203,6 @@ const sections = [
       },
       {
         icon: Activity,
-        tint: 'peach',
         labelKey: 'diagnostics',
         descKey: 'diagnosticsDesc',
         valueKey: 'localOnly',
@@ -227,7 +210,6 @@ const sections = [
       },
       {
         icon: CircleHelp,
-        tint: 'sage',
         labelKey: 'about',
         descKey: 'aboutDesc',
         valueKey: 'preAlpha',
@@ -269,7 +251,6 @@ function SettingsPage() {
       .filter((item) => !('adminOnly' in item) || user.isSuperAdmin)
       .map((item) => ({
         icon: item.icon,
-        tint: item.tint,
         label: t(`settings.items.${item.labelKey}`),
         description: t(`settings.items.${item.descKey}`),
         value:
@@ -286,7 +267,6 @@ function SettingsPage() {
   const actionItems: SettingsItem[] = [
     {
       icon: LogOut,
-      tint: 'pink',
       label: t('settings.actions.logout'),
       description: t('settings.actions.logoutDesc'),
       value: loggingOut ? t('settings.actions.loggingOut') : undefined,
@@ -303,11 +283,9 @@ function SettingsPage() {
           <SettingsPatternField />
 
           <div className="relative z-10 pb-0">
-            <header className="relative border-b border-hairline px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
+            <header className={settingsHeaderClassName}>
               <div className="max-w-2xl space-y-2">
-                <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
-                  {t('settings.pageTitle')}
-                </h1>
+                <h1 className={settingsTitleClassName}>{t('settings.pageTitle')}</h1>
                 <p className="text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
                   {t('settings.pageSubtitle')}
                 </p>
@@ -379,7 +357,7 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   const content = (
     <>
       <span
-        className={`grid size-8 shrink-0 place-items-center rounded-md border border-hairline ${settingsTintClass[item.tint]}`}
+        className={`grid w-5 shrink-0 place-items-center ${item.danger ? 'text-pink' : 'text-ink'}`}
       >
         <Icon size={16} />
       </span>
@@ -403,7 +381,7 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   );
 
   const className =
-    'group flex min-h-[58px] w-full items-center gap-3 border-b border-hairline px-3.5 text-left transition-colors last:border-b-0 hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60';
+    'group flex min-h-[58px] w-full appearance-none items-center gap-3 border-b border-hairline bg-transparent px-3.5 text-left text-inherit transition-colors last:border-b-0 hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60';
 
   if (item.to) {
     return (
@@ -414,14 +392,13 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   }
 
   return (
-    <HeroButton
+    <button
       type="button"
-      tone="plain"
       onClick={item.onPress}
       disabled={item.loading}
-      className={`app-settings-action-row ${className}`}
+      className={className}
     >
       {content}
-    </HeroButton>
+    </button>
   );
 }

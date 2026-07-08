@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { BrandMark } from '@/components/AppBrand';
 import { HeroSwitch } from '@/components/HeroControls';
 import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
-import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
+import {
+  settingsHeaderClassName,
+  settingsTintClass,
+  settingsTitleClassName,
+  type SettingsTint,
+} from '@/components/settings-ui';
 
 export function SettingsDetailShell({
   title,
@@ -33,11 +38,9 @@ export function SettingsDetailShell({
           <SettingsPatternField />
 
           <div className="relative z-10 pb-0">
-            <header className="relative border-b border-hairline px-4 pb-6 pt-16 sm:px-8 sm:pt-20 lg:px-10 lg:pb-8 lg:pt-16">
+            <header className={settingsHeaderClassName}>
               <div className="max-w-2xl space-y-2">
-                <h1 className="text-[28px] font-semibold leading-tight text-ink sm:text-[34px]">
-                  {title}
-                </h1>
+                <h1 className={settingsTitleClassName}>{title}</h1>
                 <p className="text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
                   {subtitle}
                 </p>

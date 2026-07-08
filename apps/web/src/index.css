@@ -784,14 +784,6 @@ body {
 .hero-btn-plain[data-pressed] {
   box-shadow: none;
 }
-.app-settings-action-row {
-  border-bottom: 1px solid var(--hairline);
-  border-radius: 0;
-  padding: 0 0.875rem;
-}
-.app-settings-action-row:last-child {
-  border-bottom: 0;
-}
 .hero-btn[data-disabled],
 .hero-btn[disabled] {
   cursor: not-allowed;
