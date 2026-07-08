@@ -114,7 +114,7 @@
   --field-foreground: var(--ink);
   --field-placeholder: var(--ink-faint);
   --field-border: transparent;
-  --field-radius: var(--radius);
+  --field-radius: 0.25rem;
 }
 
 /* ─── 日间主题色 preset — 默认暖纸 + 马卡龙柔彩 ───────────────────────── */
@@ -1766,7 +1766,7 @@ a.dash-card:active {
   --warning: oklch(78.19% 0.1614 49.97);
   --warning-foreground: oklch(21.03% 0.0059 49.97);
   --radius: 0.125rem;
-  --field-radius: var(--radius);
+  --field-radius: 0.25rem;
   --font-sans:
     'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,
     system-ui, sans-serif;
