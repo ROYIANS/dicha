@@ -358,9 +358,9 @@
   --color-ink-faint: var(--field-placeholder);
   --color-hairline: var(--border);
 
-  --color-sidebar-bg: var(--accent);
-  --color-sidebar-ink: var(--accent-foreground);
-  --color-sidebar-ink-soft: color-mix(in oklab, var(--accent-foreground) 72%, transparent);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-soft: var(--sidebar-ink-soft);
 
   --color-lavender: var(--accent);
   --color-peach: var(--warning);
@@ -2166,7 +2166,7 @@ a.dash-card:active {
 /* Legacy utility aliases backed by HeroUI tokens while class names migrate. */
 :root,
 [data-theme='light'],
-[data-theme='dark'] {
+[data-theme='default'] {
   --canvas-outer: var(--surface-secondary);
   --canvas: var(--background);
   --surface-alt: var(--surface-secondary);
@@ -2189,6 +2189,35 @@ a.dash-card:active {
   --chip-peach: color-mix(in oklab, var(--warning) 18%, var(--surface) 82%);
   --chip-sage: color-mix(in oklab, var(--success) 16%, var(--surface) 84%);
   --chip-pink: color-mix(in oklab, var(--danger) 14%, var(--surface) 86%);
+  --chip-mist: var(--surface-tertiary);
+  --lp-brand: var(--accent);
+  --lp-deco: var(--accent);
+}
+
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  --canvas-outer: var(--surface-secondary);
+  --canvas: var(--background);
+  --surface-alt: var(--surface-secondary);
+  --ink: var(--foreground);
+  --ink-soft: var(--muted);
+  --ink-faint: var(--field-placeholder);
+  --hairline: var(--border);
+  --sidebar-bg: color-mix(in oklab, var(--background) 86%, black);
+  --sidebar-ink: var(--foreground);
+  --sidebar-ink-soft: color-mix(in oklab, var(--foreground) 68%, var(--background));
+  --sidebar-active: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --sidebar-hover: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --accent-warm: var(--accent);
+  --accent-lavender: var(--accent);
+  --accent-peach: var(--warning);
+  --accent-sage: var(--success);
+  --accent-pink: var(--danger);
+  --accent-mist: var(--muted);
+  --chip-lavender: color-mix(in oklab, var(--accent) 18%, var(--surface) 82%);
+  --chip-peach: color-mix(in oklab, var(--warning) 20%, var(--surface) 80%);
+  --chip-sage: color-mix(in oklab, var(--success) 18%, var(--surface) 82%);
+  --chip-pink: color-mix(in oklab, var(--danger) 16%, var(--surface) 84%);
   --chip-mist: var(--surface-tertiary);
   --lp-brand: var(--accent);
   --lp-deco: var(--accent);
