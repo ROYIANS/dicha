@@ -37,7 +37,7 @@ import { BrandMark } from '@/components/AppBrand';
 import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 import { useTheme } from '@/lib/hooks/useTheme';
-import { HeroButton } from '@/components/HeroControls';
+import { HeroButton, HeroTextInput } from '@/components/HeroControls';
 
 export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
@@ -318,13 +318,20 @@ function SettingsPage() {
 
             <div className="bg-canvas px-2 py-7 sm:px-8 sm:py-9 lg:px-10">
               <div className="mx-auto max-w-3xl space-y-6">
-                <HeroButton
-                  type="button"
-                  className="app-input-field flex min-h-11 w-full items-center gap-3 rounded-md border border-hairline bg-surface px-3.5 text-left text-[13px] text-ink-faint"
-                >
-                  <Search size={15} className="shrink-0" />
-                  <span>{t('settings.searchPlaceholder')}</span>
-                </HeroButton>
+                <div className="relative">
+                  <Search
+                    size={15}
+                    className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-ink-faint"
+                  />
+                  <HeroTextInput
+                    value=""
+                    readOnly
+                    aria-label={t('settings.searchPlaceholder')}
+                    placeholder={t('settings.searchPlaceholder')}
+                    onFocus={() => toast.info('搜索功能即将开放')}
+                    className="app-input-field min-h-11 w-full rounded-md border border-hairline bg-surface pl-10 text-[13px] text-ink"
+                  />
+                </div>
 
                 {settingSections.map((section) => (
                   <SettingsGroup key={section.title} title={section.title}>
@@ -407,7 +414,13 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   }
 
   return (
-    <HeroButton type="button" onClick={item.onPress} disabled={item.loading} className={className}>
+    <HeroButton
+      type="button"
+      tone="plain"
+      onClick={item.onPress}
+      disabled={item.loading}
+      className={`app-settings-action-row ${className}`}
+    >
       {content}
     </HeroButton>
   );

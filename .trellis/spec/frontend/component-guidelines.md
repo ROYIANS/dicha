@@ -147,6 +147,16 @@
 
 ---
 
+### Convention: 搜索框不要用按钮伪装
+
+**What**: 顶栏搜索、设置页搜索、列表搜索过滤等只要视觉是输入框，就使用 HeroUI `Input`（项目内优先 `HeroTextInput`）；即使功能尚未开放，也不要用 `HeroButton` 包图标和 placeholder 来假装搜索框。未开放搜索可以用 `readOnly` Input + 聚焦提示承接，等真实搜索落地后再接状态和筛选逻辑。
+
+**Why**: 搜索框是文本输入语义，不是命令按钮。用 Button 伪装会继承 physical button 的阴影/下压/边框推断，键盘和屏幕阅读器语义也不对。
+
+**Related**: 设置页整行动作如退出登录仍可使用 `HeroButton`，但需要显式 `tone="plain"` 或局部 row class，避免把整行渲染成物理按钮。
+
+---
+
 ## Web Component（自定义元素）集成
 
 接入非 React 的 Web Component（如 ALTCHA `<altcha-widget>`）时：

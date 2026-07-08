@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useRouteContext } from '@tanstack/react-router';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { parseGeneratedAvatarMarker } from '@/lib/account-settings';
-import { HeroButton } from '@/components/HeroControls';
+import { HeroButton, HeroTextInput } from '@/components/HeroControls';
 
 type HeaderProps = {
   navOpen?: boolean;
@@ -41,20 +41,23 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
           </HeroButton>
         ) : null}
 
-        <HeroButton
-          type="button"
-          onClick={() => toast.info('搜索功能即将开放')}
-          className="app-input-field flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-hairline bg-surface/80 px-2.5 text-left text-ink-faint sm:px-3"
-        >
-          <Search size={14} className="shrink-0" />
-          <span className="truncate text-[12px] sm:text-[13px]">
-            <span className="sm:hidden">{t('header.searchShort', { defaultValue: '搜索' })}</span>
-            <span className="hidden sm:inline">{t('header.searchPlaceholder')}</span>
-          </span>
-          <span className="ml-auto hidden shrink-0 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline">
+        <div className="relative min-w-0 flex-1">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-2.5 top-1/2 z-10 -translate-y-1/2 text-ink-faint sm:left-3"
+          />
+          <HeroTextInput
+            value=""
+            readOnly
+            aria-label={t('header.searchPlaceholder')}
+            placeholder={t('header.searchPlaceholder')}
+            onFocus={() => toast.info('搜索功能即将开放')}
+            className="app-input-field h-8 w-full rounded-md border border-hairline bg-surface/80 pl-8 pr-8 text-[12px] text-ink sm:text-[13px]"
+          />
+          <span className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline">
             /
           </span>
-        </HeroButton>
+        </div>
 
         <span aria-hidden className="hidden h-5 w-px shrink-0 bg-hairline sm:block" />
 

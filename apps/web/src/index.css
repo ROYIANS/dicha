@@ -784,6 +784,14 @@ body {
 .hero-btn-plain[data-pressed] {
   box-shadow: none;
 }
+.app-settings-action-row {
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  padding: 0 0.875rem;
+}
+.app-settings-action-row:last-child {
+  border-bottom: 0;
+}
 .hero-btn[data-disabled],
 .hero-btn[disabled] {
   cursor: not-allowed;
@@ -1771,8 +1779,8 @@ a.dash-card:active {
   --surface-tertiary-foreground: oklch(21.03% 0.0092 67.46);
   --warning: oklch(78.19% 0.1614 49.97);
   --warning-foreground: oklch(21.03% 0.0059 49.97);
-  --radius: 0.125rem;
-  --field-radius: 0.25rem;
+  --radius: 0.375rem;
+  --field-radius: var(--radius);
   --font-sans:
     'Sarasa UI SC', 'Sarasa Gothic SC', 'Microsoft YaHei UI', 'PingFang SC', ui-sans-serif,
     system-ui, sans-serif;
