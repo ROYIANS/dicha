@@ -64,6 +64,34 @@
 - 表单：HeroUI 输入是受控组件，用 RHF `<Controller>` 接（详见 [architecture.md §5](./architecture.md)）。
 - 美学：M1 接受 HeroUI 现代观感，像素皮 = M2 soul 层。
 
+### Convention: 基础表单控件薄封装
+
+**What**: 前台 `apps/web/src/components/HeroControls.tsx` 与后台 `apps/admin/src/components/HeroControls.tsx` 是基础表单控件迁移的薄封装入口。新增或替换普通文本、文本域、数字、选择器、开关、复选框和 tabs 时，优先复用这些 wrapper；业务组件不要继续散写原生 `<input>` / `<select>` / `<textarea>` / checkbox / 自写 tab。隐藏文件上传 input 这类没有 HeroUI 等价的浏览器能力可以保留原生。
+
+**Why**: HeroUI v3 的基础控件 API 不是完全同形：`Input` / `TextArea` 使用事件式 `onChange` 且禁用 prop 是 `disabled`；`Select` 的 `onChange` 返回 `Key | Key[] | null` 且禁用 prop 是 `isDisabled`；`Switch` / `Checkbox` 使用 boolean 受控状态。薄封装把这些差异收口成项目内稳定的 `value` / `onChange(value)` 调用面。
+
+**Example**:
+
+```tsx
+// Good: 页面只关心业务值
+<HeroTextInput value={modelId} onChange={setModelId} disabled={pending} />
+<HeroSelect
+  value={status ?? ''}
+  onChange={(nextStatus) => setStatus(nextStatus as AdminUsersQueryInput['status'] | '')}
+  emptyLabel="全部状态"
+  options={[
+    { value: 'active', label: '正常' },
+    { value: 'disabled', label: '已禁用' },
+  ]}
+/>
+<HeroCheckbox label="启用" isSelected={enabled} isDisabled={pending} onChange={setEnabled} />
+
+// Bad: 新页面继续手写 native select/input 样式和事件拆值
+<select value={status} onChange={(event) => setStatus(event.target.value)} />
+```
+
+**Related**: 按钮、弹窗和表格是否迁移要按任务范围决定；不要借基础控件迁移顺手重写 `Button` / `Modal` / `Table`。
+
 ---
 
 ## Web Component（自定义元素）集成

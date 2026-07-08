@@ -40,17 +40,51 @@ export const Route = createFileRoute('/')({
    编目网格 / 大金句拼格 / 清单台账 / 非对称信笺 / 留白收尾。
    ════════════════════════════════════════════════════════════════════════════ */
 
-const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
-const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
+const LINE = 'color-mix(in oklab, var(--foreground) 16%, transparent)';
+const RULE = 'color-mix(in oklab, var(--foreground) 12%, transparent)';
 const LP = {
   deco: 'var(--lp-deco)',
-  chrome: 'var(--sidebar-bg)',
-  chromeFg: 'var(--sidebar-ink)',
+  chrome: 'var(--accent)',
+  chromeFg: 'var(--accent-foreground)',
   footRail: 'var(--lp-footer-rail)',
   footHair: 'var(--lp-footer-hair)',
   footMuted: 'var(--lp-footer-fg-muted)',
   footFaint: 'var(--lp-footer-fg-faint)',
 } as const;
+
+function chipColor(tint: string) {
+  switch (tint) {
+    case 'lavender':
+      return 'color-mix(in oklab, var(--accent) 14%, var(--surface) 86%)';
+    case 'peach':
+      return 'color-mix(in oklab, var(--warning) 18%, var(--surface) 82%)';
+    case 'sage':
+      return 'color-mix(in oklab, var(--success) 16%, var(--surface) 84%)';
+    case 'pink':
+      return 'color-mix(in oklab, var(--danger) 14%, var(--surface) 86%)';
+    case 'mist':
+      return 'var(--surface-tertiary)';
+    default:
+      return 'var(--surface-secondary)';
+  }
+}
+
+function accentColor(tint: string) {
+  switch (tint) {
+    case 'lavender':
+      return 'var(--accent)';
+    case 'peach':
+      return 'var(--warning)';
+    case 'sage':
+      return 'var(--success)';
+    case 'pink':
+      return 'var(--danger)';
+    case 'mist':
+      return 'var(--muted)';
+    default:
+      return 'var(--field-placeholder)';
+  }
+}
 
 // ─── 数据 ──────────────────────────────────────────────────────────────────────
 
@@ -200,7 +234,7 @@ function Node({ pos, className = '' }: { pos: NodePos; className?: string }) {
       className={`pointer-events-none absolute z-50 size-1.5 rotate-45 border ${className}`}
       style={{
         borderColor: LINE,
-        backgroundColor: 'var(--canvas)',
+        backgroundColor: 'var(--background)',
         [v]: 'calc(-1 * var(--node-vertical-offset))',
         [h]: 'var(--node-horizontal-offset)',
       }}
@@ -327,7 +361,7 @@ function Barcode({ rail, color = RULE }: { rail: 'left' | 'right'; color?: strin
 /** 高亮短语（Zed 式 mark，柔彩底）。 */
 function Mark({ children, tint = 'peach' }: { children: ReactNode; tint?: string }) {
   return (
-    <span className="rounded-[3px] px-1 py-0.5" style={{ backgroundColor: `var(--chip-${tint})` }}>
+    <span className="rounded-[3px] px-1 py-0.5" style={{ backgroundColor: chipColor(tint) }}>
       {children}
     </span>
   );
@@ -526,7 +560,7 @@ function Key({ children, onDark = false }: { children: ReactNode; onDark?: boole
           ? undefined
           : {
               border: `1px solid ${LINE}`,
-              color: 'var(--ink-soft)',
+              color: 'var(--muted)',
             }
       }
     >
@@ -551,7 +585,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
       className="lp-outer-node-offset sticky top-0 z-40 flex h-[57px] min-w-0 border-y sm:border-t-0"
       style={{
         borderColor: LINE,
-        backgroundColor: 'color-mix(in oklab, var(--canvas) 82%, transparent)',
+        backgroundColor: 'color-mix(in oklab, var(--background) 82%, transparent)',
         backdropFilter: 'saturate(160%) blur(14px)',
         WebkitBackdropFilter: 'saturate(160%) blur(14px)',
       }}
@@ -575,7 +609,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
 
         <div className="flex min-w-0 items-center gap-4">
           <a href="#top" className="flex shrink-0 items-center gap-2">
-            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
+            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--foreground)' }} />
             <span className="text-[16px] font-semibold font-serif text-ink">滴茶</span>
           </a>
           <div className="hidden items-center gap-0.5 lg:flex">
@@ -826,7 +860,7 @@ function HeroArt() {
         <svg
           viewBox="0 0 480 480"
           className="lp-spin block w-[680px]"
-          style={{ opacity: 0.035, color: 'var(--ink)' }}
+          style={{ opacity: 0.035, color: 'var(--foreground)' }}
         >
           {squares.map((_, i) => {
             const s = 460 * 0.9 ** i;
@@ -1002,7 +1036,7 @@ function FeatureVignette({ id }: { id: string }) {
             className="absolute left-1/2 top-1/2 w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-lg p-4"
             style={{
               backgroundColor: 'var(--surface)',
-              border: `1px solid var(--hairline)`,
+              border: `1px solid var(--border)`,
               boxShadow: 'var(--shadow-md)',
             }}
           >
@@ -1013,7 +1047,7 @@ function FeatureVignette({ id }: { id: string }) {
                 <span
                   key={t}
                   className="rounded px-1.5 py-0.5 text-[10px] text-ink-soft"
-                  style={{ backgroundColor: 'var(--chip-mist)' }}
+                  style={{ backgroundColor: 'var(--surface-tertiary)' }}
                 >
                   {t}
                 </span>
@@ -1043,7 +1077,7 @@ function FeatureVignette({ id }: { id: string }) {
       <VignetteCard label="已经 218 天没有翻动">
         <div
           className="relative rounded-lg p-5"
-          style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--hairline)` }}
+          style={{ backgroundColor: 'var(--surface)', border: `1px solid var(--border)` }}
         >
           {/* 灰膜：自上而下的暖灰渐变盖在卡片上 */}
           <div
@@ -1051,7 +1085,7 @@ function FeatureVignette({ id }: { id: string }) {
             className="pointer-events-none absolute inset-0 rounded-lg"
             style={{
               background:
-                'linear-gradient(to bottom, color-mix(in oklab, var(--ink) 9%, transparent), transparent 65%)',
+                'linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 9%, transparent), transparent 65%)',
             }}
           />
           <div className="flex items-center justify-between">
@@ -1063,7 +1097,7 @@ function FeatureVignette({ id }: { id: string }) {
           </div>
           <div
             className="mt-4 h-1 w-full overflow-hidden rounded-full"
-            style={{ backgroundColor: 'var(--hairline)' }}
+            style={{ backgroundColor: 'var(--border)' }}
           >
             <div className="h-full w-[72%] rounded-full bg-lp-brand opacity-45" />
           </div>
@@ -1085,7 +1119,7 @@ function FeatureVignette({ id }: { id: string }) {
       <div className="flex flex-col gap-3 py-2">
         <div
           className="max-w-[80%] self-start rounded-xl rounded-bl-sm px-4 py-3"
-          style={{ backgroundColor: 'var(--chip-sage)' }}
+          style={{ backgroundColor: 'color-mix(in oklab, var(--success) 16%, var(--surface) 84%)' }}
         >
           <p className="text-[13.5px] font-serif leading-relaxed text-ink">
             创可贴在药盒第二格。上次用，是三月你切到手指那回。
@@ -1161,17 +1195,17 @@ function AppWindow() {
       </div>
       <div
         className="relative z-10 flex h-9 items-center gap-2 px-4"
-        style={{ backgroundColor: 'var(--surface-alt)', borderBottom: `1px solid ${LINE}` }}
+        style={{ backgroundColor: 'var(--surface-secondary)', borderBottom: `1px solid ${LINE}` }}
       >
-        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-pink)' }} />
-        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-peach)' }} />
-        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--accent-sage)' }} />
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--danger)' }} />
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--warning)' }} />
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
         <span className="mx-auto text-[12px] text-ink-soft">滴茶 — 我的小窝</span>
       </div>
       <div className="relative z-10 flex h-[360px] sm:h-[420px]">
         <div
           className="hidden w-[68px] shrink-0 flex-col items-center gap-4 py-5 sm:flex"
-          style={{ backgroundColor: 'var(--sidebar-bg)' }}
+          style={{ backgroundColor: 'var(--accent)' }}
         >
           <span
             className="grid h-8 w-8 place-items-center rounded-md"
@@ -1183,7 +1217,7 @@ function AppWindow() {
             <span
               key={k}
               className="h-7 w-7 rounded-lg"
-              style={{ backgroundColor: 'var(--sidebar-hover)' }}
+              style={{ backgroundColor: 'color-mix(in oklab, var(--accent-foreground) 6%, transparent)' }}
             />
           ))}
         </div>
@@ -1197,19 +1231,19 @@ function AppWindow() {
               <div
                 key={i}
                 className="rounded-xl p-3"
-                style={{ border: `1px solid var(--hairline)`, backgroundColor: 'var(--surface)' }}
+                style={{ border: `1px solid var(--border)`, backgroundColor: 'var(--surface)' }}
               >
                 <span
                   className="mb-2 block h-6 w-6 rounded-full"
-                  style={{ backgroundColor: `var(--chip-${c})` }}
+                  style={{ backgroundColor: chipColor(c) }}
                 />
                 <span
                   className="block h-2.5 w-8 rounded"
-                  style={{ backgroundColor: `var(--accent-${c})` }}
+                  style={{ backgroundColor: accentColor(c) }}
                 />
                 <span
                   className="mt-1.5 block h-1.5 w-10 rounded"
-                  style={{ backgroundColor: 'var(--hairline)' }}
+                  style={{ backgroundColor: 'var(--border)' }}
                 />
               </div>
             ))}
@@ -1220,7 +1254,7 @@ function AppWindow() {
               <div
                 key={i}
                 className="h-24 w-[96px] shrink-0 rounded-xl"
-                style={{ backgroundColor: `var(--chip-${c})`, border: `1px solid var(--hairline)` }}
+                style={{ backgroundColor: chipColor(c), border: `1px solid var(--border)` }}
               />
             ))}
           </div>
@@ -1301,13 +1335,13 @@ function RoomCell({ room: r, index }: { room: (typeof ROOMS)[number]; index: num
         <span
           className="grid h-11 w-11 place-items-center rounded-xl"
           style={{
-            backgroundColor: isMore ? 'transparent' : `var(--chip-${r.tint})`,
+            backgroundColor: isMore ? 'transparent' : chipColor(r.tint),
             border: isMore ? `1px dashed ${LINE}` : 'none',
           }}
         >
           <Icon
             size={20}
-            style={{ color: isMore ? 'var(--ink-faint)' : `var(--accent-${r.tint})` }}
+            style={{ color: isMore ? 'var(--field-placeholder)' : accentColor(r.tint) }}
           />
         </span>
         <span className="text-[12px] text-ink-faint">{r.no}</span>
@@ -1476,9 +1510,9 @@ function AuthorLetter() {
         <div className="relative z-10 mt-6 flex items-center gap-3">
           <span
             className="grid h-12 w-12 place-items-center rounded-2xl"
-            style={{ backgroundColor: 'var(--chip-sage)' }}
+            style={{ backgroundColor: 'color-mix(in oklab, var(--success) 16%, var(--surface) 84%)' }}
           >
-            <MessageSquareText size={22} style={{ color: 'var(--accent-sage)' }} />
+            <MessageSquareText size={22} style={{ color: 'var(--success)' }} />
           </span>
           <div>
             <div className="text-[15px] font-semibold text-ink">齐默默</div>

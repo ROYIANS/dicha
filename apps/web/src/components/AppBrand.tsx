@@ -42,8 +42,8 @@ export function BrandMark({ className = '', style, title }: BrandMarkProps) {
 /** 全站品牌 mark + 中文字标。 */
 export function AppBrand({ variant = 'canvas', to, className = '', onClick }: AppBrandProps) {
   const isSidebar = variant === 'sidebar';
-  const markColor = isSidebar ? 'var(--sidebar-ink)' : 'var(--ink)';
-  const wordColor = isSidebar ? 'var(--sidebar-ink)' : 'var(--ink)';
+  const markColor = isSidebar ? 'var(--accent-foreground)' : 'var(--foreground)';
+  const wordColor = isSidebar ? 'var(--accent-foreground)' : 'var(--foreground)';
 
   const inner = (
     <>

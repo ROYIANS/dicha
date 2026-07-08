@@ -20,6 +20,7 @@ import {
   creditLedgerQueryOptions,
   redeemCreditCode,
 } from '@/api/credits';
+import { HeroTextInput } from '@/components/HeroControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass } from '@/components/settings-ui';
 import type { CreditCheckInStatus, CreditLedgerEntry } from '@dicha/shared';
@@ -121,16 +122,15 @@ export function CreditsSettingsPage() {
                 redeemMutation.mutate(code);
               }}
             >
-              <input
+              <HeroTextInput
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={setCode}
                 placeholder={t('settings.detail.credits.codePlaceholder')}
-                className="h-10 w-full rounded-md border border-hairline bg-surface-alt px-3 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
               />
               <button
                 type="submit"
                 disabled={!code.trim() || redeemMutation.isPending}
-                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-3 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Gift size={14} />
                 {redeemMutation.isPending
@@ -191,11 +191,11 @@ function CheckInCard({
     <section className="relative overflow-hidden rounded-md border border-hairline bg-surface">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-80 [background-image:radial-gradient(var(--hairline)_1px,transparent_1px),repeating-linear-gradient(135deg,transparent_0,transparent_18px,var(--hairline)_18px,var(--hairline)_19px)] [background-position:0_0,0_0] [background-size:14px_14px,26px_26px]"
+        className="pointer-events-none absolute inset-0 opacity-80 [background-image:radial-gradient(var(--border)_1px,transparent_1px),repeating-linear-gradient(135deg,transparent_0,transparent_18px,var(--border)_18px,var(--border)_19px)] [background-position:0_0,0_0] [background-size:14px_14px,26px_26px]"
       />
       <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-8 h-24 w-48 rounded-[50%] border border-peach/50" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-14 top-14 h-20 w-48 rounded-[50%] border border-sage/40" />
-      <div aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-1 w-full bg-[linear-gradient(90deg,var(--accent-peach),var(--accent-sage),var(--accent-mist))]" />
+      <div aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-1 w-full bg-[linear-gradient(90deg,var(--warning),var(--success),var(--muted))]" />
 
       <div className="relative grid gap-5 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
         <div className="flex min-w-0 items-start gap-3">
@@ -240,7 +240,7 @@ function CheckInCard({
             type="button"
             onClick={onCheckIn}
             disabled={!canCheckIn}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[var(--sidebar-bg)] px-4 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50 lg:w-[180px]"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-4 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50 lg:w-[180px]"
           >
             {checkedIn ? <CheckCircle2 size={15} /> : <Gift size={15} />}
             {pending

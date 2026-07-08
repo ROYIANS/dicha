@@ -29,6 +29,13 @@ import {
   updateAdminAiProviderDirectory,
   updateAdminAiProviderDirectoryModel,
 } from '@/api/admin';
+import {
+  HeroCheckbox,
+  HeroSelect,
+  HeroSwitch,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import {
   aiModelCommonParameterControls,
@@ -330,36 +337,22 @@ function ModelRow({
         <p className="mt-1 text-xs text-ink-faint">{model.priceHint}</p>
       </div>
       <div className="flex items-center justify-end gap-3">
-        <label
-          className="flex items-center gap-2 text-xs text-ink-soft"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <input
-            type="checkbox"
-            checked={model.recommended}
-            disabled={pending}
-            onChange={(event) => {
-              onRecommend(event.target.checked);
-            }}
-            className="size-4"
+        <div onClick={(event) => event.stopPropagation()}>
+          <HeroCheckbox
+            label="推荐"
+            isSelected={model.recommended}
+            isDisabled={pending}
+            onChange={onRecommend}
           />
-          推荐
-        </label>
-        <label
-          className="flex items-center gap-2 text-xs text-ink-soft"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <input
-            type="checkbox"
-            checked={model.enabled}
-            disabled={pending}
-            onChange={(event) => {
-              onToggle(event.target.checked);
-            }}
-            className="size-4"
+        </div>
+        <div onClick={(event) => event.stopPropagation()}>
+          <HeroCheckbox
+            label="启用"
+            isSelected={model.enabled}
+            isDisabled={pending}
+            onChange={onToggle}
           />
-          启用
-        </label>
+        </div>
       </div>
     </div>
   );
@@ -454,13 +447,10 @@ function ModelDefaultConfigForm({
 
       <div className="space-y-3">
         <Field label="模型展示名称">
-          <input
+          <HeroTextInput
             value={form.displayName}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, displayName: event.target.value }))
-            }
+            onChange={(displayName) => setForm((current) => ({ ...current, displayName }))}
             disabled={pending}
-            className="admin-input"
           />
         </Field>
         <Field label="模型头像">
@@ -468,15 +458,12 @@ function ModelDefaultConfigForm({
             <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-xs font-semibold text-mist">
               {form.avatar.trim() || model.avatar || model.displayName.slice(0, 2).toUpperCase()}
             </span>
-            <input
+            <HeroTextInput
               value={form.avatar}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, avatar: event.target.value }))
-              }
+              onChange={(avatar) => setForm((current) => ({ ...current, avatar }))}
               disabled={pending}
               maxLength={12}
               placeholder="例如 GPT"
-              className="admin-input"
             />
           </div>
         </Field>
@@ -501,15 +488,14 @@ function ModelDefaultConfigForm({
                 </button>
               ))}
             </div>
-            <input
+            <HeroTextInput
               value={form.contextWindow}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, contextWindow: event.target.value }))
+              onChange={(contextWindow) =>
+                setForm((current) => ({ ...current, contextWindow }))
               }
               inputMode="numeric"
               disabled={pending}
               placeholder="未知则留空"
-              className="admin-input"
             />
             {contextWindowInvalid ? (
               <p className="text-[11px] text-pink">请输入大于 0 的整数 Token 数。</p>
@@ -517,23 +503,17 @@ function ModelDefaultConfigForm({
           </div>
         </Field>
         <Field label="模型类型">
-          <select
+          <HeroSelect
             value={form.modelType}
-            onChange={(event) =>
+            onChange={(modelType) =>
               setForm((current) => ({
                 ...current,
-                modelType: event.target.value as AiModelType,
+                modelType: modelType as AiModelType,
               }))
             }
-            disabled={pending}
-            className="admin-input"
-          >
-            {modelTypeOptions.map((type) => (
-              <option key={type} value={type}>
-                {modelTypeLabels[type]}
-              </option>
-            ))}
-          </select>
+            isDisabled={pending}
+            options={modelTypeOptions.map((type) => ({ value: type, label: modelTypeLabels[type] }))}
+          />
         </Field>
       </div>
 
@@ -630,45 +610,37 @@ function ParameterControlInput({
 }) {
   if (control.kind === 'switch') {
     return (
-      <label className="flex items-center justify-between rounded-md border border-hairline bg-surface px-3 py-2 text-xs text-ink-soft">
-        <span>{value === true ? '已开启' : '未开启'}</span>
-        <input
-          type="checkbox"
-          checked={value === true}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.checked)}
-          className="size-4"
-        />
-      </label>
+      <HeroSwitch
+        label={value === true ? '已开启' : '未开启'}
+        isSelected={value === true}
+        isDisabled={disabled}
+        onChange={onChange}
+      />
     );
   }
 
   if (control.kind === 'select') {
     return (
-      <select
+      <HeroSelect
         value={typeof value === 'string' ? value : ''}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="admin-input"
-      >
-        <option value="">不设置</option>
-        {control.options?.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        isDisabled={disabled}
+        onChange={onChange}
+        emptyLabel="不设置"
+        options={(control.options ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        }))}
+      />
     );
   }
 
   return (
-    <input
+    <HeroTextInput
       value={typeof value === 'string' ? value : ''}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
       inputMode="decimal"
       disabled={disabled}
       placeholder={control.placeholder}
-      className="admin-input"
     />
   );
 }
@@ -717,26 +689,20 @@ function ExtensionParameterPicker({
   );
   return (
     <div className="space-y-2">
-      <select
+      <HeroSelect
         value=""
-        disabled={disabled || available.length === 0}
-        onChange={(event) => {
-          const next = event.target.value as AiModelExtensionParameter;
+        isDisabled={disabled || available.length === 0}
+        onChange={(nextValue) => {
+          const next = nextValue as AiModelExtensionParameter;
           if (!next) return;
           onChange([...value, next]);
         }}
-        className="admin-input"
-      >
-        <option value="">添加扩展参数</option>
-        {available.map((parameter) => {
+        emptyLabel="添加扩展参数"
+        options={available.map((parameter) => {
           const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
-          return (
-            <option key={parameter} value={parameter}>
-              {definition?.label ?? parameter}
-            </option>
-          );
+          return { value: parameter, label: definition?.label ?? parameter };
         })}
-      </select>
+      />
       {value.length > 0 ? (
         <div className="grid gap-2">
           {value.map((parameter) => {
@@ -842,65 +808,58 @@ function ProviderConfigForm({
 
   return (
     <form onSubmit={submit} className="space-y-4 p-4">
-      <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
-        <span>前台开放</span>
-        <input
-          type="checkbox"
-          checked={form.enabled}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, enabled: event.target.checked }))
-          }
-          className="size-4"
-        />
-      </label>
+      <HeroCheckbox
+        label="前台开放"
+        isSelected={form.enabled}
+        onChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+      />
       <Field label="默认 Base URL">
-        <input
+        <HeroTextInput
           value={form.baseUrl}
-          onChange={(event) => setForm((current) => ({ ...current, baseUrl: event.target.value }))}
-          className="admin-input"
+          onChange={(baseUrl) => setForm((current) => ({ ...current, baseUrl }))}
         />
       </Field>
       <Field label="请求格式">
-        <select
+        <HeroSelect
           value={form.requestFormat}
-          onChange={(event) =>
+          onChange={(requestFormat) =>
             setForm((current) => ({
               ...current,
-              requestFormat: event.target.value as NonNullable<
+              requestFormat: requestFormat as NonNullable<
                 AdminAiProviderDirectoryUpdate['requestFormat']
               >,
             }))
           }
-          className="admin-input"
-        >
-          <option value="openai_compatible">OpenAI Chat</option>
-          <option value="openai_responses">OpenAI Responses</option>
-          <option value="anthropic_messages">Anthropic Messages</option>
-        </select>
+          options={[
+            { value: 'openai_compatible', label: 'OpenAI Chat' },
+            { value: 'openai_responses', label: 'OpenAI Responses' },
+            { value: 'anthropic_messages', label: 'Anthropic Messages' },
+          ]}
+        />
       </Field>
       <Field label="认证方式">
-        <select
+        <HeroSelect
           value={form.authType}
-          onChange={(event) =>
+          onChange={(authType) =>
             setForm((current) => ({
               ...current,
-              authType: event.target.value as NonNullable<
+              authType: authType as NonNullable<
                 AdminAiProviderDirectoryUpdate['authType']
               >,
             }))
           }
-          className="admin-input"
-        >
-          <option value="bearer_token">Bearer Token</option>
-          <option value="api_key">API Key</option>
-          <option value="none">None</option>
-        </select>
+          options={[
+            { value: 'bearer_token', label: 'Bearer Token' },
+            { value: 'api_key', label: 'API Key' },
+            { value: 'none', label: 'None' },
+          ]}
+        />
       </Field>
       <Field label="备注">
-        <textarea
+        <HeroTextArea
           value={form.notes}
-          onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-          className="admin-input min-h-20 resize-none py-2"
+          onChange={(notes) => setForm((current) => ({ ...current, notes }))}
+          className="min-h-20"
         />
       </Field>
       <div className="grid gap-2">
@@ -944,15 +903,12 @@ function ModelSearchBar({
   return (
     <div className="border-b border-hairline bg-surface-alt/60 p-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-ink-faint" />
-          <input
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            placeholder={placeholder}
-            className="h-9 w-full rounded-md border border-hairline bg-surface px-9 text-xs text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
-          />
-        </label>
+        <HeroTextInput
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="min-w-0 flex-1"
+        />
         <div className="flex items-center justify-between gap-2 sm:justify-end">
           <span className="text-xs text-ink-soft">
             {visible} / {total}

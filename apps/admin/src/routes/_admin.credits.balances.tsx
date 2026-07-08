@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { WalletCards } from 'lucide-react';
 import { useState } from 'react';
 import { adminCreditBalancesQueryOptions } from '@/api/admin';
+import { HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/balances')({
@@ -22,13 +23,13 @@ function CreditBalancesPage() {
         title="账户余额"
         description="查看用户积分账户余额、累计获得与累计消耗。"
         action={
-          <div className="flex h-9 items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3">
+          <div className="flex items-center gap-2">
             <WalletCards size={15} className="text-ink-faint" />
-            <input
+            <HeroTextInput
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={setSearch}
               placeholder="搜索邮箱或昵称"
-              className="w-48 bg-transparent text-xs text-ink outline-none placeholder:text-ink-faint"
+              className="w-48"
             />
           </div>
         }

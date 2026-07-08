@@ -68,7 +68,7 @@ export function ErrorStateScene({ variant, errorMessage }: ErrorStateSceneProps)
       <div className="absolute inset-x-0 top-0 z-10 border-b border-hairline bg-surface/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link to="/" className="inline-flex min-w-0 items-center gap-2">
-            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
+            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--foreground)' }} />
             <span className="font-serif text-[16px] font-semibold text-ink">滴茶</span>
           </Link>
           <span className="rounded-md border border-hairline bg-surface-alt px-2.5 py-1 text-[11px] font-medium text-ink-faint">
@@ -101,7 +101,7 @@ export function ErrorStateScene({ variant, errorMessage }: ErrorStateSceneProps)
           <div className="mt-7 flex flex-col gap-2 sm:flex-row">
             <Link
               to="/"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-4 text-[13px] font-medium text-sidebar-ink shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--sidebar-ink)_12%,transparent)] transition-[transform,opacity] active:translate-y-px"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-[var(--accent)] px-4 text-[13px] font-medium text-sidebar-ink shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--accent-foreground)_12%,transparent)] transition-[transform,opacity] active:translate-y-px"
             >
               <Home size={15} />
               {t('errors.actions.home')}
@@ -109,7 +109,7 @@ export function ErrorStateScene({ variant, errorMessage }: ErrorStateSceneProps)
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 text-[13px] font-medium text-ink-soft shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)] transition-colors hover:text-ink active:translate-y-px"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 text-[13px] font-medium text-ink-soft shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] transition-colors hover:text-ink active:translate-y-px"
             >
               <ArrowLeft size={15} />
               {t('errors.actions.back')}
@@ -118,7 +118,7 @@ export function ErrorStateScene({ variant, errorMessage }: ErrorStateSceneProps)
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 text-[13px] font-medium text-ink-soft shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)] transition-colors hover:text-ink active:translate-y-px"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 text-[13px] font-medium text-ink-soft shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] transition-colors hover:text-ink active:translate-y-px"
               >
                 <RefreshCw size={15} />
                 {t('errors.actions.reload')}
@@ -141,14 +141,14 @@ function ErrorGrid() {
         className="pointer-events-none absolute inset-0 opacity-[0.18]"
         style={{
           backgroundImage:
-            'linear-gradient(color-mix(in oklab,var(--ink)_7%,transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab,var(--ink)_7%,transparent) 1px, transparent 1px)',
+            'linear-gradient(color-mix(in oklab,var(--foreground)_7%,transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab,var(--foreground)_7%,transparent) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
           maskImage: 'linear-gradient(to bottom, #000 45%, transparent)',
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 h-px w-[200vw] -translate-x-1/2 bg-[color-mix(in_oklab,var(--ink)_14%,transparent)]"
+        className="pointer-events-none absolute left-1/2 top-0 h-px w-[200vw] -translate-x-1/2 bg-[color-mix(in_oklab,var(--foreground)_14%,transparent)]"
       />
     </>
   );
@@ -193,7 +193,7 @@ function LostRoomMap({
         className="absolute inset-0 top-[57px] opacity-[0.22]"
         style={{
           backgroundImage:
-            'linear-gradient(color-mix(in oklab,var(--ink)_9%,transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab,var(--ink)_9%,transparent) 1px, transparent 1px)',
+            'linear-gradient(color-mix(in oklab,var(--foreground)_9%,transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab,var(--foreground)_9%,transparent) 1px, transparent 1px)',
           backgroundSize: '22px 22px',
         }}
       />
@@ -221,8 +221,8 @@ function LostRoomMap({
         ))}
       </div>
 
-      <span className="absolute left-5 top-[57px] h-[calc(100%-57px)] w-px bg-[color-mix(in_oklab,var(--ink)_12%,transparent)]" />
-      <span className="absolute right-5 top-[57px] h-[calc(100%-57px)] w-px bg-[color-mix(in_oklab,var(--ink)_12%,transparent)]" />
+      <span className="absolute left-5 top-[57px] h-[calc(100%-57px)] w-px bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]" />
+      <span className="absolute right-5 top-[57px] h-[calc(100%-57px)] w-px bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]" />
       <span className={`absolute right-5 top-24 size-2 rotate-45 border bg-surface ${active}`} />
       <span className="absolute bottom-24 left-5 size-2 rotate-45 border border-hairline bg-surface" />
     </div>
@@ -230,13 +230,13 @@ function LostRoomMap({
 }
 
 function MapPath({ variant }: { variant: ErrorVariant }) {
-  const stroke = variant === 'not-found' ? 'var(--accent-mist)' : 'var(--accent-pink)';
+  const stroke = variant === 'not-found' ? 'var(--muted)' : 'var(--danger)';
   return (
     <svg className="absolute inset-0 size-full" aria-hidden viewBox="0 0 520 360" preserveAspectRatio="none">
       <path
         d="M34 92 C120 52 168 38 232 64 C306 96 310 158 400 152 C456 148 486 118 504 88"
         fill="none"
-        stroke="color-mix(in oklab, var(--ink) 14%, transparent)"
+        stroke="color-mix(in oklab, var(--foreground) 14%, transparent)"
         strokeWidth="1"
         strokeDasharray="8 8"
       />
@@ -251,7 +251,7 @@ function MapPath({ variant }: { variant: ErrorVariant }) {
       <path
         d="M150 66 L150 305 M312 42 L312 318 M36 176 L494 176"
         fill="none"
-        stroke="color-mix(in oklab, var(--ink) 10%, transparent)"
+        stroke="color-mix(in oklab, var(--foreground) 10%, transparent)"
         strokeWidth="1"
       />
     </svg>

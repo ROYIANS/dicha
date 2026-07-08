@@ -30,7 +30,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
-import { Dropdown, Input, Tooltip } from '@heroui/react';
+import { Dropdown, Tooltip } from '@heroui/react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -64,6 +64,7 @@ import {
   updateAiConfig,
 } from '@/api/ai';
 import { ModelSelect } from '@/components/ModelSelect';
+import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
 import {
   SettingsDetailShell,
   SettingsPanel,
@@ -518,7 +519,7 @@ function ProviderCard({
     : t('settings.detail.aiProviders.syncModels');
 
   return (
-    <article className="overflow-visible rounded-md border border-hairline bg-surface shadow-[6px_6px_0_color-mix(in_oklab,var(--ink)_5%,transparent)]">
+    <article className="overflow-visible rounded-md border border-hairline bg-surface shadow-[6px_6px_0_color-mix(in_oklab,var(--foreground)_5%,transparent)]">
       <div className="grid gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
         <div className="min-w-0 space-y-3">
           <div className="flex min-w-0 items-start gap-3">
@@ -718,7 +719,7 @@ function AssignmentRow({
   return (
     <div className="grid gap-4 border-b border-hairline/70 px-3.5 py-4 last:border-b-0 sm:px-4 lg:grid-cols-[minmax(220px,1fr)_minmax(420px,520px)] lg:items-start">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-lavender text-lavender shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_7%,transparent)]">
+        <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-chip-lavender text-lavender shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_7%,transparent)]">
           <Icon size={17} />
         </span>
         <div className="min-w-0 pt-0.5">
@@ -728,7 +729,7 @@ function AssignmentRow({
           </p>
         </div>
       </div>
-      <div className="grid min-w-0 gap-3 rounded-md bg-canvas p-3 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_6%,transparent)] sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 rounded-md bg-canvas p-3 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_6%,transparent)] sm:grid-cols-2">
         <AssignmentField label={t('settings.detail.aiModels.primaryModel')}>
           <ModelSelect
             catalog={catalog}
@@ -920,14 +921,13 @@ function ProviderCredentialPopover({
               placeholder={t('settings.detail.aiProviders.baseUrlPlaceholder')}
             />
             {requiresUserCredential ? (
-              <input
+              <HeroTextInput
                 value={credential}
-                onChange={(event) => setCredential(event.target.value)}
+                onChange={setCredential}
                 type="password"
                 autoComplete="off"
                 placeholder={t('settings.detail.aiProviders.apiKeyPlaceholder')}
                 disabled={pending}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
               />
             ) : null}
             <button
@@ -949,7 +949,7 @@ function ProviderCredentialPopover({
                 setCredential('');
                 setOpen(false);
               }}
-              className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--accent)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save size={14} />
               {requiresUserCredential
@@ -1055,12 +1055,11 @@ function ProviderModelList({
               size={15}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
             />
-            <Input
+            <HeroTextInput
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              onChange={setSearchQuery}
               placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
-              fullWidth
-              className="h-9 rounded-md border border-hairline bg-surface pl-9 pr-3 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+              className="pl-9"
             />
           </div>
           <Dropdown>
@@ -1111,7 +1110,7 @@ function ProviderModelList({
                   onClick={() => setActiveFilter(filter.key)}
                   className={`inline-flex h-10 items-center gap-1.5 border-b-2 px-0 text-[12px] font-semibold outline-none transition-colors ${
                     selected
-                      ? 'border-[var(--ink)] text-ink'
+                      ? 'border-[var(--foreground)] text-ink'
                       : 'border-transparent text-ink-faint hover:text-ink-soft'
                   }`}
                 >
@@ -1482,33 +1481,30 @@ function ProviderFormModal({
           </div>
         </FormField>
         <FormField title={t('settings.detail.aiProviders.providerDescription')} required>
-          <textarea
+          <HeroTextArea
             value={description}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={setDescription}
             disabled={pending}
             placeholder={t('settings.detail.aiProviders.providerDescriptionPlaceholder')}
-            className="min-h-20 w-full rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+            rows={3}
           />
         </FormField>
         <FormSectionTitle>{t('settings.detail.aiProviders.configInfo')}</FormSectionTitle>
         <FormField title={t('settings.detail.aiProviders.requestFormat')} required>
-          <select
+          <HeroSelect
             value={requestFormat}
-            onChange={(event) => {
+            onChange={(value) => {
               const next =
-                requestFormatOptions.find((option) => option.value === event.target.value)?.value ??
+                requestFormatOptions.find((option) => option.value === value)?.value ??
                 'openai_compatible';
               setRequestFormat(next);
             }}
-            disabled={pending}
-            className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {requestFormatOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            isDisabled={pending}
+            options={requestFormatOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
         </FormField>
         <FormField title={t('settings.detail.aiProviders.baseUrl')} required>
           <TextField
@@ -1519,14 +1515,13 @@ function ProviderFormModal({
           />
         </FormField>
         <FormField title="API Key">
-          <input
+          <HeroTextInput
             value={credential}
-            onChange={(event) => setCredential(event.target.value)}
+            onChange={setCredential}
             type="password"
             autoComplete="off"
             disabled={pending}
             placeholder={t('settings.detail.aiProviders.apiKeyPlaceholder')}
-            className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
           />
         </FormField>
       </div>
@@ -1777,18 +1772,12 @@ function ModelFormModal({
           title={t('settings.detail.aiProviders.modelType')}
           description={t('settings.detail.aiProviders.modelTypeDesc')}
         />
-        <select
+        <HeroSelect
           value={modelType}
-          onChange={(event) => setModelType(event.target.value as AiModelType)}
-          disabled={pending || backendManagedModel}
-          className="h-9 rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {modelTypeOptions.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setModelType(value as AiModelType)}
+          isDisabled={pending || backendManagedModel}
+          options={modelTypeOptions.map((type) => ({ value: type, label: type }))}
+        />
 
         <ConfigLabel
           title={t('settings.detail.aiProviders.defaultParameterConfig')}
@@ -1886,7 +1875,7 @@ function ModalActions({
         type="button"
         onClick={onSubmit}
         disabled={pending || !canSubmit}
-        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-4 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-hairline bg-[var(--accent)] px-4 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Save size={14} />
         {submitLabel}
@@ -2002,14 +1991,13 @@ function TextField({
   maxLength?: number;
 }) {
   return (
-    <input
+    <HeroTextInput
       value={value}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
       inputMode={inputMode}
       disabled={disabled}
       placeholder={placeholder}
       maxLength={maxLength}
-      className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
     />
   );
 }
@@ -2027,26 +2015,21 @@ function ExtensionParameterPicker({
   const available = extensionParameterOptions.filter((parameter) => !selected.has(parameter));
   return (
     <div className="space-y-2">
-      <select
+      <HeroSelect
         value=""
-        disabled={disabled || available.length === 0}
-        onChange={(event) => {
-          const next = event.target.value as AiModelExtensionParameter;
+        isDisabled={disabled || available.length === 0}
+        onChange={(nextValue) => {
+          const next = nextValue as AiModelExtensionParameter;
           if (!next) return;
           onChange([...value, next]);
         }}
-        className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <option value="">添加扩展参数</option>
-        {available.map((parameter) => {
+        placeholder="添加扩展参数"
+        emptyLabel="添加扩展参数"
+        options={available.map((parameter) => {
           const definition = aiModelExtensionParameterDefinitionByKey.get(parameter);
-          return (
-            <option key={parameter} value={parameter}>
-              {definition?.label ?? parameter}
-            </option>
-          );
+          return { value: parameter, label: definition?.label ?? parameter };
         })}
-      </select>
+      />
       {value.length > 0 ? (
         <div className="grid gap-2">
           {value.map((parameter) => {
@@ -2153,30 +2136,27 @@ function ParameterControlInput({
 
   if (control.kind === 'select') {
     return (
-      <select
+      <HeroSelect
         value={typeof value === 'string' ? value : ''}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <option value="">沿用默认</option>
-        {control.options?.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        isDisabled={disabled}
+        onChange={onChange}
+        placeholder="沿用默认"
+        emptyLabel="沿用默认"
+        options={(control.options ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        }))}
+      />
     );
   }
 
   return (
-    <input
+    <HeroTextInput
       value={typeof value === 'string' ? value : ''}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
       inputMode="decimal"
       disabled={disabled}
       placeholder={control.placeholder}
-      className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
     />
   );
 }
@@ -2346,7 +2326,7 @@ function EmptyProvidersPanel({ onAddProvider }: { onAddProvider: () => void }) {
         <button
           type="button"
           onClick={onAddProvider}
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink"
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--accent)] px-3 text-[12px] font-medium text-sidebar-ink"
         >
           <Plus size={14} />
           {t('settings.detail.aiProviders.addProvider')}
@@ -2487,11 +2467,11 @@ function CapabilityIconRail({ capabilities }: { capabilities: AiModelCapability[
 
 function StatusDot({ tint, label }: { tint: SettingsTint; label: string }) {
   const tintClass = {
-    peach: 'bg-[var(--accent-peach)]',
-    lavender: 'bg-[var(--accent-lavender)]',
-    sage: 'bg-[var(--accent-sage)]',
-    mist: 'bg-[var(--accent-mist)]',
-    pink: 'bg-[var(--accent-pink)]',
+    peach: 'bg-[var(--warning)]',
+    lavender: 'bg-[var(--accent)]',
+    sage: 'bg-[var(--success)]',
+    mist: 'bg-[var(--muted)]',
+    pink: 'bg-[var(--danger)]',
   } satisfies Record<SettingsTint, string>;
 
   return (

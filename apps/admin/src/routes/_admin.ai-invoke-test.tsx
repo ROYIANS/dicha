@@ -12,6 +12,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import { invokeAdminAiStream } from '@/api/admin';
+import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AiInvokeAttempt, AiInvokeResponse, AiModelUseCase, AiUsageStatus } from '@dicha/shared';
 
@@ -104,34 +105,27 @@ function AiInvokeTestPage() {
           </div>
           <div className="space-y-4 p-4">
             <FieldLabel label="用途">
-              <select
+              <HeroSelect
                 value={useCase}
-                onChange={(event) => setUseCase(event.target.value as AiModelUseCase)}
-                disabled={isRunning}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-xs text-ink outline-none disabled:opacity-60"
-              >
-                {useCaseOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+                onChange={(nextUseCase) => setUseCase(nextUseCase as AiModelUseCase)}
+                isDisabled={isRunning}
+                options={useCaseOptions.map((item) => ({ value: item, label: item }))}
+              />
             </FieldLabel>
             <FieldLabel label="指定模型 ID">
-              <input
+              <HeroTextInput
                 value={modelId}
-                onChange={(event) => setModelId(event.target.value)}
+                onChange={setModelId}
                 disabled={isRunning}
                 placeholder="留空则使用用途分配"
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-xs text-ink outline-none placeholder:text-ink-soft disabled:opacity-60"
               />
             </FieldLabel>
             <FieldLabel label="提示词">
-              <textarea
+              <HeroTextArea
                 value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
+                onChange={setPrompt}
                 disabled={isRunning}
-                className="min-h-40 w-full resize-y rounded-md border border-hairline bg-surface px-3 py-2 text-xs leading-relaxed text-ink outline-none disabled:opacity-60"
+                className="min-h-40"
               />
             </FieldLabel>
             <div className="grid gap-2 sm:grid-cols-[1fr_auto]">

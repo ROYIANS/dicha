@@ -64,7 +64,7 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
 
         <div className="flex shrink-0 items-center justify-between border-b border-hairline px-4 pb-3 pt-1">
           <div className="flex items-center gap-2">
-            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--ink)' }} />
+            <BrandMark className="h-5 w-[30px]" style={{ color: 'var(--foreground)' }} />
             <span id={titleId} className="text-[16px] font-semibold font-serif text-ink">
               滴茶
             </span>

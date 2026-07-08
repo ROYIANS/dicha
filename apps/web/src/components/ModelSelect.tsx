@@ -1,6 +1,7 @@
-import { AlertCircle, Check, ChevronDown } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 import { useMemo } from 'react';
 import type { AiGatewayCatalog } from '@dicha/shared';
+import { HeroSelect } from '@/components/HeroControls';
 import { getAssignableModelGroups } from '@/lib/ai-catalog-ui';
 
 type ModelSelectProps = {
@@ -15,6 +16,7 @@ type ModelSelectProps = {
 };
 
 type AssignableModelGroup = ReturnType<typeof getAssignableModelGroups>[number];
+const EMPTY_MODEL_VALUE = '__empty_model__';
 
 export function ModelSelect({
   catalog,
@@ -43,7 +45,7 @@ export function ModelSelect({
   }, [catalog]);
   const selected = selectableModels.get(value);
   const selectedUnavailable = Boolean(value) && !selected;
-  const selectValue = selected ? value : '';
+  const selectValue = selected ? value : allowEmpty ? EMPTY_MODEL_VALUE : '';
 
   if (modelGroups.length === 0) {
     return (
@@ -62,33 +64,23 @@ export function ModelSelect({
   }
 
   return (
-    <span className="flex w-full min-w-0 flex-col items-stretch gap-1">
-      <span className="relative block w-full">
-        <select
-          value={selectValue}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.value)}
-          aria-label={placeholder}
-          className="h-9 w-full appearance-none truncate rounded-md border border-hairline bg-surface-alt py-0 pl-3 pr-8 text-[12px] font-medium text-ink shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_7%,transparent)] outline-none transition-colors hover:bg-surface focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <option value="" disabled={!allowEmpty}>
-            {placeholder}
-          </option>
-          {modelGroups.map((group) => (
-            <optgroup key={group.provider.id} label={group.provider.name}>
-              {group.models.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.displayName}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <ChevronDown
-          size={14}
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
-        />
-      </span>
+      <span className="flex w-full min-w-0 flex-col items-stretch gap-1">
+      <HeroSelect
+        aria-label={placeholder}
+        value={selectValue}
+        onChange={(next) => onChange(next === EMPTY_MODEL_VALUE ? '' : next)}
+        placeholder={placeholder}
+        isDisabled={disabled}
+        className="w-full"
+        options={allowEmpty ? [{ value: EMPTY_MODEL_VALUE, label: placeholder }] : undefined}
+        groups={modelGroups.map((group) => ({
+          label: group.provider.name,
+          options: group.models.map((model) => ({
+            value: model.id,
+            label: model.displayName,
+          })),
+        }))}
+      />
       {selectedUnavailable ? (
         <span className="inline-flex min-w-0 items-center gap-1 text-[11px] leading-tight text-pink">
           <AlertCircle size={12} className="shrink-0" />

@@ -8,7 +8,7 @@ type EdgeRulerProps = {
 };
 
 /** 侧沟分段标尺 — 与落地页 Ruler 同实现，贴 rail 内边界。 */
-export function EdgeRuler({ segs, side, color = 'var(--hairline)', className = '' }: EdgeRulerProps) {
+export function EdgeRuler({ segs, side, color = 'var(--border)', className = '' }: EdgeRulerProps) {
   return (
     <div
       aria-hidden

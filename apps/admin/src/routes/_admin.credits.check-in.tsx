@@ -7,6 +7,7 @@ import {
   adminCreditCheckInQueryOptions,
   upsertAdminCreditCheckInCampaign,
 } from '@/api/admin';
+import { HeroNumberInput, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminCreditCheckInCampaignUpsert, AdminCreditCheckInOverview } from '@dicha/shared';
 
@@ -177,10 +178,10 @@ function CampaignForm({
       <Field label="活动时区" value={timezone} onChange={setTimezone} placeholder="Asia/Shanghai" />
       <label className="block space-y-1.5 text-xs text-ink-soft">
         <span>活动说明</span>
-        <textarea
+        <HeroTextArea
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          className="min-h-24 w-full resize-y rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint"
+          onChange={setDescription}
+          className="min-h-24"
         />
       </label>
       <div className="grid gap-3 md:grid-cols-2">
@@ -219,12 +220,11 @@ function Field({
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input
+      <HeroTextInput
         type={type}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
         placeholder={placeholder}
-        className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none placeholder:text-ink-faint"
       />
     </label>
   );
@@ -242,13 +242,11 @@ function NumberField({
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input
-        type="number"
-        min={1}
+      <HeroNumberInput
+        minValue={1}
         step={1}
         value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none"
+        onChange={(nextValue) => onChange(nextValue ?? 0)}
       />
     </label>
   );

@@ -20,6 +20,7 @@ import type {
   AiUsageStatus,
 } from '@dicha/shared';
 import { invokeAiStream } from '@/api/ai';
+import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
@@ -105,7 +106,7 @@ export function AiInvokeDemoPage() {
       subtitle={t('settings.detail.aiInvokeDemo.subtitle')}
     >
       <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="rounded-md border border-hairline bg-surface shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_6%,transparent)]">
+        <section className="rounded-md border border-hairline bg-surface shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_6%,transparent)]">
           <div className="flex items-center gap-2 border-b border-hairline bg-surface-alt px-4 py-3">
             <span className={`grid size-8 place-items-center rounded-md border border-hairline ${settingsTintClass.peach}`}>
               <FlaskConical size={15} />
@@ -119,30 +120,26 @@ export function AiInvokeDemoPage() {
               <span className="text-[12px] font-medium text-ink-faint">
                 {t('settings.detail.aiInvokeDemo.useCase')}
               </span>
-              <select
+              <HeroSelect
                 value={useCase}
-                onChange={(event) => setUseCase(event.target.value as AiModelUseCase)}
-                disabled={isRunning}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {useCaseOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {t(`settings.aiUseCases.${item}`)}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setUseCase(value as AiModelUseCase)}
+                isDisabled={isRunning}
+                options={useCaseOptions.map((item) => ({
+                  value: item,
+                  label: t(`settings.aiUseCases.${item}`),
+                }))}
+              />
             </label>
 
             <label className="block space-y-1.5">
               <span className="text-[12px] font-medium text-ink-faint">
                 {t('settings.detail.aiInvokeDemo.modelId')}
               </span>
-              <input
+              <HeroTextInput
                 value={modelId}
-                onChange={(event) => setModelId(event.target.value)}
+                onChange={setModelId}
                 disabled={isRunning}
                 placeholder={t('settings.detail.aiInvokeDemo.modelIdPlaceholder')}
-                className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-[12px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
               />
             </label>
 
@@ -150,12 +147,12 @@ export function AiInvokeDemoPage() {
               <span className="text-[12px] font-medium text-ink-faint">
                 {t('settings.detail.aiInvokeDemo.prompt')}
               </span>
-              <textarea
+              <HeroTextArea
                 value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
+                onChange={setPrompt}
                 disabled={isRunning}
                 placeholder={t('settings.detail.aiInvokeDemo.promptPlaceholder')}
-                className="min-h-40 w-full resize-y rounded-md border border-hairline bg-surface px-3 py-2 text-[12px] leading-relaxed text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-mist disabled:cursor-not-allowed disabled:opacity-60"
+                rows={6}
               />
             </label>
 
@@ -164,7 +161,7 @@ export function AiInvokeDemoPage() {
                 type="button"
                 disabled={!canSubmit}
                 onClick={() => void runStream()}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-hairline bg-[var(--sidebar-bg)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-hairline bg-[var(--accent)] px-3 text-[12px] font-medium text-sidebar-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send size={14} />
                 {isRunning

@@ -33,6 +33,36 @@ const DEV_NAME = 'Serena';
 
 type Tint = 'lavender' | 'peach' | 'sage' | 'pink' | 'mist';
 
+const tintChipColor = (tint: Tint) => {
+  switch (tint) {
+    case 'lavender':
+      return 'color-mix(in oklab, var(--accent) 14%, var(--surface) 86%)';
+    case 'peach':
+      return 'color-mix(in oklab, var(--warning) 18%, var(--surface) 82%)';
+    case 'sage':
+      return 'color-mix(in oklab, var(--success) 16%, var(--surface) 84%)';
+    case 'pink':
+      return 'color-mix(in oklab, var(--danger) 14%, var(--surface) 86%)';
+    case 'mist':
+      return 'var(--surface-tertiary)';
+  }
+};
+
+const tintAccentColor = (tint: Tint) => {
+  switch (tint) {
+    case 'lavender':
+      return 'var(--accent)';
+    case 'peach':
+      return 'var(--warning)';
+    case 'sage':
+      return 'var(--success)';
+    case 'pink':
+      return 'var(--danger)';
+    case 'mist':
+      return 'var(--muted)';
+  }
+};
+
 // A2 — 今天概览 widgets
 type Widget = {
   key: string;
@@ -235,7 +265,7 @@ function IconChip({
   return (
     <span
       className={`dash-card-chip ${className}`}
-      style={{ backgroundColor: `var(--chip-${tint})`, color: `var(--accent-${tint})` }}
+      style={{ backgroundColor: tintChipColor(tint), color: tintAccentColor(tint) }}
     >
       {children}
     </span>
@@ -315,7 +345,7 @@ function SpaceCard({ space }: { space: Space }) {
       <div className="dash-card-media-img">
         <div
           className="absolute inset-0"
-          style={{ backgroundColor: `var(--chip-${space.tint})` }}
+          style={{ backgroundColor: tintChipColor(space.tint) }}
         />
         <img
           src={space.img}
@@ -327,8 +357,8 @@ function SpaceCard({ space }: { space: Space }) {
         <span
           className="dash-card-chip absolute left-2 top-2"
           style={{
-            backgroundColor: `var(--chip-${space.tint})`,
-            color: `var(--accent-${space.tint})`,
+            backgroundColor: tintChipColor(space.tint),
+            color: tintAccentColor(space.tint),
           }}
         >
           <Icon size={13} />
@@ -422,7 +452,7 @@ function RecentAdded() {
             >
               <div
                 className="absolute inset-0"
-                style={{ backgroundColor: `var(--chip-${item.tint})` }}
+                style={{ backgroundColor: tintChipColor(item.tint) }}
               />
               <img
                 src={item.img}

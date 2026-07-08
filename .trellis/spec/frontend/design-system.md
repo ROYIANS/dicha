@@ -67,23 +67,23 @@
 - **默认主题**：`warm-matte` 等于本文 §1.1 的暖白柔面哑光，是默认值。
 - **注册表单一出处**：主题 id、设置页 tint 与 swatch 预览放在 `apps/web/src/lib/theme-palettes.ts`，不要在页面组件里重复定义。
 - **DOM 契约**：`useTheme()` 同时维护 `data-theme="light|dark"` 和 `data-theme-palette="<preset>"`；palette 持久化到本机 `localStorage`。
-- **CSS 契约**：亮色 preset 用 `:root[data-theme-palette='<id>']` 覆盖语义 token（`--canvas`、`--surface`、`--hairline`、`--sidebar-bg`、`--accent-*`、`--chip-*`、`--accent-warm` 等）。组件继续只读语义 token，不直接判断 palette id。
-- **暗色契约**：`:root[data-theme='dark']` 必须在 palette 覆盖之后定义并保持最终覆盖权；MVP 暗色只有一套，不随 palette 变成多套暗色主题。
+- **CSS 契约**：主题色 preset 以 HeroUI v3 token 为源头，亮色用 `:root[data-theme-palette='<id>']` 覆盖 `--background`、`--foreground`、`--surface`、`--surface-secondary`、`--accent`、`--warning`、`--success`、`--danger`、`--border`、`--field-*` 等 HeroUI token。旧的 `--canvas`、`--ink`、`--hairline`、`--accent-*`、`--chip-*`、`--sidebar-*` 只能作为过渡别名映射到 HeroUI token，不再承载独立色值。
+- **暗色契约**：`:root[data-theme='dark'][data-theme-palette='<id>']` 定义每个 preset 的暗色 HeroUI token；自动/手动暗色只切 `data-theme`，不改写 `data-theme-palette`。
 - **文案契约**：设置页显示名和说明放在 `settings.themePalettes.<id>`，设置首页当前值也读取同一 palette。
 
 ```css
-/* Good: 主题只覆盖 token，组件零改动 */
+/* Good: 主题只覆盖 HeroUI token，组件零改动 */
 :root[data-theme-palette='sage-mint'] {
-  --canvas: #f3f7ec;
-  --surface: #fffffb;
-  --accent-warm: #6d8b63;
+  --background: oklch(97.02% 0.0056 138);
+  --surface: oklch(100% 0.0028 138);
+  --accent: oklch(60.27% 0.0682 138);
 }
 
-/* Good: 暗色仍是最终覆盖 */
-:root[data-theme='dark'] {
-  --canvas: #141414;
-  --surface: #212121;
-  --accent-warm: var(--ink-soft);
+/* Good: 每个 palette 可以有对应暗色 token */
+:root[data-theme='dark'][data-theme-palette='sage-mint'] {
+  --background: oklch(12% 0.0056 138);
+  --surface: oklch(21.03% 0.0112 138);
+  --accent: oklch(60.27% 0.0682 138);
 }
 ```
 
@@ -170,7 +170,7 @@
 
 ## 8. Tailwind 工具类映射
 
-`index.css` 用 `@theme inline` 把语义变量注册为工具类（随 `data-theme` 动态）：
+`index.css` 用 `@theme inline` 把 HeroUI token 注册到既有工具类（随 `data-theme` / `data-theme-palette` 动态）：
 
 - 颜色：`bg-canvas` `bg-surface` `bg-surface-alt` · `text-ink` `text-ink-soft` `text-ink-faint` · `border-hairline` · `text-lavender`/`-peach`/`-sage`/`-pink`/`-mist` 及 `bg-chip-*`
 - 侧栏 chrome：`bg-sidebar-bg` `text-sidebar-ink` `text-sidebar-ink-soft`（进 `@theme inline`）；选中/hover 叠加直接用 `bg-[var(--sidebar-active)]` / `bg-[var(--sidebar-hover)]`（不进 @theme）
@@ -178,7 +178,9 @@
 - 圆角：`rounded-card`
 - 阴影：`shadow-card` `shadow-raised` `shadow-float`
 
-**禁用**：组件内硬编码 `text-gray-*` / `bg-violet-*` / `oklch(...)` / `backdrop-blur` / `bg-white/NN`。一律走上述 token。
+**迁移规则**：新增组件优先直接读 HeroUI token（如 `var(--foreground)`、`var(--muted)`、`var(--border)`、`var(--surface-secondary)`）；旧 utility 类名可继续使用，但其底层必须映射到 HeroUI token。不要再新增独立色值的 `--canvas` / `--ink` / `--chip-*` 等项目自定义主题变量。
+
+**禁用**：组件内硬编码 `text-gray-*` / `bg-violet-*` / `oklch(...)` / `backdrop-blur` / `bg-white/NN`。一律走 HeroUI token 或已映射到 HeroUI token 的项目工具类。
 
 ### 8.1 滚动
 
@@ -206,4 +208,4 @@
 ## 实现约束
 
 - **无 legacy 双套**：仓库内不得同时存在玻璃 + 哑光两套视觉语言（铁律 no-legacy-compat）。
-- **HeroUI v3**：oklch theme 变量仍是底座；本系统语义 token 覆盖其表面/背景表现，不另起炉灶。
+- **HeroUI v3**：HeroUI oklch token 是颜色系统底座；本系统不另起一套独立 CSS 颜色变量。旧语义变量只作兼容别名，最终应逐步从组件直接引用中移除。

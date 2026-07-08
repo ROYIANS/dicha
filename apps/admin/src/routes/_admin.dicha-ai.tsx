@@ -8,7 +8,6 @@ import {
   PlugZap,
   RefreshCw,
   Save,
-  Search,
   Server,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
@@ -19,6 +18,12 @@ import {
   updateAdminDichaModel,
   upsertAdminDichaInternalProvider,
 } from '@/api/admin';
+import {
+  HeroCheckbox,
+  HeroSelect,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import { AiModelPricingSchema } from '@dicha/shared';
 import type {
@@ -320,77 +325,69 @@ function InternalProviderForm({
         {provider ? '编辑上游' : '新增上游'}
       </div>
       <Field label="名称">
-        <input
+        <HeroTextInput
           value={form.name}
-          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-          className="admin-input"
+          onChange={(name) => setForm((current) => ({ ...current, name }))}
         />
       </Field>
       <Field label="Base URL">
-        <input
+        <HeroTextInput
           value={form.baseUrl}
-          onChange={(event) => setForm((current) => ({ ...current, baseUrl: event.target.value }))}
-          className="admin-input"
+          onChange={(baseUrl) => setForm((current) => ({ ...current, baseUrl }))}
         />
       </Field>
       <div className="grid grid-cols-2 gap-2">
         <Field label="格式">
-          <select
+          <HeroSelect
             value={form.requestFormat}
-            onChange={(event) =>
+            onChange={(requestFormat) =>
               setForm((current) => ({
                 ...current,
-                requestFormat: event.target.value as AdminAiInternalProviderUpsert['requestFormat'],
+                requestFormat: requestFormat as AdminAiInternalProviderUpsert['requestFormat'],
               }))
             }
-            className="admin-input"
-          >
-            <option value="openai_compatible">OpenAI</option>
-            <option value="openai_responses">Responses</option>
-            <option value="anthropic_messages">Anthropic</option>
-          </select>
+            options={[
+              { value: 'openai_compatible', label: 'OpenAI' },
+              { value: 'openai_responses', label: 'Responses' },
+              { value: 'anthropic_messages', label: 'Anthropic' },
+            ]}
+          />
         </Field>
         <Field label="认证">
-          <select
+          <HeroSelect
             value={form.authType}
-            onChange={(event) =>
+            onChange={(authType) =>
               setForm((current) => ({
                 ...current,
-                authType: event.target.value as AdminAiInternalProviderUpsert['authType'],
+                authType: authType as AdminAiInternalProviderUpsert['authType'],
               }))
             }
-            className="admin-input"
-          >
-            <option value="bearer_token">Bearer</option>
-            <option value="api_key">API Key</option>
-            <option value="none">None</option>
-          </select>
+            options={[
+              { value: 'bearer_token', label: 'Bearer' },
+              { value: 'api_key', label: 'API Key' },
+              { value: 'none', label: 'None' },
+            ]}
+          />
         </Field>
       </div>
       <Field label="密钥">
-        <input
+        <HeroTextInput
           value={form.credential}
-          onChange={(event) => setForm((current) => ({ ...current, credential: event.target.value }))}
+          onChange={(credential) => setForm((current) => ({ ...current, credential }))}
           placeholder={provider?.credentialState === 'configured' ? '留空表示保持原密钥' : '输入密钥'}
           type="password"
-          className="admin-input"
         />
       </Field>
       <div className="grid grid-cols-[1fr_92px] gap-2">
-        <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
-          <span>启用</span>
-          <input
-            type="checkbox"
-            checked={form.enabled}
-            onChange={(event) => setForm((current) => ({ ...current, enabled: event.target.checked }))}
-            className="size-4"
-          />
-        </label>
+        <HeroCheckbox
+          label="启用"
+          isSelected={form.enabled}
+          onChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+        />
         <Field label="优先级">
-          <input
+          <HeroTextInput
             value={form.priority}
-            onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))}
-            className="admin-input"
+            onChange={(priority) => setForm((current) => ({ ...current, priority }))}
             inputMode="numeric"
           />
         </Field>
@@ -497,34 +494,28 @@ function DichaModelForm({
           </div>
         </div>
       </div>
-      <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
-        <span>作为 DX 模型启用</span>
-        <input
-          type="checkbox"
-          checked={form.enabled}
-          onChange={(event) => setForm((current) => ({ ...current, enabled: event.target.checked }))}
-          className="size-4"
-        />
-      </label>
+      <HeroCheckbox
+        label="作为 DX 模型启用"
+        isSelected={form.enabled}
+        onChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+      />
       <Field label="DX 模型 ID">
-        <input
+        <HeroTextInput
           value={form.dxModelId}
-          onChange={(event) => setForm((current) => ({ ...current, dxModelId: event.target.value }))}
-          className="admin-input"
+          onChange={(dxModelId) => setForm((current) => ({ ...current, dxModelId }))}
         />
       </Field>
       <Field label="前台展示名称">
-        <input
+        <HeroTextInput
           value={form.dxDisplayName}
-          onChange={(event) => setForm((current) => ({ ...current, dxDisplayName: event.target.value }))}
-          className="admin-input"
+          onChange={(dxDisplayName) => setForm((current) => ({ ...current, dxDisplayName }))}
         />
       </Field>
       <Field label="前台描述">
-        <textarea
+        <HeroTextArea
           value={form.dxDescription}
-          onChange={(event) => setForm((current) => ({ ...current, dxDescription: event.target.value }))}
-          className="admin-input min-h-20 resize-none py-2"
+          onChange={(dxDescription) => setForm((current) => ({ ...current, dxDescription }))}
+          className="min-h-20"
         />
       </Field>
       <div className="rounded-md border border-hairline bg-surface-alt p-3">
@@ -536,59 +527,51 @@ function DichaModelForm({
         </div>
         <div className="mt-3 grid grid-cols-[1fr_1.4fr] gap-2">
           <Field label="结算货币">
-            <select
+            <HeroSelect
               value={form.dxPricingCurrency}
-              onChange={(event) =>
+              onChange={(dxPricingCurrency) =>
                 setForm((current) => ({
                   ...current,
-                  dxPricingCurrency: event.target.value as PricingCurrency,
+                  dxPricingCurrency: dxPricingCurrency as PricingCurrency,
                 }))
               }
-              className="admin-input"
-            >
-              {PRICING_CURRENCIES.map((currency) => (
-                <option key={currency} value={currency}>
-                  {currencyLabel(currency)}
-                </option>
-              ))}
-            </select>
+              options={PRICING_CURRENCIES.map((currency) => ({
+                value: currency,
+                label: currencyLabel(currency),
+              }))}
+            />
           </Field>
           <Field label="前台价格提示">
-            <input
+            <HeroTextInput
               value={form.dxPriceHint}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, dxPriceHint: event.target.value }))
-              }
-              className="admin-input"
+              onChange={(dxPriceHint) => setForm((current) => ({ ...current, dxPriceHint }))}
               placeholder="例如 Dicha AI 按量计费"
             />
           </Field>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Field label="输入 / 百万 tokens">
-            <input
+            <HeroTextInput
               value={form.dxInputPerMillionTokens}
-              onChange={(event) =>
+              onChange={(dxInputPerMillionTokens) =>
                 setForm((current) => ({
                   ...current,
-                  dxInputPerMillionTokens: event.target.value,
+                  dxInputPerMillionTokens,
                 }))
               }
-              className="admin-input"
               inputMode="decimal"
               placeholder="例如 0.15"
             />
           </Field>
           <Field label="输出 / 百万 tokens">
-            <input
+            <HeroTextInput
               value={form.dxOutputPerMillionTokens}
-              onChange={(event) =>
+              onChange={(dxOutputPerMillionTokens) =>
                 setForm((current) => ({
                   ...current,
-                  dxOutputPerMillionTokens: event.target.value,
+                  dxOutputPerMillionTokens,
                 }))
               }
-              className="admin-input"
               inputMode="decimal"
               placeholder="例如 0.6"
             />
@@ -596,55 +579,43 @@ function DichaModelForm({
         </div>
         <div className="mt-2 grid gap-2">
           <Field label="阶梯计费 units JSON">
-            <textarea
+            <HeroTextArea
               value={form.dxPricingUnitsJson}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, dxPricingUnitsJson: event.target.value }))
+              onChange={(dxPricingUnitsJson) =>
+                setForm((current) => ({ ...current, dxPricingUnitsJson }))
               }
-              className="admin-input min-h-28 resize-none py-2 text-xs"
+              className="min-h-28"
               placeholder='[{"name":"textInput","unit":"millionTokens","strategy":"tiered","tiers":[{"upTo":100,"rate":2},{"upTo":"infinity","rate":1.5}]}]'
             />
           </Field>
           <Field label="内部计费备注">
-            <input
+            <HeroTextInput
               value={form.dxPricingNotes}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, dxPricingNotes: event.target.value }))
-              }
-              className="admin-input"
+              onChange={(dxPricingNotes) => setForm((current) => ({ ...current, dxPricingNotes }))}
               placeholder="例如 暂按上游成本价计"
             />
           </Field>
         </div>
       </div>
       <div className="grid grid-cols-[1fr_96px] gap-2">
-        <label className="flex items-center justify-between rounded-md border border-hairline bg-surface-alt px-3 py-2 text-sm text-ink">
-          <span>推荐</span>
-          <input
-            type="checkbox"
-            checked={form.dxRecommended}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, dxRecommended: event.target.checked }))
-            }
-            className="size-4"
-          />
-        </label>
+        <HeroCheckbox
+          label="推荐"
+          isSelected={form.dxRecommended}
+          onChange={(dxRecommended) => setForm((current) => ({ ...current, dxRecommended }))}
+        />
         <Field label="排序">
-          <input
+          <HeroTextInput
             value={form.dxSortOrder}
-            onChange={(event) => setForm((current) => ({ ...current, dxSortOrder: event.target.value }))}
-            className="admin-input"
+            onChange={(dxSortOrder) => setForm((current) => ({ ...current, dxSortOrder }))}
             inputMode="numeric"
           />
         </Field>
       </div>
       <Field label="参数配置 JSON">
-        <textarea
+        <HeroTextArea
           value={form.parameterConfig}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, parameterConfig: event.target.value }))
-          }
-          className="admin-input min-h-36 resize-none py-2 text-xs"
+          onChange={(parameterConfig) => setForm((current) => ({ ...current, parameterConfig }))}
+          className="min-h-36"
         />
       </Field>
       <button
@@ -697,15 +668,12 @@ function ModelSearchBar({
   return (
     <div className="border-b border-hairline bg-surface-alt/60 p-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-ink-faint" />
-          <input
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            placeholder={placeholder}
-            className="h-9 w-full rounded-md border border-hairline bg-surface px-9 text-xs text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
-          />
-        </label>
+        <HeroTextInput
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="min-w-0 flex-1"
+        />
         <div className="flex items-center justify-between gap-2 sm:justify-end">
           <span className="text-xs text-ink-soft">
             {visible} / {total}

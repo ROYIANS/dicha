@@ -17,7 +17,6 @@ import {
   Hash,
   Layers3,
   RefreshCw,
-  Search,
   Server,
   Timer,
   UserRound,
@@ -27,6 +26,7 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { adminDichaAiDiagnosticsQueryOptions } from '@/api/admin';
+import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type {
   AdminDichaAiDiagnosticsQuery,
@@ -439,17 +439,11 @@ function FilterSelect({
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-ink-soft">{label}</span>
-      <select
+      <HeroSelect
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink outline-none"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={options}
+      />
     </label>
   );
 }
@@ -468,15 +462,7 @@ function FilterInput({
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-ink-soft">{label}</span>
-      <div className="flex h-9 items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3">
-        <Search className="size-3.5 shrink-0 text-ink-soft" />
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          className="min-w-0 flex-1 bg-transparent text-xs text-ink outline-none placeholder:text-ink-soft"
-        />
-      </div>
+      <HeroTextInput value={value} onChange={onChange} placeholder={placeholder} />
     </label>
   );
 }

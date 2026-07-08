@@ -4,6 +4,7 @@ import { Plus, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminCreditRulesQueryOptions, upsertAdminCreditRule } from '@/api/admin';
+import { HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/rules')({
@@ -127,7 +128,7 @@ function TextInput({ label, value, onChange }: { label: string; value: string; o
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none" />
+      <HeroTextInput value={value} onChange={onChange} />
     </label>
   );
 }
@@ -136,7 +137,7 @@ function NumberInput({ label, value, onChange, step = 1 }: { label: string; valu
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input type="number" min={0} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none" />
+      <HeroNumberInput minValue={0} step={step} value={value} onChange={(nextValue) => onChange(nextValue ?? 0)} />
     </label>
   );
 }

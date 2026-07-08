@@ -1,4 +1,5 @@
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router';
+import { InputOTP } from '@heroui/react';
 import { useId, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { ArrowLeft, KeyRound, Loader2, Mail, Plus, ShieldCheck } from 'lucide-react';
 import 'altcha';
@@ -7,13 +8,14 @@ import { authQueryOptions } from '@/api/auth';
 import { EdgeRuler } from '@/components/EdgeRuler';
 import { BrandMark } from '@/components/AppBrand';
 import { FrameNode } from '@/components/FrameNode';
+import { HeroTextInput } from '@/components/HeroControls';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import { authClient } from '@/lib/auth-client';
 
 type Step = 'email' | 'otp';
 
-const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
-const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
+const LINE = 'color-mix(in oklab, var(--foreground) 16%, transparent)';
+const RULE = 'color-mix(in oklab, var(--foreground) 12%, transparent)';
 
 function GithubMark({ size = 15 }: { size?: number }) {
   return (
@@ -241,7 +243,7 @@ function LoginPage() {
               <div className="flex items-center gap-3 lg:hidden">
                 <span
                   className="grid h-10 w-12 place-items-center rounded-md bg-sidebar-bg transition-transform hover:scale-105"
-                  style={{ color: 'var(--sidebar-ink)' }}
+                  style={{ color: 'var(--accent-foreground)' }}
                 >
                   <BrandMark className="h-[18px] w-[27px]" />
                 </span>
@@ -273,14 +275,13 @@ function LoginPage() {
               <form className="space-y-4" onSubmit={handleSendOtp}>
                 <label className="block space-y-1.5">
                   <span className="text-[11px] tracking-wider text-ink-soft">管理员邮箱</span>
-                  <input
+                  <HeroTextInput
                     type="email"
                     required
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={setEmail}
                     placeholder="name@example.com"
                     autoComplete="email"
-                    className="w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
                   />
                 </label>
                 <button
@@ -296,16 +297,21 @@ function LoginPage() {
               <form className="space-y-4" onSubmit={verifyOtp}>
                 <label className="block space-y-1.5">
                   <span className="text-[11px] tracking-wider text-ink-soft">6 位验证码</span>
-                  <input
-                    inputMode="numeric"
-                    required
-                    minLength={6}
+                  <InputOTP
                     maxLength={6}
                     value={otp}
-                    onChange={(event) => setOtp(event.target.value)}
-                    placeholder="000000"
-                    className="w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-center text-lg font-semibold tracking-[0.32em] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
-                  />
+                    onChange={setOtp}
+                    autoFocus
+                  >
+                    <InputOTP.Group>
+                      <InputOTP.Slot index={0} />
+                      <InputOTP.Slot index={1} />
+                      <InputOTP.Slot index={2} />
+                      <InputOTP.Slot index={3} />
+                      <InputOTP.Slot index={4} />
+                      <InputOTP.Slot index={5} />
+                    </InputOTP.Group>
+                  </InputOTP>
                 </label>
                 <button
                   type="submit"

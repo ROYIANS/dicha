@@ -23,7 +23,12 @@ export const THEME_PALETTES = [
   {
     id: 'warm-matte',
     tint: 'peach',
-    swatches: ['#f7f4ef', '#ffffff', '#7a6248', '#b7aee0'],
+    swatches: [
+      'oklch(97.02% 0.0092 67.46)',
+      'oklch(100% 0.0046 67.46)',
+      'oklch(29.59% 0.0092 67.46)',
+      'oklch(78.19% 0.1614 49.97)',
+    ],
   },
   {
     id: 'peach-milk',

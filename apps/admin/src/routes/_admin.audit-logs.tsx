@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, FileClock, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileClock } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { adminAuditLogsQueryOptions, type AdminAuditLogsQueryInput } from '@/api/admin';
+import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 const PAGE_SIZE = 50;
@@ -47,41 +48,40 @@ function AuditLogsPage() {
         description="查看超级管理员在后台执行的关键操作、对象、结果和安全摘要。"
         action={
           <form onSubmit={submitSearch} className="flex w-full flex-wrap gap-2 lg:w-[560px]">
-            <label className="relative min-w-[220px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint" />
-              <input
-                value={searchDraft}
-                onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="搜索操作者、资源 ID 或摘要"
-                className="h-10 w-full rounded-md border border-hairline bg-surface px-9 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
-              />
-            </label>
-            <select
+            <HeroTextInput
+              value={searchDraft}
+              onChange={setSearchDraft}
+              placeholder="搜索操作者、资源 ID 或摘要"
+              className="min-w-[220px] flex-1"
+            />
+            <HeroSelect
               value={window}
-              onChange={(event) => {
-                setWindow(event.target.value as typeof window);
+              onChange={(nextWindow) => {
+                setWindow(nextWindow as typeof window);
                 setPage(1);
               }}
-              className="h-10 rounded-md border border-hairline bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-ink-soft"
-            >
-              <option value="24h">近 24 小时</option>
-              <option value="7d">近 7 天</option>
-              <option value="30d">近 30 天</option>
-              <option value="90d">近 90 天</option>
-              <option value="all">全部</option>
-            </select>
-            <select
-              value={result}
-              onChange={(event) => {
-                setResult(event.target.value as AdminAuditLogsQueryInput['result'] | '');
+              className="min-w-32"
+              options={[
+                { value: '24h', label: '近 24 小时' },
+                { value: '7d', label: '近 7 天' },
+                { value: '30d', label: '近 30 天' },
+                { value: '90d', label: '近 90 天' },
+                { value: 'all', label: '全部' },
+              ]}
+            />
+            <HeroSelect
+              value={result ?? ''}
+              onChange={(nextResult) => {
+                setResult(nextResult as AdminAuditLogsQueryInput['result'] | '');
                 setPage(1);
               }}
-              className="h-10 rounded-md border border-hairline bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-ink-soft"
-            >
-              <option value="">全部结果</option>
-              <option value="success">成功</option>
-              <option value="failure">失败</option>
-            </select>
+              className="min-w-28"
+              emptyLabel="全部结果"
+              options={[
+                { value: 'success', label: '成功' },
+                { value: 'failure', label: '失败' },
+              ]}
+            />
             <button
               type="submit"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90"

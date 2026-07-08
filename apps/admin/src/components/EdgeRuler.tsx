@@ -10,7 +10,7 @@ type EdgeRulerProps = {
 export function EdgeRuler({
   segs,
   side,
-  color = 'var(--hairline)',
+  color = 'var(--border)',
   className = '',
 }: EdgeRulerProps) {
   return (

@@ -7,6 +7,7 @@ import {
   adminCreditRedemptionCodesQueryOptions,
   upsertAdminCreditRedemptionCode,
 } from '@/api/admin';
+import { HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/redemption-codes')({
@@ -119,7 +120,7 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none placeholder:text-ink-faint" />
+      <HeroTextInput value={value} onChange={onChange} placeholder={placeholder} />
     </label>
   );
 }
@@ -128,7 +129,7 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input type="number" min={1} step={1} value={value} onChange={(event) => onChange(Number(event.target.value))} className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none" />
+      <HeroNumberInput minValue={1} step={1} value={value} onChange={(nextValue) => onChange(nextValue ?? 0)} />
     </label>
   );
 }

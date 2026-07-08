@@ -14,13 +14,13 @@ import {
   Mail,
   MemoryStick,
   RefreshCw,
-  Search,
   Server,
   TerminalSquare,
   Trash2,
   type LucideIcon,
 } from 'lucide-react';
 import { adminSystemOperationsQueryOptions, runAdminSystemAction } from '@/api/admin';
+import { HeroTabs, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminSystemActionResult, AdminSystemOperations } from '@dicha/shared';
 
@@ -129,33 +129,67 @@ function SystemToolsWorkbench({
 
       {lastResult ? <ActionResultBanner result={lastResult} /> : null}
 
-      <div className="grid grid-cols-4 gap-1 rounded-md bg-surface-alt p-1">
-        <TabButton active={tab === 'status'} icon={Cpu} label="系统状态" onClick={() => setTab('status')} />
-        <TabButton active={tab === 'backup'} icon={Archive} label="数据备份" onClick={() => setTab('backup')} />
-        <TabButton active={tab === 'logs'} icon={FileText} label="系统日志" onClick={() => setTab('logs')} />
-        <TabButton active={tab === 'cache'} icon={Trash2} label="缓存管理" onClick={() => setTab('cache')} />
-      </div>
-
-      {tab === 'status' ? <SystemStatusPanel operations={operations} onRunAction={onRunAction} runningAction={runningAction} actionPending={actionPending} /> : null}
-      {tab === 'backup' ? (
-        <BackupPanel
-          operations={operations}
-          actions={backupActions}
-          runningAction={runningAction}
-          actionPending={actionPending}
-          onRunAction={onRunAction}
-        />
-      ) : null}
-      {tab === 'logs' ? <LogsPanel operations={operations} onRunAction={onRunAction} runningAction={runningAction} actionPending={actionPending} /> : null}
-      {tab === 'cache' ? (
-        <CachePanel
-          operations={operations}
-          actions={cacheActions}
-          runningAction={runningAction}
-          actionPending={actionPending}
-          onRunAction={onRunAction}
-        />
-      ) : null}
+      <HeroTabs
+        value={tab}
+        onChange={setTab}
+        ariaLabel="系统管理标签页"
+        items={[
+          {
+            value: 'status',
+            label: '系统状态',
+            icon: <Cpu className="size-4" strokeWidth={1.8} />,
+            panel: (
+              <SystemStatusPanel
+                operations={operations}
+                onRunAction={onRunAction}
+                runningAction={runningAction}
+                actionPending={actionPending}
+              />
+            ),
+          },
+          {
+            value: 'backup',
+            label: '数据备份',
+            icon: <Archive className="size-4" strokeWidth={1.8} />,
+            panel: (
+              <BackupPanel
+                operations={operations}
+                actions={backupActions}
+                runningAction={runningAction}
+                actionPending={actionPending}
+                onRunAction={onRunAction}
+              />
+            ),
+          },
+          {
+            value: 'logs',
+            label: '系统日志',
+            icon: <FileText className="size-4" strokeWidth={1.8} />,
+            panel: (
+              <LogsPanel
+                operations={operations}
+                onRunAction={onRunAction}
+                runningAction={runningAction}
+                actionPending={actionPending}
+              />
+            ),
+          },
+          {
+            value: 'cache',
+            label: '缓存管理',
+            icon: <Trash2 className="size-4" strokeWidth={1.8} />,
+            panel: (
+              <CachePanel
+                operations={operations}
+                actions={cacheActions}
+                runningAction={runningAction}
+                actionPending={actionPending}
+                onRunAction={onRunAction}
+              />
+            ),
+          },
+        ]}
+      />
     </>
   );
 }
@@ -380,15 +414,12 @@ function LogsPanel({
           <p className="mt-1 text-xs text-ink-soft">{operations.logs.detail}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex min-w-[260px] items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 py-2">
-            <Search className="size-4 text-ink-faint" strokeWidth={1.8} />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="搜索日志..."
-              className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
-            />
-          </div>
+          <HeroTextInput
+            value={search}
+            onChange={setSearch}
+            placeholder="搜索日志..."
+            className="min-w-[260px]"
+          />
           {action ? (
             <ActionButton
               action={action}
@@ -525,31 +556,6 @@ function CachePanel({
         </div>
       </div>
     </section>
-  );
-}
-
-function TabButton({
-  active,
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  icon: LucideIcon;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex min-h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors ${
-        active ? 'bg-surface text-ink shadow-raised' : 'text-ink-soft hover:bg-surface'
-      }`}
-    >
-      <Icon className="size-4" strokeWidth={1.8} />
-      <span className="truncate">{label}</span>
-    </button>
   );
 }
 

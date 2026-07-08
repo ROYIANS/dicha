@@ -35,6 +35,7 @@ import {
   YAxis,
 } from 'recharts';
 import { adminDichaAiUsageQueryOptions } from '@/api/admin';
+import { HeroSelect } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type {
   AdminDichaAiUsageEvent,
@@ -58,10 +59,10 @@ const LOG_LIMITS = [100, 300, 500, 1000] as const;
 type TrendMetric = 'calls' | 'totalTokens' | 'cnyCost' | 'usdCost';
 
 const TREND_METRICS: Array<{ value: TrendMetric; label: string; color: string }> = [
-  { value: 'calls', label: '请求次数', color: 'var(--accent-peach)' },
-  { value: 'totalTokens', label: '总 token', color: 'var(--accent-sage)' },
-  { value: 'cnyCost', label: '人民币费用', color: 'var(--accent-warm)' },
-  { value: 'usdCost', label: '美元费用', color: 'var(--accent-mist)' },
+  { value: 'calls', label: '请求次数', color: 'var(--warning)' },
+  { value: 'totalTokens', label: '总 token', color: 'var(--success)' },
+  { value: 'cnyCost', label: '人民币费用', color: 'var(--accent)' },
+  { value: 'usdCost', label: '美元费用', color: 'var(--muted)' },
 ];
 
 export const Route = createFileRoute('/_admin/analytics')({
@@ -111,17 +112,12 @@ function AnalyticsPage() {
                 </button>
               ))}
             </div>
-            <select
-              value={logLimit}
-              onChange={(event) => setLogLimit(Number(event.target.value) as (typeof LOG_LIMITS)[number])}
-              className="h-9 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink outline-none"
-            >
-              {LOG_LIMITS.map((limit) => (
-                <option key={limit} value={limit}>
-                  日志 {limit} 条
-                </option>
-              ))}
-            </select>
+            <HeroSelect
+              value={String(logLimit)}
+              onChange={(nextLimit) => setLogLimit(Number(nextLimit) as (typeof LOG_LIMITS)[number])}
+              className="min-w-28"
+              options={LOG_LIMITS.map((limit) => ({ value: String(limit), label: `日志 ${limit} 条` }))}
+            />
           </div>
         </div>
 
@@ -259,33 +255,33 @@ function TrendChart({ buckets }: { buckets: AiUsageTimeBucket[] }) {
                   <stop offset="100%" stopColor={selectedMetric.color} stopOpacity={0.04} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="var(--hairline)" vertical={false} />
+              <CartesianGrid stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                tick={{ fill: 'var(--muted)', fontSize: 11 }}
                 interval="preserveStartEnd"
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
                 width={44}
-                tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                tick={{ fill: 'var(--muted)', fontSize: 11 }}
                 tickFormatter={formatCompact}
               />
               <Tooltip
-                cursor={{ stroke: 'var(--hairline)' }}
+                cursor={{ stroke: 'var(--border)' }}
                 contentStyle={{
-                  border: '1px solid var(--hairline)',
+                  border: '1px solid var(--border)',
                   borderRadius: 6,
                   background: 'var(--surface)',
-                  color: 'var(--ink)',
+                  color: 'var(--foreground)',
                   fontSize: 12,
                   boxShadow: 'var(--shadow-raised)',
                 }}
-                itemStyle={{ color: 'var(--ink)', fontSize: 12 }}
-                labelStyle={{ color: 'var(--ink-soft)', fontSize: 12 }}
+                itemStyle={{ color: 'var(--foreground)', fontSize: 12 }}
+                labelStyle={{ color: 'var(--muted)', fontSize: 12 }}
                 formatter={(value) => formatTrendValue(Number(value), metric)}
               />
               <Area
@@ -325,12 +321,12 @@ function ModelUsagePanel({ items }: { items: AiUsageBreakdown[] }) {
           {data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 4 }}>
-                <CartesianGrid stroke="var(--hairline)" horizontal={false} />
+                <CartesianGrid stroke="var(--border)" horizontal={false} />
                 <XAxis
                   type="number"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
                   tickFormatter={formatCompact}
                 />
                 <YAxis
@@ -339,20 +335,20 @@ function ModelUsagePanel({ items }: { items: AiUsageBreakdown[] }) {
                   axisLine={false}
                   tickLine={false}
                   width={118}
-                  tick={{ fill: 'var(--ink-soft)', fontSize: 11 }}
+                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
                 />
                 <Tooltip
-                  cursor={{ fill: 'color-mix(in oklab, var(--ink) 4%, transparent)' }}
+                  cursor={{ fill: 'color-mix(in oklab, var(--foreground) 4%, transparent)' }}
                   contentStyle={{
-                    border: '1px solid var(--hairline)',
+                    border: '1px solid var(--border)',
                     borderRadius: 6,
                     background: 'var(--surface)',
-                    color: 'var(--ink)',
+                    color: 'var(--foreground)',
                     fontSize: 12,
                   }}
-                  itemStyle={{ color: 'var(--ink)', fontSize: 12 }}
+                  itemStyle={{ color: 'var(--foreground)', fontSize: 12 }}
                 />
-                <Bar dataKey="tokens" name="总 token" fill="var(--accent-sage)" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="tokens" name="总 token" fill="var(--success)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -538,17 +534,12 @@ function UsageLogTable({
         />
         <div className="flex items-center gap-2 text-xs text-ink-soft">
           <span>每页</span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(event) => table.setPageSize(Number(event.target.value))}
-            className="h-8 rounded-md border border-hairline bg-surface-alt px-2 text-xs text-ink outline-none"
-          >
-            {[25, 50, 100, 200].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+          <HeroSelect
+            value={String(table.getState().pagination.pageSize)}
+            onChange={(nextSize) => table.setPageSize(Number(nextSize))}
+            className="min-w-20"
+            options={[25, 50, 100, 200].map((size) => ({ value: String(size), label: String(size) }))}
+          />
           <span>最多 {formatInteger(logLimit)} 条</span>
         </div>
       </div>

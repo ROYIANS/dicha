@@ -272,7 +272,7 @@ function SidebarNavItem({
       to={item.to}
       onClick={onNavigate}
       className="admin-sidebar-link flex items-center gap-2 rounded-md px-2.5 py-2 text-sm"
-      activeProps={{ className: 'bg-[var(--sidebar-active)] text-sidebar-ink' }}
+      activeProps={{ className: 'bg-[color-mix(in oklab, var(--accent-foreground) 10%, transparent)] text-sidebar-ink' }}
       inactiveProps={{ className: 'text-sidebar-ink-soft' }}
       activeOptions={{ exact: item.to === '/' }}
     >

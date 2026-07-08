@@ -4,6 +4,7 @@ import { Gift } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { grantAdminCredits } from '@/api/admin';
+import { HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/grants')({
@@ -75,11 +76,10 @@ function Field({
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input
+      <HeroTextInput
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
         placeholder={placeholder}
-        className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none placeholder:text-ink-faint"
       />
     </label>
   );
@@ -97,13 +97,11 @@ function NumberField({
   return (
     <label className="block space-y-1.5 text-xs text-ink-soft">
       <span>{label}</span>
-      <input
-        type="number"
-        min={1}
+      <HeroNumberInput
+        minValue={1}
         step={1}
         value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="h-9 w-full rounded-md border border-hairline bg-surface-alt px-3 text-sm text-ink outline-none"
+        onChange={(nextValue) => onChange(nextValue ?? 0)}
       />
     </label>
   );

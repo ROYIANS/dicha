@@ -44,11 +44,11 @@ const WINDOWS: Array<{ value: AiUsageWindow; label: string }> = [
 ];
 
 const CHART_COLORS = {
-  granted: 'var(--accent-sage)',
-  redeemed: 'var(--accent-peach)',
-  spent: 'var(--accent-pink)',
-  ai: 'var(--accent-lavender)',
-  net: 'var(--accent-mist)',
+  granted: 'var(--success)',
+  redeemed: 'var(--warning)',
+  spent: 'var(--danger)',
+  ai: 'var(--accent)',
+  net: 'var(--muted)',
 };
 
 export const Route = createFileRoute('/_admin/credits/operations')({
@@ -202,9 +202,9 @@ function CreditTrendChart({ buckets }: { buckets: AdminCreditOperationsBucket[] 
                 <stop offset="100%" stopColor={CHART_COLORS.spent} stopOpacity={0.03} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="var(--hairline)" vertical={false} />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-faint)' }} />
-            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-faint)' }} width={64} />
+            <CartesianGrid stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--field-placeholder)' }} />
+            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--field-placeholder)' }} width={64} />
             <Tooltip content={<ChartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Area type="monotone" name="发放" dataKey="grantedCredits" stroke={CHART_COLORS.granted} fill="url(#creditGrantedFill)" strokeWidth={2} />
@@ -233,11 +233,11 @@ function CreditTypeChart({ items }: { items: AdminCreditOperationsBreakdown[] })
       {data.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <RechartsBarChart data={data} layout="vertical" margin={{ top: 8, right: 12, left: 12, bottom: 0 }}>
-            <CartesianGrid stroke="var(--hairline)" horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-faint)' }} />
-            <YAxis dataKey="label" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-faint)' }} width={56} />
+            <CartesianGrid stroke="var(--border)" horizontal={false} />
+            <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--field-placeholder)' }} />
+            <YAxis dataKey="label" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--field-placeholder)' }} width={56} />
             <Tooltip content={<ChartTooltip />} />
-            <Bar name="积分" dataKey="credits" fill="var(--accent-peach)" radius={[0, 4, 4, 0]} />
+            <Bar name="积分" dataKey="credits" fill="var(--warning)" radius={[0, 4, 4, 0]} />
           </RechartsBarChart>
         </ResponsiveContainer>
       ) : (

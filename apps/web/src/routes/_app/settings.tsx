@@ -359,7 +359,7 @@ function SettingsGroup({ title, children }: { title: string; children: ReactNode
   return (
     <section>
       <h2 className="mb-2 px-1 text-[11px] font-semibold tracking-wider text-ink-faint">{title}</h2>
-      <div className="overflow-hidden rounded-md border border-hairline bg-surface shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)]">
+      <div className="overflow-hidden rounded-md border border-hairline bg-surface shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_8%,transparent)]">
         {children}
       </div>
     </section>

@@ -8,7 +8,6 @@ import {
   LogOut,
   MonitorSmartphone,
   RotateCcw,
-  Search,
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
@@ -20,6 +19,7 @@ import {
   type AdminUsersQueryInput,
   updateAdminUserStatus,
 } from '@/api/admin';
+import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminUserDetail, AdminUserSummary } from '@dicha/shared';
 
@@ -70,41 +70,40 @@ function BasicPage() {
         description="查看平台用户的基础资料、认证状态和登录信息。首版只读，不提供删除或封禁等高风险操作。"
         action={
           <form onSubmit={submitSearch} className="flex w-full gap-2 lg:w-[360px]">
-            <label className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint" />
-              <input
-                value={searchDraft}
-                onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="搜索姓名、邮箱、城市或小屋名"
-                className="h-10 w-full rounded-md border border-hairline bg-surface px-9 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-ink-soft"
-              />
-            </label>
-            <select
-              value={status}
-              onChange={(event) => {
-                setStatus(event.target.value as AdminUsersQueryInput['status'] | '');
+            <HeroTextInput
+              value={searchDraft}
+              onChange={setSearchDraft}
+              placeholder="搜索姓名、邮箱、城市或小屋名"
+              className="min-w-0 flex-1"
+            />
+            <HeroSelect
+              value={status ?? ''}
+              onChange={(nextStatus) => {
+                setStatus(nextStatus as AdminUsersQueryInput['status'] | '');
                 setPage(1);
                 setSelectedUserId(null);
               }}
-              className="h-10 rounded-md border border-hairline bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-ink-soft"
-            >
-              <option value="">全部状态</option>
-              <option value="active">正常</option>
-              <option value="disabled">已禁用</option>
-            </select>
-            <select
+              className="min-w-28"
+              emptyLabel="全部状态"
+              options={[
+                { value: 'active', label: '正常' },
+                { value: 'disabled', label: '已禁用' },
+              ]}
+            />
+            <HeroSelect
               value={emailVerified}
-              onChange={(event) => {
-                setEmailVerified(event.target.value as 'all' | 'true' | 'false');
+              onChange={(nextVerified) => {
+                setEmailVerified(nextVerified as 'all' | 'true' | 'false');
                 setPage(1);
                 setSelectedUserId(null);
               }}
-              className="h-10 rounded-md border border-hairline bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-ink-soft"
-            >
-              <option value="all">全部邮箱</option>
-              <option value="true">已验证</option>
-              <option value="false">未验证</option>
-            </select>
+              className="min-w-28"
+              options={[
+                { value: 'all', label: '全部邮箱' },
+                { value: 'true', label: '已验证' },
+                { value: 'false', label: '未验证' },
+              ]}
+            />
             <button
               type="submit"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90"

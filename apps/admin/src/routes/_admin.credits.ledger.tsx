@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ReceiptText } from 'lucide-react';
 import { useState } from 'react';
 import { adminCreditLedgerQueryOptions } from '@/api/admin';
+import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { CreditLedgerType } from '@dicha/shared';
 
@@ -42,26 +43,25 @@ function CreditLedgerPage() {
         description="查看平台积分账户的发放、兑换、官方 AI 调用扣费与后续调整记录。"
         action={
           <div className="flex flex-wrap gap-2">
-            <div className="flex h-9 items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3">
+            <div className="flex items-center gap-2">
               <ReceiptText size={15} className="text-ink-faint" />
-              <input
+              <HeroTextInput
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={setSearch}
                 placeholder="搜索用户"
-                className="w-40 bg-transparent text-xs text-ink outline-none placeholder:text-ink-faint"
+                className="w-40"
               />
             </div>
-            <select
+            <HeroSelect
               value={type}
-              onChange={(event) => setType(event.target.value as '' | CreditLedgerType)}
-              className="h-9 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink outline-none"
-            >
-              {LEDGER_TYPES.map((item) => (
-                <option key={item.value || 'all'} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              onChange={(nextType) => setType(nextType as '' | CreditLedgerType)}
+              className="min-w-28"
+              emptyLabel="全部类型"
+              options={LEDGER_TYPES.filter((item) => item.value).map((item) => ({
+                value: item.value,
+                label: item.label,
+              }))}
+            />
           </div>
         }
       />

@@ -52,12 +52,12 @@ const statusTone = {
 } satisfies Record<AiUsageEvent['status'], SettingsTint>;
 
 const chartColors = [
-  'var(--accent-sage)',
-  'var(--accent-peach)',
-  'var(--accent-lavender)',
-  'var(--accent-mist)',
-  'var(--accent-pink)',
-  'var(--accent-warm)',
+  'var(--success)',
+  'var(--warning)',
+  'var(--accent)',
+  'var(--muted)',
+  'var(--danger)',
+  'var(--accent)',
 ];
 
 type DistributionChartType = 'area' | 'bar';
@@ -91,7 +91,7 @@ export function AiUsageSettingsPage() {
                 onClick={() => setWindow(item.value)}
                 className={`h-8 rounded-md px-3 text-[12px] font-medium transition-colors ${
                   window === item.value
-                    ? 'bg-[var(--sidebar-bg)] text-sidebar-ink'
+                    ? 'bg-[var(--accent)] text-sidebar-ink'
                     : 'text-ink-faint hover:bg-surface-alt hover:text-ink'
                 }`}
               >
@@ -254,7 +254,7 @@ function MetricTile({
   detail: string;
 }) {
   return (
-    <article className="rounded-md border border-hairline bg-surface px-4 py-3 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_6%,transparent)]">
+    <article className="rounded-md border border-hairline bg-surface px-4 py-3 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_6%,transparent)]">
       <div className="flex items-center gap-2">
         <span className={`grid size-8 place-items-center rounded-md border border-hairline ${settingsTintClass[tint]}`}>
           <Icon size={15} />
@@ -305,7 +305,7 @@ function TrendCard({
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 6, right: 6, bottom: 0, left: 6 }}>
             <Tooltip
-              cursor={{ stroke: 'var(--hairline)' }}
+              cursor={{ stroke: 'var(--border)' }}
               formatter={(nextValue) => formatChartValue(Number(nextValue), metric)}
               contentStyle={tooltipStyle}
               itemStyle={tooltipItemStyle}
@@ -391,7 +391,7 @@ function DistributionPanel({ report }: { report: AiUsageReport }) {
           <ResponsiveContainer width="100%" height="100%">
             {chartType === 'area' ? (
               <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
-                <CartesianGrid stroke="var(--hairline)" strokeDasharray="3 5" vertical={false} />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} tick={axisTick} />
                 <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={(value) => compactChartValue(Number(value), metric)} />
                 <Tooltip
@@ -401,7 +401,7 @@ function DistributionPanel({ report }: { report: AiUsageReport }) {
                   labelStyle={tooltipLabelStyle}
                   wrapperStyle={tooltipWrapperStyle}
                 />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--ink-faint)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--field-placeholder)' }} />
                 {series.map((item) => (
                   <Area
                     key={item.dataKey}
@@ -420,7 +420,7 @@ function DistributionPanel({ report }: { report: AiUsageReport }) {
               </AreaChart>
             ) : (
               <RechartsBarChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
-                <CartesianGrid stroke="var(--hairline)" strokeDasharray="3 5" vertical={false} />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} tick={axisTick} />
                 <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={(value) => compactChartValue(Number(value), metric)} />
                 <Tooltip
@@ -430,7 +430,7 @@ function DistributionPanel({ report }: { report: AiUsageReport }) {
                   labelStyle={tooltipLabelStyle}
                   wrapperStyle={tooltipWrapperStyle}
                 />
-                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--ink-faint)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: 'var(--field-placeholder)' }} />
                 {series.map((item) => (
                   <Bar
                     key={item.dataKey}
@@ -473,7 +473,7 @@ function SegmentedControl<TValue extends string>({
           onClick={() => onChange(option.value)}
           className={`h-7 rounded-md px-2.5 text-[11px] font-medium transition-colors ${
             value === option.value
-              ? 'bg-[var(--sidebar-bg)] text-sidebar-ink'
+              ? 'bg-[var(--accent)] text-sidebar-ink'
               : 'text-ink-faint hover:bg-surface-alt hover:text-ink'
           }`}
         >
@@ -692,30 +692,30 @@ function compactChartValue(value: number, metric: DistributionMetric) {
 }
 
 const axisTick = {
-  fill: 'var(--ink-faint)',
+  fill: 'var(--field-placeholder)',
   fontSize: 11,
 };
 
 const tooltipStyle = {
-  border: '1px solid var(--hairline)',
+  border: '1px solid var(--border)',
   borderRadius: 6,
   background: 'var(--surface)',
-  color: 'var(--ink)',
+  color: 'var(--foreground)',
   fontSize: 11,
   lineHeight: 1.35,
   padding: '7px 9px',
-  boxShadow: '0 8px 24px color-mix(in oklab, var(--ink) 12%, transparent)',
+  boxShadow: '0 8px 24px color-mix(in oklab, var(--foreground) 12%, transparent)',
 };
 
 const tooltipItemStyle = {
-  color: 'var(--ink-soft)',
+  color: 'var(--muted)',
   fontSize: 11,
   lineHeight: 1.35,
   paddingBlock: 2,
 };
 
 const tooltipLabelStyle = {
-  color: 'var(--ink-faint)',
+  color: 'var(--field-placeholder)',
   fontSize: 10,
   lineHeight: 1.3,
   marginBottom: 4,

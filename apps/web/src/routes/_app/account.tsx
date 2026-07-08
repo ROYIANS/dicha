@@ -31,6 +31,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
+import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import {
@@ -68,7 +69,7 @@ export const Route = createFileRoute('/_app/account')({
   component: AccountPage,
 });
 
-const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
+const LINE = 'color-mix(in oklab, var(--foreground) 16%, transparent)';
 const AVATAR_COLORS = ['#2E2A26', '#7A6248', '#F0C3A3', '#A9C0A0', '#A8C4D6'];
 const GENDER_OPTIONS = ['男', '女', '保密'];
 
@@ -387,7 +388,7 @@ function AvatarSection({ user }: { user: UserDto }) {
                 onClick={() => void applyGeneratedAvatar(seed)}
                 aria-label={seed}
                 className="size-14 overflow-hidden rounded-md border bg-canvas transition-transform hover:scale-[1.03]"
-                style={{ borderColor: selectedSeed === seed ? 'var(--lp-brand)' : 'var(--hairline)' }}
+                style={{ borderColor: selectedSeed === seed ? 'var(--lp-brand)' : 'var(--border)' }}
               >
                 <Avatar name={seed} variant="beam" colors={AVATAR_COLORS} size={56} square />
               </button>
@@ -679,10 +680,9 @@ function SecuritySection({ user }: { user: UserDto }) {
       <section className="space-y-3 border-t border-hairline pt-5">
         <SectionLabel>{t('account.passkey')}</SectionLabel>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <input
+          <HeroTextInput
             value={newPasskeyName}
-            onChange={(event) => setNewPasskeyName(event.target.value)}
-            className="w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
+            onChange={setNewPasskeyName}
           />
           <button
             type="button"
@@ -709,10 +709,9 @@ function SecuritySection({ user }: { user: UserDto }) {
               <li key={record.id} className="rounded-md border border-hairline bg-canvas px-3 py-3">
                 {editingPasskeyId === record.id ? (
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
+                    <HeroTextInput
                       value={editingPasskeyName}
-                      onChange={(event) => setEditingPasskeyName(event.target.value)}
-                      className="w-full rounded-md border border-hairline bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-[var(--lp-brand)]"
+                      onChange={setEditingPasskeyName}
                     />
                     <button
                       type="button"
@@ -892,7 +891,7 @@ function Panel({
 }) {
   return (
     <section
-      className={`relative isolate overflow-hidden rounded-md border border-hairline bg-surface p-5 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--ink)_8%,transparent)] sm:p-6 ${className}`}
+      className={`relative isolate overflow-hidden rounded-md border border-hairline bg-surface p-5 shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] sm:p-6 ${className}`}
     >
       <div className="absolute inset-x-0 top-0 h-8 opacity-35 [mask-image:linear-gradient(to_bottom,#000,transparent)]">
         <Hatch />
@@ -901,7 +900,7 @@ function Panel({
         <div>
           <h2 className="text-[17px] font-semibold text-ink">{title}</h2>
         </div>
-        <span aria-hidden className="h-px w-14 bg-[color-mix(in_oklab,var(--ink)_16%,transparent)]" />
+        <span aria-hidden className="h-px w-14 bg-[color-mix(in_oklab,var(--foreground)_16%,transparent)]" />
       </div>
       <div className="relative z-10 space-y-5">{children}</div>
     </section>
@@ -927,44 +926,30 @@ function Field({
   placeholder?: string;
   multiline?: boolean;
 }) {
-  const controlClass =
-    'w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-[var(--lp-brand)]';
-  const controlStyle = { borderColor: invalid ? 'var(--accent-pink)' : 'var(--hairline)' };
-
   return (
     <label className="block space-y-1.5">
       <span className="block text-[11px] tracking-wider text-ink-soft">{label}</span>
       {options ? (
-        <select
+        <HeroSelect
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={onChange}
           aria-invalid={invalid}
-          className={`${controlClass} appearance-none`}
-          style={controlStyle}
-        >
-          <option value="">{placeholder ?? ''}</option>
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          placeholder={placeholder ?? ''}
+          emptyLabel={placeholder ?? ''}
+          options={options.map((option) => ({ value: option, label: option }))}
+        />
       ) : multiline ? (
-        <textarea
+        <HeroTextArea
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={onChange}
           aria-invalid={invalid}
           rows={4}
-          className={`${controlClass} min-h-28 resize-none leading-relaxed`}
-          style={controlStyle}
         />
       ) : (
-        <input
+        <HeroTextInput
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={onChange}
           aria-invalid={invalid}
-          className={controlClass}
-          style={controlStyle}
         />
       )}
       {invalid && errorText ? <span className="block text-[11px] text-accent-pink">{errorText}</span> : null}
@@ -985,23 +970,15 @@ function SelectControl({
   placeholder: string;
   disabled?: boolean;
 }) {
-  const controlClass =
-    'w-full rounded-md border border-hairline bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors focus:border-[var(--lp-brand)] disabled:cursor-not-allowed disabled:opacity-55';
-
   return (
-    <select
+    <HeroSelect
       value={value}
-      onChange={(event) => onChange(event.target.value)}
-      disabled={disabled}
-      className={`${controlClass} appearance-none`}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option key={option.code} value={option.code}>
-          {option.name}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      isDisabled={disabled}
+      placeholder={placeholder}
+      emptyLabel={placeholder}
+      options={options.map((option) => ({ value: option.code, label: option.name }))}
+    />
   );
 }
 

@@ -5,6 +5,7 @@ import { InputOTP } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { BrandMark } from '@/components/AppBrand';
+import { HeroTextInput } from '@/components/HeroControls';
 import { authClient } from '@/lib/auth-client';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import { suggestEmailCompletions } from '@/lib/email-suggestions';
@@ -25,8 +26,8 @@ export const Route = createFileRoute('/login')({
 });
 
 // 结构线 —— 与落地页同定义（blueprint-aesthetic.md §4.2）
-const LINE = 'color-mix(in oklab, var(--ink) 16%, transparent)';
-const RULE = 'color-mix(in oklab, var(--ink) 12%, transparent)';
+const LINE = 'color-mix(in oklab, var(--foreground) 16%, transparent)';
+const RULE = 'color-mix(in oklab, var(--foreground) 12%, transparent)';
 
 /** 双层工程纸网格（细 8px + 主 32px），radial 渐隐遮罩 —— 登录页辨识度底景。 */
 function GridPattern() {
@@ -121,11 +122,11 @@ function EmailField({
       <label htmlFor={id}>
         <span className="block text-[11px] tracking-wider text-ink-soft">{label}</span>
       </label>
-      <input
+      <HeroTextInput
         id={id}
         type="email"
         value={value}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={handleChange}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onKeyDown={handleKeyDown}
@@ -134,8 +135,6 @@ function EmailField({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
-        className="w-full rounded-md border bg-canvas px-3 py-2.5 text-[14px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-[var(--lp-brand)]"
-        style={{ borderColor: 'var(--hairline)' }}
       />
       {open ? (
         <div
@@ -339,7 +338,7 @@ function LoginPage() {
               <div className="flex items-center gap-3">
                 <span
                   className="grid h-10 w-12 place-items-center rounded-md bg-sidebar-bg transition-transform hover:scale-105"
-                  style={{ color: 'var(--sidebar-ink)' }}
+                  style={{ color: 'var(--accent-foreground)' }}
                 >
                   <BrandMark className="h-[18px] w-[27px]" />
                 </span>
@@ -360,9 +359,9 @@ function LoginPage() {
                 <div
                   className="rounded-md border border-l-2 p-3 transition-all duration-200"
                   style={{
-                    borderColor: 'color-mix(in oklab, var(--accent-pink) 60%, var(--ink) 8%)',
-                    borderLeftColor: 'var(--accent-pink)',
-                    backgroundColor: 'var(--chip-pink)',
+                    borderColor: 'color-mix(in oklab, var(--danger) 60%, var(--foreground) 8%)',
+                    borderLeftColor: 'var(--danger)',
+                    backgroundColor: 'color-mix(in oklab, var(--danger) 14%, var(--surface) 86%)',
                   }}
                 >
                   <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">ERR</span>
@@ -374,9 +373,9 @@ function LoginPage() {
                 <div
                   className="rounded-md border border-l-2 p-3 transition-all duration-200"
                   style={{
-                    borderColor: 'color-mix(in oklab, var(--accent-sage) 60%, var(--ink) 8%)',
-                    borderLeftColor: 'var(--accent-sage)',
-                    backgroundColor: 'var(--chip-sage)',
+                    borderColor: 'color-mix(in oklab, var(--success) 60%, var(--foreground) 8%)',
+                    borderLeftColor: 'var(--success)',
+                    backgroundColor: 'color-mix(in oklab, var(--success) 16%, var(--surface) 84%)',
                   }}
                 >
                   <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">OK</span>
@@ -514,14 +513,14 @@ function LoginPage() {
                 <br />
                 <a
                   href="#"
-                  className="underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
+                  className="underline decoration-[color-mix(in_oklab,var(--foreground)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--foreground)_80%)] hover:text-ink-soft"
                 >
                   服务条款
                 </a>
                 {' · '}
                 <a
                   href="#"
-                  className="underline decoration-[color-mix(in_oklab,var(--ink)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--ink)_80%)] hover:text-ink-soft"
+                  className="underline decoration-[color-mix(in_oklab,var(--foreground)_20%)] underline-offset-2 transition-[text-decoration-color] duration-150 hover:decoration-[color-mix(in_oklab,var(--foreground)_80%)] hover:text-ink-soft"
                 >
                   隐私政策
                 </a>
