@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ticket } from 'lucide-react';
 import { useState } from 'react';
@@ -7,7 +9,7 @@ import {
   adminCreditRedemptionCodesQueryOptions,
   upsertAdminCreditRedemptionCode,
 } from '@/api/admin';
-import { HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/redemption-codes')({
@@ -63,12 +65,12 @@ function RedemptionCodesPage() {
           <Field label="兑换码" value={code} onChange={setCode} placeholder="例如 DICHA-TEST-1000" />
           <NumberField label="积分数量" value={creditAmount} onChange={setCreditAmount} />
           <NumberField label="可兑换次数" value={maxRedemptions} onChange={setMaxRedemptions} />
-          <button
+          <HeroButton
             disabled={!code.trim() || creditAmount <= 0 || maxRedemptions <= 0 || mutation.isPending}
             className="h-9 w-full rounded-md bg-sidebar-bg text-xs font-medium text-sidebar-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {mutation.isPending ? '保存中...' : '保存兑换码'}
-          </button>
+          </HeroButton>
         </form>
 
         <section className="overflow-hidden rounded-md border border-hairline bg-surface">
@@ -87,7 +89,7 @@ function RedemptionCodesPage() {
                 <span className="text-sm font-semibold text-ink tabular-nums">
                   {formatInteger(item.creditAmount)}
                 </span>
-                <button
+                <HeroButton
                   type="button"
                   onClick={() =>
                     mutation.mutate({
@@ -103,7 +105,7 @@ function RedemptionCodesPage() {
                   className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink"
                 >
                   {item.enabled ? '停用' : '启用'}
-                </button>
+                </HeroButton>
               </div>
             ))}
             {codes.data?.codes.length === 0 ? (

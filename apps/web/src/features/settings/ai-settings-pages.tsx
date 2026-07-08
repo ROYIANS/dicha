@@ -31,7 +31,12 @@ import {
 } from 'lucide-react';
 import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
 import { Dropdown, Tooltip } from '@heroui/react';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import {
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +69,12 @@ import {
   updateAiConfig,
 } from '@/api/ai';
 import { ModelSelect } from '@/components/ModelSelect';
-import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
+import {
+  HeroButton,
+  HeroSelect,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import {
   SettingsDetailShell,
   SettingsPanel,
@@ -259,14 +269,14 @@ export function AiProvidersSettingsPage() {
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionLabel>{t('settings.detail.aiProviders.panelProviders')}</SectionLabel>
-            <button
+            <HeroButton
               type="button"
               onClick={() => setProviderModalOpen(true)}
               className="inline-flex h-9 items-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
             >
               <Plus size={14} />
               {t('settings.detail.aiProviders.addProvider')}
-            </button>
+            </HeroButton>
           </div>
           {providers && catalog ? (
             providers.length > 0 ? (
@@ -589,7 +599,7 @@ function ProviderCard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-surface-alt px-4 py-2.5">
-        <button
+        <HeroButton
           type="button"
           onClick={() => setExpanded((current) => !current)}
           className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink"
@@ -604,10 +614,10 @@ function ProviderCard({
           <span className="text-ink-faint">
             {t('settings.detail.aiProviders.enabledModelCount', { count: enabledModelCount })}
           </span>
-        </button>
+        </HeroButton>
         <div className="flex items-center gap-2">
           {canDeleteProvider ? (
-            <button
+            <HeroButton
               type="button"
               onClick={() => {
                 if (
@@ -624,11 +634,11 @@ function ProviderCard({
             >
               <Trash2 size={14} />
               {t('settings.detail.aiProviders.deleteProvider')}
-            </button>
+            </HeroButton>
           ) : null}
           {showProviderRuntimeActions ? (
             <>
-              <button
+              <HeroButton
                 type="button"
                 onClick={() => onCheckConnection(provider.id)}
                 disabled={checking || !canRunUpstreamProbe}
@@ -637,12 +647,12 @@ function ProviderCard({
               >
                 <Activity size={14} className={checking ? 'animate-pulse' : ''} />
                 {t('settings.detail.aiProviders.checkConnection')}
-              </button>
+              </HeroButton>
             </>
           ) : null}
           {showUpstreamSyncActions ? (
             <>
-              <button
+              <HeroButton
                 type="button"
                 onClick={() => onSyncModels(provider.id)}
                 disabled={syncing || !canRunUpstreamProbe}
@@ -651,12 +661,12 @@ function ProviderCard({
               >
                 <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
                 {t('settings.detail.aiProviders.syncModels')}
-              </button>
+              </HeroButton>
             </>
           ) : null}
           {canAddCustomModel ? (
             <>
-              <button
+              <HeroButton
                 type="button"
                 onClick={onAddModel}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
@@ -664,7 +674,7 @@ function ProviderCard({
               >
                 <Plus size={14} />
                 {t('settings.detail.aiProviders.addModel')}
-              </button>
+              </HeroButton>
             </>
           ) : null}
         </div>
@@ -855,7 +865,7 @@ function ProviderCredentialPopover({
 
   return (
     <div className="relative mt-3">
-      <button
+      <HeroButton
         type="button"
         onClick={() => setOpen((current) => !current)}
         className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
@@ -866,20 +876,20 @@ function ProviderCredentialPopover({
             ? t('settings.detail.aiProviders.addCredential')
             : t('settings.detail.aiProviders.manageCredential')
           : t('settings.detail.aiProviders.configureEndpoint')}
-      </button>
+      </HeroButton>
       {open ? (
         <div className="absolute right-0 z-20 mt-2 w-[min(360px,calc(100vw-48px))] rounded-md border border-hairline bg-surface p-3 shadow-float">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[13px] font-semibold text-ink">
               {t('settings.detail.aiProviders.apiKeyPopoverTitle')}
             </p>
-            <button
+            <HeroButton
               type="button"
               onClick={() => setOpen(false)}
               className="grid size-7 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
             >
               <X size={14} />
-            </button>
+            </HeroButton>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <span className="rounded-md border border-hairline bg-surface-alt px-2 py-1.5 text-center text-[12px] font-medium text-ink-faint">
@@ -930,7 +940,7 @@ function ProviderCredentialPopover({
                 disabled={pending}
               />
             ) : null}
-            <button
+            <HeroButton
               type="button"
               disabled={pending || !canSave}
               onClick={() => {
@@ -955,7 +965,7 @@ function ProviderCredentialPopover({
               {requiresUserCredential
                 ? t('settings.detail.aiProviders.saveCredentialShort')
                 : t('settings.detail.aiProviders.saveEndpointConfig')}
-            </button>
+            </HeroButton>
           </div>
         </div>
       ) : null}
@@ -1102,7 +1112,7 @@ function ProviderModelList({
               const count = filterCounts.get(filter.key) ?? 0;
               const selected = filter.key === selectedFilter;
               return (
-                <button
+                <HeroButton
                   key={filter.key}
                   type="button"
                   role="tab"
@@ -1117,7 +1127,7 @@ function ProviderModelList({
                   <Icon size={15} />
                   {t(`settings.detail.aiProviders.modelFilters.${filter.key}`)}
                   <span className="text-[11px] font-medium text-ink-faint">{count}</span>
-                </button>
+                </HeroButton>
               );
             })}
           </div>
@@ -1224,7 +1234,7 @@ function ProviderModelRow({
         {canDeleteModel ? (
           <Tooltip>
             <Tooltip.Trigger>
-              <button
+              <HeroButton
                 type="button"
                 onClick={() => {
                   if (
@@ -1242,7 +1252,7 @@ function ProviderModelRow({
                 aria-label={t('settings.detail.aiProviders.deleteModel')}
               >
                 <Trash2 size={15} />
-              </button>
+              </HeroButton>
             </Tooltip.Trigger>
             <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
               {t('settings.detail.aiProviders.deleteModel')}
@@ -1252,14 +1262,14 @@ function ProviderModelRow({
         {canConfigureModel ? (
           <Tooltip>
             <Tooltip.Trigger>
-              <button
+              <HeroButton
                 type="button"
                 onClick={onConfigure}
                 className="grid size-8 shrink-0 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
                 aria-label={t('settings.detail.aiProviders.configureModel')}
               >
                 <SlidersHorizontal size={15} />
-              </button>
+              </HeroButton>
             </Tooltip.Trigger>
             <Tooltip.Content className="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink shadow-float">
               {t('settings.detail.aiProviders.configureModel')}
@@ -1720,7 +1730,7 @@ function ModelFormModal({
         <div className="space-y-2">
           <div className="flex flex-wrap gap-1.5">
             {contextWindowPresets.map((preset) => (
-              <button
+              <HeroButton
                 key={preset}
                 type="button"
                 disabled={pending || backendManagedModel || preset === 0}
@@ -1732,7 +1742,7 @@ function ModelFormModal({
                 }`}
               >
                 {formatContextWindowPreset(preset)}
-              </button>
+              </HeroButton>
             ))}
           </div>
           <TextField
@@ -1829,13 +1839,13 @@ function ModalShell({
       <section className="relative z-10 flex h-dvh w-full flex-col overflow-hidden border-0 bg-surface shadow-float sm:h-auto sm:max-h-[min(760px,calc(100dvh-72px))] sm:max-w-3xl sm:rounded-card sm:border sm:border-hairline">
         <header className="flex items-center justify-between gap-4 border-b border-hairline px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
           <h2 className="text-[18px] font-semibold text-ink">{title}</h2>
-          <button
+          <HeroButton
             type="button"
             onClick={onClose}
             className="grid size-8 place-items-center rounded-md text-ink-faint transition-colors hover:bg-surface-alt hover:text-ink"
           >
             <X size={16} />
-          </button>
+          </HeroButton>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
         <footer className="border-t border-hairline bg-surface-alt px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
@@ -1863,15 +1873,15 @@ function ModalActions({
   const { t } = useTranslation();
   return (
     <div className="flex justify-end gap-2">
-      <button
+      <HeroButton
         type="button"
         onClick={onClose}
         disabled={pending}
         className="inline-flex h-9 items-center rounded-md border border-hairline bg-surface px-4 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
       >
         {t('settings.detail.aiProviders.cancel')}
-      </button>
-      <button
+      </HeroButton>
+      <HeroButton
         type="button"
         onClick={onSubmit}
         disabled={pending || !canSubmit}
@@ -1879,7 +1889,7 @@ function ModalActions({
       >
         <Save size={14} />
         {submitLabel}
-      </button>
+      </HeroButton>
     </div>
   );
 }
@@ -2046,7 +2056,7 @@ function ExtensionParameterPicker({
                         {definition?.parameterTag ?? definition?.key ?? parameter}
                       </p>
                     </div>
-                    <button
+                    <HeroButton
                       type="button"
                       disabled={disabled}
                       onClick={() => onChange(value.filter((item) => item !== parameter))}
@@ -2054,7 +2064,7 @@ function ExtensionParameterPicker({
                       aria-label="移除扩展参数"
                     >
                       <X size={13} />
-                    </button>
+                    </HeroButton>
                   </div>
                 </Tooltip.Trigger>
                 <Tooltip.Content className="max-w-80 rounded-md border border-hairline bg-surface px-3 py-2 text-[11px] leading-5 text-ink shadow-float">
@@ -2323,14 +2333,14 @@ function EmptyProvidersPanel({ onAddProvider }: { onAddProvider: () => void }) {
             </p>
           </div>
         </div>
-        <button
+        <HeroButton
           type="button"
           onClick={onAddProvider}
           className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-hairline bg-[var(--accent)] px-3 text-[12px] font-medium text-sidebar-ink"
         >
           <Plus size={14} />
           {t('settings.detail.aiProviders.addProvider')}
-        </button>
+        </HeroButton>
       </div>
     </div>
   );

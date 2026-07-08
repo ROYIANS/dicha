@@ -1,6 +1,13 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { House, LayoutDashboard, Package, Plus, UserRound } from 'lucide-react';
+import {
+  House,
+  LayoutDashboard,
+  Package,
+  Plus,
+  UserRound,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { HeroButton } from '@/components/HeroControls';
 
 type MobileTabBarProps = {
   actionsOpen: boolean;
@@ -67,7 +74,7 @@ export function MobileTabBar({ actionsOpen, onAddClick }: MobileTabBarProps) {
     <nav className="app-mobile-tabbar lg:hidden" aria-label={t('nav.mobilePrimary')}>
       <div className="app-mobile-tabbar-inner">
         {tabs.slice(0, 2).map(renderTab)}
-        <button
+        <HeroButton
           type="button"
           className="app-mobile-tabbar-add"
           aria-label={t('inputBar.add')}
@@ -75,7 +82,7 @@ export function MobileTabBar({ actionsOpen, onAddClick }: MobileTabBarProps) {
           onClick={onAddClick}
         >
           <Plus size={20} />
-        </button>
+        </HeroButton>
         {tabs.slice(2).map(renderTab)}
       </div>
     </nav>

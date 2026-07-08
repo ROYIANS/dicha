@@ -1,9 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, FileClock } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { adminAuditLogsQueryOptions, type AdminAuditLogsQueryInput } from '@/api/admin';
-import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 const PAGE_SIZE = 50;
@@ -82,12 +84,12 @@ function AuditLogsPage() {
                 { value: 'failure', label: '失败' },
               ]}
             />
-            <button
+            <HeroButton
               type="submit"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90"
             >
               搜索
-            </button>
+            </HeroButton>
           </form>
         }
       />
@@ -170,7 +172,7 @@ function AuditLogsPage() {
           )}
 
           <div className="flex items-center justify-between border-t border-hairline p-4">
-            <button
+            <HeroButton
               type="button"
               disabled={page <= 1}
               onClick={() => setPage((value) => Math.max(1, value - 1))}
@@ -178,11 +180,11 @@ function AuditLogsPage() {
             >
               <ChevronLeft className="size-3.5" />
               上一页
-            </button>
+            </HeroButton>
             <p className="text-xs text-ink-soft">
               {logs.data ? `${logs.data.page} / ${Math.max(logs.data.totalPages, 1)}` : '-'}
             </p>
-            <button
+            <HeroButton
               type="button"
               disabled={!logs.data || page >= logs.data.totalPages}
               onClick={() => setPage((value) => value + 1)}
@@ -190,7 +192,7 @@ function AuditLogsPage() {
             >
               下一页
               <ChevronRight className="size-3.5" />
-            </button>
+            </HeroButton>
           </div>
         </section>
       </div>

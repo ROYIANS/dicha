@@ -94,6 +94,33 @@
 
 ---
 
+### Convention: HeroUI Button 作为按钮底座
+
+**What**: 前台 `apps/web/src/components/HeroControls.tsx` 与后台 `apps/admin/src/components/HeroControls.tsx` 导出的 `HeroButton` 是普通 action button 的默认入口。新增真实 `<button>` 语义的操作按钮时优先使用 `HeroButton`，不要继续散写原生 `<button>`；导航跳转仍使用 `Link` / `<a>`，需要按钮视觉时复用 `lp-btn` / `lp-btn-primary` / `lp-btn-ghost` 类。
+
+**Why**: `HeroButton` 以 HeroUI `Button` 保留 React Aria 交互底座，同时把项目视觉收口到落地页 hero section 的 physical button 语汇：primary/ghost/danger 有底边 inset 凸起，hover 摊平，active 下压。薄封装会按旧 className/role 保守推断 `primary | ghost | danger | quiet | icon | plain` tone；复杂场景可显式传 `tone`。
+
+**Example**:
+
+```tsx
+// Good: 真实操作按钮走 HeroUI 底座
+<HeroButton type="button" onClick={save} disabled={pending}>
+  保存
+</HeroButton>
+
+// Good: 导航保留 Link 语义，但共享按钮视觉
+<Link to="/home" className="lp-btn lp-btn-primary inline-flex items-center rounded-md px-4 py-2.5">
+  开始入住
+</Link>
+
+// Bad: 新增页面继续散写原生 button 和独立按钮样式
+<button className="rounded bg-black px-4 py-2 text-white">保存</button>
+```
+
+**Related**: Modal / Table 仍按任务范围独立迁移，不跟按钮替换混在一起。
+
+---
+
 ## Web Component（自定义元素）集成
 
 接入非 React 的 Web Component（如 ALTCHA `<altcha-widget>`）时：

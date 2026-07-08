@@ -1,5 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
 import { useThemeTransition } from '@/lib/hooks/useThemeTransition';
+import { HeroButton } from '@/components/HeroControls';
 
 type ThemeToggleProps = {
   className?: string;
@@ -14,13 +15,13 @@ export function ThemeToggle({
   const { theme, toggle } = useThemeTransition();
 
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={toggle}
       className={className}
       aria-label={theme === 'light' ? '切换到夜间模式' : '切换到日间模式'}
     >
       {theme === 'light' ? <Moon size={iconSize} /> : <Sun size={iconSize} />}
-    </button>
+    </HeroButton>
   );
 }

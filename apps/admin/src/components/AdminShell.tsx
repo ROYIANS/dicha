@@ -1,4 +1,10 @@
-import { getRouteApi, Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
+import {
+  getRouteApi,
+  Link,
+  Outlet,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router';
 import { useState } from 'react';
 import {
   Activity,
@@ -23,6 +29,7 @@ import {
 } from 'lucide-react';
 import { logout } from '@/api/auth';
 import { BrandMark } from '@/components/AppBrand';
+import { HeroButton } from '@/components/HeroControls';
 
 const adminRoute = getRouteApi('/_admin');
 
@@ -119,22 +126,23 @@ export function AdminShell() {
 
       {mobileNavOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden" role="presentation">
-          <button
+          <HeroButton
             type="button"
             aria-label="关闭导航"
             className="absolute inset-0 bg-black/35"
+            style={{ backgroundColor: 'rgb(0 0 0 / 0.35)' }}
             onClick={() => setMobileNavOpen(false)}
           />
           <aside className="relative flex h-full w-[min(82vw,280px)] flex-col bg-sidebar-bg px-3 py-4 text-sidebar-ink shadow-float">
             <div className="mb-2 flex justify-end">
-              <button
+              <HeroButton
                 type="button"
                 aria-label="关闭导航"
                 onClick={() => setMobileNavOpen(false)}
                 className="grid size-9 place-items-center rounded-md bg-white/10 text-sidebar-ink transition-colors hover:bg-white/15"
               >
                 <X className="size-4" strokeWidth={1.8} />
-              </button>
+              </HeroButton>
             </div>
             <AdminSidebarContent
               user={user}
@@ -153,14 +161,14 @@ export function AdminShell() {
         <div className="admin-noise" aria-hidden />
         <header className="relative z-[1] flex h-16 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-surface/90 px-4 lg:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <button
+            <HeroButton
               type="button"
               aria-label="打开导航"
               onClick={() => setMobileNavOpen(true)}
               className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-alt text-ink transition-colors hover:bg-canvas lg:hidden"
             >
               <Menu className="size-4" strokeWidth={1.8} />
-            </button>
+            </HeroButton>
             <div className="min-w-0">
               <p className="text-xs text-ink-soft">Admin Console</p>
               <p className="truncate text-sm font-semibold text-ink">超级管理员管理系统</p>
@@ -226,14 +234,14 @@ function AdminSidebarContent({
       <div className="mt-4 shrink-0 rounded-md border border-white/10 bg-white/[0.04] p-3">
         <p className="truncate text-xs font-medium">{user.name}</p>
         <p className="mt-1 truncate text-[11px] text-sidebar-ink-soft">{user.email}</p>
-        <button
+        <HeroButton
           type="button"
           onClick={onLogout}
           className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-white/10 px-3 py-2 text-xs text-sidebar-ink transition-colors hover:bg-white/15"
         >
           <LogOut className="size-3.5" strokeWidth={1.7} />
           退出登录
-        </button>
+        </HeroButton>
       </div>
     </>
   );
@@ -252,7 +260,7 @@ function SidebarNavItem({
 
   if (!item.to || item.planned) {
     return (
-      <button
+      <HeroButton
         type="button"
         disabled
         className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-sidebar-ink-soft/50"
@@ -262,7 +270,7 @@ function SidebarNavItem({
         <span className="ml-auto rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-sidebar-ink-soft/70">
           稍后
         </span>
-      </button>
+      </HeroButton>
     );
   }
 

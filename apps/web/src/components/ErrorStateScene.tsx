@@ -1,7 +1,15 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, Compass, Home, RefreshCw, SearchX, ServerCrash } from 'lucide-react';
+import {
+  ArrowLeft,
+  Compass,
+  Home,
+  RefreshCw,
+  SearchX,
+  ServerCrash,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BrandMark } from '@/components/AppBrand';
+import { HeroButton } from '@/components/HeroControls';
 
 type ErrorStateSceneProps = {
   variant: 'not-found' | 'error';
@@ -106,23 +114,23 @@ export function ErrorStateScene({ variant, errorMessage }: ErrorStateSceneProps)
               <Home size={15} />
               {t('errors.actions.home')}
             </Link>
-            <button
+            <HeroButton
               type="button"
               onClick={() => window.history.back()}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 text-[13px] font-medium text-ink-soft shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] transition-colors hover:text-ink active:translate-y-px"
             >
               <ArrowLeft size={15} />
               {t('errors.actions.back')}
-            </button>
+            </HeroButton>
             {variant === 'error' ? (
-              <button
+              <HeroButton
                 type="button"
                 onClick={() => window.location.reload()}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 text-[13px] font-medium text-ink-soft shadow-[inset_0_-2px_0_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] transition-colors hover:text-ink active:translate-y-px"
               >
                 <RefreshCw size={15} />
                 {t('errors.actions.reload')}
-              </button>
+              </HeroButton>
             ) : null}
           </div>
         </div>

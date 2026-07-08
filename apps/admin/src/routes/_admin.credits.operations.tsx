@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { adminCreditOperationsQueryOptions } from '@/api/admin';
 import { PageHeader } from '@/components/PageHeader';
+import { HeroButton } from '@/components/HeroControls';
 import type {
   AdminCreditOperationsAiBreakdown,
   AdminCreditOperationsBreakdown,
@@ -79,7 +80,7 @@ function CreditOperationsPage() {
           </div>
           <div className="flex rounded-md border border-hairline bg-surface-alt p-1">
             {WINDOWS.map((item) => (
-              <button
+              <HeroButton
                 key={item.value}
                 type="button"
                 onClick={() => setWindow(item.value)}
@@ -90,7 +91,7 @@ function CreditOperationsPage() {
                 }`}
               >
                 {item.label}
-              </button>
+              </HeroButton>
             ))}
           </div>
         </div>

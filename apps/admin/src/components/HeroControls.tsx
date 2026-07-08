@@ -1,6 +1,7 @@
 import type { Key } from '@heroui/react';
 import type { ComponentProps, ReactNode } from 'react';
 import {
+  Button,
   Checkbox,
   Header,
   Input,
@@ -12,6 +13,82 @@ import {
   Tabs,
   TextArea,
 } from '@heroui/react';
+
+type ClassValue = string | false | null | undefined;
+
+function cx(...classes: ClassValue[]) {
+  return classes.filter(Boolean).join(' ');
+}
+
+type HeroButtonTone = 'primary' | 'ghost' | 'danger' | 'quiet' | 'icon' | 'plain';
+
+type NativeButtonCompatibilityProps = Pick<
+  ComponentProps<'button'>,
+  'aria-selected' | 'onMouseDown' | 'onMouseEnter' | 'role' | 'title'
+>;
+
+type HeroButtonProps = Omit<ComponentProps<typeof Button>, 'className' | 'isDisabled'> & {
+  className?: string;
+  disabled?: boolean;
+  isDisabled?: boolean;
+  tone?: HeroButtonTone;
+} & NativeButtonCompatibilityProps;
+
+export function HeroButton({
+  className,
+  disabled,
+  isDisabled,
+  tone,
+  variant,
+  ...props
+}: HeroButtonProps) {
+  const resolvedTone = tone ?? inferHeroButtonTone(className, props.role);
+  const resolvedVariant =
+    variant ??
+    (resolvedTone === 'primary' ? 'primary' : resolvedTone === 'danger' ? 'danger' : 'ghost');
+  const resolvedClassName =
+    resolvedTone === 'plain'
+      ? cx('hero-btn-plain', className)
+      : cx('hero-btn', `hero-btn-${resolvedTone}`, className);
+
+  return (
+    <Button
+      className={resolvedClassName}
+      isDisabled={isDisabled ?? disabled}
+      variant={resolvedVariant}
+      {...props}
+    />
+  );
+}
+
+function inferHeroButtonTone(
+  className: string | undefined,
+  role: NativeButtonCompatibilityProps['role'] | undefined,
+): HeroButtonTone {
+  const classes = className ?? '';
+
+  if (matchesClass(classes, 'backdrop|fixed inset-0|absolute inset-0')) return 'plain';
+  if (matchesClass(classes, 'text-danger|bg-danger|text-red|bg-red')) return 'danger';
+  if (matchesClass(classes, 'lp-nav-link|app-icon-btn|app-action-dial|app-mobile-tabbar-add')) {
+    return 'icon';
+  }
+  if (matchesClass(classes, 'lp-btn-primary|bg-\\[var\\(--accent\\)\\]|bg-sidebar-bg')) {
+    return 'primary';
+  }
+  if (role === 'tab' || role === 'option' || matchesClass(classes, 'border-b-2|app-sidebar-link')) {
+    return 'quiet';
+  }
+  if (matchesClass(classes, 'lp-btn-ghost|border|bg-surface|bg-canvas|bg-white/|surface-alt')) {
+    return 'ghost';
+  }
+  if (matchesClass(classes, 'size-|inline-grid|place-items-center')) return 'icon';
+
+  return 'primary';
+}
+
+function matchesClass(className: string, pattern: string) {
+  return new RegExp(pattern).test(className);
+}
 
 type Option = {
   value: string;

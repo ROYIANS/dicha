@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import {
   Bot,
   CircleStop,
@@ -12,7 +14,12 @@ import { useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import { invokeAdminAiStream } from '@/api/admin';
-import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
+import {
+  HeroButton,
+  HeroSelect,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AiInvokeAttempt, AiInvokeResponse, AiModelUseCase, AiUsageStatus } from '@dicha/shared';
 
@@ -129,7 +136,7 @@ function AiInvokeTestPage() {
               />
             </FieldLabel>
             <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-              <button
+              <HeroButton
                 type="button"
                 disabled={!canSubmit}
                 onClick={() => void runStream()}
@@ -137,16 +144,16 @@ function AiInvokeTestPage() {
               >
                 <Send className="size-3.5" />
                 {isRunning ? '流式生成中...' : '发送流式调用'}
-              </button>
+              </HeroButton>
               {isRunning ? (
-                <button
+                <HeroButton
                   type="button"
                   onClick={() => abortRef.current?.abort()}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 text-xs font-medium text-ink"
                 >
                   <CircleStop className="size-3.5" />
                   取消
-                </button>
+                </HeroButton>
               ) : null}
             </div>
           </div>

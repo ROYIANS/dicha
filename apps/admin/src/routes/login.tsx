@@ -1,14 +1,31 @@
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  redirect,
+  useRouter,
+} from '@tanstack/react-router';
 import { InputOTP } from '@heroui/react';
-import { useId, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { ArrowLeft, KeyRound, Loader2, Mail, Plus, ShieldCheck } from 'lucide-react';
+import {
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from 'react';
+import {
+  ArrowLeft,
+  KeyRound,
+  Loader2,
+  Mail,
+  Plus,
+  ShieldCheck,
+} from 'lucide-react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { authQueryOptions } from '@/api/auth';
 import { EdgeRuler } from '@/components/EdgeRuler';
 import { BrandMark } from '@/components/AppBrand';
 import { FrameNode } from '@/components/FrameNode';
-import { HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroTextInput } from '@/components/HeroControls';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import { authClient } from '@/lib/auth-client';
 
@@ -284,14 +301,14 @@ function LoginPage() {
                     autoComplete="email"
                   />
                 </label>
-                <button
+                <HeroButton
                   type="submit"
                   disabled={pending}
                   className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {pending ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
                   发送验证码
-                </button>
+                </HeroButton>
               </form>
             ) : (
               <form className="space-y-4" onSubmit={verifyOtp}>
@@ -313,15 +330,15 @@ function LoginPage() {
                     </InputOTP.Group>
                   </InputOTP>
                 </label>
-                <button
+                <HeroButton
                   type="submit"
                   disabled={pending || otp.length !== 6}
                   className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {pending ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
                   登录
-                </button>
-                <button
+                </HeroButton>
+                <HeroButton
                   type="button"
                   onClick={() => {
                     setStep('email');
@@ -332,7 +349,7 @@ function LoginPage() {
                 >
                   <ArrowLeft className="size-3" strokeWidth={1.8} />
                   换一个邮箱
-                </button>
+                </HeroButton>
               </form>
             )}
 
@@ -346,7 +363,7 @@ function LoginPage() {
             </div>
 
             <div className="grid gap-2">
-              <button
+              <HeroButton
                 type="button"
                 onClick={handlePasskey}
                 disabled={pending}
@@ -354,8 +371,8 @@ function LoginPage() {
               >
                 <KeyRound className="size-4" strokeWidth={1.8} />
                 使用 Passkey 登录
-              </button>
-              <button
+              </HeroButton>
+              <HeroButton
                 type="button"
                 onClick={handleGithub}
                 disabled={pending}
@@ -363,7 +380,7 @@ function LoginPage() {
               >
                 <GithubMark size={15} />
                 使用 GitHub 登录
-              </button>
+              </HeroButton>
             </div>
 
             {message ? (

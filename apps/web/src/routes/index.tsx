@@ -2,7 +2,15 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { BrandMark } from '@/components/AppBrand';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LandingNavDrawer } from '@/components/LandingNavDrawer';
-import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
+import { HeroButton } from '@/components/HeroControls';
 import {
   ScanLine,
   Feather,
@@ -636,7 +644,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
             <span className="text-[13px] font-medium">开始入住</span>
             <Key onDark>D</Key>
           </Link>
-          <button
+          <HeroButton
             type="button"
             aria-label={drawerOpen ? '关闭导航菜单' : '打开导航菜单'}
             aria-expanded={drawerOpen}
@@ -646,7 +654,7 @@ function Nav({ drawerOpen, onMenuClick }: { drawerOpen: boolean; onMenuClick: ()
             onClick={onMenuClick}
           >
             <Menu size={15} className="text-ink-soft" />
-          </button>
+          </HeroButton>
         </div>
       </nav>
 
@@ -955,7 +963,7 @@ function FeatureTabs() {
             const Icon = f.icon;
             const selected = i === active;
             return (
-              <button
+              <HeroButton
                 key={f.id}
                 type="button"
                 role="tab"
@@ -989,7 +997,7 @@ function FeatureTabs() {
                     <PlusIcon size={14} className="opacity-50" />
                   </div>
                 )}
-              </button>
+              </HeroButton>
             );
           })}
         </div>

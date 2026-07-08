@@ -1,11 +1,26 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router';
-import { useId, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
+import {
+  createFileRoute,
+  useRouter,
+} from '@tanstack/react-router';
+import {
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+import {
+  KeyRound,
+  Mail,
+  ArrowLeft,
+  Loader2,
+  Plus,
+} from 'lucide-react';
 import { InputOTP } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { BrandMark } from '@/components/AppBrand';
-import { HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroTextInput } from '@/components/HeroControls';
 import { authClient } from '@/lib/auth-client';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import { suggestEmailCompletions } from '@/lib/email-suggestions';
@@ -143,7 +158,7 @@ function EmailField({
           className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-hairline bg-surface shadow-float"
         >
           {suggestions.map((suggestion, index) => (
-            <button
+            <HeroButton
               key={suggestion}
               type="button"
               role="option"
@@ -156,7 +171,7 @@ function EmailField({
               className="block w-full px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-surface-alt aria-selected:bg-surface-alt"
             >
               {suggestion}
-            </button>
+            </HeroButton>
           ))}
         </div>
       ) : null}
@@ -393,7 +408,7 @@ function LoginPage() {
                     autoComplete="email"
                     placeholder="you@example.com"
                   />
-                  <button
+                  <HeroButton
                     type="submit"
                     disabled={pending}
                     className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
@@ -406,7 +421,7 @@ function LoginPage() {
                     <span className="text-[14px] font-medium">
                       {pending ? '发送中…' : '发送验证码'}
                     </span>
-                  </button>
+                  </HeroButton>
                 </form>
               )}
 
@@ -450,7 +465,7 @@ function LoginPage() {
                       </InputOTP.Group>
                     </InputOTP>
                   </div>
-                  <button
+                  <HeroButton
                     type="submit"
                     disabled={pending}
                     className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
@@ -463,15 +478,15 @@ function LoginPage() {
                     <span className="text-[14px] font-medium">
                       {pending ? '验证中…' : '验证并登录'}
                     </span>
-                  </button>
-                  <button
+                  </HeroButton>
+                  <HeroButton
                     type="button"
                     onClick={backToEmail}
                     className="lp-nav-link inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1 text-[12px]"
                   >
                     <ArrowLeft size={12} />
                     <span>换一个邮箱</span>
-                  </button>
+                  </HeroButton>
                 </form>
               )}
 
@@ -486,7 +501,7 @@ function LoginPage() {
               </div>
 
               {/* passkey 登录 */}
-              <button
+              <HeroButton
                 type="button"
                 onClick={handlePasskey}
                 disabled={pending}
@@ -494,10 +509,10 @@ function LoginPage() {
               >
                 <KeyRound size={15} />
                 <span className="text-[14px] font-medium">使用 passkey 登录</span>
-              </button>
+              </HeroButton>
 
               {/* GitHub 登录 */}
-              <button
+              <HeroButton
                 type="button"
                 onClick={handleGithub}
                 disabled={pending}
@@ -505,7 +520,7 @@ function LoginPage() {
               >
                 <GithubMark size={15} />
                 <span className="text-[14px] font-medium">使用 GitHub 登录</span>
-              </button>
+              </HeroButton>
 
               {/* 页脚小字 —— zed 式下划线渐显链接 */}
               <p className="text-center text-[11px] leading-relaxed text-ink-faint">

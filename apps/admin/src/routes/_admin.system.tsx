@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import {
+  useState,
+} from 'react';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -20,7 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { adminSystemOperationsQueryOptions, runAdminSystemAction } from '@/api/admin';
-import { HeroTabs, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroTabs, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminSystemActionResult, AdminSystemOperations } from '@dicha/shared';
 
@@ -368,14 +370,14 @@ function BackupPanel({
                     {file.createdAt ? formatDateTime(file.createdAt) : '-'}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
+                    <HeroButton
                       type="button"
                       disabled
                       className="inline-grid size-8 place-items-center rounded-md text-ink-soft opacity-50"
                       title="下载/恢复/删除需要单独的文件操作接口"
                     >
                       <Download className="size-4" strokeWidth={1.8} />
-                    </button>
+                    </HeroButton>
                   </td>
                 </tr>
               ))}
@@ -574,7 +576,7 @@ function ActionButton({
 }) {
   const pending = runningAction === action.id && actionPending;
   return (
-    <button
+    <HeroButton
       type="button"
       disabled={!action.executable || actionPending}
       onClick={() => onRunAction(action.id)}
@@ -596,7 +598,7 @@ function ActionButton({
       {!compact && action.disabledReason ? (
         <span className="mt-2 block text-xs leading-5 text-ink-soft">{action.disabledReason}</span>
       ) : null}
-    </button>
+    </HeroButton>
   );
 }
 

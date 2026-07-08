@@ -2,7 +2,7 @@
 
 ## Goal
 
-将前台 `apps/web` 与后台 `apps/admin` 中自写或原生的基础交互控件逐步迁移到 HeroUI v3，本轮优先覆盖表单输入、选择器、OTP、开关/复选与标签页。按钮、弹窗和表格暂时保持原样。迁移阶段先接受 HeroUI 原生观感，不继续为每个控件手写暖白 blueprint 样式；等基础组件统一后，再单独讨论视觉微调。
+将前台 `apps/web` 与后台 `apps/admin` 中自写或原生的基础交互控件逐步迁移到 HeroUI v3，本轮优先覆盖表单输入、选择器、OTP、开关/复选、标签页与按钮。按钮视觉以落地页 hero section 的 `lp-btn` 物理感按钮为基准，尽量通过 HeroUI `Button` 薄封装统一，不引入另一套按钮系统。
 
 ## What I Already Know
 
@@ -17,10 +17,10 @@
 
 * 前台和后台都纳入梳理与迁移计划。
 * 第一批实施采用全量非容器表单控件迁移：一次性扫完前后台 input/select/textarea/checkbox/switch/OTP/tab 等基础交互控件。
-* 按钮暂时保持原样，不在本轮迁移 HeroUI `Button`。
+* 按钮纳入本轮继续迁移：普通 action button 使用 HeroUI `Button`，视觉尽量还原落地页 hero section 的物理感 `lp-btn`。
 * 表格和弹窗暂时保持原样，不在本轮迁移 HeroUI `Table` / `Modal`。
 * 优先迁移表单与基础输入组件，同时覆盖标签页，而不是重做整站视觉。
-* 替换后尽量使用 HeroUI 组件默认样式，减少自定义 class 覆盖。
+* 替换后尽量使用 HeroUI 组件作为交互底座；按钮允许统一覆写为项目的 warm matte physical button 样式。
 * 保留现有业务行为、状态逻辑、路由与 API 调用。
 * ALTCHA 自定义元素必须继续放在 `<form>` 外，避免内部 required input 拦截提交。
 * 虽然按一个任务全量完成，内部实现仍按文件/区域小步推进，每个区域完成后跑局部检查，最终统一 lint/typecheck。
@@ -33,7 +33,9 @@
 * [x] `SettingsSwitch` 迁移为 HeroUI `Switch`，调用点行为不变。
 * [x] AI 设置与后台 AI 管理表单中的原生 input/select/textarea/checkbox 优先迁移到 HeroUI 对应组件。
 * [x] 后台自写 tabs 至少在 `_admin.system.tsx` 迁移到 HeroUI `Tabs`。
-* [x] 本轮不迁移 HeroUI `Button` / `Modal` / `Table`，相关原有结构保持稳定。
+* [x] 前台和后台普通按钮迁移到 HeroUI `Button` 薄封装，并保留现有业务行为、disabled/loading、表单提交与路由语义。
+* [x] HeroUI `Button` 的默认项目样式尽量还原落地页 hero section `lp-btn` / `lp-btn-primary` / `lp-btn-ghost` 的物理按钮效果。
+* [x] 本轮不迁移 HeroUI `Modal` / `Table`，相关原有结构保持稳定。
 * [x] `apps/web` 和 `apps/admin` 的 typecheck/lint 通过。
 
 ## Definition of Done
@@ -66,18 +68,22 @@
 4. **Admin tabs**
    * Replace `_admin.system.tsx` tab buttons with HeroUI `Tabs`.
 
-5. **Deferred container/action controls**
-   * Do not migrate buttons to HeroUI in this task.
-   * Keep native/custom button markup and existing classes for landing CTA, mobile tab bar, action dial, dashboard actions, forms, pagination, and icon actions.
+5. **Button migration**
+   * Add `HeroButton` thin wrappers in web/admin `HeroControls.tsx`.
+   * Style the wrapper from landing hero section `lp-btn` physical button behavior.
+   * Replace native/custom button markup across web/admin with HeroUI-backed buttons where the element is a real button.
+   * Link/anchor CTAs may keep their navigational element but should share the same button class system.
+
+6. **Deferred container controls**
    * Do not migrate custom modal shells or table markup in this task.
 
 ## Decision (ADR-lite)
 
-**Context**: The migration can be done as a conservative first batch or a broad component-library reset. The user wants to move decisively away from hand-rolled native controls and back to HeroUI defaults, but wants buttons to remain unchanged for now. Modal and table migration are also deferred to avoid widening the first implementation.
+**Context**: The migration can be done as a conservative first batch or a broad component-library reset. The user wants to move decisively away from hand-rolled native controls and back to HeroUI defaults. Button migration was initially deferred, then explicitly pulled into the next step with a requirement to match the landing hero section physical button style. Modal and table migration remain deferred to avoid widening the implementation.
 
-**Decision**: Use a broad first implementation pass that covers frontend/admin non-button, non-container form controls in this task; keep buttons, modals, and tables as-is.
+**Decision**: Use a broad implementation pass that covers frontend/admin form controls and buttons in this task; keep modals and tables as-is. Buttons use HeroUI as the accessible interaction primitive and project-level classes for the landing-inspired physical style.
 
-**Consequences**: This reduces split UI patterns for form controls while avoiding churn in branded/action-heavy button UI and complex container components. Later tasks can migrate buttons, modals, and tables after the HeroUI baseline settles.
+**Consequences**: This reduces split UI patterns for form controls and action buttons while avoiding churn in complex container components. Later tasks can migrate modals and tables after the HeroUI baseline settles.
 
 ## Open Questions
 
@@ -87,7 +93,6 @@
 
 * Replacing HeroUI with Lobe UI or introducing another component library.
 * Final visual polish beyond basic HeroUI theme token alignment.
-* Button migration to HeroUI.
 * Modal migration to HeroUI.
 * Table migration to HeroUI.
 * Rewriting business logic, API contracts, auth behavior, or AI provider semantics.

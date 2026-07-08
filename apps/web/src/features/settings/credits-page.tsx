@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   CalendarCheck,
   CheckCircle2,
@@ -20,7 +24,7 @@ import {
   creditLedgerQueryOptions,
   redeemCreditCode,
 } from '@/api/credits';
-import { HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroTextInput } from '@/components/HeroControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass } from '@/components/settings-ui';
 import type { CreditCheckInStatus, CreditLedgerEntry } from '@dicha/shared';
@@ -127,7 +131,7 @@ export function CreditsSettingsPage() {
                 onChange={setCode}
                 placeholder={t('settings.detail.credits.codePlaceholder')}
               />
-              <button
+              <HeroButton
                 type="submit"
                 disabled={!code.trim() || redeemMutation.isPending}
                 className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-3 text-[12px] font-medium text-sidebar-ink transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
@@ -136,7 +140,7 @@ export function CreditsSettingsPage() {
                 {redeemMutation.isPending
                   ? t('settings.detail.credits.redeeming')
                   : t('settings.detail.credits.redeem')}
-              </button>
+              </HeroButton>
             </form>
           </div>
 
@@ -236,7 +240,7 @@ function CheckInCard({
               ? t('settings.detail.credits.checkInToday', { date: status.todayDate })
               : t('settings.detail.credits.checkInLoading')}
           </p>
-          <button
+          <HeroButton
             type="button"
             onClick={onCheckIn}
             disabled={!canCheckIn}
@@ -248,7 +252,7 @@ function CheckInCard({
               : checkedIn
                 ? t('settings.detail.credits.checkedIn')
                 : t('settings.detail.credits.checkInAction')}
-          </button>
+          </HeroButton>
         </div>
       </div>
 

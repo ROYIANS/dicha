@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { DashCard, DashCardHeader, DashCardSlash } from '@/components/DashCard';
 import { ScrollArea } from '@/components/ScrollArea';
 import { useTheme } from '@/lib/hooks/useTheme';
+import { HeroButton } from '@/components/HeroControls';
 
 // ─── Unsplash 占位图（暖调极简实拍；真实摄影管线独立跟进）──────────────────────
 // 全部 URL 已 curl -I 验证 200。直链格式（不用已废弃的 source.unsplash.com）。
@@ -497,9 +498,9 @@ function Reminders() {
       <DashCardHeader
         title={t('dashboard.reminders')}
         action={
-          <button type="button" onClick={stub} className="dash-card-action">
+          <HeroButton type="button" onClick={stub} className="dash-card-action">
             {t('dashboard.viewAll')}
-          </button>
+          </HeroButton>
         }
       />
       <div className="space-y-2.5">
@@ -541,13 +542,13 @@ function Reading() {
           <div className="mt-1 text-[11px] tabular-nums text-ink-faint">68%</div>
         </div>
       </div>
-      <button
+      <HeroButton
         type="button"
         onClick={stub}
         className="lp-btn lp-btn-ghost mt-3 w-full rounded-md py-2 text-[12px] text-ink"
       >
         {t('dashboard.continueReading')}
-      </button>
+      </HeroButton>
     </DashCard>
   );
 }
@@ -569,9 +570,9 @@ function SpaceUsage() {
       <DashCardHeader
         title={t('dashboard.spaceUsage')}
         action={
-          <button type="button" onClick={stub} className="dash-card-action">
+          <HeroButton type="button" onClick={stub} className="dash-card-action">
             {t('dashboard.viewAll')}
-          </button>
+          </HeroButton>
         }
       />
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">

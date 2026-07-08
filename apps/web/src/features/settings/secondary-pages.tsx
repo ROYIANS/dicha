@@ -30,6 +30,7 @@ import {
 } from '@/components/SettingsScaffold';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { THEME_PALETTES, themePaletteById, type ThemePalette } from '@/lib/theme-palettes';
+import { HeroButton } from '@/components/HeroControls';
 
 type SettingsDetailPageKey =
   | 'privacy'
@@ -161,7 +162,7 @@ function ThemePaletteOption({
   const { t } = useTranslation();
 
   return (
-    <button
+    <HeroButton
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
@@ -185,7 +186,7 @@ function ThemePaletteOption({
       <span className="grid size-7 shrink-0 place-items-center rounded-md border border-hairline bg-canvas text-ink-soft">
         {selected ? <Check size={15} strokeWidth={2} /> : null}
       </span>
-    </button>
+    </HeroButton>
   );
 }
 

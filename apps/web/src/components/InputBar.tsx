@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { actionItems, handleActionStub } from '@/components/actionItems';
+import { HeroButton } from '@/components/HeroControls';
 
 /** 右下角浮动录入动作盘 — 默认只露出小白点，hover/focus/click 展开快捷动作。 */
 export function InputBar() {
@@ -25,7 +26,7 @@ export function InputBar() {
       <div className="app-action-dial-plate" aria-hidden />
 
       <div className="app-action-dial-anchor">
-        <button
+        <HeroButton
           type="button"
           onClick={() => {
             setOpen((value) => {
@@ -39,7 +40,7 @@ export function InputBar() {
           aria-expanded={open}
         >
           <Plus size={18} />
-        </button>
+        </HeroButton>
       </div>
 
       <div className="app-action-dial-actions">
@@ -48,7 +49,7 @@ export function InputBar() {
           const label = t(action.label);
 
           return (
-            <button
+            <HeroButton
               key={label}
               type="button"
               onClick={() => {
@@ -65,7 +66,7 @@ export function InputBar() {
               aria-label={label}
             >
               <Icon size={16} />
-            </button>
+            </HeroButton>
           );
         })}
       </div>

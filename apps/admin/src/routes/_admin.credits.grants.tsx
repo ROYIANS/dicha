@@ -1,10 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Gift } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { grantAdminCredits } from '@/api/admin';
-import { HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/grants')({
@@ -50,12 +52,12 @@ function CreditGrantsPage() {
           <Field label="用户 ID" value={ownerId} onChange={setOwnerId} placeholder="Better Auth / User.id" />
           <NumberField label="发放数量" value={amount} onChange={setAmount} />
           <Field label="原因" value={reason} onChange={setReason} placeholder="用于流水说明" />
-          <button
+          <HeroButton
             disabled={!ownerId.trim() || amount <= 0 || !reason.trim() || mutation.isPending}
             className="h-9 w-full rounded-md bg-sidebar-bg text-xs font-medium text-sidebar-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {mutation.isPending ? '发放中...' : '确认发放'}
-          </button>
+          </HeroButton>
         </form>
       </div>
     </div>

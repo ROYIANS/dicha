@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   flexRender,
@@ -35,7 +37,7 @@ import {
   YAxis,
 } from 'recharts';
 import { adminDichaAiUsageQueryOptions } from '@/api/admin';
-import { HeroSelect } from '@/components/HeroControls';
+import { HeroButton, HeroSelect } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type {
   AdminDichaAiUsageEvent,
@@ -98,7 +100,7 @@ function AnalyticsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex rounded-md border border-hairline bg-surface-alt p-1">
               {WINDOWS.map((item) => (
-                <button
+                <HeroButton
                   key={item.value}
                   type="button"
                   onClick={() => setWindow(item.value)}
@@ -109,7 +111,7 @@ function AnalyticsPage() {
                   }`}
                 >
                   {item.label}
-                </button>
+                </HeroButton>
               ))}
             </div>
             <HeroSelect
@@ -231,7 +233,7 @@ function TrendChart({ buckets }: { buckets: AiUsageTimeBucket[] }) {
     <div className="mt-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {TREND_METRICS.map((item) => (
-          <button
+          <HeroButton
             key={item.value}
             type="button"
             onClick={() => setMetric(item.value)}
@@ -242,7 +244,7 @@ function TrendChart({ buckets }: { buckets: AiUsageTimeBucket[] }) {
             }`}
           >
             {item.label}
-          </button>
+          </HeroButton>
         ))}
       </div>
       <div className="h-64 rounded-md border border-hairline bg-surface-alt p-3">
@@ -554,14 +556,14 @@ function UsageLogTable({
                     className={`px-4 py-3 font-medium ${isRightAligned(header.column.columnDef) ? 'text-right' : ''}`}
                   >
                     {header.isPlaceholder ? null : (
-                      <button
+                      <HeroButton
                         type="button"
                         onClick={header.column.getToggleSortingHandler()}
                         className={`inline-flex items-center gap-1.5 ${isRightAligned(header.column.columnDef) ? 'justify-end' : ''}`}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() ? <ArrowDownUp className="size-3" strokeWidth={1.8} /> : null}
-                      </button>
+                      </HeroButton>
                     )}
                   </th>
                 ))}
@@ -597,22 +599,22 @@ function UsageLogTable({
           第 {table.getState().pagination.pageIndex + 1} / {Math.max(table.getPageCount(), 1)} 页
         </span>
         <div className="flex items-center gap-2">
-          <button
+          <HeroButton
             type="button"
             disabled={!table.getCanPreviousPage()}
             onClick={() => table.previousPage()}
             className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
           >
             上一页
-          </button>
-          <button
+          </HeroButton>
+          <HeroButton
             type="button"
             disabled={!table.getCanNextPage()}
             onClick={() => table.nextPage()}
             className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
           >
             下一页
-          </button>
+          </HeroButton>
         </div>
       </div>
     </section>

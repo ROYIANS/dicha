@@ -1,4 +1,8 @@
-import { createFileRoute, useRouteContext, useRouter } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  useRouteContext,
+  useRouter,
+} from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Avatar from 'boring-avatars';
 import 'altcha';
@@ -31,7 +35,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { authQueryOptions } from '@/api/auth';
-import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
+import {
+  HeroButton,
+  HeroSelect,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { altchaChallengeUrl } from '@/lib/altcha';
 import {
@@ -283,7 +292,7 @@ function ProfileSection({ user }: { user: UserDto }) {
       </div>
 
       <div className="flex justify-end border-t border-hairline pt-5">
-        <button
+        <HeroButton
           type="button"
           onClick={() => void handleSave()}
           disabled={!dirty || nameInvalid || saving}
@@ -291,7 +300,7 @@ function ProfileSection({ user }: { user: UserDto }) {
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
           {saving ? t('account.saving') : t('account.save')}
-        </button>
+        </HeroButton>
       </div>
     </Panel>
   );
@@ -367,14 +376,14 @@ function AvatarSection({ user }: { user: UserDto }) {
               <Avatar name={selectedSeed ?? user.email} variant="beam" colors={AVATAR_COLORS} size={112} square />
             )}
           </div>
-          <button
+          <HeroButton
             type="button"
             onClick={handleRandomAvatar}
             className="lp-btn lp-btn-ghost inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md px-3 text-[12px]"
           >
             <Dices size={14} />
             {t('account.avatarRandom')}
-          </button>
+          </HeroButton>
         </div>
         <div className="min-w-0 flex-1">
           <span className="block text-[11px] tracking-wider text-ink-soft">
@@ -382,7 +391,7 @@ function AvatarSection({ user }: { user: UserDto }) {
           </span>
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {seeds.map((seed) => (
-              <button
+              <HeroButton
                 key={seed}
                 type="button"
                 onClick={() => void applyGeneratedAvatar(seed)}
@@ -391,7 +400,7 @@ function AvatarSection({ user }: { user: UserDto }) {
                 style={{ borderColor: selectedSeed === seed ? 'var(--lp-brand)' : 'var(--border)' }}
               >
                 <Avatar name={seed} variant="beam" colors={AVATAR_COLORS} size={56} square />
-              </button>
+              </HeroButton>
             ))}
           </div>
         </div>
@@ -405,7 +414,7 @@ function AvatarSection({ user }: { user: UserDto }) {
           className="hidden"
           onChange={(event) => void handleUpload(event)}
         />
-        <button
+        <HeroButton
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
@@ -413,7 +422,7 @@ function AvatarSection({ user }: { user: UserDto }) {
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? t('account.avatarUploading') : t('account.avatarUpload')}
-        </button>
+        </HeroButton>
         <span className="mt-2 block text-[11px] text-ink-faint">{t('account.avatarHint')}</span>
       </div>
     </Panel>
@@ -625,7 +634,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             </span>
           </div>
           {!user.emailVerified ? (
-            <button
+            <HeroButton
               type="button"
               onClick={() => void handleResend()}
               disabled={resending}
@@ -633,7 +642,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             >
               {resending ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
               {resending ? t('account.sending') : t('account.emailResend')}
-            </button>
+            </HeroButton>
           ) : null}
         </div>
         <altcha-widget
@@ -654,7 +663,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             {githubLinked ? t('account.githubLinked') : t('account.githubNotLinked')}
           </span>
           {githubLinked ? (
-            <button
+            <HeroButton
               type="button"
               onClick={() => void handleUnlinkGithub()}
               disabled={busy}
@@ -662,9 +671,9 @@ function SecuritySection({ user }: { user: UserDto }) {
             >
               <Unlink size={13} />
               {t('account.githubUnlink')}
-            </button>
+            </HeroButton>
           ) : (
-            <button
+            <HeroButton
               type="button"
               onClick={() => void handleLinkGithub()}
               disabled={busy}
@@ -672,7 +681,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             >
               <Link2 size={13} />
               {t('account.githubLink')}
-            </button>
+            </HeroButton>
           )}
         </div>
       </section>
@@ -684,7 +693,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             value={newPasskeyName}
             onChange={setNewPasskeyName}
           />
-          <button
+          <HeroButton
             type="button"
             onClick={() => void handleAddPasskey()}
             disabled={busy}
@@ -692,7 +701,7 @@ function SecuritySection({ user }: { user: UserDto }) {
           >
             <KeyRound size={14} />
             {t('account.passkeyAdd')}
-          </button>
+          </HeroButton>
         </div>
 
         {passkeysPending ? (
@@ -713,7 +722,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                       value={editingPasskeyName}
                       onChange={setEditingPasskeyName}
                     />
-                    <button
+                    <HeroButton
                       type="button"
                       onClick={() => void handleRenamePasskey()}
                       disabled={busy || !editingPasskeyName.trim()}
@@ -721,7 +730,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                     >
                       <Check size={13} />
                       {t('account.save')}
-                    </button>
+                    </HeroButton>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -735,15 +744,15 @@ function SecuritySection({ user }: { user: UserDto }) {
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button
+                      <HeroButton
                         type="button"
                         onClick={() => handleStartRename(record)}
                         className="app-icon-btn inline-flex size-8 items-center justify-center rounded-md text-ink-soft"
                         aria-label={t('account.passkeyRename')}
                       >
                         <Pencil size={13} />
-                      </button>
-                      <button
+                      </HeroButton>
+                      <HeroButton
                         type="button"
                         onClick={() => void handleDeletePasskey(record)}
                         disabled={busy}
@@ -751,7 +760,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                         aria-label={t('account.passkeyDelete')}
                       >
                         <Trash2 size={13} />
-                      </button>
+                      </HeroButton>
                     </div>
                   </div>
                 )}
@@ -765,7 +774,7 @@ function SecuritySection({ user }: { user: UserDto }) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <SectionLabel>{t('account.sessions')}</SectionLabel>
           <div className="flex items-center gap-2">
-            <button
+            <HeroButton
               type="button"
               onClick={() => void handleRefreshSessions()}
               disabled={sessionsQuery.isFetching}
@@ -773,8 +782,8 @@ function SecuritySection({ user }: { user: UserDto }) {
               aria-label={t('account.sessionRefresh')}
             >
               <RotateCcw size={13} className={sessionsQuery.isFetching ? 'animate-spin' : ''} />
-            </button>
-            <button
+            </HeroButton>
+            <HeroButton
               type="button"
               onClick={() => void handleRevokeOtherSessions()}
               disabled={revokingOthers || otherSessionCount === 0 || sessionsQuery.isPending}
@@ -782,7 +791,7 @@ function SecuritySection({ user }: { user: UserDto }) {
             >
               {revokingOthers ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}
               {t('account.sessionRevokeOthers')}
-            </button>
+            </HeroButton>
           </div>
         </div>
 
@@ -845,7 +854,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                     {current ? (
                       <span className="shrink-0 text-[11px] text-ink-faint">{t('account.sessionUseLogout')}</span>
                     ) : (
-                      <button
+                      <HeroButton
                         type="button"
                         onClick={() => void handleRevokeSession(record)}
                         disabled={revokingToken === record.token}
@@ -853,7 +862,7 @@ function SecuritySection({ user }: { user: UserDto }) {
                       >
                         {revokingToken === record.token ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                         {t('account.sessionRevoke')}
-                      </button>
+                      </HeroButton>
                     )}
                   </div>
                 </li>
@@ -864,14 +873,14 @@ function SecuritySection({ user }: { user: UserDto }) {
       </section>
 
       <section className="border-t border-hairline pt-5">
-        <button
+        <HeroButton
           type="button"
           onClick={() => void handleLogout()}
           className="lp-btn lp-btn-ghost inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-[13px]"
         >
           <User size={14} />
           {t('account.logout')}
-        </button>
+        </HeroButton>
         <span className="mt-3 block text-[11px] leading-relaxed text-ink-faint">
           {t('account.futureSettingsNote')}
         </span>

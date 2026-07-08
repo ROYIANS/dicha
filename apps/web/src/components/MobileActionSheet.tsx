@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { actionItems, handleActionStub } from '@/components/actionItems';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
+import { HeroButton } from '@/components/HeroControls';
 
 type MobileActionSheetProps = {
   open: boolean;
@@ -39,14 +40,14 @@ export function MobileActionSheet({ open, onOpenChange }: MobileActionSheetProps
 
   return createPortal(
     <>
-      <button
+      <HeroButton
         type="button"
         aria-label={t('inputBar.mobileClose')}
         className="app-mobile-actions-backdrop fixed inset-0 z-[210] lg:hidden"
         onClick={close}
       >
         <DotsBackdrop visible={open} className="pointer-events-none absolute inset-0 size-full" />
-      </button>
+      </HeroButton>
       <section
         role="dialog"
         aria-modal="true"
@@ -59,7 +60,7 @@ export function MobileActionSheet({ open, onOpenChange }: MobileActionSheetProps
             <h2 className="text-base font-semibold text-ink">{t('inputBar.mobileTitle')}</h2>
             <p className="mt-1 text-xs leading-relaxed text-ink-soft">{t('inputBar.mobileSubtitle')}</p>
           </div>
-          <button
+          <HeroButton
             ref={closeRef}
             type="button"
             aria-label={t('inputBar.mobileClose')}
@@ -67,7 +68,7 @@ export function MobileActionSheet({ open, onOpenChange }: MobileActionSheetProps
             onClick={close}
           >
             <X size={16} />
-          </button>
+          </HeroButton>
         </div>
         <div className="app-mobile-actions-grid">
           {actionItems.map((action, index) => {
@@ -75,7 +76,7 @@ export function MobileActionSheet({ open, onOpenChange }: MobileActionSheetProps
             const label = t(action.label);
 
             return (
-              <button
+              <HeroButton
                 key={label}
                 type="button"
                 className="app-mobile-actions-item"
@@ -89,7 +90,7 @@ export function MobileActionSheet({ open, onOpenChange }: MobileActionSheetProps
                   <Icon size={21} />
                 </span>
                 <span className="text-[13px] font-medium leading-tight text-ink">{label}</span>
-              </button>
+              </HeroButton>
             );
           })}
         </div>

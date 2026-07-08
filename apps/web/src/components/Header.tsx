@@ -1,10 +1,16 @@
 import Avatar from 'boring-avatars';
-import { Search, Bell, User, Menu } from 'lucide-react';
+import {
+  Search,
+  Bell,
+  User,
+  Menu,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { Link, useRouteContext } from '@tanstack/react-router';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { parseGeneratedAvatarMarker } from '@/lib/account-settings';
+import { HeroButton } from '@/components/HeroControls';
 
 type HeaderProps = {
   navOpen?: boolean;
@@ -23,7 +29,7 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
     <header className="app-chrome-header relative z-20 w-full shrink-0 border-b border-hairline [--node-horizontal-offset:-3.5px]">
       <div className="flex h-[57px] w-full min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-5 lg:px-6">
         {onMenuClick ? (
-          <button
+          <HeroButton
             type="button"
             aria-label={navOpen ? '关闭导航菜单' : '打开导航菜单'}
             aria-expanded={navOpen}
@@ -32,10 +38,10 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
             onClick={onMenuClick}
           >
             <Menu size={16} />
-          </button>
+          </HeroButton>
         ) : null}
 
-        <button
+        <HeroButton
           type="button"
           onClick={() => toast.info('搜索功能即将开放')}
           className="app-input-field flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-hairline bg-surface/80 px-2.5 text-left text-ink-faint sm:px-3"
@@ -48,20 +54,20 @@ export function Header({ navOpen = false, onMenuClick }: HeaderProps) {
           <span className="ml-auto hidden shrink-0 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline">
             /
           </span>
-        </button>
+        </HeroButton>
 
         <span aria-hidden className="hidden h-5 w-px shrink-0 bg-hairline sm:block" />
 
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           <ThemeToggle className="lp-nav-link inline-flex size-8 items-center justify-center rounded-md" iconSize={15} />
-          <button
+          <HeroButton
             type="button"
             onClick={() => toast.info('通知功能即将开放')}
             className="app-icon-btn relative inline-flex size-8 items-center justify-center rounded-md"
           >
             <Bell size={16} />
             <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-peach" />
-          </button>
+          </HeroButton>
           <Link
             to="/settings"
             className="app-icon-btn inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-1.5 sm:px-2"

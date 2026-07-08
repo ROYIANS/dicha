@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { AppBrand } from '@/components/AppBrand';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
 import { SidebarNav } from '@/components/Sidebar';
+import { HeroButton } from '@/components/HeroControls';
 
 type AppNavDrawerProps = {
   open: boolean;
@@ -39,14 +40,14 @@ export function AppNavDrawer({ open, onOpenChange }: AppNavDrawerProps) {
 
   return createPortal(
     <>
-      <button
+      <HeroButton
         type="button"
         aria-label="关闭导航"
         className="lp-drawer-backdrop fixed inset-0 z-[200] backdrop-blur-[14px] backdrop-saturate-150 lg:hidden"
         onClick={close}
       >
         <DotsBackdrop visible={open} className="pointer-events-none absolute inset-0 size-full" />
-      </button>
+      </HeroButton>
       <aside
         role="dialog"
         aria-modal="true"
@@ -55,7 +56,7 @@ export function AppNavDrawer({ open, onOpenChange }: AppNavDrawerProps) {
       >
         <div className="flex shrink-0 items-center justify-between border-b border-hairline px-4 py-3.5">
           <AppBrand to="/home" onClick={close} />
-          <button
+          <HeroButton
             ref={closeRef}
             type="button"
             aria-label="关闭"
@@ -63,7 +64,7 @@ export function AppNavDrawer({ open, onOpenChange }: AppNavDrawerProps) {
             onClick={close}
           >
             <X size={16} className="text-ink-soft" />
-          </button>
+          </HeroButton>
         </div>
         <SidebarNav className="flex-1 overflow-y-auto py-2" onNavigate={close} variant="canvas" />
       </aside>

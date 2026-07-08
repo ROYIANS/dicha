@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppBrand } from '@/components/AppBrand';
+import { HeroButton } from '@/components/HeroControls';
 
 /** Union of all registered route paths — matches FileRouteTypes['to'] in routeTree.gen.ts */
 type AppRoute = '/home' | '/storage-room' | '/wardrobe' | '/library' | '/world' | '/settings';
@@ -82,7 +83,7 @@ function NavLink({
 
   if (item.onClick) {
     return (
-      <button
+      <HeroButton
         type="button"
         onClick={() => {
           item.onClick?.();
@@ -92,7 +93,7 @@ function NavLink({
       >
         <span className="size-4 shrink-0">{item.icon}</span>
         <span className="truncate">{item.label}</span>
-      </button>
+      </HeroButton>
     );
   }
 

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { BrandMark } from '@/components/AppBrand';
 import { DotsBackdrop } from '@/components/DotsBackdrop';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { HeroButton } from '@/components/HeroControls';
 
 export type NavDrawerItem = { href: string; label: string };
 
@@ -44,14 +45,14 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
 
   return createPortal(
     <>
-      <button
+      <HeroButton
         type="button"
         aria-label="关闭导航菜单"
         className="lp-drawer-backdrop fixed inset-0 z-[200] backdrop-blur-[14px] backdrop-saturate-150"
         onClick={close}
       >
         <DotsBackdrop visible={open} className="pointer-events-none absolute inset-0 size-full" />
-      </button>
+      </HeroButton>
 
       <section
         role="dialog"
@@ -69,7 +70,7 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
               滴茶
             </span>
           </div>
-          <button
+          <HeroButton
             ref={closeRef}
             type="button"
             aria-label="关闭"
@@ -77,7 +78,7 @@ export function LandingNavDrawer({ open, onOpenChange, items }: LandingNavDrawer
             onClick={close}
           >
             <X size={16} className="text-ink-soft" />
-          </button>
+          </HeroButton>
         </div>
 
         <nav aria-label="站点主导航" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-2">

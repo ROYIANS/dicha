@@ -37,6 +37,7 @@ import type {
 import { aiUsageQueryOptions } from '@/api/ai';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
+import { HeroButton } from '@/components/HeroControls';
 
 const usageWindows = [
   { value: '24h' },
@@ -85,7 +86,7 @@ export function AiUsageSettingsPage() {
           </p>
           <div className="flex rounded-md border border-hairline bg-surface p-1">
             {usageWindows.map((item) => (
-              <button
+              <HeroButton
                 key={item.value}
                 type="button"
                 onClick={() => setWindow(item.value)}
@@ -96,7 +97,7 @@ export function AiUsageSettingsPage() {
                 }`}
               >
                 {t(`settings.detail.aiUsage.windows.${item.value}`)}
-              </button>
+              </HeroButton>
             ))}
           </div>
         </div>
@@ -467,7 +468,7 @@ function SegmentedControl<TValue extends string>({
   return (
     <div className="flex rounded-md border border-hairline bg-surface p-0.5">
       {options.map((option) => (
-        <button
+        <HeroButton
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
@@ -478,7 +479,7 @@ function SegmentedControl<TValue extends string>({
           }`}
         >
           {option.label}
-        </button>
+        </HeroButton>
       ))}
     </div>
   );

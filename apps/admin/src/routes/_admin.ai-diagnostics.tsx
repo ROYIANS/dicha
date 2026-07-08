@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   flexRender,
@@ -26,7 +28,7 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { adminDichaAiDiagnosticsQueryOptions } from '@/api/admin';
-import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type {
   AdminDichaAiDiagnosticsQuery,
@@ -204,14 +206,14 @@ function AiDiagnosticsPage() {
                     />
                   ))}
                 </div>
-                <button
+                <HeroButton
                   type="button"
                   onClick={() => setFilters(initialState)}
                   className="inline-flex h-8 items-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink"
                 >
                   <RefreshCw className="size-3.5" />
                   重置筛选
-                </button>
+                </HeroButton>
               </div>
             </div>
           </div>
@@ -477,14 +479,14 @@ function QuickFilter({
   onClick: () => void;
 }) {
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={onClick}
       className="inline-flex h-8 max-w-[220px] items-center gap-2 rounded-md border border-hairline bg-surface-alt px-2.5 text-xs text-ink-soft transition-colors hover:text-ink"
     >
       <span className="truncate">{label}</span>
       <span className="shrink-0 tabular-nums">{count}</span>
-    </button>
+    </HeroButton>
   );
 }
 
@@ -531,14 +533,14 @@ function DetailRow({
         <Icon className="size-3.5" />
         {label}
         {copyable && value ? (
-          <button
+          <HeroButton
             type="button"
             onClick={() => void copyText(value)}
             className="ml-auto grid size-6 place-items-center rounded border border-hairline bg-surface text-ink-soft transition-colors hover:text-ink"
             aria-label={`复制 ${label}`}
           >
             <Copy className="size-3" />
-          </button>
+          </HeroButton>
         ) : null}
       </div>
       <p className="mt-2 break-all text-xs leading-5 text-ink">{text}</p>
@@ -549,7 +551,7 @@ function DetailRow({
 function ShortId({ value }: { value: string | null }) {
   if (!value) return <span className="text-xs text-ink-soft">-</span>;
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={(event) => {
         event.stopPropagation();
@@ -559,7 +561,7 @@ function ShortId({ value }: { value: string | null }) {
     >
       <Clipboard className="size-3" />
       <span className="truncate">{value}</span>
-    </button>
+    </HeroButton>
   );
 }
 
@@ -582,22 +584,22 @@ function PaginationBar({
         第 {page} / {Math.max(totalPages, 1)} 页 · 每页 {pageSize} · 共 {formatInteger(total)} 条
       </span>
       <div className="flex items-center gap-2">
-        <button
+        <HeroButton
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
         >
           上一页
-        </button>
-        <button
+        </HeroButton>
+        <HeroButton
           type="button"
           disabled={page >= totalPages || totalPages === 0}
           onClick={() => onPageChange(page + 1)}
           className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
         >
           下一页
-        </button>
+        </HeroButton>
       </div>
     </div>
   );

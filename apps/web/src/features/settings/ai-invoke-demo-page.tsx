@@ -20,7 +20,12 @@ import type {
   AiUsageStatus,
 } from '@dicha/shared';
 import { invokeAiStream } from '@/api/ai';
-import { HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
+import {
+  HeroButton,
+  HeroSelect,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import { SettingsDetailShell } from '@/components/SettingsScaffold';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 
@@ -157,7 +162,7 @@ export function AiInvokeDemoPage() {
             </label>
 
             <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-              <button
+              <HeroButton
                 type="button"
                 disabled={!canSubmit}
                 onClick={() => void runStream()}
@@ -167,16 +172,16 @@ export function AiInvokeDemoPage() {
                 {isRunning
                   ? t('settings.detail.aiInvokeDemo.running')
                   : t('settings.detail.aiInvokeDemo.run')}
-              </button>
+              </HeroButton>
               {isRunning ? (
-                <button
+                <HeroButton
                   type="button"
                   onClick={cancelStream}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline bg-surface-alt px-3 text-[12px] font-medium text-ink transition-colors hover:bg-canvas"
                 >
                   <CircleStop size={14} />
                   {t('settings.detail.aiInvokeDemo.cancel')}
-                </button>
+                </HeroButton>
               ) : null}
             </div>
           </div>

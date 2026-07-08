@@ -1,13 +1,27 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarCheck, Clock3, Gift, Power, UsersRound, type LucideIcon } from 'lucide-react';
+import {
+  CalendarCheck,
+  Clock3,
+  Gift,
+  Power,
+  UsersRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   adminCreditCheckInQueryOptions,
   upsertAdminCreditCheckInCampaign,
 } from '@/api/admin';
-import { HeroNumberInput, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
+import {
+  HeroButton,
+  HeroNumberInput,
+  HeroTextArea,
+  HeroTextInput,
+} from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminCreditCheckInCampaignUpsert, AdminCreditCheckInOverview } from '@dicha/shared';
 
@@ -148,7 +162,7 @@ function CampaignForm({
             </p>
           </div>
         </div>
-        <button
+        <HeroButton
           type="button"
           onClick={() => setEnabled((value) => !value)}
           className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium transition-colors ${
@@ -159,7 +173,7 @@ function CampaignForm({
         >
           <Power size={14} />
           {enabled ? '已开启' : '已关闭'}
-        </button>
+        </HeroButton>
       </div>
 
       <Field label="活动名称" value={name} onChange={setName} />
@@ -188,7 +202,7 @@ function CampaignForm({
         <Field label="开始时间" type="datetime-local" value={startsAt} onChange={setStartsAt} />
         <Field label="结束时间" type="datetime-local" value={endsAt} onChange={setEndsAt} />
       </div>
-      <button
+      <HeroButton
         disabled={
           !name.trim()
           || !timezone.trim()
@@ -199,7 +213,7 @@ function CampaignForm({
         className="h-9 w-full rounded-md bg-sidebar-bg text-xs font-medium text-sidebar-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? '保存中...' : '保存签到活动'}
-      </button>
+      </HeroButton>
     </form>
   );
 }

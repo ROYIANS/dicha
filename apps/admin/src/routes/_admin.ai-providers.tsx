@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AudioLines,
@@ -21,7 +23,12 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { toast } from 'sonner';
 import {
   adminAiProviderDirectoryQueryOptions,
@@ -30,6 +37,7 @@ import {
   updateAdminAiProviderDirectoryModel,
 } from '@/api/admin';
 import {
+  HeroButton,
   HeroCheckbox,
   HeroSelect,
   HeroSwitch,
@@ -280,7 +288,7 @@ function ProviderButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={onClick}
       className={`flex w-full items-start gap-3 p-3 text-left transition-colors ${
@@ -301,7 +309,7 @@ function ProviderButton({
       ) : (
         <CircleDashed className="mt-1 size-4 shrink-0 text-ink-faint" strokeWidth={1.8} />
       )}
-    </button>
+    </HeroButton>
   );
 }
 
@@ -471,7 +479,7 @@ function ModelDefaultConfigForm({
           <div className="space-y-2">
             <div className="flex flex-wrap gap-1.5">
               {contextWindowPresets.map((preset) => (
-                <button
+                <HeroButton
                   key={preset}
                   type="button"
                   disabled={pending}
@@ -485,7 +493,7 @@ function ModelDefaultConfigForm({
                   }`}
                 >
                   {formatContextWindowPreset(preset)}
-                </button>
+                </HeroButton>
               ))}
             </div>
             <HeroTextInput
@@ -551,14 +559,14 @@ function ModelDefaultConfigForm({
         disabled={pending}
         onChange={setParameterDraft}
       />
-      <button
+      <HeroButton
         type="submit"
         disabled={pending || contextWindowInvalid}
         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         <Save className="size-4" strokeWidth={1.8} />
         {pending ? '保存中' : '保存模型配置'}
-      </button>
+      </HeroButton>
     </form>
   );
 }
@@ -658,7 +666,7 @@ function CapabilityToggle({
 }) {
   const Icon = option.icon;
   return (
-    <button
+    <HeroButton
       type="button"
       disabled={disabled}
       onClick={onToggle}
@@ -670,7 +678,7 @@ function CapabilityToggle({
     >
       <Icon className="size-3.5 shrink-0" strokeWidth={1.8} />
       <span className="min-w-0 truncate">{option.label}</span>
-    </button>
+    </HeroButton>
   );
 }
 
@@ -720,7 +728,7 @@ function ExtensionParameterPicker({
                     {definition?.parameterTag ?? definition?.key ?? parameter}
                   </p>
                 </div>
-                <button
+                <HeroButton
                   type="button"
                   disabled={disabled}
                   onClick={() => onChange(value.filter((item) => item !== parameter))}
@@ -728,7 +736,7 @@ function ExtensionParameterPicker({
                   aria-label="移除扩展参数"
                 >
                   <X className="size-3.5" strokeWidth={1.8} />
-                </button>
+                </HeroButton>
               </div>
             );
           })}
@@ -863,7 +871,7 @@ function ProviderConfigForm({
         />
       </Field>
       <div className="grid gap-2">
-        <button
+        <HeroButton
           type="button"
           onClick={onSync}
           disabled={syncing}
@@ -871,15 +879,15 @@ function ProviderConfigForm({
         >
           <RefreshCw className="size-4" strokeWidth={1.8} />
           {syncing ? '同步中' : '同步默认模型'}
-        </button>
-        <button
+        </HeroButton>
+        <HeroButton
           type="submit"
           disabled={pending}
           className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           <Save className="size-4" strokeWidth={1.8} />
           {pending ? '保存中' : '保存渠道配置'}
-        </button>
+        </HeroButton>
       </div>
     </form>
   );
@@ -914,13 +922,13 @@ function ModelSearchBar({
             {visible} / {total}
           </span>
           {value.trim() ? (
-            <button
+            <HeroButton
               type="button"
               onClick={onClear}
               className="rounded-md border border-hairline bg-surface px-2.5 py-1.5 text-xs text-ink-soft transition-colors hover:text-ink"
             >
               清除
-            </button>
+            </HeroButton>
           ) : null}
         </div>
       </div>

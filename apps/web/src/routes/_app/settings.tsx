@@ -37,6 +37,7 @@ import { BrandMark } from '@/components/AppBrand';
 import { SettingsPatternField, SettingsSlash } from '@/components/SettingsOrnaments';
 import { settingsTintClass, type SettingsTint } from '@/components/settings-ui';
 import { useTheme } from '@/lib/hooks/useTheme';
+import { HeroButton } from '@/components/HeroControls';
 
 export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
@@ -317,13 +318,13 @@ function SettingsPage() {
 
             <div className="bg-canvas px-2 py-7 sm:px-8 sm:py-9 lg:px-10">
               <div className="mx-auto max-w-3xl space-y-6">
-                <button
+                <HeroButton
                   type="button"
                   className="app-input-field flex min-h-11 w-full items-center gap-3 rounded-md border border-hairline bg-surface px-3.5 text-left text-[13px] text-ink-faint"
                 >
                   <Search size={15} className="shrink-0" />
                   <span>{t('settings.searchPlaceholder')}</span>
-                </button>
+                </HeroButton>
 
                 {settingSections.map((section) => (
                   <SettingsGroup key={section.title} title={section.title}>
@@ -406,8 +407,8 @@ function SettingsRow({ item }: { item: SettingsItem }) {
   }
 
   return (
-    <button type="button" onClick={item.onPress} disabled={item.loading} className={className}>
+    <HeroButton type="button" onClick={item.onPress} disabled={item.loading} className={className}>
       {content}
-    </button>
+    </HeroButton>
   );
 }

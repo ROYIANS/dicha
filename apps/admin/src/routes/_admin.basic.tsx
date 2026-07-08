@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Ban,
@@ -11,7 +13,12 @@ import {
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import {
   adminUserDetailQueryOptions,
   adminUsersQueryOptions,
@@ -19,7 +26,7 @@ import {
   type AdminUsersQueryInput,
   updateAdminUserStatus,
 } from '@/api/admin';
-import { HeroSelect, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroSelect, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 import type { AdminUserDetail, AdminUserSummary } from '@dicha/shared';
 
@@ -104,12 +111,12 @@ function BasicPage() {
                 { value: 'false', label: '未验证' },
               ]}
             />
-            <button
+            <HeroButton
               type="submit"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90"
             >
               搜索
-            </button>
+            </HeroButton>
           </form>
         }
       />
@@ -126,7 +133,7 @@ function BasicPage() {
               </p>
             </div>
             {search || status || emailVerified !== 'all' ? (
-              <button
+              <HeroButton
                 type="button"
                 onClick={() => {
                   setSearch('');
@@ -139,7 +146,7 @@ function BasicPage() {
                 className="self-start rounded-md border border-hairline bg-surface-alt px-3 py-1.5 text-xs text-ink-soft transition-colors hover:bg-canvas sm:self-auto"
               >
                 清除搜索
-              </button>
+              </HeroButton>
             ) : null}
           </div>
 
@@ -163,7 +170,7 @@ function BasicPage() {
           )}
 
           <div className="flex items-center justify-between border-t border-hairline p-4">
-            <button
+            <HeroButton
               type="button"
               disabled={page <= 1}
               onClick={() => setPage((value) => Math.max(1, value - 1))}
@@ -171,11 +178,11 @@ function BasicPage() {
             >
               <ChevronLeft className="size-3.5" />
               上一页
-            </button>
+            </HeroButton>
             <p className="text-xs text-ink-soft">
               {users.data ? `${users.data.page} / ${Math.max(users.data.totalPages, 1)}` : '-'}
             </p>
-            <button
+            <HeroButton
               type="button"
               disabled={!users.data || page >= users.data.totalPages}
               onClick={() => setPage((value) => value + 1)}
@@ -183,7 +190,7 @@ function BasicPage() {
             >
               下一页
               <ChevronRight className="size-3.5" />
-            </button>
+            </HeroButton>
           </div>
         </section>
 
@@ -203,7 +210,7 @@ function UserRow({
   onSelect: () => void;
 }) {
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={onSelect}
       className={`grid w-full gap-3 px-4 py-4 text-left transition-colors hover:bg-surface-alt md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1fr)] ${
@@ -233,7 +240,7 @@ function UserRow({
         <MiniCount label="绑定" value={user.counts.accounts} />
         <MiniCount label="密钥" value={user.counts.passkeys} />
       </div>
-    </button>
+    </HeroButton>
   );
 }
 
@@ -339,7 +346,7 @@ function UserDetailContent({
           <DetailStat icon={KeyRound} label="Passkey" value={user.counts.passkeys} />
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <button
+          <HeroButton
             type="button"
             disabled={actionPending}
             onClick={onToggleStatus}
@@ -351,8 +358,8 @@ function UserDetailContent({
               <RotateCcw className="size-3.5 text-sage" strokeWidth={1.8} />
             )}
             {user.status === 'active' ? '禁用用户' : '启用用户'}
-          </button>
-          <button
+          </HeroButton>
+          <HeroButton
             type="button"
             disabled={actionPending}
             onClick={onRevokeSessions}
@@ -360,7 +367,7 @@ function UserDetailContent({
           >
             <LogOut className="size-3.5 text-mist" strokeWidth={1.8} />
             强制退出
-          </button>
+          </HeroButton>
         </div>
       </div>
 

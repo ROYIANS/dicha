@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { ArrowLeft, LogOut, ShieldAlert } from 'lucide-react';
 import { logout } from '@/api/auth';
+import { HeroButton } from '@/components/HeroControls';
 
 export const Route = createFileRoute('/unauthorized')({
   component: UnauthorizedPage,
@@ -32,14 +33,14 @@ function UnauthorizedPage() {
             <ArrowLeft className="size-4" strokeWidth={1.8} />
             返回主站
           </a>
-          <button
+          <HeroButton
             type="button"
             onClick={handleLogout}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-sidebar-bg px-3 py-2 text-sm text-sidebar-ink transition-colors hover:opacity-90"
           >
             <LogOut className="size-4" strokeWidth={1.8} />
             退出登录
-          </button>
+          </HeroButton>
         </div>
       </div>
     </div>

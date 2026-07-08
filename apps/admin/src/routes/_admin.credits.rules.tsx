@@ -1,10 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminCreditRulesQueryOptions, upsertAdminCreditRule } from '@/api/admin';
-import { HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
+import { HeroButton, HeroNumberInput, HeroTextInput } from '@/components/HeroControls';
 import { PageHeader } from '@/components/PageHeader';
 
 export const Route = createFileRoute('/_admin/credits/rules')({
@@ -58,9 +60,9 @@ function CreditRulesPage() {
           <NumberInput label="1 USD 对应积分" value={usd} onChange={setUsd} />
           <NumberInput label="平台倍率" value={markup} onChange={setMarkup} step={0.01} />
           <NumberInput label="最低扣费积分" value={minimum} onChange={setMinimum} />
-          <button className="h-9 w-full rounded-md bg-sidebar-bg text-xs font-medium text-sidebar-ink">
+          <HeroButton className="h-9 w-full rounded-md bg-sidebar-bg text-xs font-medium text-sidebar-ink">
             保存规则
-          </button>
+          </HeroButton>
         </form>
 
         <section className="overflow-hidden rounded-md border border-hairline bg-surface">
@@ -84,7 +86,7 @@ function CreditRulesPage() {
                   </p>
                 </div>
                 {!rule.active ? (
-                  <button
+                  <HeroButton
                     type="button"
                     onClick={() =>
                       mutation.mutate({
@@ -101,7 +103,7 @@ function CreditRulesPage() {
                     className="h-8 rounded-md border border-hairline bg-surface-alt px-3 text-xs text-ink"
                   >
                     设为启用
-                  </button>
+                  </HeroButton>
                 ) : null}
               </div>
             ))}

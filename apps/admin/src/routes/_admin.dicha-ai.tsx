@@ -1,4 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+} from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle2,
@@ -10,7 +12,12 @@ import {
   Save,
   Server,
 } from 'lucide-react';
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { toast } from 'sonner';
 import {
   adminDichaAiServiceQueryOptions,
@@ -19,6 +26,7 @@ import {
   upsertAdminDichaInternalProvider,
 } from '@/api/admin';
 import {
+  HeroButton,
   HeroCheckbox,
   HeroSelect,
   HeroTextArea,
@@ -111,14 +119,14 @@ function DichaAiServicePage() {
               <p className="text-sm font-semibold text-ink">内部供应商</p>
               <p className="mt-1 text-xs leading-5 text-ink-soft">{providers.length} 个上游渠道</p>
             </div>
-            <button
+            <HeroButton
               type="button"
               onClick={() => setSelectedProviderId(NEW_INTERNAL_PROVIDER_ID)}
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline bg-surface-alt px-2.5 text-xs font-medium text-ink-soft transition-colors hover:text-ink"
             >
               <Plus className="size-3.5" strokeWidth={1.8} />
               新增
-            </button>
+            </HeroButton>
           </div>
           {service.isPending ? (
             <EmptyState text="正在加载内部供应商" />
@@ -159,7 +167,7 @@ function DichaAiServicePage() {
                 从内部供应商同步出来的模型，启用后会聚合到用户端 Dicha AI 下。
               </p>
             </div>
-            <button
+            <HeroButton
               type="button"
               disabled={!selectedProvider || syncModels.isPending}
               onClick={() => selectedProvider && syncModels.mutate(selectedProvider.id)}
@@ -167,7 +175,7 @@ function DichaAiServicePage() {
             >
               <RefreshCw className="size-3.5" strokeWidth={1.8} />
               {syncModels.isPending ? '同步中' : '同步模型'}
-            </button>
+            </HeroButton>
           </div>
           <ModelSearchBar
             value={modelSearch}
@@ -223,7 +231,7 @@ function ProviderButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={onClick}
       className={`flex w-full items-start gap-3 p-3 text-left transition-colors ${
@@ -242,7 +250,7 @@ function ProviderButton({
       ) : (
         <CircleDashed className="mt-1 size-4 shrink-0 text-ink-faint" strokeWidth={1.8} />
       )}
-    </button>
+    </HeroButton>
   );
 }
 
@@ -256,7 +264,7 @@ function ModelButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <HeroButton
       type="button"
       onClick={onClick}
       className={`grid w-full gap-3 p-4 text-left transition-colors md:grid-cols-[minmax(0,1fr)_140px] md:items-center ${
@@ -279,7 +287,7 @@ function ModelButton({
         )}
         {model.enabled ? 'DX 启用' : '未启用'}
       </span>
-    </button>
+    </HeroButton>
   );
 }
 
@@ -392,14 +400,14 @@ function InternalProviderForm({
           />
         </Field>
       </div>
-      <button
+      <HeroButton
         type="submit"
         disabled={pending || !form.name.trim() || !form.baseUrl.trim()}
         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         <Save className="size-4" strokeWidth={1.8} />
         {pending ? '保存中' : '保存上游'}
-      </button>
+      </HeroButton>
     </form>
   );
 }
@@ -618,14 +626,14 @@ function DichaModelForm({
           className="min-h-36"
         />
       </Field>
-      <button
+      <HeroButton
         type="submit"
         disabled={pending || !form.dxModelId.trim() || !form.dxDisplayName.trim()}
         className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-sidebar-bg px-4 text-sm text-sidebar-ink transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         <Save className="size-4" strokeWidth={1.8} />
         {pending ? '保存中' : '保存 DX 模型'}
-      </button>
+      </HeroButton>
     </form>
   );
 }
@@ -679,13 +687,13 @@ function ModelSearchBar({
             {visible} / {total}
           </span>
           {value.trim() ? (
-            <button
+            <HeroButton
               type="button"
               onClick={onClear}
               className="rounded-md border border-hairline bg-surface px-2.5 py-1.5 text-xs text-ink-soft transition-colors hover:text-ink"
             >
               清除
-            </button>
+            </HeroButton>
           ) : null}
         </div>
       </div>
