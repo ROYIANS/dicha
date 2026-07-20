@@ -120,6 +120,12 @@
 
 **Related**: Modal / Table 仍按任务范围独立迁移，不跟按钮替换混在一起。
 
+> **HeroUI v3 type gotcha**: `ButtonRootProps` 当前不暴露原生 `title`，因此
+> `HeroButtonProps` 可以用 `Pick<ComponentProps<'button'>, 'title'>` 窄补 tooltip
+> 属性。不要顺手把 `role`、`aria-selected` 等也加入兼容层来承载伪 tab / option；
+> 筛选 tab 和可选择对象必须分别迁移到 HeroUI `Tabs` / `ListBox`，让组件库维护
+> 正确的键盘与 ARIA 语义。
+
 ---
 
 ### Convention: 可选择对象行使用 ListBox
