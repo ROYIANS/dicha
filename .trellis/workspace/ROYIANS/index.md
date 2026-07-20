@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 40
-- **Last Active**: 2026-07-05
+- **Total Sessions**: 41
+- **Last Active**: 2026-07-20
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1431 | Active |
+| `journal-1.md` | ~1465 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 41 | 2026-07-20 | HeroUI 基础组件迁移质量复核与收尾 | `20932b1`, `1460026` | `main` |
 | 40 | 2026-07-05 | Credit operations dashboard | `6158e3c` | `main` |
 | 39 | 2026-07-04 | Dicha AI diagnostics console | `4715cb1` | `main` |
 | 38 | 2026-07-04 | AI Gateway streaming invoke | `45cdc2e` | `main` |

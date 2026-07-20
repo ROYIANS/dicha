@@ -1429,3 +1429,37 @@ Added the super-admin credit operations dashboard: shared admin contract, API ag
 ### Next Steps
 
 - None - task complete
+
+
+## Session 41: HeroUI 基础组件迁移质量复核与收尾
+
+**Date**: 2026-07-20
+**Task**: HeroUI 基础组件迁移质量复核与收尾
+**Branch**: `main`
+
+### Summary
+
+完成 HeroUI 迁移复核，修正残留的伪 tab/option 语义、邮箱建议 ListBox 激活行为、HeroButton 类型兼容与 Admin 侧栏 token；Web/Admin typecheck、lint、build 通过，Web 26 项测试及 Vite dev module graph 通过，并归档任务。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `20932b1` | (see git log) |
+| `1460026` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
