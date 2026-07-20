@@ -22,17 +22,13 @@ function cx(...classes: ClassValue[]) {
 
 type HeroButtonTone = 'primary' | 'ghost' | 'danger' | 'quiet' | 'icon' | 'plain';
 
-type NativeButtonCompatibilityProps = Pick<
-  ComponentProps<'button'>,
-  'aria-selected' | 'onMouseDown' | 'onMouseEnter' | 'role' | 'title'
->;
-
-type HeroButtonProps = Omit<ComponentProps<typeof Button>, 'className' | 'isDisabled'> & {
-  className?: string;
-  disabled?: boolean;
-  isDisabled?: boolean;
-  tone?: HeroButtonTone;
-} & NativeButtonCompatibilityProps;
+type HeroButtonProps = Omit<ComponentProps<typeof Button>, 'className' | 'isDisabled'> &
+  Pick<ComponentProps<'button'>, 'title'> & {
+    className?: string;
+    disabled?: boolean;
+    isDisabled?: boolean;
+    tone?: HeroButtonTone;
+  };
 
 export function HeroButton({
   className,
@@ -42,7 +38,7 @@ export function HeroButton({
   variant,
   ...props
 }: HeroButtonProps) {
-  const resolvedTone = tone ?? inferHeroButtonTone(className, props.role);
+  const resolvedTone = tone ?? inferHeroButtonTone(className);
   const resolvedVariant =
     variant ??
     (resolvedTone === 'primary' ? 'primary' : resolvedTone === 'danger' ? 'danger' : 'ghost');
@@ -61,10 +57,7 @@ export function HeroButton({
   );
 }
 
-function inferHeroButtonTone(
-  className: string | undefined,
-  role: NativeButtonCompatibilityProps['role'] | undefined,
-): HeroButtonTone {
+function inferHeroButtonTone(className: string | undefined): HeroButtonTone {
   const classes = className ?? '';
 
   if (matchesClass(classes, 'backdrop|fixed inset-0|absolute inset-0')) return 'plain';
@@ -75,10 +68,10 @@ function inferHeroButtonTone(
   if (matchesClass(classes, 'lp-btn-primary|bg-\\[var\\(--accent\\)\\]|bg-sidebar-bg')) {
     return 'primary';
   }
-  if (role === 'tab' || role === 'option' || matchesClass(classes, 'border-b-2|app-sidebar-link')) {
+  if (matchesClass(classes, 'border-b-2|app-sidebar-link')) {
     return 'quiet';
   }
-  if (matchesClass(classes, 'lp-btn-ghost|border|bg-surface|bg-canvas|bg-white/|surface-alt')) {
+  if (matchesClass(classes, 'lp-btn-ghost|border|bg-surface|bg-canvas|surface-alt')) {
     return 'ghost';
   }
   if (matchesClass(classes, 'size-|inline-grid|place-items-center')) return 'icon';
@@ -107,7 +100,9 @@ type HeroTextInputProps = Omit<ComponentProps<typeof Input>, 'onChange'> & {
 };
 
 export function HeroTextInput({ onChange, fullWidth = true, ...props }: HeroTextInputProps) {
-  return <Input fullWidth={fullWidth} onChange={(event) => onChange?.(event.target.value)} {...props} />;
+  return (
+    <Input fullWidth={fullWidth} onChange={(event) => onChange?.(event.target.value)} {...props} />
+  );
 }
 
 type HeroTextAreaProps = Omit<ComponentProps<typeof TextArea>, 'onChange'> & {
@@ -115,7 +110,13 @@ type HeroTextAreaProps = Omit<ComponentProps<typeof TextArea>, 'onChange'> & {
 };
 
 export function HeroTextArea({ onChange, fullWidth = true, ...props }: HeroTextAreaProps) {
-  return <TextArea fullWidth={fullWidth} onChange={(event) => onChange?.(event.target.value)} {...props} />;
+  return (
+    <TextArea
+      fullWidth={fullWidth}
+      onChange={(event) => onChange?.(event.target.value)}
+      {...props}
+    />
+  );
 }
 
 type HeroNumberInputProps = Omit<ComponentProps<typeof NumberField>, 'onChange' | 'children'> & {

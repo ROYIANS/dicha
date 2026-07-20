@@ -1,22 +1,7 @@
-import {
-  createFileRoute,
-  useRouter,
-} from '@tanstack/react-router';
-import {
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react';
-import {
-  KeyRound,
-  Mail,
-  ArrowLeft,
-  Loader2,
-  Plus,
-} from 'lucide-react';
-import { InputOTP } from '@heroui/react';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { KeyRound, Mail, ArrowLeft, Loader2, Plus } from 'lucide-react';
+import { InputOTP, ListBox } from '@heroui/react';
 import 'altcha';
 import type { AltchaWidgetElement } from 'altcha';
 import { BrandMark } from '@/components/AppBrand';
@@ -30,7 +15,14 @@ import { EdgeRuler } from '@/components/EdgeRuler';
 /** GitHub 标识（lucide v1 已移除品牌图标，内联官方 mark）。 */
 function GithubMark({ size = 15 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden focusable="false">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      aria-hidden
+      focusable="false"
+    >
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
     </svg>
   );
@@ -66,7 +58,13 @@ function GridPattern() {
         {/* 主格 32px：蓝图主网格 */}
         <pattern id={major} width="32" height="32" patternUnits="userSpaceOnUse">
           <rect width="32" height="32" fill={`url(#${fine})`} />
-          <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.18" />
+          <path
+            d="M32 0H0V32"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.75"
+            opacity="0.18"
+          />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill={`url(#${major})`} />
@@ -94,6 +92,7 @@ function EmailField({
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const open = focused && suggestions.length > 0;
+  const activeSuggestion = suggestions[activeIndex] ?? suggestions[0];
 
   const pickSuggestion = (nextEmail: string) => {
     onChange(nextEmail);
@@ -122,8 +121,7 @@ function EmailField({
 
     if (event.key === 'Enter') {
       event.preventDefault();
-      const suggestion = suggestions[activeIndex] ?? suggestions[0];
-      if (suggestion) pickSuggestion(suggestion);
+      if (activeSuggestion) pickSuggestion(activeSuggestion);
       return;
     }
 
@@ -153,26 +151,29 @@ function EmailField({
       />
       {open ? (
         <div
-          id={listboxId}
-          role="listbox"
           className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-hairline bg-surface shadow-float"
+          onMouseDown={(event) => event.preventDefault()}
         >
-          {suggestions.map((suggestion, index) => (
-            <HeroButton
-              key={suggestion}
-              type="button"
-              role="option"
-              aria-selected={index === activeIndex}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                pickSuggestion(suggestion);
-              }}
-              onMouseEnter={() => setActiveIndex(index)}
-              className="block w-full px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-surface-alt aria-selected:bg-surface-alt"
-            >
-              {suggestion}
-            </HeroButton>
-          ))}
+          <ListBox
+            id={listboxId}
+            aria-label={label}
+            selectionMode="single"
+            selectedKeys={activeSuggestion ? new Set([activeSuggestion]) : new Set()}
+            onAction={(key) => pickSuggestion(String(key))}
+            className="p-0"
+          >
+            {suggestions.map((suggestion, index) => (
+              <ListBox.Item
+                key={suggestion}
+                id={suggestion}
+                textValue={suggestion}
+                onHoverStart={() => setActiveIndex(index)}
+                className="block w-full px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-surface-alt data-[selected]:bg-surface-alt"
+              >
+                {suggestion}
+              </ListBox.Item>
+            ))}
+          </ListBox>
         </div>
       ) : null}
     </div>
@@ -291,7 +292,10 @@ function LoginPage() {
   const handleGithub = async () => {
     resetFeedback();
     setPending(true);
-    const { error: err } = await authClient.signIn.social({ provider: 'github', callbackURL: '/home' });
+    const { error: err } = await authClient.signIn.social({
+      provider: 'github',
+      callbackURL: '/home',
+    });
     if (err) {
       setFormError(err.message ?? 'GitHub 登录失败，请稍后再试');
       setPending(false);
@@ -379,7 +383,9 @@ function LoginPage() {
                     backgroundColor: 'color-mix(in oklab, var(--danger) 14%, var(--surface) 86%)',
                   }}
                 >
-                  <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">ERR</span>
+                  <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">
+                    ERR
+                  </span>
                   <p className="mt-1 text-[13px] leading-relaxed text-ink">{error}</p>
                 </div>
               )}
@@ -393,7 +399,9 @@ function LoginPage() {
                     backgroundColor: 'color-mix(in oklab, var(--success) 16%, var(--surface) 84%)',
                   }}
                 >
-                  <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">OK</span>
+                  <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-soft">
+                    OK
+                  </span>
                   <p className="mt-1 text-[13px] leading-relaxed text-ink">{notice}</p>
                 </div>
               )}
@@ -413,11 +421,7 @@ function LoginPage() {
                     disabled={pending}
                     className="lp-btn lp-btn-primary inline-flex w-full items-center justify-center gap-2.5 rounded-md px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {pending ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Mail size={14} />
-                    )}
+                    {pending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
                     <span className="text-[14px] font-medium">
                       {pending ? '发送中…' : '发送验证码'}
                     </span>

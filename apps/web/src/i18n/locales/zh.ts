@@ -306,6 +306,7 @@ export const zh = {
           noProviderModels: '这个供应商下还没有模型。添加 API Key 后可以先同步模型列表。',
           noProviderModelsForFilter: '没有符合当前筛选条件的模型。',
           modelSearchPlaceholder: '搜索模型 ID、名称、能力或供应商',
+          modelFilterLabel: '模型类型筛选',
           modelSortLabel: '模型排序',
           officialModelManaged: '官方只读',
           modelMaxOutput: '输出 {{value}}',

@@ -232,7 +232,7 @@ function LoginPage() {
               />
               <div className="relative z-[1] flex h-full flex-col">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-12 place-items-center rounded-md bg-white/10">
+                  <span className="grid h-10 w-12 place-items-center rounded-md bg-sidebar-ink/10">
                     <BrandMark className="h-[18px] w-[27px]" />
                   </span>
                   <div>

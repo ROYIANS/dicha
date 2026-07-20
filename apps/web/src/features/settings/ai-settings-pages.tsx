@@ -30,13 +30,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { ModelIcon, ProviderIcon, modelMappings } from '@lobehub/icons';
-import { Dropdown, Tooltip } from '@heroui/react';
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { Dropdown, Tabs, Tooltip } from '@heroui/react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -69,12 +64,7 @@ import {
   updateAiConfig,
 } from '@/api/ai';
 import { ModelSelect } from '@/components/ModelSelect';
-import {
-  HeroButton,
-  HeroSelect,
-  HeroTextArea,
-  HeroTextInput,
-} from '@/components/HeroControls';
+import { HeroButton, HeroSelect, HeroTextArea, HeroTextInput } from '@/components/HeroControls';
 import {
   SettingsDetailShell,
   SettingsPanel,
@@ -1058,103 +1048,110 @@ function ProviderModelList({
 
   return (
     <div className="bg-canvas px-4 py-3">
-      <div className="grid gap-3 rounded-md border border-hairline bg-surface px-3 py-3">
-        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-          <div className="relative min-w-0">
-            <Search
-              size={15}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
-            />
-            <HeroTextInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
-              className="pl-9"
-            />
-          </div>
-          <Dropdown>
-            <Dropdown.Trigger
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
-              aria-label={t('settings.detail.aiProviders.modelSortLabel')}
-            >
-              <ArrowDownUp size={14} />
-              <span className="max-w-[12rem] truncate">{activeSortLabel}</span>
-              <ChevronDown size={13} />
-            </Dropdown.Trigger>
-            <Dropdown.Popover className="min-w-48 rounded-md border border-hairline bg-surface p-1 shadow-float">
-              <Dropdown.Menu
-                aria-label={t('settings.detail.aiProviders.modelSortLabel')}
-                selectionMode="single"
-                selectedKeys={[sortMode]}
-                onAction={(key) => setSortMode(String(key) as ModelListSortMode)}
-              >
-                {modelListSortOptions.map((option) => (
-                  <Dropdown.Item
-                    key={option}
-                    id={option}
-                    className="rounded-md px-2.5 py-2 text-[12px] text-ink-soft outline-none data-[focused]:bg-surface-alt data-[focused]:text-ink"
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      {t(`settings.detail.aiProviders.modelSort.${option}`)}
-                      <Dropdown.ItemIndicator type="checkmark" className="text-sage" />
-                    </span>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
-        </div>
-
-        <div className="overflow-x-auto border-b border-hairline" role="tablist">
-          <div className="flex min-w-max flex-row flex-nowrap items-center gap-7 px-1">
-            {visibleFilters.map((filter) => {
-              const Icon = filter.icon;
-              const count = filterCounts.get(filter.key) ?? 0;
-              const selected = filter.key === selectedFilter;
-              return (
-                <HeroButton
-                  key={filter.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  onClick={() => setActiveFilter(filter.key)}
-                  className={`inline-flex h-10 items-center gap-1.5 border-b-2 px-0 text-[12px] font-semibold outline-none transition-colors ${
-                    selected
-                      ? 'border-[var(--foreground)] text-ink'
-                      : 'border-transparent text-ink-faint hover:text-ink-soft'
-                  }`}
-                >
-                  <Icon size={15} />
-                  {t(`settings.detail.aiProviders.modelFilters.${filter.key}`)}
-                  <span className="text-[11px] font-medium text-ink-faint">{count}</span>
-                </HeroButton>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3 overflow-hidden rounded-md border border-hairline bg-surface">
-        {visibleModels.length > 0 ? (
-          visibleModels.map((model) => (
-            <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
-              <ProviderModelRow
-                model={model}
-                provider={provider}
-                catalog={catalog}
-                pending={pending}
-                readOnly={readOnly}
-                onConfigure={() => onConfigure(model)}
-                onUpdate={onUpdate}
+      <Tabs
+        selectedKey={selectedFilter}
+        onSelectionChange={(key) => setActiveFilter(String(key) as ModelListFilterKey)}
+      >
+        <div className="grid gap-3 rounded-md border border-hairline bg-surface px-3 py-3">
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="relative min-w-0">
+              <Search
+                size={15}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
+              />
+              <HeroTextInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t('settings.detail.aiProviders.modelSearchPlaceholder')}
+                className="pl-9"
               />
             </div>
-          ))
-        ) : (
-          <div className="px-4 py-5 text-[12px] text-ink-faint">
-            {t('settings.detail.aiProviders.noProviderModelsForFilter')}
+            <Dropdown>
+              <Dropdown.Trigger
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 text-[12px] font-medium text-ink-soft transition-colors hover:text-ink"
+                aria-label={t('settings.detail.aiProviders.modelSortLabel')}
+              >
+                <ArrowDownUp size={14} />
+                <span className="max-w-[12rem] truncate">{activeSortLabel}</span>
+                <ChevronDown size={13} />
+              </Dropdown.Trigger>
+              <Dropdown.Popover className="min-w-48 rounded-md border border-hairline bg-surface p-1 shadow-float">
+                <Dropdown.Menu
+                  aria-label={t('settings.detail.aiProviders.modelSortLabel')}
+                  selectionMode="single"
+                  selectedKeys={[sortMode]}
+                  onAction={(key) => setSortMode(String(key) as ModelListSortMode)}
+                >
+                  {modelListSortOptions.map((option) => (
+                    <Dropdown.Item
+                      key={option}
+                      id={option}
+                      className="rounded-md px-2.5 py-2 text-[12px] text-ink-soft outline-none data-[focused]:bg-surface-alt data-[focused]:text-ink"
+                    >
+                      <span className="flex items-center justify-between gap-3">
+                        {t(`settings.detail.aiProviders.modelSort.${option}`)}
+                        <Dropdown.ItemIndicator type="checkmark" className="text-sage" />
+                      </span>
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
-        )}
-      </div>
+
+          <Tabs.ListContainer className="overflow-x-auto border-b border-hairline">
+            <Tabs.List
+              aria-label={t('settings.detail.aiProviders.modelFilterLabel')}
+              className="flex min-w-max flex-row flex-nowrap items-center gap-7 px-1"
+            >
+              {visibleFilters.map((filter) => {
+                const Icon = filter.icon;
+                const count = filterCounts.get(filter.key) ?? 0;
+                return (
+                  <Tabs.Tab
+                    key={filter.key}
+                    id={filter.key}
+                    className="inline-flex h-10 items-center gap-1.5 px-0 text-[12px] font-semibold text-ink-faint outline-none transition-colors data-[selected]:text-ink"
+                  >
+                    <Icon size={15} />
+                    {t(`settings.detail.aiProviders.modelFilters.${filter.key}`)}
+                    <span className="text-[11px] font-medium text-ink-faint">{count}</span>
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                );
+              })}
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </div>
+
+        {visibleFilters.map((filter) => (
+          <Tabs.Panel key={filter.key} id={filter.key} className="mt-3">
+            {filter.key === selectedFilter ? (
+              <div className="overflow-hidden rounded-md border border-hairline bg-surface">
+                {visibleModels.length > 0 ? (
+                  visibleModels.map((model) => (
+                    <div key={model.id} className="border-b border-hairline/70 last:border-b-0">
+                      <ProviderModelRow
+                        model={model}
+                        provider={provider}
+                        catalog={catalog}
+                        pending={pending}
+                        readOnly={readOnly}
+                        onConfigure={() => onConfigure(model)}
+                        onUpdate={onUpdate}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-5 text-[12px] text-ink-faint">
+                    {t('settings.detail.aiProviders.noProviderModelsForFilter')}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </Tabs.Panel>
+        ))}
+      </Tabs>
     </div>
   );
 }
